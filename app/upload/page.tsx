@@ -5,25 +5,28 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
+import { useWorkflowStore } from "@/lib/stores/workflow-store"
 import { AppHeader } from "@/components/shared/app-header"
-import { FileUploadZone } from "@/components/upload/file-upload-zone"
-import { FileList } from "@/components/upload/file-list"
+import { DragDropZone } from "@/components/upload/drag-drop-zone"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { NotificationModal } from "@/components/shared/notification-modal"
 import { TagSelector } from "@/components/tags/tag-selector"
-import { Lock } from "lucide-react"
+import { Lock, Send, Sparkles } from "lucide-react"
 
 export default function UploadPage() {
   const { user, isAuthenticated } = useAuthStore()
+  const { addUpload } = useWorkflowStore()
   const router = useRouter()
   const [recipient, setRecipient] = useState("")
   const [description, setDescription] = useState("")
   const [files, setFiles] = useState<File[]>([])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [priority, setPriority] = useState<"high" | "medium" | "low">("medium")
   const [isLoading, setIsLoading] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
   const [notification, setNotification] = useState<{
     show: boolean
     type: "success" | "error" | "warning" | "info"
@@ -86,20 +89,43 @@ export default function UploadPage() {
     setIsLoading(true)
 
     try {
-      // TODO: Integrar com API Python
+      // Simular envio
       await new Promise((resolve) => setTimeout(resolve, 2000))
 
+      addUpload({
+        name: description.substring(0, 50),
+        sender: {
+          id: user!.id,
+          name: user!.name,
+          email: user!.email,
+        },
+        recipient,
+        description,
+        tags: selectedTags,
+        files: files.map((f) => ({
+          name: f.name,
+          size: `${(f.size / (1024 * 1024)).toFixed(2)} MB`,
+          type: f.name.split(".").pop()?.toUpperCase() || "FILE",
+        })),
+        priority,
+      })
+
+      setShowSuccess(true)
       setNotification({
         show: true,
         type: "success",
         title: "Arquivos enviados com sucesso!",
-        message: `${files.length} arquivo(s) enviado(s) para ${recipient} com ${selectedTags.length} tag(s)`,
+        message: `${files.length} arquivo(s) enviado(s) para aprovação do supervisor. Você será notificado sobre a decisão.`,
       })
 
-      setRecipient("")
-      setDescription("")
-      setFiles([])
-      setSelectedTags([])
+      // Reset form
+      setTimeout(() => {
+        setRecipient("")
+        setDescription("")
+        setFiles([])
+        setSelectedTags([])
+        setShowSuccess(false)
+      }, 3000)
     } catch (error) {
       setNotification({
         show: true,
@@ -117,47 +143,86 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <AppHeader subtitle="Módulo de Upload" />
 
-      <main className="container max-w-4xl mx-auto px-6 py-8">
-        <div className="bg-card rounded-xl shadow-sm border p-8 space-y-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Upload de Arquivos para Clientes</h1>
-            <p className="text-muted-foreground">Envie documentos de forma segura para destinatários externos.</p>
+      <main className="container max-w-5xl mx-auto px-6 py-8">
+        <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-8 space-y-8 relative overflow-hidden">
+          {/* Decorative gradient */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#00A99D]/10 to-[#0047BB]/10 rounded-full blur-3xl -z-10" />
+
+          <div className="relative">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
+                <Sparkles className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">Transferência Segura de Arquivos</h1>
+                <p className="text-muted-foreground">Envie documentos para destinatários externos com segurança</p>
+              </div>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Recipient */}
             <div className="space-y-2">
-              <Label htmlFor="recipient" className="text-sm font-medium">
-                Destinatário
+              <Label htmlFor="recipient" className="text-sm font-medium flex items-center gap-2">
+                <Lock className="h-4 w-4 text-[#00A99D]" />
+                Destinatário Externo
               </Label>
-              <div className="relative">
-                <Input
-                  id="recipient"
-                  type="email"
-                  placeholder="sistema.interno@petrobras.com.br"
-                  value={recipient}
-                  onChange={(e) => setRecipient(e.target.value)}
-                  className="h-11 pr-10"
-                  required
-                />
-                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="recipient"
+                type="email"
+                placeholder="cliente@empresa.com"
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+                className="h-12 text-base"
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                O destinatário receberá um email com link seguro para download
+              </p>
+            </div>
+
+            {/* File Upload */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Anexar Arquivos</Label>
+              <DragDropZone
+                onFilesSelected={handleFilesSelected}
+                selectedFiles={files}
+                onRemoveFile={handleFileRemove}
+              />
+            </div>
+
+            {/* Tags */}
+            <TagSelector selectedTags={selectedTags} onTagsChange={setSelectedTags} />
+
+            {/* Priority */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Prioridade</Label>
+              <div className="flex gap-3">
+                {(["high", "medium", "low"] as const).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPriority(p)}
+                    className={`
+                      flex-1 py-3 px-4 rounded-lg border-2 font-medium transition-all
+                      ${priority === p ? "border-[#0047BB] bg-[#0047BB]/10 text-[#0047BB]" : "border-border hover:border-[#0047BB]/50"}
+                    `}
+                  >
+                    {p === "high" && "Alta"}
+                    {p === "medium" && "Média"}
+                    {p === "low" && "Baixa"}
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Arquivos</Label>
-              <FileUploadZone onFilesSelected={handleFilesSelected} />
-            </div>
-
-            {files.length > 0 && <FileList files={files} onRemove={handleFileRemove} />}
-
-            <TagSelector selectedTags={selectedTags} onTagsChange={setSelectedTags} />
-
+            {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="description" className="text-sm font-medium">
-                Descrição (obrigatório)
+                Descrição do Envio (obrigatório)
               </Label>
               <Textarea
                 id="description"
@@ -169,9 +234,20 @@ export default function UploadPage() {
               />
             </div>
 
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isLoading} size="lg" className="bg-[#0047BB] hover:bg-[#003A99]">
-                {isLoading ? "Enviando..." : "Enviar Arquivos"}
+            {/* Submit */}
+            <div className="flex justify-end pt-4">
+              <Button
+                type="submit"
+                disabled={isLoading || showSuccess}
+                size="lg"
+                className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:from-[#008A81] hover:to-[#003A99] text-white font-semibold px-8"
+              >
+                {isLoading && (
+                  <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                )}
+                {showSuccess && <Sparkles className="h-5 w-5 mr-2" />}
+                <Send className="h-5 w-5 mr-2" />
+                {isLoading ? "Enviando..." : showSuccess ? "Enviado!" : "Enviar para Aprovação"}
               </Button>
             </div>
           </form>
