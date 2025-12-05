@@ -15,16 +15,16 @@ import { Button } from "@/components/ui/button"
 import { NotificationModal } from "@/components/shared/notification-modal"
 import { TagSelector } from "@/components/tags/tag-selector"
 import { Lock, Send, Sparkles } from "lucide-react"
+import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
 
 export default function UploadPage() {
   const { user, isAuthenticated } = useAuthStore()
-  const { addUpload } = useWorkflowStore()
+  const { addUpload, uploads } = useWorkflowStore()
   const router = useRouter()
   const [recipient, setRecipient] = useState("")
   const [description, setDescription] = useState("")
   const [files, setFiles] = useState<File[]>([])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [priority, setPriority] = useState<"high" | "medium" | "low">("medium")
   const [isLoading, setIsLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [notification, setNotification] = useState<{
@@ -107,7 +107,6 @@ export default function UploadPage() {
           size: `${(f.size / (1024 * 1024)).toFixed(2)} MB`,
           type: f.name.split(".").pop()?.toUpperCase() || "FILE",
         })),
-        priority,
       })
 
       setShowSuccess(true)
@@ -142,11 +141,20 @@ export default function UploadPage() {
     return null
   }
 
+  const uploadStats = {
+    total: uploads.length,
+    pending: uploads.filter((u) => u.status === "pending").length,
+    approved: uploads.filter((u) => u.status === "approved").length,
+    rejected: uploads.filter((u) => u.status === "rejected").length,
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <AppHeader subtitle="Módulo de Upload" />
 
       <main className="container max-w-5xl mx-auto px-6 py-8">
+        <MetricsDashboard {...uploadStats} userType="internal" />
+
         <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-8 space-y-8 relative overflow-hidden">
           {/* Decorative gradient */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#00A99D]/10 to-[#0047BB]/10 rounded-full blur-3xl -z-10" />
@@ -196,28 +204,6 @@ export default function UploadPage() {
 
             {/* Tags */}
             <TagSelector selectedTags={selectedTags} onTagsChange={setSelectedTags} />
-
-            {/* Priority */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Prioridade</Label>
-              <div className="flex gap-3">
-                {(["high", "medium", "low"] as const).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPriority(p)}
-                    className={`
-                      flex-1 py-3 px-4 rounded-lg border-2 font-medium transition-all
-                      ${priority === p ? "border-[#0047BB] bg-[#0047BB]/10 text-[#0047BB]" : "border-border hover:border-[#0047BB]/50"}
-                    `}
-                  >
-                    {p === "high" && "Alta"}
-                    {p === "medium" && "Média"}
-                    {p === "low" && "Baixa"}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             {/* Description */}
             <div className="space-y-2">

@@ -19,7 +19,6 @@ export interface FileUpload {
     type: string
   }>
   status: "pending" | "approved" | "rejected"
-  priority: "high" | "medium" | "low"
   uploadDate: string
   approvalDate?: string
   approvedBy?: string
@@ -56,7 +55,6 @@ export const useWorkflowStore = create<WorkflowState>()(
             { name: "Anexo_Graficos.xlsx", size: "2.4 MB", type: "XLS" },
           ],
           status: "pending",
-          priority: "high",
           uploadDate: "15/01/2025 - 14:32",
         },
         {
@@ -72,7 +70,6 @@ export const useWorkflowStore = create<WorkflowState>()(
           tags: ["Contratos", "Jurídico"],
           files: [{ name: "Contrato_Servicos_2024.docx", size: "890 KB", type: "DOCX" }],
           status: "approved",
-          priority: "medium",
           uploadDate: "14/01/2025 - 10:15",
           approvalDate: "14/01/2025 - 15:20",
           approvedBy: "Carlos Mendes",
@@ -94,7 +91,7 @@ export const useWorkflowStore = create<WorkflowState>()(
         // Notificar supervisores
         useNotificationStore.getState().addNotification({
           type: "approval",
-          priority: upload.priority,
+          priority: "medium",
           title: "Novo upload aguardando aprovação",
           message: `${upload.sender.name} enviou "${upload.name}" para aprovação`,
           actionLabel: "Revisar",

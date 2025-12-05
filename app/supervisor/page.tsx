@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { NotificationModal } from "@/components/shared/notification-modal"
+import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
 
 export default function SupervisorPage() {
   const router = useRouter()
@@ -22,7 +23,6 @@ export default function SupervisorPage() {
   const { uploads, approveUpload, rejectUpload } = useWorkflowStore()
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [priorityFilter, setPriorityFilter] = useState("all")
   const [actionModal, setActionModal] = useState<{
     show: boolean
     action: "approve" | "reject"
@@ -90,17 +90,6 @@ export default function SupervisorPage() {
     }
   }
 
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return <Badge variant="destructive">Alta</Badge>
-      case "medium":
-        return <Badge className="bg-orange-100 text-orange-800 border-orange-300">Média</Badge>
-      case "low":
-        return <Badge variant="secondary">Baixa</Badge>
-    }
-  }
-
   const handleAction = (action: "approve" | "reject", upload: FileUpload) => {
     setActionModal({ show: true, action, upload })
     setRejectionReason("")
@@ -144,8 +133,7 @@ export default function SupervisorPage() {
       upload.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       upload.sender.name.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === "all" || upload.status === statusFilter
-    const matchesPriority = priorityFilter === "all" || upload.priority === priorityFilter
-    return matchesSearch && matchesStatus && matchesPriority
+    return matchesSearch && matchesStatus
   })
 
   const pendingCount = uploads.filter((u) => u.status === "pending").length
@@ -175,44 +163,13 @@ export default function SupervisorPage() {
         </div>
 
         {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="p-6 hover:shadow-lg transition-shadow bg-gradient-to-br from-card to-card/50">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Total</p>
-                <p className="text-3xl font-bold text-foreground">{uploads.length}</p>
-              </div>
-              <FileText className="h-10 w-10 text-[#00A99D]" />
-            </div>
-          </Card>
-          <Card className="p-6 hover:shadow-lg transition-shadow bg-gradient-to-br from-yellow-50 to-yellow-50/50 dark:from-yellow-950/20 dark:to-yellow-950/10">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-yellow-700 dark:text-yellow-400 mb-1">Pendentes</p>
-                <p className="text-3xl font-bold text-yellow-700 dark:text-yellow-300">{pendingCount}</p>
-              </div>
-              <Clock className="h-10 w-10 text-yellow-600 dark:text-yellow-400" />
-            </div>
-          </Card>
-          <Card className="p-6 hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 to-green-50/50 dark:from-green-950/20 dark:to-green-950/10">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-green-700 dark:text-green-400 mb-1">Aprovados</p>
-                <p className="text-3xl font-bold text-green-700 dark:text-green-300">{approvedCount}</p>
-              </div>
-              <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
-            </div>
-          </Card>
-          <Card className="p-6 hover:shadow-lg transition-shadow bg-gradient-to-br from-red-50 to-red-50/50 dark:from-red-950/20 dark:to-red-950/10">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-red-700 dark:text-red-400 mb-1">Rejeitados</p>
-                <p className="text-3xl font-bold text-red-700 dark:text-red-300">{rejectedCount}</p>
-              </div>
-              <XCircle className="h-10 w-10 text-red-600 dark:text-red-400" />
-            </div>
-          </Card>
-        </div>
+        <MetricsDashboard
+          total={uploads.length}
+          pending={pendingCount}
+          approved={approvedCount}
+          rejected={rejectedCount}
+          userType="supervisor"
+        />
 
         {/* Filters */}
         <Card className="p-6 mb-6 bg-card/50 backdrop-blur-sm">
@@ -238,32 +195,24 @@ export default function SupervisorPage() {
                 <SelectItem value="rejected">Rejeitado</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas Prioridades</SelectItem>
-                <SelectItem value="high">Alta</SelectItem>
-                <SelectItem value="medium">Média</SelectItem>
-                <SelectItem value="low">Baixa</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </Card>
 
         {/* Files Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {filteredUploads.map((upload) => (
-            <Card key={upload.id} className="p-6 hover:shadow-xl transition-all bg-card/50 backdrop-blur-sm">
+            <Card
+              key={upload.id}
+              className={`p-6 hover:shadow-xl transition-all bg-card/50 backdrop-blur-sm ${
+                upload.status === "pending" ? "pulse-pending" : ""
+              }`}
+            >
               <div className="flex gap-4">
                 <div className="flex-shrink-0">{getFileIcon(upload.files[0]?.type)}</div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <h3 className="font-semibold text-foreground text-lg">{upload.name}</h3>
-                    {getPriorityBadge(upload.priority)}
                   </div>
 
                   <div className="space-y-2 mb-4">

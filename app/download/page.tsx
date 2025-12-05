@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { AppHeader } from "@/components/shared/app-header"
 import { DocumentCard } from "@/components/download/document-card"
-import { DownloadStats } from "@/components/download/download-stats"
+import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
 import { SecurityVerificationModal } from "@/components/download/security-verification-modal"
 import { TagFilter } from "@/components/tags/tag-filter"
 import { Input } from "@/components/ui/input"
@@ -276,7 +276,13 @@ export default function DownloadPage() {
           </div>
         </div>
 
-        <DownloadStats stats={stats} />
+        <MetricsDashboard
+          total={stats.totalReceived}
+          pending={stats.pending}
+          approved={stats.downloaded}
+          rejected={stats.expired}
+          userType="external"
+        />
 
         <div className="bg-card rounded-lg border p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

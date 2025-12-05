@@ -11,6 +11,7 @@ import { PetrobrasLogo } from "@/components/ui/petrobras-logo"
 import { LoginBackground } from "@/components/ui/login-background"
 import { ForgotPasswordModal } from "@/components/auth/forgot-password-modal"
 import { NotificationModal } from "@/components/shared/notification-modal"
+import { ExternalVerificationModal } from "@/components/auth/external-verification-modal"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useRouter } from "next/navigation"
 
@@ -38,6 +39,7 @@ export function LoginForm() {
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [showExternalVerification, setShowExternalVerification] = useState(false)
   const [notification, setNotification] = useState<{
     show: boolean
     type: "success" | "error" | "warning" | "info"
@@ -57,6 +59,13 @@ export function LoginForm() {
 
   const handleQuickLogin = (userType: "internal" | "external" | "supervisor") => {
     const credentials = DEMO_CREDENTIALS[userType]
+
+    // For external users, show verification modal instead of direct login
+    if (userType === "external") {
+      setShowExternalVerification(true)
+      return
+    }
+
     setEmail(credentials.email)
     setPassword(credentials.password)
 
@@ -87,6 +96,20 @@ export function LoginForm() {
         router.push(redirectPath)
       }, 1500)
     }, 100)
+  }
+
+  const handleExternalVerificationSuccess = (email: string) => {
+    setAuth(
+      {
+        id: "demo-external-user",
+        email: email,
+        name: "Maria Santos",
+        userType: "external",
+      },
+      "demo-access-token",
+      "demo-refresh-token",
+    )
+    router.push("/download")
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -296,6 +319,11 @@ export function LoginForm() {
       </div>
 
       <ForgotPasswordModal open={showForgotPassword} onOpenChange={setShowForgotPassword} />
+      <ExternalVerificationModal
+        open={showExternalVerification}
+        onOpenChange={setShowExternalVerification}
+        onSuccess={handleExternalVerificationSuccess}
+      />
       <NotificationModal
         open={notification.show}
         onOpenChange={(show) => setNotification({ ...notification, show })}
