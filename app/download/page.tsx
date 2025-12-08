@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Download, Search, AlertTriangle, Clock } from "lucide-react"
 import { NotificationModal } from "@/components/shared/notification-modal"
+import { ScrollToTop } from "@/components/shared/scroll-to-top"
 import type { Document } from "@/types/download"
 
 const MOCK_DOCUMENTS: Document[] = [
@@ -91,7 +92,7 @@ const MOCK_DOCUMENTS: Document[] = [
 ]
 
 export default function DownloadPage() {
-  const { user, isAuthenticated } = useAuthStore()
+  const { user, isAuthenticated, logout } = useAuthStore()
   const router = useRouter()
 
   const isEmptyDemo = user?.id === "demo-empty-user-id"
@@ -317,6 +318,16 @@ export default function DownloadPage() {
     })
   }
 
+  const handleNotificationClose = (show: boolean) => {
+    if (!show && isEmptyDemo && documents.length === 0) {
+      // Usuário sem arquivos clicou OK, fazer logout e voltar ao login
+      logout()
+      router.push("/")
+    } else {
+      setNotification({ ...notification, show })
+    }
+  }
+
   if (!isAuthenticated || user?.userType !== "external") {
     return null
   }
@@ -325,15 +336,17 @@ export default function DownloadPage() {
     <div className="min-h-screen bg-muted/30">
       <AppHeader subtitle="Módulo de Download" />
 
-      <main className="container max-w-7xl mx-auto px-6 py-12 pb-16 space-y-8">
+      <main className="container max-w-7xl mx-auto px-6 py-12 pb-20 space-y-10">
         <div>
-          <h1 className="text-4xl font-bold text-foreground mb-3">Documentos Aprovados para Download</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-4 leading-tight">Documentos Aprovados para Download</h1>
 
-          <div className="flex items-start gap-3 bg-yellow-50 dark:bg-yellow-950/20 border-l-4 border-yellow-400 p-4 rounded">
-            <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+          <div className="flex items-start gap-4 bg-yellow-50 dark:bg-yellow-950/20 border-l-4 border-yellow-400 p-5 rounded">
+            <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-yellow-900 dark:text-yellow-100 text-sm">Aviso de Confidencialidade:</p>
-              <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+              <p className="font-semibold text-yellow-900 dark:text-yellow-100 text-base">
+                Aviso de Confidencialidade:
+              </p>
+              <p className="text-yellow-800 dark:text-yellow-200 text-base leading-relaxed">
                 Os documentos listados abaixo são confidenciais e destinados exclusivamente ao destinatário. A
                 reprodução ou distribuição não autorizada é estritamente proibida. Todos os downloads são registrados.
               </p>
@@ -371,8 +384,8 @@ export default function DownloadPage() {
           </div>
         ) : (
           <>
-            <div className="bg-card rounded-lg border p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-card rounded-lg border p-8 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -420,7 +433,7 @@ export default function DownloadPage() {
                 </Select>
               </div>
 
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center justify-between pt-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="select-all"
@@ -452,7 +465,7 @@ export default function DownloadPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredDocuments.map((doc) => {
                 const isExpired = doc.expiresAt && new Date(doc.expiresAt) < new Date()
                 const timeRemaining = getTimeRemaining(doc.expiresAt)
@@ -504,6 +517,8 @@ export default function DownloadPage() {
         </div>
       </main>
 
+      <ScrollToTop />
+
       <SecurityVerificationModal
         open={securityModal.show}
         onOpenChange={(show) => setSecurityModal({ ...securityModal, show })}
@@ -514,7 +529,7 @@ export default function DownloadPage() {
 
       <NotificationModal
         open={notification.show}
-        onOpenChange={(show) => setNotification({ ...notification, show })}
+        onOpenChange={handleNotificationClose}
         type={notification.type}
         title={notification.title}
         message={notification.message}

@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label"
 import { NotificationModal } from "@/components/shared/notification-modal"
 import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
 import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
+import { ScrollToTop } from "@/components/shared/scroll-to-top"
 
 export default function SupervisorPage() {
   const router = useRouter()
@@ -149,21 +150,21 @@ export default function SupervisorPage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <AppHeader subtitle="Módulo Supervisor" />
 
-      <div className="container max-w-7xl mx-auto px-6 py-8">
+      <div className="container max-w-7xl mx-auto px-6 py-10 pb-20">
         <BreadcrumbNav
           items={[{ label: "Início", href: "/supervisor" }, { label: "Arquivos" }]}
           dashboardLink="/supervisor"
         />
 
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
-              <Sparkles className="h-6 w-6 text-white" />
+        <div className="mb-10">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
+              <Sparkles className="h-7 w-7 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-foreground">Central de Aprovações</h1>
-              <p className="text-muted-foreground text-lg">Gerencie e aprove envios de arquivos</p>
+              <h1 className="text-4xl font-bold text-foreground leading-tight">Central de Aprovações</h1>
+              <p className="text-muted-foreground text-lg leading-relaxed">Gerencie e aprove envios de arquivos</p>
             </div>
           </div>
         </div>
@@ -176,10 +177,9 @@ export default function SupervisorPage() {
           userType="supervisor"
         />
 
-        {/* Statistics */}
         {/* Filters */}
-        <Card className="p-6 mb-6 bg-card/50 backdrop-blur-sm">
-          <div className="flex flex-col md:flex-row gap-4">
+        <Card className="p-8 mb-8 bg-card/50 backdrop-blur-sm">
+          <div className="flex flex-col md:flex-row gap-5">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -205,7 +205,7 @@ export default function SupervisorPage() {
         </Card>
 
         {/* Files Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {filteredUploads.map((upload) => (
             <Card
               key={upload.id}
@@ -277,7 +277,7 @@ export default function SupervisorPage() {
         </div>
 
         {filteredUploads.length === 0 && (
-          <Card className="p-12 text-center bg-card/50">
+          <Card className="p-16 text-center bg-card/50">
             <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-xl font-semibold mb-2">Nenhum arquivo encontrado</h3>
             <p className="text-muted-foreground">Ajuste os filtros ou aguarde novos envios</p>
@@ -355,6 +355,9 @@ export default function SupervisorPage() {
         title={notification.title}
         message={notification.message}
       />
+
+      {/* Added button to scroll to top */}
+      <ScrollToTop />
     </div>
   )
 }

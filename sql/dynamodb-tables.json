@@ -1,0 +1,422 @@
+{
+  "tables": [
+    {
+      "TableName": "petrobras-users",
+      "KeySchema": [
+        {
+          "AttributeName": "userId",
+          "KeyType": "HASH"
+        }
+      ],
+      "AttributeDefinitions": [
+        {
+          "AttributeName": "userId",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "email",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "role",
+          "AttributeType": "S"
+        }
+      ],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "EmailIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "email",
+              "KeyType": "HASH"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        },
+        {
+          "IndexName": "RoleIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "role",
+              "KeyType": "HASH"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        }
+      ],
+      "BillingMode": "PAY_PER_REQUEST",
+      "StreamSpecification": {
+        "StreamEnabled": true,
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+      "Tags": [
+        {
+          "Key": "Project",
+          "Value": "Petrobras-FileTransfer"
+        }
+      ]
+    },
+    {
+      "TableName": "petrobras-files",
+      "KeySchema": [
+        {
+          "AttributeName": "fileId",
+          "KeyType": "HASH"
+        }
+      ],
+      "AttributeDefinitions": [
+        {
+          "AttributeName": "fileId",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "uploadedBy",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "recipientEmail",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "status",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "createdAt",
+          "AttributeType": "S"
+        }
+      ],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "UploaderIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "uploadedBy",
+              "KeyType": "HASH"
+            },
+            {
+              "AttributeName": "createdAt",
+              "KeyType": "RANGE"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        },
+        {
+          "IndexName": "RecipientIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "recipientEmail",
+              "KeyType": "HASH"
+            },
+            {
+              "AttributeName": "createdAt",
+              "KeyType": "RANGE"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        },
+        {
+          "IndexName": "StatusIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "status",
+              "KeyType": "HASH"
+            },
+            {
+              "AttributeName": "createdAt",
+              "KeyType": "RANGE"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        }
+      ],
+      "BillingMode": "PAY_PER_REQUEST",
+      "StreamSpecification": {
+        "StreamEnabled": true,
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+      "Tags": [
+        {
+          "Key": "Project",
+          "Value": "Petrobras-FileTransfer"
+        }
+      ],
+      "TimeToLiveSpecification": {
+        "AttributeName": "ttl",
+        "Enabled": true
+      }
+    },
+    {
+      "TableName": "petrobras-audit-logs",
+      "KeySchema": [
+        {
+          "AttributeName": "logId",
+          "KeyType": "HASH"
+        },
+        {
+          "AttributeName": "timestamp",
+          "KeyType": "RANGE"
+        }
+      ],
+      "AttributeDefinitions": [
+        {
+          "AttributeName": "logId",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "timestamp",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "userId",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "action",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "fileId",
+          "AttributeType": "S"
+        }
+      ],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "UserIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "userId",
+              "KeyType": "HASH"
+            },
+            {
+              "AttributeName": "timestamp",
+              "KeyType": "RANGE"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        },
+        {
+          "IndexName": "ActionIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "action",
+              "KeyType": "HASH"
+            },
+            {
+              "AttributeName": "timestamp",
+              "KeyType": "RANGE"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        },
+        {
+          "IndexName": "FileIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "fileId",
+              "KeyType": "HASH"
+            },
+            {
+              "AttributeName": "timestamp",
+              "KeyType": "RANGE"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        }
+      ],
+      "BillingMode": "PAY_PER_REQUEST",
+      "StreamSpecification": {
+        "StreamEnabled": false
+      },
+      "Tags": [
+        {
+          "Key": "Project",
+          "Value": "Petrobras-FileTransfer"
+        }
+      ]
+    },
+    {
+      "TableName": "petrobras-notifications",
+      "KeySchema": [
+        {
+          "AttributeName": "notificationId",
+          "KeyType": "HASH"
+        }
+      ],
+      "AttributeDefinitions": [
+        {
+          "AttributeName": "notificationId",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "userId",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "createdAt",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "isRead",
+          "AttributeType": "S"
+        }
+      ],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "UserNotificationsIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "userId",
+              "KeyType": "HASH"
+            },
+            {
+              "AttributeName": "createdAt",
+              "KeyType": "RANGE"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        },
+        {
+          "IndexName": "UnreadNotificationsIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "userId",
+              "KeyType": "HASH"
+            },
+            {
+              "AttributeName": "isRead",
+              "KeyType": "RANGE"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        }
+      ],
+      "BillingMode": "PAY_PER_REQUEST",
+      "StreamSpecification": {
+        "StreamEnabled": true,
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+      "Tags": [
+        {
+          "Key": "Project",
+          "Value": "Petrobras-FileTransfer"
+        }
+      ],
+      "TimeToLiveSpecification": {
+        "AttributeName": "ttl",
+        "Enabled": true
+      }
+    },
+    {
+      "TableName": "petrobras-sessions",
+      "KeySchema": [
+        {
+          "AttributeName": "sessionId",
+          "KeyType": "HASH"
+        }
+      ],
+      "AttributeDefinitions": [
+        {
+          "AttributeName": "sessionId",
+          "AttributeType": "S"
+        },
+        {
+          "AttributeName": "userId",
+          "AttributeType": "S"
+        }
+      ],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "UserSessionsIndex",
+          "KeySchema": [
+            {
+              "AttributeName": "userId",
+              "KeyType": "HASH"
+            }
+          ],
+          "Projection": {
+            "ProjectionType": "ALL"
+          },
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5
+          }
+        }
+      ],
+      "BillingMode": "PAY_PER_REQUEST",
+      "StreamSpecification": {
+        "StreamEnabled": false
+      },
+      "Tags": [
+        {
+          "Key": "Project",
+          "Value": "Petrobras-FileTransfer"
+        }
+      ],
+      "TimeToLiveSpecification": {
+        "AttributeName": "ttl",
+        "Enabled": true
+      }
+    }
+  ]
+}

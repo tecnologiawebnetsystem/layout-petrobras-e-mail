@@ -17,6 +17,7 @@ import { Lock, Send, Sparkles, Clock } from "lucide-react"
 import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
+import { ScrollToTop } from "@/components/shared/scroll-to-top"
 
 export default function UploadPage() {
   const { user, isAuthenticated } = useAuthStore()
@@ -152,7 +153,7 @@ export default function UploadPage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <AppHeader subtitle="Módulo de Upload" />
 
-      <main className="container max-w-5xl mx-auto px-6 py-8 pb-16">
+      <main className="container max-w-5xl mx-auto px-6 py-10 pb-20">
         <BreadcrumbNav
           items={[{ label: "Início", href: "/upload" }, { label: "Upload de Arquivos" }]}
           dashboardLink="/upload"
@@ -160,24 +161,26 @@ export default function UploadPage() {
 
         <MetricsDashboard {...uploadStats} userType="internal" />
 
-        <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-8 space-y-8 relative overflow-hidden">
+        <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-10 space-y-8 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#00A99D]/10 to-[#0047BB]/10 rounded-full blur-3xl -z-10" />
 
           <div className="relative">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
-                <Sparkles className="h-6 w-6 text-white" />
+            <div className="flex items-center gap-4 mb-3">
+              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
+                <Sparkles className="h-7 w-7 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-foreground">Transferência Segura de Arquivos</h1>
-                <p className="text-muted-foreground">Envie documentos para destinatários externos com segurança</p>
+                <h1 className="text-3xl font-bold text-foreground leading-tight">Transferência Segura de Arquivos</h1>
+                <p className="text-muted-foreground text-base leading-relaxed">
+                  Envie documentos para destinatários externos com segurança
+                </p>
               </div>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="recipient" className="text-sm font-medium flex items-center gap-2">
+          <form onSubmit={handleSubmit} className="space-y-7">
+            <div className="space-y-3">
+              <Label htmlFor="recipient" className="text-base font-medium flex items-center gap-2">
                 <Lock className="h-4 w-4 text-[#00A99D]" />
                 Destinatário Externo
               </Label>
@@ -187,16 +190,15 @@ export default function UploadPage() {
                 placeholder="cliente@empresa.com"
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
-                className="h-12 text-base"
                 required
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 O destinatário receberá um email com link seguro para download
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Anexar Arquivos</Label>
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Anexar Arquivos</Label>
               <DragDropZone
                 onFilesSelected={handleFilesSelected}
                 selectedFiles={files}
@@ -204,13 +206,13 @@ export default function UploadPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="expiration" className="text-sm font-medium flex items-center gap-2">
+            <div className="space-y-3">
+              <Label htmlFor="expiration" className="text-base font-medium flex items-center gap-2">
                 <Clock className="h-4 w-4 text-[#FDB913]" />
                 Tempo de Disponibilidade
               </Label>
               <Select value={expirationHours.toString()} onValueChange={(v) => setExpirationHours(Number(v))}>
-                <SelectTrigger className="h-12">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -223,14 +225,14 @@ export default function UploadPage() {
                   <SelectItem value="720">720 horas (30 dias)</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Os arquivos ficarão disponíveis para download por {expirationHours} horas após a aprovação. O supervisor
                 poderá ajustar este tempo.
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description" className="text-sm font-medium">
+            <div className="space-y-3">
+              <Label htmlFor="description" className="text-base font-medium">
                 Descrição do Envio (obrigatório)
               </Label>
               <Textarea
@@ -238,17 +240,17 @@ export default function UploadPage() {
                 placeholder="Descreva o conteúdo e a finalidade dos arquivos..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="min-h-[120px] resize-none"
+                className="min-h-[140px] resize-none text-base"
                 required
               />
             </div>
 
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-end pt-6">
               <Button
                 type="submit"
                 disabled={isLoading || showSuccess}
                 size="lg"
-                className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:from-[#008A81] hover:to-[#003A99] text-white font-semibold px-8"
+                className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:from-[#008A81] hover:to-[#003A99] text-white font-semibold px-10 text-base shadow-lg hover:shadow-xl"
               >
                 {isLoading && (
                   <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
@@ -261,6 +263,8 @@ export default function UploadPage() {
           </form>
         </div>
       </main>
+
+      <ScrollToTop />
 
       <NotificationModal
         open={notification.show}
