@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, Moon, Sun, User, History, Book, Map, Shield } from "lucide-react"
+import { LogOut, Moon, Sun, User, History, Book, Shield } from "lucide-react"
 import { PetrobrasLogo } from "@/components/ui/petrobras-logo"
 import { Button } from "@/components/ui/button"
 import {
@@ -26,6 +26,8 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
   const { isDark, toggleTheme } = useThemeStore()
   const router = useRouter()
 
+  const isExternalUser = user?.userType === "external"
+
   const handleLogout = () => {
     clearAuth()
     router.push("/")
@@ -37,10 +39,6 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
 
   const handleViewWiki = () => {
     router.push("/wiki")
-  }
-
-  const handleViewRoadmap = () => {
-    router.push("/roadmap")
   }
 
   const handleViewAuditoria = () => {
@@ -70,10 +68,11 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <GlobalSearch />
-          <NotificationCenter />
+          {!isExternalUser && <GlobalSearch />}
 
-          {(user?.userType === "supervisor" || user?.userType === "internal") && (
+          {!isExternalUser && <NotificationCenter />}
+
+          {!isExternalUser && (user?.userType === "supervisor" || user?.userType === "internal") && (
             <Button
               variant="ghost"
               size="icon"
@@ -85,25 +84,17 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
             </Button>
           )}
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleViewWiki}
-            className="h-9 w-9 rounded-full text-white hover:bg-white/20 transition-colors"
-            title="Central de Conhecimento"
-          >
-            <Book className="h-4 w-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleViewRoadmap}
-            className="h-9 w-9 rounded-full text-white hover:bg-white/20 transition-colors"
-            title="Roadmap de Evolução"
-          >
-            <Map className="h-4 w-4" />
-          </Button>
+          {!isExternalUser && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleViewWiki}
+              className="h-9 w-9 rounded-full text-white hover:bg-white/20 transition-colors"
+              title="Central de Conhecimento"
+            >
+              <Book className="h-4 w-4" />
+            </Button>
+          )}
 
           <Button
             variant="ghost"
@@ -137,10 +128,12 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
               align="end"
               className="w-56 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 shadow-xl"
             >
-              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 hover:text-blue-900 dark:hover:text-blue-100 focus:text-blue-900 dark:focus:text-blue-100">
-                <User className="h-4 w-4" />
-                <span>Meu Perfil</span>
-              </DropdownMenuItem>
+              {!isExternalUser && (
+                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 hover:text-blue-900 dark:hover:text-blue-100 focus:text-blue-900 dark:focus:text-blue-100">
+                  <User className="h-4 w-4" />
+                  <span>Meu Perfil</span>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={handleViewHistory}
                 className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 hover:text-blue-900 dark:hover:text-blue-100 focus:text-blue-900 dark:focus:text-blue-100"

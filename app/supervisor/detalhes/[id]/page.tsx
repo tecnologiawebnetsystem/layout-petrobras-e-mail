@@ -9,14 +9,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
 import { WorkflowTimeline } from "@/components/workflow/workflow-timeline"
 import { ApprovalModal } from "@/components/workflow/approval-modal"
 import { Download, CheckCircle2, CheckCircle, XCircle, Workflow, Clock } from "lucide-react"
@@ -206,25 +199,14 @@ export default function SupervisorDetailPage() {
       <AppHeader subtitle="Módulo Supervisor" />
 
       <div className="container max-w-7xl mx-auto px-6 py-8">
-        <Breadcrumb className="mb-6">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/supervisor" className="text-[#0047BB] hover:text-[#003A99]">
-                Início
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/supervisor" className="text-[#0047BB] hover:text-[#003A99]">
-                Arquivos
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="text-muted-foreground">Detalhe do Arquivo</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+        <BreadcrumbNav
+          items={[
+            { label: "Início", href: "/supervisor" },
+            { label: "Arquivos", href: "/supervisor" },
+            { label: "Detalhe do Arquivo" },
+          ]}
+          dashboardLink="/supervisor"
+        />
 
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">Visualização de Documento</h1>

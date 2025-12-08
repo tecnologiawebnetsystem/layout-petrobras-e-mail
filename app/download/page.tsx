@@ -8,7 +8,6 @@ import { AppHeader } from "@/components/shared/app-header"
 import { DocumentCard } from "@/components/download/document-card"
 import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
 import { SecurityVerificationModal } from "@/components/download/security-verification-modal"
-import { TagFilter } from "@/components/tags/tag-filter"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -100,7 +99,6 @@ export default function DownloadPage() {
   const [sortBy, setSortBy] = useState("recent")
   const [filterType, setFilterType] = useState("all")
   const [filterStatus, setFilterStatus] = useState("all")
-  const [filterTags, setFilterTags] = useState<string[]>([])
   const [securityModal, setSecurityModal] = useState<{
     show: boolean
     documentId: string
@@ -384,8 +382,6 @@ export default function DownloadPage() {
               </SelectContent>
             </Select>
           </div>
-
-          <TagFilter selectedTags={filterTags} onTagsChange={setFilterTags} />
 
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center space-x-2">

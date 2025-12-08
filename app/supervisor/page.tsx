@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { NotificationModal } from "@/components/shared/notification-modal"
 import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
+import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
 
 export default function SupervisorPage() {
   const router = useRouter()
@@ -149,6 +150,11 @@ export default function SupervisorPage() {
       <AppHeader subtitle="Módulo Supervisor" />
 
       <div className="container max-w-7xl mx-auto px-6 py-8">
+        <BreadcrumbNav
+          items={[{ label: "Início", href: "/supervisor" }, { label: "Arquivos" }]}
+          dashboardLink="/supervisor"
+        />
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
@@ -162,7 +168,6 @@ export default function SupervisorPage() {
           </div>
         </div>
 
-        {/* Statistics */}
         <MetricsDashboard
           total={uploads.length}
           pending={pendingCount}
@@ -171,6 +176,7 @@ export default function SupervisorPage() {
           userType="supervisor"
         />
 
+        {/* Statistics */}
         {/* Filters */}
         <Card className="p-6 mb-6 bg-card/50 backdrop-blur-sm">
           <div className="flex flex-col md:flex-row gap-4">
@@ -229,15 +235,7 @@ export default function SupervisorPage() {
                       <span className="mx-2">•</span>
                       <span>{upload.files.length} arquivo(s)</span>
                     </div>
-                    {upload.tags.length > 0 && (
-                      <div className="flex gap-2 flex-wrap">
-                        {upload.tags.map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
+                    {/* Removed exibição de tags */}
                   </div>
 
                   <div className="flex items-center justify-between gap-2">

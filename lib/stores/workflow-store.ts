@@ -21,7 +21,6 @@ export interface FileUpload {
   }
   recipient: string
   description: string
-  tags: string[]
   files: Array<{
     name: string
     size: string
@@ -62,7 +61,6 @@ export const useWorkflowStore = create<WorkflowState>()(
           },
           recipient: "cliente@gmail.com",
           description: "Relatório financeiro consolidado do ano fiscal de 2023",
-          tags: ["Financeiro", "Anual"],
           files: [
             { name: "Relatorio_Anual_2023.pdf", size: "12.8 MB", type: "PDF" },
             { name: "Anexo_Graficos.xlsx", size: "2.4 MB", type: "XLS" },
@@ -82,7 +80,6 @@ export const useWorkflowStore = create<WorkflowState>()(
           },
           recipient: "fornecedor@empresa.com.br",
           description: "Contrato de prestação de serviços técnicos para Q1 2024",
-          tags: ["Contratos", "Jurídico"],
           files: [{ name: "Contrato_Servicos_2024.docx", size: "890 KB", type: "DOCX" }],
           status: "approved",
           uploadDate: "14/01/2025 - 10:15",
@@ -132,7 +129,6 @@ export const useWorkflowStore = create<WorkflowState>()(
               recipient: upload.recipient,
               fileCount: upload.files.length,
               expirationHours: upload.expirationHours,
-              tags: upload.tags,
             },
           },
         })

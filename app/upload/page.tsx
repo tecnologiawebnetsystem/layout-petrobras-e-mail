@@ -13,10 +13,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { NotificationModal } from "@/components/shared/notification-modal"
-import { TagSelector } from "@/components/tags/tag-selector"
 import { Lock, Send, Sparkles, Clock } from "lucide-react"
 import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
 
 export default function UploadPage() {
   const { user, isAuthenticated } = useAuthStore()
@@ -25,7 +25,6 @@ export default function UploadPage() {
   const [recipient, setRecipient] = useState("")
   const [description, setDescription] = useState("")
   const [files, setFiles] = useState<File[]>([])
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [expirationHours, setExpirationHours] = useState<number>(72) // Padrão: 3 dias
   const [isLoading, setIsLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -103,7 +102,6 @@ export default function UploadPage() {
         },
         recipient,
         description,
-        tags: selectedTags,
         files: files.map((f) => ({
           name: f.name,
           size: `${(f.size / (1024 * 1024)).toFixed(2)} MB`,
@@ -124,7 +122,6 @@ export default function UploadPage() {
         setRecipient("")
         setDescription("")
         setFiles([])
-        setSelectedTags([])
         setExpirationHours(72)
         setShowSuccess(false)
       }, 3000)
@@ -155,13 +152,17 @@ export default function UploadPage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <AppHeader subtitle="Módulo de Upload" />
 
-      <main className="container max-w-5xl mx-auto px-6 py-12 pb-16">
+      <main className="container max-w-5xl mx-auto px-6 py-8 pb-16">
+        <BreadcrumbNav
+          items={[{ label: "Início", href: "/upload" }, { label: "Upload de Arquivos" }]}
+          dashboardLink="/upload"
+        />
+
         <MetricsDashboard {...uploadStats} userType="internal" />
 
         <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-8 space-y-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
-            <Sparkles className="h-6 w-6 text-white" />
-          </div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#00A99D]/10 to-[#0047BB]/10 rounded-full blur-3xl -z-10" />
+
           <div className="relative">
             <div className="flex items-center gap-3 mb-2">
               <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
@@ -202,8 +203,6 @@ export default function UploadPage() {
                 onRemoveFile={handleFileRemove}
               />
             </div>
-
-            <TagSelector selectedTags={selectedTags} onTagsChange={setSelectedTags} />
 
             <div className="space-y-2">
               <Label htmlFor="expiration" className="text-sm font-medium flex items-center gap-2">

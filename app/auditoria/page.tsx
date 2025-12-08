@@ -103,8 +103,8 @@ export default function AuditoriaPage() {
   }, [logs, getLogsByAction])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 pt-4 pb-12 px-8">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 pt-8 pb-16 px-8">
+      <div className="mx-auto max-w-7xl space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -120,18 +120,8 @@ export default function AuditoriaPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
-          <Card className="bg-gradient-to-br from-petrobras-blue to-petrobras-blue-dark text-white p-4 border-none shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium opacity-90">Total de Logs</p>
-                <p className="text-3xl font-bold mt-1">{stats.total}</p>
-              </div>
-              <FileText className="h-8 w-8 opacity-80" />
-            </div>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white p-4 border-none shadow-lg">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <Card className="bg-gradient-to-br from-petrobras-green to-petrobras-green-dark text-white p-4 border-none shadow-lg">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium opacity-90">Logins</p>
@@ -148,16 +138,6 @@ export default function AuditoriaPage() {
                 <p className="text-3xl font-bold mt-1">{stats.uploads}</p>
               </div>
               <Upload className="h-8 w-8 opacity-80" />
-            </div>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-petrobras-green to-petrobras-green-dark text-white p-4 border-none shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium opacity-90">Aprovações</p>
-                <p className="text-3xl font-bold mt-1">{stats.approvals}</p>
-              </div>
-              <CheckCircle className="h-8 w-8 opacity-80" />
             </div>
           </Card>
 
@@ -178,6 +158,16 @@ export default function AuditoriaPage() {
                 <p className="text-3xl font-bold mt-1">{stats.fileExpired}</p>
               </div>
               <Trash2 className="h-8 w-8 opacity-80" />
+            </div>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-petrobras-blue to-petrobras-blue-dark text-white p-4 border-none shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium opacity-90">Total de Logs</p>
+                <p className="text-3xl font-bold mt-1">{stats.total}</p>
+              </div>
+              <FileText className="h-8 w-8 opacity-80" />
             </div>
           </Card>
         </div>

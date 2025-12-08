@@ -17,6 +17,8 @@ export default function HistoricoPage() {
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+  const isExternalUser = user?.userType === "external"
+
   useEffect(() => {
     if (!isAuthenticated) {
       router.push("/")
@@ -108,9 +110,13 @@ export default function HistoricoPage() {
       },
     ]
 
-    setActivities(mockActivities)
-    setFilteredActivities(mockActivities)
-  }, [isAuthenticated, router, user])
+    const filteredMockActivities = isExternalUser
+      ? mockActivities.filter((activity) => activity.type === "download")
+      : mockActivities
+
+    setActivities(filteredMockActivities)
+    setFilteredActivities(filteredMockActivities)
+  }, [isAuthenticated, router, user, isExternalUser])
 
   const handleFilterChange = (filters: {
     type: ActivityType | "all"
@@ -161,8 +167,14 @@ export default function HistoricoPage() {
 
       <main className="container mx-auto px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Histórico de Atividades</h1>
-          <p className="text-muted-foreground">Visualize todas as suas ações e atividades realizadas no sistema</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            {isExternalUser ? "Histórico de Downloads" : "Histórico de Atividades"}
+          </h1>
+          <p className="text-muted-foreground">
+            {isExternalUser
+              ? "Visualize todos os seus downloads realizados no sistema"
+              : "Visualize todas as suas ações e atividades realizadas no sistema"}
+          </p>
         </div>
 
         <HistoryFilters onFilterChange={handleFilterChange} totalActivities={filteredActivities.length} />
