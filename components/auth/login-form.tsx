@@ -27,6 +27,11 @@ const DEMO_CREDENTIALS = {
     password: "demo123",
     name: "Maria Santos",
   },
+  externalEmpty: {
+    email: "demo@exemplo.com.br",
+    password: "demo123",
+    name: "Pedro Teste",
+  },
   supervisor: {
     email: "supervisor@petrobras.com.br",
     password: "demo123",
@@ -58,7 +63,7 @@ export function LoginForm() {
 
   const isInternalUser = email.toLowerCase().includes("@petrobras")
 
-  const handleQuickLogin = (userType: "internal" | "external" | "supervisor") => {
+  const handleQuickLogin = (userType: "internal" | "external" | "supervisor" | "externalEmpty") => {
     const credentials = DEMO_CREDENTIALS[userType]
 
     // For external users, show verification modal instead of direct login
@@ -66,6 +71,8 @@ export function LoginForm() {
       setShowExternalVerification(true)
       return
     }
+
+    const actualUserType = userType === "externalEmpty" ? "external" : userType
 
     setEmail(credentials.email)
     setPassword(credentials.password)
@@ -75,10 +82,10 @@ export function LoginForm() {
       setIsLoading(true)
       setAuth(
         {
-          id: "demo-user-id",
+          id: userType === "externalEmpty" ? "demo-empty-user-id" : "demo-user-id",
           email: credentials.email,
           name: credentials.name,
-          userType,
+          userType: actualUserType,
         },
         "demo-access-token",
         "demo-refresh-token",
@@ -88,10 +95,10 @@ export function LoginForm() {
         action: "login",
         level: "success",
         user: {
-          id: "demo-user-id",
+          id: userType === "externalEmpty" ? "demo-empty-user-id" : "demo-user-id",
           name: credentials.name,
           email: credentials.email,
-          type: userType,
+          type: actualUserType,
         },
         details: {
           description: `Login realizado com sucesso via acesso rápido`,
@@ -108,7 +115,7 @@ export function LoginForm() {
 
       setTimeout(() => {
         const redirectPath =
-          userType === "internal" ? "/upload" : userType === "supervisor" ? "/supervisor" : "/download"
+          actualUserType === "internal" ? "/upload" : actualUserType === "supervisor" ? "/supervisor" : "/download"
         router.push(redirectPath)
       }, 1500)
     }, 100)
@@ -155,21 +162,31 @@ export function LoginForm() {
         email === DEMO_CREDENTIALS.external.email && password === DEMO_CREDENTIALS.external.password
       const isSupervisorDemo =
         email === DEMO_CREDENTIALS.supervisor.email && password === DEMO_CREDENTIALS.supervisor.password
+      const isExternalEmptyDemo =
+        email === DEMO_CREDENTIALS.externalEmpty.email && password === DEMO_CREDENTIALS.externalEmpty.password
 
-      if (isInternalDemo || isExternalDemo || isSupervisorDemo) {
-        const userType = isInternalDemo ? "internal" : isExternalDemo ? "external" : "supervisor"
+      if (isInternalDemo || isExternalDemo || isSupervisorDemo || isExternalEmptyDemo) {
+        const userType = isInternalDemo
+          ? "internal"
+          : isExternalDemo
+            ? "external"
+            : isSupervisorDemo
+              ? "supervisor"
+              : "externalEmpty"
         const demoUser = isInternalDemo
           ? DEMO_CREDENTIALS.internal
           : isExternalDemo
             ? DEMO_CREDENTIALS.external
-            : DEMO_CREDENTIALS.supervisor
+            : isSupervisorDemo
+              ? DEMO_CREDENTIALS.supervisor
+              : DEMO_CREDENTIALS.externalEmpty
 
         setAuth(
           {
-            id: "demo-user-id",
+            id: userType === "externalEmpty" ? "demo-empty-user-id" : "demo-user-id",
             email: demoUser.email,
             name: demoUser.name,
-            userType,
+            userType: userType === "externalEmpty" ? "external" : userType,
           },
           "demo-access-token",
           "demo-refresh-token",
@@ -179,10 +196,10 @@ export function LoginForm() {
           action: "login",
           level: "success",
           user: {
-            id: "demo-user-id",
+            id: userType === "externalEmpty" ? "demo-empty-user-id" : "demo-user-id",
             name: demoUser.name,
             email: demoUser.email,
-            type: userType,
+            type: userType === "externalEmpty" ? "external" : userType,
           },
           details: {
             description: `Login realizado com sucesso via formulário`,
@@ -285,6 +302,20 @@ export function LoginForm() {
                 <div className="flex flex-col items-start w-full">
                   <span className="text-xs font-semibold text-blue-900 dark:text-blue-100">Usuário Externo</span>
                   <span className="text-[10px] text-blue-700 dark:text-blue-300">cliente@empresa.com</span>
+                </div>
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleQuickLogin("externalEmpty")}
+                className="justify-start h-auto py-2 px-3 bg-white dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 border-blue-200 dark:border-blue-800 text-left"
+              >
+                <div className="flex flex-col items-start w-full">
+                  <span className="text-xs font-semibold text-blue-900 dark:text-blue-100">
+                    Usuário Externo (Vazio)
+                  </span>
+                  <span className="text-[10px] text-blue-700 dark:text-blue-300">demo@exemplo.com.br</span>
                 </div>
               </Button>
 

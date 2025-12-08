@@ -93,7 +93,10 @@ const MOCK_DOCUMENTS: Document[] = [
 export default function DownloadPage() {
   const { user, isAuthenticated } = useAuthStore()
   const router = useRouter()
-  const [documents, setDocuments] = useState<Document[]>(MOCK_DOCUMENTS)
+
+  const isEmptyDemo = user?.id === "demo-empty-user-id"
+  const [documents, setDocuments] = useState<Document[]>(isEmptyDemo ? [] : MOCK_DOCUMENTS)
+
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedDocs, setSelectedDocs] = useState<string[]>([])
   const [sortBy, setSortBy] = useState("recent")
@@ -127,6 +130,18 @@ export default function DownloadPage() {
       router.push("/")
     }
   }, [isAuthenticated, user, router])
+
+  useEffect(() => {
+    if (isEmptyDemo && documents.length === 0) {
+      setNotification({
+        show: true,
+        type: "info",
+        title: "Nenhum Arquivo Disponível",
+        message:
+          "No momento, você não possui arquivos aprovados para download. Quando novos arquivos forem compartilhados com você e aprovados pelo supervisor, eles aparecerão nesta página.",
+      })
+    }
+  }, [isEmptyDemo, documents.length])
 
   const stats = {
     totalReceived: documents.length,
@@ -334,131 +349,155 @@ export default function DownloadPage() {
           userType="external"
         />
 
-        <div className="bg-card rounded-lg border p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome do arquivo..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="pending">Pendentes</SelectItem>
-                <SelectItem value="downloaded">Baixados</SelectItem>
-                <SelectItem value="expired">Expirados</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger>
-                <SelectValue placeholder="Ordenar por" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recent">Remetente</SelectItem>
-                <SelectItem value="name">Nome</SelectItem>
-                <SelectItem value="size">Tamanho</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Tipo de Arquivo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                <SelectItem value="pdf">PDF</SelectItem>
-                <SelectItem value="docx">DOCX</SelectItem>
-                <SelectItem value="xlsx">XLSX</SelectItem>
-                <SelectItem value="pptx">PPTX</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="select-all"
-                checked={
-                  selectedDocs.length > 0 &&
-                  selectedDocs.length ===
-                    filteredDocuments.filter(
-                      (d) => !d.downloaded && (!d.expiresAt || new Date(d.expiresAt) >= new Date()),
-                    ).length
-                }
-                onCheckedChange={handleSelectAll}
-              />
-              <label
-                htmlFor="select-all"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-              >
-                Selecionar Todos Disponíveis
-              </label>
-            </div>
-
-            <Button
-              onClick={handleDownloadSelected}
-              disabled={selectedDocs.length === 0}
-              className="bg-[#0047BB] hover:bg-[#003A99]"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Baixar Selecionados ({selectedDocs.length})
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {filteredDocuments.map((doc) => {
-            const isExpired = doc.expiresAt && new Date(doc.expiresAt) < new Date()
-            const timeRemaining = getTimeRemaining(doc.expiresAt)
-
-            return (
-              <div key={doc.id} className="relative">
-                <DocumentCard
-                  document={doc}
-                  isSelected={selectedDocs.includes(doc.id)}
-                  onSelect={(checked) => handleSelectDoc(doc.id, checked)}
-                  onDownload={() => handleDownloadSingle(doc.id)}
-                />
-
-                {doc.expiresAt && !doc.downloaded && (
-                  <div
-                    className={`absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1 ${
-                      isExpired
-                        ? "bg-red-100 text-red-800 border border-red-300"
-                        : "bg-yellow-100 text-yellow-800 border border-yellow-300"
-                    }`}
-                  >
-                    <Clock className="h-3 w-3" />
-                    {timeRemaining}
-                  </div>
-                )}
+        {documents.length === 0 ? (
+          <div className="bg-card rounded-lg border p-12 text-center space-y-6">
+            <div className="flex justify-center">
+              <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center">
+                <Download className="h-12 w-12 text-muted-foreground" />
               </div>
-            )
-          })}
-        </div>
-
-        <div className="flex items-center justify-between pt-4">
-          <p className="text-sm text-muted-foreground">
-            Mostrando {filteredDocuments.length} de {documents.length} documentos
-          </p>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              Anterior
-            </Button>
-            <Button variant="outline" size="sm">
-              Próximo
-            </Button>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-bold text-foreground">Nenhum Arquivo Disponível</h3>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                No momento, você não possui arquivos aprovados para download. Quando novos arquivos forem compartilhados
+                com você e aprovados pelo supervisor, eles aparecerão aqui.
+              </p>
+            </div>
+            <div className="flex justify-center gap-4 pt-4">
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Atualizar Página
+              </Button>
+            </div>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="bg-card rounded-lg border p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nome do arquivo..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os status</SelectItem>
+                    <SelectItem value="pending">Pendentes</SelectItem>
+                    <SelectItem value="downloaded">Baixados</SelectItem>
+                    <SelectItem value="expired">Expirados</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Ordenar por" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="recent">Remetente</SelectItem>
+                    <SelectItem value="name">Nome</SelectItem>
+                    <SelectItem value="size">Tamanho</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tipo de Arquivo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os tipos</SelectItem>
+                    <SelectItem value="pdf">PDF</SelectItem>
+                    <SelectItem value="docx">DOCX</SelectItem>
+                    <SelectItem value="xlsx">XLSX</SelectItem>
+                    <SelectItem value="pptx">PPTX</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="select-all"
+                    checked={
+                      selectedDocs.length > 0 &&
+                      selectedDocs.length ===
+                        filteredDocuments.filter(
+                          (d) => !d.downloaded && (!d.expiresAt || new Date(d.expiresAt) >= new Date()),
+                        ).length
+                    }
+                    onCheckedChange={handleSelectAll}
+                  />
+                  <label
+                    htmlFor="select-all"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    Selecionar Todos Disponíveis
+                  </label>
+                </div>
+
+                <Button
+                  onClick={handleDownloadSelected}
+                  disabled={selectedDocs.length === 0}
+                  className="bg-[#0047BB] hover:bg-[#003A99]"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Baixar Selecionados ({selectedDocs.length})
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {filteredDocuments.map((doc) => {
+                const isExpired = doc.expiresAt && new Date(doc.expiresAt) < new Date()
+                const timeRemaining = getTimeRemaining(doc.expiresAt)
+
+                return (
+                  <div key={doc.id} className="relative">
+                    <DocumentCard
+                      document={doc}
+                      isSelected={selectedDocs.includes(doc.id)}
+                      onSelect={(checked) => handleSelectDoc(doc.id, checked)}
+                      onDownload={() => handleDownloadSingle(doc.id)}
+                    />
+
+                    {doc.expiresAt && !doc.downloaded && (
+                      <div
+                        className={`absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1 ${
+                          isExpired
+                            ? "bg-red-100 text-red-800 border border-red-300"
+                            : "bg-yellow-100 text-yellow-800 border border-yellow-300"
+                        }`}
+                      >
+                        <Clock className="h-3 w-3" />
+                        {timeRemaining}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="flex items-center justify-between pt-4">
+              <p className="text-sm text-muted-foreground">
+                Mostrando {filteredDocuments.length} de {documents.length} documentos
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm">
+                  Anterior
+                </Button>
+                <Button variant="outline" size="sm">
+                  Próximo
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
 
         <div className="text-center text-sm text-muted-foreground border-t pt-12 mt-12">
           © 2025 Petrobras. Todos os direitos reservados. | Política de Privacidade
