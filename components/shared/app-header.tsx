@@ -53,19 +53,19 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-gradient-to-r from-[#00A859] to-[#003F7F] backdrop-blur supports-[backdrop-filter]:bg-gradient-to-r supports-[backdrop-filter]:from-[#00A859]/95 supports-[backdrop-filter]:to-[#003F7F]/95 shadow-lg">
-      <div className="container flex h-20 items-center justify-between px-6">
-        <div className="flex items-center gap-4">
-          <PetrobrasLogo size="md" showText={true} />
+    <header className="sticky top-0 z-50 w-full border-b bg-gradient-to-r from-[#00A859] to-[#003F7F] backdrop-blur supports-[backdrop-filter]:bg-gradient-to-r supports-[backdrop-filter]:from-[#00A859]/95 supports-[backdrop-filter]:to-[#003F7F]/95 shadow-md">
+      <div className="container flex h-16 items-center justify-between px-6">
+        <div className="flex items-center gap-3">
+          <PetrobrasLogo size="sm" showText={false} />
           {subtitle && (
             <>
-              <div className="h-8 w-px bg-white/30" />
-              <span className="text-white/90 font-semibold text-lg">{subtitle}</span>
+              <div className="h-6 w-px bg-white/30" />
+              <span className="text-white font-semibold text-base tracking-tight drop-shadow-md">{subtitle}</span>
             </>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <GlobalSearch />
           <NotificationCenter />
 
@@ -73,43 +73,47 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
             variant="ghost"
             size="icon"
             onClick={handleViewWiki}
-            className="rounded-full text-white hover:bg-white/20"
+            className="h-9 w-9 rounded-full text-white hover:bg-white/20 transition-colors"
             title="Central de Conhecimento"
           >
-            <Book className="h-5 w-5" />
+            <Book className="h-4 w-4" />
           </Button>
 
           <Button
             variant="ghost"
             size="icon"
             onClick={handleViewRoadmap}
-            className="rounded-full text-white hover:bg-white/20"
+            className="h-9 w-9 rounded-full text-white hover:bg-white/20 transition-colors"
             title="Roadmap de Evolução"
           >
-            <Map className="h-5 w-5" />
+            <Map className="h-4 w-4" />
           </Button>
 
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            className="rounded-full text-white hover:bg-white/20"
+            className="h-9 w-9 rounded-full text-white hover:bg-white/20 transition-colors"
           >
-            {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             <span className="sr-only">Toggle theme</span>
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="gap-2 px-3 text-white hover:bg-white/20">
-                <Avatar className="h-9 w-9">
-                  <AvatarFallback className="bg-white text-[#003F7F] text-sm font-bold">
+              <Button variant="ghost" className="gap-2 px-2 h-10 text-white hover:bg-white/20 transition-colors">
+                <Avatar className="h-8 w-8 ring-2 ring-white/50">
+                  <AvatarFallback className="bg-white text-[#003F7F] text-xs font-bold">
                     {user?.name ? getInitials(user.name) : "U"}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col items-start">
-                  <span className="text-sm font-semibold text-white">{user?.name || "Usuário"}</span>
-                  <span className="text-xs text-white/80">{user?.email || ""}</span>
+                <div className="flex flex-col items-start min-w-0">
+                  <span className="text-sm font-semibold text-white drop-shadow-md truncate max-w-[150px]">
+                    {user?.name || "Usuário"}
+                  </span>
+                  <span className="text-xs text-white/90 drop-shadow-sm truncate max-w-[150px]">
+                    {user?.email || ""}
+                  </span>
                 </div>
               </Button>
             </DropdownMenuTrigger>

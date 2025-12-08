@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { CheckCircle } from "lucide-react"
 
 interface SuccessAnimationProps {
@@ -9,21 +9,8 @@ interface SuccessAnimationProps {
 }
 
 export function SuccessAnimation({ show, onComplete }: SuccessAnimationProps) {
-  const [confettiPieces, setConfettiPieces] = useState<
-    Array<{ id: number; left: number; delay: number; color: string }>
-  >([])
-
   useEffect(() => {
     if (show) {
-      const colors = ["#00A859", "#FDB913", "#003F7F"]
-      const pieces = Array.from({ length: 30 }, (_, i) => ({
-        id: i,
-        left: Math.random() * 100,
-        delay: Math.random() * 0.5,
-        color: colors[Math.floor(Math.random() * colors.length)],
-      }))
-      setConfettiPieces(pieces)
-
       const timer = setTimeout(() => {
         onComplete?.()
       }, 2000)
@@ -62,19 +49,6 @@ export function SuccessAnimation({ show, onComplete }: SuccessAnimationProps) {
           </div>
         </div>
       </div>
-
-      {confettiPieces.map((piece) => (
-        <div
-          key={piece.id}
-          className="confetti-particle absolute"
-          style={{
-            left: `${piece.left}%`,
-            top: "50%",
-            backgroundColor: piece.color,
-            animationDelay: `${piece.delay}s`,
-          }}
-        />
-      ))}
     </div>
   )
 }

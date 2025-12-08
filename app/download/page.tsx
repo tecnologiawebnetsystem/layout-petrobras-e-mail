@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Download, Search, AlertTriangle } from "lucide-react"
+import { Download, Search, AlertTriangle, Clock } from "lucide-react"
 import { NotificationModal } from "@/components/shared/notification-modal"
 import type { Document } from "@/types/download"
 
@@ -217,6 +217,17 @@ export default function DownloadPage() {
     const doc = documents.find((d) => d.id === docId)
     if (!doc) return
 
+    const isExpired = doc.expiresAt && new Date(doc.expiresAt) < new Date()
+    if (isExpired) {
+      setNotification({
+        show: true,
+        type: "error",
+        title: "Arquivo Expirado",
+        message: `O arquivo "${doc.name}" não está mais disponível. O prazo de validade expirou.`,
+      })
+      return
+    }
+
     setSecurityModal({
       show: true,
       documentId: doc.id,
@@ -225,31 +236,43 @@ export default function DownloadPage() {
     })
   }
 
-  const handleSecurityVerified = () => {
-    const doc = documents.find((d) => d.id === securityModal.documentId)
-    if (!doc) return
+  const getTimeRemaining = (expiresAt?: string) => {
+    if (!expiresAt) return null
 
+    const expiration = new Date(expiresAt.split(" - ")[0].split("/").reverse().join("-"))
+    const now = new Date()
+    const diff = expiration.getTime() - now.getTime()
+
+    if (diff <= 0) return "Expirado"
+
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const days = Math.floor(hours / 24)
+
+    if (days > 0) return `${days} dia${days > 1 ? "s" : ""} restante${days > 1 ? "s" : ""}`
+    if (hours > 0) return `${hours} hora${hours > 1 ? "s" : ""} restante${hours > 1 ? "s" : ""}`
+    return "Menos de 1 hora"
+  }
+
+  const handleSecurityVerified = (documentId: string) => {
+    setDocuments((prev) =>
+      prev.map((doc) =>
+        doc.id === documentId
+          ? {
+              ...doc,
+              downloaded: true,
+              downloadedAt: new Date().toLocaleDateString("pt-BR") + " " + new Date().toLocaleTimeString("pt-BR"),
+              downloadCount: doc.downloadCount + 1,
+            }
+          : doc,
+      ),
+    )
+    setSecurityModal({ show: false, documentId: "", documentName: "", requiresPassword: false })
     setNotification({
       show: true,
       type: "success",
-      title: "Download seguro iniciado!",
-      message: `Baixando ${doc.name} de forma criptografada.`,
+      title: "Download iniciado!",
+      message: `O documento "${documentId}" foi baixado com sucesso.`,
     })
-
-    setTimeout(() => {
-      setDocuments((prev) =>
-        prev.map((d) =>
-          d.id === doc.id
-            ? {
-                ...d,
-                downloaded: true,
-                downloadedAt: new Date().toLocaleDateString("pt-BR") + " " + new Date().toLocaleTimeString("pt-BR"),
-                downloadCount: d.downloadCount + 1,
-              }
-            : d,
-        ),
-      )
-    }, 1500)
   }
 
   if (!isAuthenticated || user?.userType !== "external") {
@@ -368,15 +391,34 @@ export default function DownloadPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {filteredDocuments.map((doc) => (
-            <DocumentCard
-              key={doc.id}
-              document={doc}
-              isSelected={selectedDocs.includes(doc.id)}
-              onSelect={(checked) => handleSelectDoc(doc.id, checked)}
-              onDownload={() => handleDownloadSingle(doc.id)}
-            />
-          ))}
+          {filteredDocuments.map((doc) => {
+            const isExpired = doc.expiresAt && new Date(doc.expiresAt) < new Date()
+            const timeRemaining = getTimeRemaining(doc.expiresAt)
+
+            return (
+              <div key={doc.id} className="relative">
+                <DocumentCard
+                  document={doc}
+                  isSelected={selectedDocs.includes(doc.id)}
+                  onSelect={(checked) => handleSelectDoc(doc.id, checked)}
+                  onDownload={() => handleDownloadSingle(doc.id)}
+                />
+
+                {doc.expiresAt && !doc.downloaded && (
+                  <div
+                    className={`absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1 ${
+                      isExpired
+                        ? "bg-red-100 text-red-800 border border-red-300"
+                        : "bg-yellow-100 text-yellow-800 border border-yellow-300"
+                    }`}
+                  >
+                    <Clock className="h-3 w-3" />
+                    {timeRemaining}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
 
         <div className="flex items-center justify-between pt-4">
@@ -403,7 +445,7 @@ export default function DownloadPage() {
         onOpenChange={(show) => setSecurityModal({ ...securityModal, show })}
         documentName={securityModal.documentName}
         requiresPassword={securityModal.requiresPassword}
-        onVerified={handleSecurityVerified}
+        onVerified={() => handleSecurityVerified(securityModal.documentId)}
       />
 
       <NotificationModal

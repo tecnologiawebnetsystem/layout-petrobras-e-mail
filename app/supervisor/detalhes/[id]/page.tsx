@@ -19,8 +19,10 @@ import {
 } from "@/components/ui/breadcrumb"
 import { WorkflowTimeline } from "@/components/workflow/workflow-timeline"
 import { ApprovalModal } from "@/components/workflow/approval-modal"
-import { Download, CheckCircle2, CheckCircle, XCircle, Workflow } from "lucide-react"
+import { Download, CheckCircle2, CheckCircle, XCircle, Workflow, Clock } from "lucide-react"
 import { useNotificationStore } from "@/lib/stores/notification-store"
+import { ExpirationEditorModal } from "@/components/workflow/expiration-editor-modal"
+import { useWorkflowStore } from "@/lib/stores/workflow-store"
 import type { ApprovalWorkflow } from "@/types/workflow"
 
 const documentData = {
@@ -99,6 +101,7 @@ export default function SupervisorDetailPage() {
   const params = useParams()
   const { user, isAuthenticated } = useAuthStore()
   const { addNotification } = useNotificationStore()
+  const { getUploadById, updateExpiration } = useWorkflowStore()
   const [isLoading, setIsLoading] = useState(true)
   const [workflow, setWorkflow] = useState<ApprovalWorkflow>(mockWorkflow)
   const [approvalModal, setApprovalModal] = useState<{
@@ -108,6 +111,9 @@ export default function SupervisorDetailPage() {
     open: false,
     action: null,
   })
+  const [expirationModal, setExpirationModal] = useState(false)
+
+  const uploadData = getUploadById(params.id as string)
 
   useEffect(() => {
     if (!isAuthenticated || user?.userType !== "supervisor") {
@@ -184,6 +190,17 @@ export default function SupervisorDetailPage() {
     })
   }
 
+  const handleUpdateExpiration = (newHours: number, reason: string) => {
+    updateExpiration(params.id as string, newHours, user!.name, reason)
+
+    addNotification({
+      type: "info",
+      priority: "medium",
+      title: "Tempo de validade atualizado",
+      message: `Você alterou o tempo de validade para ${newHours} horas`,
+    })
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader subtitle="Módulo Supervisor" />
@@ -246,6 +263,55 @@ export default function SupervisorDetailPage() {
                   <p className="text-sm text-muted-foreground mb-1">Data de Upload</p>
                   <p className="font-semibold text-foreground">{documentData.file.uploadDate}</p>
                 </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                    <div>
+                      <h3 className="font-semibold text-foreground">Tempo de Disponibilidade</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Arquivos ficam disponíveis por {uploadData?.expirationHours || 72} horas após aprovação
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setExpirationModal(true)}
+                    className="border-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-950/40"
+                  >
+                    <Clock className="h-4 w-4 mr-2" />
+                    Ajustar Tempo
+                  </Button>
+                </div>
+
+                {uploadData?.expiresAt && (
+                  <p className="text-xs text-muted-foreground">Expira em: {uploadData.expiresAt}</p>
+                )}
+
+                {uploadData && uploadData.expirationLogs.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-yellow-200 dark:border-yellow-800">
+                    <p className="text-xs font-semibold text-foreground mb-2">Histórico de Alterações:</p>
+                    <div className="space-y-1">
+                      {uploadData.expirationLogs.map((log, index) => (
+                        <div key={index} className="text-xs text-muted-foreground">
+                          <span className="font-medium">{log.changedBy}</span>
+                          {log.previousValue !== null && (
+                            <span>
+                              {" "}
+                              alterou de {log.previousValue}h para {log.newValue}h
+                            </span>
+                          )}
+                          {log.previousValue === null && <span> definiu {log.newValue}h</span>}
+                          <span className="text-muted-foreground/70"> - {log.timestamp}</span>
+                          {log.reason && <p className="mt-0.5 italic text-muted-foreground/60">Motivo: {log.reason}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <Separator className="my-6" />
@@ -424,6 +490,15 @@ export default function SupervisorDetailPage() {
         onReject={handleReject}
         action={approvalModal.action}
       />
+
+      {uploadData && (
+        <ExpirationEditorModal
+          open={expirationModal}
+          onOpenChange={setExpirationModal}
+          currentHours={uploadData.expirationHours}
+          onUpdate={handleUpdateExpiration}
+        />
+      )}
     </div>
   )
 }

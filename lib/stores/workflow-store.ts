@@ -2,6 +2,14 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { useNotificationStore } from "./notification-store"
 
+export interface ExpirationLog {
+  timestamp: string
+  changedBy: string
+  previousValue: number | null
+  newValue: number
+  reason?: string
+}
+
 export interface FileUpload {
   id: string
   name: string
@@ -23,13 +31,18 @@ export interface FileUpload {
   approvalDate?: string
   approvedBy?: string
   rejectionReason?: string
+  expirationHours: number // Horas até expirar
+  expiresAt?: string // Data/hora de expiração (calculada após aprovação)
+  expirationLogs: ExpirationLog[] // Histórico de alterações
 }
 
 interface WorkflowState {
   uploads: FileUpload[]
-  addUpload: (upload: Omit<FileUpload, "id" | "status" | "uploadDate">) => void
+  addUpload: (upload: Omit<FileUpload, "id" | "status" | "uploadDate" | "expirationLogs">) => void
   approveUpload: (id: string, approvedBy: string) => void
   rejectUpload: (id: string, rejectedBy: string, reason: string) => void
+  updateExpiration: (id: string, newHours: number, changedBy: string, reason?: string) => void
+  checkIfExpired: (id: string) => boolean
   getUploadsByStatus: (status: FileUpload["status"]) => FileUpload[]
   getUploadById: (id: string) => FileUpload | undefined
 }
@@ -38,7 +51,6 @@ export const useWorkflowStore = create<WorkflowState>()(
   persist(
     (set, get) => ({
       uploads: [
-        // Mock data inicial
         {
           id: "upload-1",
           name: "Relatório Anual 2023",
@@ -56,6 +68,8 @@ export const useWorkflowStore = create<WorkflowState>()(
           ],
           status: "pending",
           uploadDate: "15/01/2025 - 14:32",
+          expirationHours: 72, // 3 dias
+          expirationLogs: [],
         },
         {
           id: "upload-2",
@@ -73,6 +87,9 @@ export const useWorkflowStore = create<WorkflowState>()(
           uploadDate: "14/01/2025 - 10:15",
           approvalDate: "14/01/2025 - 15:20",
           approvedBy: "Carlos Mendes",
+          expirationHours: 168, // 7 dias
+          expiresAt: new Date(Date.now() + 168 * 60 * 60 * 1000).toLocaleString("pt-BR"),
+          expirationLogs: [],
         },
       ],
 
@@ -82,13 +99,21 @@ export const useWorkflowStore = create<WorkflowState>()(
           id: `upload-${Date.now()}`,
           status: "pending",
           uploadDate: new Date().toLocaleString("pt-BR"),
+          expirationLogs: [
+            {
+              timestamp: new Date().toLocaleString("pt-BR"),
+              changedBy: upload.sender.name,
+              previousValue: null,
+              newValue: upload.expirationHours,
+              reason: "Definição inicial pelo remetente",
+            },
+          ],
         }
 
         set((state) => ({
           uploads: [newUpload, ...state.uploads],
         }))
 
-        // Notificar supervisores
         useNotificationStore.getState().addNotification({
           type: "approval",
           priority: "medium",
@@ -103,6 +128,8 @@ export const useWorkflowStore = create<WorkflowState>()(
         const upload = get().uploads.find((u) => u.id === id)
         if (!upload) return
 
+        const expiresAt = new Date(Date.now() + upload.expirationHours * 60 * 60 * 1000).toLocaleString("pt-BR")
+
         set((state) => ({
           uploads: state.uploads.map((u) =>
             u.id === id
@@ -111,6 +138,7 @@ export const useWorkflowStore = create<WorkflowState>()(
                   status: "approved" as const,
                   approvalDate: new Date().toLocaleString("pt-BR"),
                   approvedBy,
+                  expiresAt,
                 }
               : u,
           ),
@@ -120,7 +148,7 @@ export const useWorkflowStore = create<WorkflowState>()(
           type: "success",
           priority: "high",
           title: "Upload Aprovado!",
-          message: `Seu envio "${upload.name}" para ${upload.recipient} foi aprovado por ${approvedBy}`,
+          message: `Seu envio "${upload.name}" para ${upload.recipient} foi aprovado por ${approvedBy}. Válido por ${upload.expirationHours}h.`,
           actionLabel: "Ver Histórico",
           actionUrl: "/historico",
         })
@@ -138,7 +166,7 @@ Descrição: ${upload.description}
 Acesse o link abaixo para fazer o download seguro:
 https://petrobras-download.com/secure/${id}
 
-Este link expira em 30 dias.
+⚠️ ATENÇÃO: Este link expira em ${upload.expirationHours} horas (${expiresAt}).
 
 Atenciosamente,
 Sistema de Transferência Segura de Arquivos - Petrobras`)
@@ -170,6 +198,63 @@ Sistema de Transferência Segura de Arquivos - Petrobras`)
           actionLabel: "Revisar",
           actionUrl: "/upload",
         })
+      },
+
+      updateExpiration: (id, newHours, changedBy, reason) => {
+        const upload = get().uploads.find((u) => u.id === id)
+        if (!upload) return
+
+        const previousValue = upload.expirationHours
+        const newExpiresAt =
+          upload.status === "approved"
+            ? new Date(Date.now() + newHours * 60 * 60 * 1000).toLocaleString("pt-BR")
+            : undefined
+
+        const log: ExpirationLog = {
+          timestamp: new Date().toLocaleString("pt-BR"),
+          changedBy,
+          previousValue,
+          newValue: newHours,
+          reason: reason || "Ajuste pelo supervisor",
+        }
+
+        set((state) => ({
+          uploads: state.uploads.map((u) =>
+            u.id === id
+              ? {
+                  ...u,
+                  expirationHours: newHours,
+                  expiresAt: newExpiresAt,
+                  expirationLogs: [...u.expirationLogs, log],
+                }
+              : u,
+          ),
+        }))
+
+        useNotificationStore.getState().addNotification({
+          type: "info",
+          priority: "medium",
+          title: "Tempo de expiração alterado",
+          message: `${changedBy} alterou o tempo de validade de "${upload.name}" de ${previousValue}h para ${newHours}h`,
+          actionLabel: "Ver Detalhes",
+          actionUrl: "/historico",
+        })
+
+        console.log(`[v0] Log de alteração registrado:
+Upload: ${upload.name}
+Alterado por: ${changedBy}
+Valor anterior: ${previousValue} horas
+Novo valor: ${newHours} horas
+Motivo: ${reason || "Ajuste pelo supervisor"}
+Data: ${log.timestamp}`)
+      },
+
+      checkIfExpired: (id) => {
+        const upload = get().uploads.find((u) => u.id === id)
+        if (!upload || !upload.expiresAt) return false
+
+        const expirationDate = new Date(upload.expiresAt.split(" - ")[0].split("/").reverse().join("-"))
+        return expirationDate < new Date()
       },
 
       getUploadsByStatus: (status) => {

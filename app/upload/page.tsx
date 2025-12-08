@@ -14,8 +14,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { NotificationModal } from "@/components/shared/notification-modal"
 import { TagSelector } from "@/components/tags/tag-selector"
-import { Lock, Send, Sparkles } from "lucide-react"
+import { Lock, Send, Sparkles, Clock } from "lucide-react"
 import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function UploadPage() {
   const { user, isAuthenticated } = useAuthStore()
@@ -25,6 +26,7 @@ export default function UploadPage() {
   const [description, setDescription] = useState("")
   const [files, setFiles] = useState<File[]>([])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [expirationHours, setExpirationHours] = useState<number>(72) // Padrão: 3 dias
   const [isLoading, setIsLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [notification, setNotification] = useState<{
@@ -107,6 +109,7 @@ export default function UploadPage() {
           size: `${(f.size / (1024 * 1024)).toFixed(2)} MB`,
           type: f.name.split(".").pop()?.toUpperCase() || "FILE",
         })),
+        expirationHours,
       })
 
       setShowSuccess(true)
@@ -114,15 +117,15 @@ export default function UploadPage() {
         show: true,
         type: "success",
         title: "Arquivos enviados com sucesso!",
-        message: `${files.length} arquivo(s) enviado(s) para aprovação do supervisor. Você será notificado sobre a decisão.`,
+        message: `${files.length} arquivo(s) enviado(s) para aprovação. Validade: ${expirationHours} horas após aprovação.`,
       })
 
-      // Reset form
       setTimeout(() => {
         setRecipient("")
         setDescription("")
         setFiles([])
         setSelectedTags([])
+        setExpirationHours(72)
         setShowSuccess(false)
       }, 3000)
     } catch (error) {
@@ -156,7 +159,6 @@ export default function UploadPage() {
         <MetricsDashboard {...uploadStats} userType="internal" />
 
         <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-8 space-y-8 relative overflow-hidden">
-          {/* Decorative gradient */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#00A99D]/10 to-[#0047BB]/10 rounded-full blur-3xl -z-10" />
 
           <div className="relative">
@@ -172,7 +174,6 @@ export default function UploadPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Recipient */}
             <div className="space-y-2">
               <Label htmlFor="recipient" className="text-sm font-medium flex items-center gap-2">
                 <Lock className="h-4 w-4 text-[#00A99D]" />
@@ -192,7 +193,6 @@ export default function UploadPage() {
               </p>
             </div>
 
-            {/* File Upload */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Anexar Arquivos</Label>
               <DragDropZone
@@ -202,10 +202,33 @@ export default function UploadPage() {
               />
             </div>
 
-            {/* Tags */}
             <TagSelector selectedTags={selectedTags} onTagsChange={setSelectedTags} />
 
-            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="expiration" className="text-sm font-medium flex items-center gap-2">
+                <Clock className="h-4 w-4 text-[#FDB913]" />
+                Tempo de Disponibilidade
+              </Label>
+              <Select value={expirationHours.toString()} onValueChange={(v) => setExpirationHours(Number(v))}>
+                <SelectTrigger className="h-12">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="24">24 horas (1 dia)</SelectItem>
+                  <SelectItem value="48">48 horas (2 dias)</SelectItem>
+                  <SelectItem value="72">72 horas (3 dias)</SelectItem>
+                  <SelectItem value="120">120 horas (5 dias)</SelectItem>
+                  <SelectItem value="168">168 horas (7 dias)</SelectItem>
+                  <SelectItem value="336">336 horas (14 dias)</SelectItem>
+                  <SelectItem value="720">720 horas (30 dias)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Os arquivos ficarão disponíveis para download por {expirationHours} horas após a aprovação. O supervisor
+                poderá ajustar este tempo.
+              </p>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="description" className="text-sm font-medium">
                 Descrição do Envio (obrigatório)
@@ -220,7 +243,6 @@ export default function UploadPage() {
               />
             </div>
 
-            {/* Submit */}
             <div className="flex justify-end pt-4">
               <Button
                 type="submit"
