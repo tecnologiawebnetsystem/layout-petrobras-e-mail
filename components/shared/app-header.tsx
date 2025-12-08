@@ -63,14 +63,14 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-gradient-to-r from-[#00A859] to-[#003F7F] backdrop-blur supports-[backdrop-filter]:bg-gradient-to-r supports-[backdrop-filter]:from-[#00A859]/95 supports-[backdrop-filter]:to-[#003F7F]/95 shadow-md">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85 shadow-sm">
       <div className="container flex h-16 items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <PetrobrasLogo size="sm" showText={false} />
           {subtitle && (
             <>
-              <div className="h-6 w-px bg-white/30 hidden sm:block" />
-              <span className="text-white font-semibold text-sm sm:text-base tracking-tight drop-shadow-md truncate">
+              <div className="h-6 w-px bg-border hidden sm:block" />
+              <span className="text-foreground font-semibold text-sm sm:text-base tracking-tight truncate">
                 {subtitle}
               </span>
             </>
@@ -90,7 +90,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                     variant="ghost"
                     size="icon"
                     onClick={handleViewAuditoria}
-                    className="h-11 w-11 rounded-full text-white hover:bg-white/20 transition-all duration-300 transform hover:scale-110 active:scale-95"
+                    className="h-11 w-11 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all duration-300 transform hover:scale-110 active:scale-95"
                     aria-label="Auditoria e Logs"
                   >
                     <Shield className="h-4 w-4" />
@@ -109,7 +109,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                     variant="ghost"
                     size="icon"
                     onClick={handleViewWiki}
-                    className="h-11 w-11 rounded-full text-white hover:bg-white/20 transition-all duration-300 transform hover:scale-110 active:scale-95"
+                    className="h-11 w-11 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all duration-300 transform hover:scale-110 active:scale-95"
                     aria-label="Central de Conhecimento"
                   >
                     <Book className="h-4 w-4" />
@@ -127,7 +127,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                   variant="ghost"
                   size="icon"
                   onClick={toggleTheme}
-                  className="h-11 w-11 rounded-full text-white hover:bg-white/20 transition-all duration-300 transform hover:scale-110 active:scale-95"
+                  className="h-11 w-11 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all duration-300 transform hover:scale-110 active:scale-95"
                   aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
                 >
                   {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -142,20 +142,18 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="gap-2 px-2 h-11 text-white hover:bg-white/20 transition-all duration-300 transform hover:scale-105 active:scale-95"
+                  className="gap-2 px-2 h-11 text-foreground hover:bg-accent/10 transition-all duration-300 transform hover:scale-105 active:scale-95"
                 >
-                  <Avatar className="h-8 w-8 ring-2 ring-white/50">
-                    <AvatarFallback className="bg-white text-[#003F7F] text-xs font-bold">
+                  <Avatar className="h-8 w-8 ring-2 ring-primary/20">
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                       {user?.name ? getInitials(user.name) : "U"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col items-start min-w-0">
-                    <span className="text-sm font-semibold text-white drop-shadow-md truncate max-w-[150px]">
+                    <span className="text-sm font-semibold text-foreground truncate max-w-[150px]">
                       {user?.name || "Usuário"}
                     </span>
-                    <span className="text-xs text-white/90 drop-shadow-sm truncate max-w-[150px]">
-                      {user?.email || ""}
-                    </span>
+                    <span className="text-xs text-muted-foreground truncate max-w-[150px]">{user?.email || ""}</span>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
@@ -195,7 +193,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              className="h-11 w-11 rounded-full text-white hover:bg-white/20 transition-all duration-300 min-h-[44px] min-w-[44px]"
+              className="h-11 w-11 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all duration-300 min-h-[44px] min-w-[44px]"
               aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
             >
               {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -206,23 +204,23 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-11 w-11 rounded-full text-white hover:bg-white/20 transition-all duration-300 min-h-[44px] min-w-[44px]"
+                  className="h-11 w-11 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all duration-300 min-h-[44px] min-w-[44px]"
                   aria-label="Abrir menu"
                 >
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-80 p-0">
-                <SheetHeader className="p-6 bg-gradient-to-r from-[#00A859] to-[#003F7F] text-white">
+                <SheetHeader className="p-6 bg-muted border-b">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12 ring-2 ring-white/50">
-                      <AvatarFallback className="bg-white text-[#003F7F] text-sm font-bold">
+                    <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
                         {user?.name ? getInitials(user.name) : "U"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="text-left">
-                      <SheetTitle className="text-white text-base">{user?.name || "Usuário"}</SheetTitle>
-                      <SheetDescription className="text-white/90 text-sm">{user?.email || ""}</SheetDescription>
+                      <SheetTitle className="text-foreground text-base">{user?.name || "Usuário"}</SheetTitle>
+                      <SheetDescription className="text-muted-foreground text-sm">{user?.email || ""}</SheetDescription>
                     </div>
                   </div>
                 </SheetHeader>
