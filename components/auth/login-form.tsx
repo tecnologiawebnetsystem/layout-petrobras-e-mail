@@ -13,6 +13,7 @@ import { ForgotPasswordModal } from "@/components/auth/forgot-password-modal"
 import { NotificationModal } from "@/components/shared/notification-modal"
 import { ExternalVerificationModal } from "@/components/auth/external-verification-modal"
 import { useAuthStore } from "@/lib/stores/auth-store"
+import { useAuditLogStore } from "@/lib/stores/audit-log-store"
 import { useRouter } from "next/navigation"
 
 const DEMO_CREDENTIALS = {
@@ -83,6 +84,21 @@ export function LoginForm() {
         "demo-refresh-token",
       )
 
+      useAuditLogStore.getState().addLog({
+        action: "login",
+        level: "success",
+        user: {
+          id: "demo-user-id",
+          name: credentials.name,
+          email: credentials.email,
+          type: userType,
+        },
+        details: {
+          description: `Login realizado com sucesso via acesso rápido`,
+          ipAddress: "192.168.1.100",
+        },
+      })
+
       setNotification({
         show: true,
         type: "success",
@@ -109,6 +125,22 @@ export function LoginForm() {
       "demo-access-token",
       "demo-refresh-token",
     )
+
+    useAuditLogStore.getState().addLog({
+      action: "login",
+      level: "success",
+      user: {
+        id: "demo-external-user",
+        name: "Maria Santos",
+        email: email,
+        type: "external",
+      },
+      details: {
+        description: `Login de usuário externo realizado com verificação por código`,
+        ipAddress: "203.0.113.45",
+      },
+    })
+
     router.push("/download")
   }
 
@@ -143,6 +175,21 @@ export function LoginForm() {
           "demo-refresh-token",
         )
 
+        useAuditLogStore.getState().addLog({
+          action: "login",
+          level: "success",
+          user: {
+            id: "demo-user-id",
+            name: demoUser.name,
+            email: demoUser.email,
+            type: userType,
+          },
+          details: {
+            description: `Login realizado com sucesso via formulário`,
+            ipAddress: "192.168.1.100",
+          },
+        })
+
         setNotification({
           show: true,
           type: "success",
@@ -156,6 +203,24 @@ export function LoginForm() {
           router.push(redirectPath)
         }, 1500)
       } else {
+        useAuditLogStore.getState().addLog({
+          action: "login",
+          level: "error",
+          user: {
+            id: "unknown",
+            name: "Desconhecido",
+            email: email,
+            type: "external",
+          },
+          details: {
+            description: `Tentativa de login com credenciais inválidas`,
+            ipAddress: "192.168.1.100",
+            metadata: {
+              attemptedEmail: email,
+            },
+          },
+        })
+
         setNotification({
           show: true,
           type: "error",

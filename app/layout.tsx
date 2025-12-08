@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
+import { ExpirationMonitor } from "@/components/shared/expiration-monitor"
 import "./globals.css"
 
 const inter = Inter({
@@ -41,7 +42,10 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${inter.className} font-sans antialiased`}>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <ExpirationMonitor />
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { useNotificationStore } from "./notification-store"
+import { useAuditLogStore } from "./audit-log-store"
 
 export interface ExpirationLog {
   timestamp: string
@@ -114,6 +115,28 @@ export const useWorkflowStore = create<WorkflowState>()(
           uploads: [newUpload, ...state.uploads],
         }))
 
+        useAuditLogStore.getState().addLog({
+          action: "upload",
+          level: "info",
+          user: {
+            id: upload.sender.id,
+            name: upload.sender.name,
+            email: upload.sender.email,
+            type: "internal",
+          },
+          details: {
+            targetId: newUpload.id,
+            targetName: upload.name,
+            description: `Arquivo "${upload.name}" enviado para aprovação`,
+            metadata: {
+              recipient: upload.recipient,
+              fileCount: upload.files.length,
+              expirationHours: upload.expirationHours,
+              tags: upload.tags,
+            },
+          },
+        })
+
         useNotificationStore.getState().addNotification({
           type: "approval",
           priority: "medium",
@@ -143,6 +166,28 @@ export const useWorkflowStore = create<WorkflowState>()(
               : u,
           ),
         }))
+
+        useAuditLogStore.getState().addLog({
+          action: "approve",
+          level: "success",
+          user: {
+            id: "supervisor-id",
+            name: approvedBy,
+            email: "supervisor@petrobras.com.br",
+            type: "supervisor",
+          },
+          details: {
+            targetId: id,
+            targetName: upload.name,
+            description: `Upload "${upload.name}" aprovado e disponibilizado para ${upload.recipient}`,
+            metadata: {
+              sender: upload.sender.name,
+              recipient: upload.recipient,
+              expiresAt,
+              expirationHours: upload.expirationHours,
+            },
+          },
+        })
 
         useNotificationStore.getState().addNotification({
           type: "success",
@@ -190,6 +235,27 @@ Sistema de Transferência Segura de Arquivos - Petrobras`)
           ),
         }))
 
+        useAuditLogStore.getState().addLog({
+          action: "reject",
+          level: "warning",
+          user: {
+            id: "supervisor-id",
+            name: rejectedBy,
+            email: "supervisor@petrobras.com.br",
+            type: "supervisor",
+          },
+          details: {
+            targetId: id,
+            targetName: upload.name,
+            description: `Upload "${upload.name}" rejeitado. Motivo: ${reason}`,
+            metadata: {
+              sender: upload.sender.name,
+              recipient: upload.recipient,
+              rejectionReason: reason,
+            },
+          },
+        })
+
         useNotificationStore.getState().addNotification({
           type: "error",
           priority: "high",
@@ -230,6 +296,28 @@ Sistema de Transferência Segura de Arquivos - Petrobras`)
               : u,
           ),
         }))
+
+        useAuditLogStore.getState().addLog({
+          action: "expiration_change",
+          level: "info",
+          user: {
+            id: "supervisor-id",
+            name: changedBy,
+            email: "supervisor@petrobras.com.br",
+            type: "supervisor",
+          },
+          details: {
+            targetId: id,
+            targetName: upload.name,
+            description: `Tempo de expiração alterado de ${previousValue}h para ${newHours}h`,
+            metadata: {
+              previousValue,
+              newValue: newHours,
+              reason: reason || "Ajuste pelo supervisor",
+              sender: upload.sender.name,
+            },
+          },
+        })
 
         useNotificationStore.getState().addNotification({
           type: "info",

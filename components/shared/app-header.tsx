@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, Moon, Sun, User, History, Book, Map } from "lucide-react"
+import { LogOut, Moon, Sun, User, History, Book, Map, Shield } from "lucide-react"
 import { PetrobrasLogo } from "@/components/ui/petrobras-logo"
 import { Button } from "@/components/ui/button"
 import {
@@ -43,6 +43,10 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
     router.push("/roadmap")
   }
 
+  const handleViewAuditoria = () => {
+    router.push("/auditoria")
+  }
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -68,6 +72,18 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
         <div className="flex items-center gap-2">
           <GlobalSearch />
           <NotificationCenter />
+
+          {(user?.userType === "supervisor" || user?.userType === "internal") && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleViewAuditoria}
+              className="h-9 w-9 rounded-full text-white hover:bg-white/20 transition-colors"
+              title="Auditoria e Logs"
+            >
+              <Shield className="h-4 w-4" />
+            </Button>
+          )}
 
           <Button
             variant="ghost"

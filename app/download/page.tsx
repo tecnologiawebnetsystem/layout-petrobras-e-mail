@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
+import { useAuditLogStore } from "@/lib/stores/audit-log-store"
 import { AppHeader } from "@/components/shared/app-header"
 import { DocumentCard } from "@/components/download/document-card"
 import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
@@ -254,6 +255,9 @@ export default function DownloadPage() {
   }
 
   const handleSecurityVerified = (documentId: string) => {
+    const doc = documents.find((d) => d.id === documentId)
+    if (!doc) return
+
     setDocuments((prev) =>
       prev.map((doc) =>
         doc.id === documentId
@@ -266,12 +270,37 @@ export default function DownloadPage() {
           : doc,
       ),
     )
+
+    if (user) {
+      useAuditLogStore.getState().addLog({
+        action: "download",
+        level: "success",
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          type: user.userType,
+        },
+        details: {
+          targetId: documentId,
+          targetName: doc.name,
+          description: `Download do arquivo "${doc.name}" realizado com sucesso`,
+          metadata: {
+            sender: doc.sender,
+            fileSize: doc.size,
+            fileType: doc.type,
+            downloadCount: doc.downloadCount + 1,
+          },
+        },
+      })
+    }
+
     setSecurityModal({ show: false, documentId: "", documentName: "", requiresPassword: false })
     setNotification({
       show: true,
       type: "success",
       title: "Download iniciado!",
-      message: `O documento "${documentId}" foi baixado com sucesso.`,
+      message: `O documento "${doc.name}" foi baixado com sucesso.`,
     })
   }
 
@@ -283,7 +312,7 @@ export default function DownloadPage() {
     <div className="min-h-screen bg-muted/30">
       <AppHeader subtitle="Módulo de Download" />
 
-      <main className="container max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <main className="container max-w-7xl mx-auto px-6 py-12 pb-16 space-y-8">
         <div>
           <h1 className="text-4xl font-bold text-foreground mb-3">Documentos Aprovados para Download</h1>
 
@@ -435,7 +464,7 @@ export default function DownloadPage() {
           </div>
         </div>
 
-        <div className="text-center text-sm text-muted-foreground border-t pt-8">
+        <div className="text-center text-sm text-muted-foreground border-t pt-12 mt-12">
           © 2025 Petrobras. Todos os direitos reservados. | Política de Privacidade
         </div>
       </main>

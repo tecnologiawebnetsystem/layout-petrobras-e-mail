@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { validateZipFile, isZipFile, type ZipValidationResult } from "@/lib/utils/zip-validator"
 import { ZipValidationModal } from "@/components/upload/zip-validation-modal"
+import { useAuthStore } from "@/lib/stores/auth-store"
+import { useAuditLogStore } from "@/lib/stores/audit-log-store"
 
 interface DragDropZoneProps {
   onFilesSelected: (files: File[]) => void
@@ -25,6 +27,8 @@ export function DragDropZone({ onFilesSelected, selectedFiles, onRemoveFile }: D
     blockedFiles: string[]
     totalFiles: number
   }>({ show: false, fileName: "", blockedFiles: [], totalFiles: 0 })
+
+  const { user } = useAuthStore()
 
   const handleDragEnter = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -54,6 +58,28 @@ export function DragDropZone({ onFilesSelected, selectedFiles, onRemoveFile }: D
           const result: ZipValidationResult = await validateZipFile(file)
 
           if (!result.isValid) {
+            if (user) {
+              useAuditLogStore.getState().addLog({
+                action: "zip_validation",
+                level: "warning",
+                user: {
+                  id: user.id,
+                  name: user.name,
+                  email: user.email,
+                  type: user.userType,
+                },
+                details: {
+                  targetName: file.name,
+                  description: `Arquivo ZIP bloqueado: contém ${result.blockedFiles.length} arquivo(s) com extensões não permitidas`,
+                  metadata: {
+                    blockedFiles: result.blockedFiles,
+                    totalFiles: result.totalFiles,
+                    fileSize: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+                  },
+                },
+              })
+            }
+
             setZipValidationResult({
               show: true,
               fileName: file.name,
@@ -62,6 +88,27 @@ export function DragDropZone({ onFilesSelected, selectedFiles, onRemoveFile }: D
             })
             setValidatingZip(false)
             return
+          }
+
+          if (user) {
+            useAuditLogStore.getState().addLog({
+              action: "zip_validation",
+              level: "success",
+              user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                type: user.userType,
+              },
+              details: {
+                targetName: file.name,
+                description: `Arquivo ZIP validado com sucesso: ${result.totalFiles} arquivo(s) interno(s)`,
+                metadata: {
+                  totalFiles: result.totalFiles,
+                  fileSize: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+                },
+              },
+            })
           }
         }
         validFiles.push(file)
@@ -73,7 +120,7 @@ export function DragDropZone({ onFilesSelected, selectedFiles, onRemoveFile }: D
         simulateUpload(validFiles.length)
       }
     },
-    [onFilesSelected],
+    [onFilesSelected, user],
   )
 
   const handleDrop = useCallback(

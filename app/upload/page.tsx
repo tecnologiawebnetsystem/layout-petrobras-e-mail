@@ -155,12 +155,13 @@ export default function UploadPage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <AppHeader subtitle="Módulo de Upload" />
 
-      <main className="container max-w-5xl mx-auto px-6 py-8">
+      <main className="container max-w-5xl mx-auto px-6 py-12 pb-16">
         <MetricsDashboard {...uploadStats} userType="internal" />
 
         <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-8 space-y-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#00A99D]/10 to-[#0047BB]/10 rounded-full blur-3xl -z-10" />
-
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
+            <Sparkles className="h-6 w-6 text-white" />
+          </div>
           <div className="relative">
             <div className="flex items-center gap-3 mb-2">
               <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
