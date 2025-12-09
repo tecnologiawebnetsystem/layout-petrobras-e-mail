@@ -53,9 +53,12 @@ interface MetricsDashboardProps {
 }
 
 export function MetricsDashboard({ total, pending, approved, rejected, userType }: MetricsDashboardProps) {
-  const [selectedMetric, setSelectedMetric] = useState<string | null>(null)
+  const [selectedMetric, setSelectedMetric] = useState<"total" | "pending" | "approved" | "rejected" | null>(null)
 
-  const getMockFiles = (status: string) => {
+  console.log("[v0] MetricsDashboard - userType:", userType)
+  console.log("[v0] MetricsDashboard - metrics:", { total, pending, approved, rejected })
+
+  const getMockFiles = (status: "total" | "pending" | "approved" | "rejected") => {
     const mockFiles = {
       total: [
         {
@@ -76,15 +79,6 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
           status: "pending",
           category: "Contratos",
         },
-        {
-          id: "3",
-          name: "Apresentacao_Projeto.pptx",
-          size: "15.2 MB",
-          date: "13/01/2025",
-          recipient: "parceiro@corp.com",
-          status: "approved",
-          category: "Técnico",
-        },
       ],
       pending: [
         {
@@ -95,15 +89,6 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
           recipient: "fornecedor@empresa.com",
           status: "pending",
           category: "Contratos",
-        },
-        {
-          id: "4",
-          name: "Planilha_Custos.xlsx",
-          size: "780 KB",
-          date: "12/01/2025",
-          recipient: "contabilidade@external.com",
-          status: "pending",
-          category: "Financeiro",
         },
       ],
       approved: [
@@ -116,36 +101,18 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
           status: "approved",
           category: "Financeiro",
         },
-        {
-          id: "3",
-          name: "Apresentacao_Projeto.pptx",
-          size: "15.2 MB",
-          date: "13/01/2025",
-          recipient: "parceiro@corp.com",
-          status: "approved",
-          category: "Técnico",
-        },
       ],
-      rejected: [
-        {
-          id: "5",
-          name: "Documento_Invalido.pdf",
-          size: "1.2 MB",
-          date: "10/01/2025",
-          recipient: "teste@email.com",
-          status: "rejected",
-          category: "Outros",
-        },
-      ],
+      rejected: [],
     }
 
-    return mockFiles[status as keyof typeof mockFiles] || []
+    return mockFiles[status] || []
   }
 
   const getMetrics = () => {
     if (userType === "internal") {
       return [
         {
+          type: "total" as const,
           title: "Total Enviados",
           value: total,
           change: { value: 12, isPositive: true },
@@ -154,6 +121,7 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
           onClick: () => setSelectedMetric("total"),
         },
         {
+          type: "pending" as const,
           title: "Aguardando Aprovação",
           value: pending,
           icon: <Clock className="h-6 w-6 text-white" />,
@@ -161,6 +129,7 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
           onClick: () => setSelectedMetric("pending"),
         },
         {
+          type: "approved" as const,
           title: "Aprovados",
           value: approved,
           change: { value: 8, isPositive: true },
@@ -169,6 +138,7 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
           onClick: () => setSelectedMetric("approved"),
         },
         {
+          type: "rejected" as const,
           title: "Rejeitados",
           value: rejected,
           icon: <XCircle className="h-6 w-6 text-white" />,
@@ -181,6 +151,7 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
     if (userType === "external") {
       return [
         {
+          type: "total" as const,
           title: "Total Recebidos",
           value: total,
           icon: <FileText className="h-6 w-6 text-white" />,
@@ -188,6 +159,7 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
           onClick: () => setSelectedMetric("total"),
         },
         {
+          type: "pending" as const,
           title: "Pendentes",
           value: pending,
           icon: <Clock className="h-6 w-6 text-white" />,
@@ -195,6 +167,7 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
           onClick: () => setSelectedMetric("pending"),
         },
         {
+          type: "approved" as const,
           title: "Baixados",
           value: approved,
           change: { value: 15, isPositive: true },
@@ -203,6 +176,7 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
           onClick: () => setSelectedMetric("approved"),
         },
         {
+          type: "rejected" as const,
           title: "Expirados",
           value: rejected,
           icon: <XCircle className="h-6 w-6 text-white" />,
@@ -214,6 +188,7 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
 
     return [
       {
+        type: "total" as const,
         title: "Total para Análise",
         value: total,
         icon: <FileText className="h-6 w-6 text-white" />,
@@ -221,6 +196,7 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
         onClick: () => setSelectedMetric("total"),
       },
       {
+        type: "pending" as const,
         title: "Pendentes",
         value: pending,
         icon: <Clock className="h-6 w-6 text-white" />,
@@ -228,6 +204,7 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
         onClick: () => setSelectedMetric("pending"),
       },
       {
+        type: "approved" as const,
         title: "Aprovados",
         value: approved,
         change: { value: 10, isPositive: true },
@@ -236,6 +213,7 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
         onClick: () => setSelectedMetric("approved"),
       },
       {
+        type: "rejected" as const,
         title: "Rejeitados",
         value: rejected,
         icon: <XCircle className="h-6 w-6 text-white" />,
@@ -246,7 +224,10 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
   }
 
   const metrics = getMetrics()
-  const currentMetric = metrics.find((m) => m.title.toLowerCase().includes(selectedMetric || ""))
+  const currentMetric = metrics.find((m) => m.type === selectedMetric)
+
+  console.log("[v0] selectedMetric:", selectedMetric)
+  console.log("[v0] currentMetric:", currentMetric)
 
   return (
     <>

@@ -92,7 +92,7 @@ const MOCK_DOCUMENTS: Document[] = [
 ]
 
 export default function DownloadPage() {
-  const { user, isAuthenticated, logout } = useAuthStore()
+  const { user, isAuthenticated, clearAuth } = useAuthStore()
   const router = useRouter()
 
   const isEmptyDemo = user?.id === "demo-empty-user-id"
@@ -321,7 +321,7 @@ export default function DownloadPage() {
   const handleNotificationClose = (show: boolean) => {
     if (!show && isEmptyDemo && documents.length === 0) {
       // Usuário sem arquivos clicou OK, fazer logout e voltar ao login
-      logout()
+      clearAuth()
       router.push("/")
     } else {
       setNotification({ ...notification, show })
