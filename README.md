@@ -47,14 +47,17 @@ Sistema moderno de envio e gerenciamento de e-mails para domínios externos, des
 ├── sql/                         # Estrutura de banco DynamoDB
 │   ├── dynamodb-tables.json     # Definição das tabelas
 │   ├── create-tables.py         # Script Python para criar tabelas
-│   ├── cloudformation-template.yaml  # Template CloudFormation
-│   ├── API-DOCUMENTATION.md     # Documentação completa da API
-│   ├── DEPLOYMENT-GUIDE.md      # Guia de deployment AWS
-│   └── README.md                # Visão geral da estrutura
-├── Documentacao/                # Documentação técnica
-│   ├── BACKEND_STRUCTURE.md     # Estrutura do backend Python
-│   ├── DEMO_CREDENTIALS.md      # Credenciais de demonstração
-│   └── SECURITY_VALIDATION.md   # Validação de segurança
+│   └── cloudformation-template.yaml  # Template CloudFormation
+├── Documentacao/                # Documentação técnica completa
+│   ├── BACKEND_STRUCTURE.md     # Estrutura completa do backend Python/FastAPI
+│   ├── DEMO_CREDENTIALS.md      # Todas as credenciais de demonstração
+│   ├── SECURITY_VALIDATION.md   # Sistema de validação de segurança
+│   ├── API-DOCUMENTATION.md     # Documentação completa da API REST
+│   ├── DEPLOYMENT-GUIDE.md      # Guia detalhado de deployment AWS
+│   ├── DATA-MODELS.md           # Modelos de dados e queries DynamoDB
+│   ├── AWS-IMPLEMENTATION-GUIDE.md  # Guia completo de implementação AWS (23 serviços)
+│   ├── QUICK-START.md           # Deploy rápido em 1 dia
+│   └── SQL-README.md            # Visão geral da estrutura de dados
 └── types/                       # TypeScript types
 \`\`\`
 
@@ -198,7 +201,7 @@ Template completo com:
 - IAM Roles e Policies
 
 ### API REST
-Documentação completa em `sql/API-DOCUMENTATION.md`:
+Documentação completa em `Documentacao/API-DOCUMENTATION.md`:
 - Autenticação com JWT
 - Endpoints de Upload/Download
 - Sistema de Aprovação
@@ -294,7 +297,7 @@ npm run build
 vercel --prod
 \`\`\`
 
-Veja o guia completo em `sql/DEPLOYMENT-GUIDE.md`
+Veja o guia completo em `Documentacao/DEPLOYMENT-GUIDE.md` ou o quick start em `Documentacao/QUICK-START.md`
 
 ## Próximos Passos
 
@@ -341,12 +344,21 @@ Veja `.env.example` para todas as variáveis disponíveis.
 
 ## Documentação
 
-- `Documentacao/BACKEND_STRUCTURE.md` - Estrutura do backend Python
-- `Documentacao/DEMO_CREDENTIALS.md` - Credenciais de demonstração
-- `Documentacao/SECURITY_VALIDATION.md` - Validação de segurança
-- `sql/API-DOCUMENTATION.md` - Documentação completa da API REST
-- `sql/DEPLOYMENT-GUIDE.md` - Guia de deployment na AWS
-- `sql/README.md` - Visão geral da estrutura de dados
+### Documentação Técnica (Pasta `Documentacao/`)
+- **BACKEND_STRUCTURE.md** - Estrutura completa do backend Python/FastAPI
+- **DEMO_CREDENTIALS.md** - Todas as credenciais de demonstração
+- **SECURITY_VALIDATION.md** - Sistema de validação de segurança
+- **API-DOCUMENTATION.md** - Documentação completa da API REST
+- **DEPLOYMENT-GUIDE.md** - Guia detalhado de deployment AWS
+- **DATA-MODELS.md** - Modelos de dados e queries DynamoDB
+- **AWS-IMPLEMENTATION-GUIDE.md** - Guia completo de implementação AWS (23 serviços)
+- **QUICK-START.md** - Deploy rápido em 1 dia
+- **SQL-README.md** - Visão geral da estrutura de dados
+
+### Scripts SQL (Pasta `sql/`)
+- **dynamodb-tables.json** - Definição completa das tabelas
+- **create-tables.py** - Script automatizado de criação
+- **cloudformation-template.yaml** - Infraestrutura completa AWS
 
 ## Licença
 
