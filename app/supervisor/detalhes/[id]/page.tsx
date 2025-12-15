@@ -12,11 +12,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
 import { WorkflowTimeline } from "@/components/workflow/workflow-timeline"
 import { ApprovalModal } from "@/components/workflow/approval-modal"
-import { Download, CheckCircle2, CheckCircle, XCircle, Workflow, Clock } from "lucide-react"
+import { Download, CheckCircle2, CheckCircle, XCircle, Workflow, Clock, FileText } from "lucide-react"
 import { useNotificationStore } from "@/lib/stores/notification-store"
 import { ExpirationEditorModal } from "@/components/workflow/expiration-editor-modal"
 import { useWorkflowStore } from "@/lib/stores/workflow-store"
 import type { ApprovalWorkflow } from "@/types/workflow"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 
 const documentData = {
   file: {
@@ -28,10 +38,9 @@ const documentData = {
   },
   sender: {
     name: "Ana Clara Santos",
-    role: "Analista Financeira, Fornecedor XYZ",
+    email: "ana.santos@fornecedor-xyz.com.br",
+    role: "Analista Financeira",
     avatar: "/placeholder-user.jpg",
-    totalSent: 42,
-    successRate: 100,
   },
   sharedWith: [
     { name: "Carlos Pereira", role: "Supervisor de Contratos", avatar: null },
@@ -94,7 +103,7 @@ export default function SupervisorDetailPage() {
   const params = useParams()
   const { user, isAuthenticated } = useAuthStore()
   const { addNotification } = useNotificationStore()
-  const { getUploadById, updateExpiration } = useWorkflowStore()
+  const { getUploadById, updateExpiration, approveUpload, rejectUpload } = useWorkflowStore()
   const [isLoading, setIsLoading] = useState(true)
   const [workflow, setWorkflow] = useState<ApprovalWorkflow>(mockWorkflow)
   const [approvalModal, setApprovalModal] = useState<{
@@ -105,6 +114,8 @@ export default function SupervisorDetailPage() {
     action: null,
   })
   const [expirationModal, setExpirationModal] = useState(false)
+  const [rejectModal, setRejectModal] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState("")
 
   const uploadData = getUploadById(params.id as string)
 
@@ -183,6 +194,48 @@ export default function SupervisorDetailPage() {
     })
   }
 
+  const handleConfirmRejection = () => {
+    if (!rejectionReason.trim()) {
+      addNotification({
+        type: "error",
+        priority: "high",
+        title: "Motivo obrigatório",
+        message: "Por favor, informe o motivo da rejeição",
+      })
+      return
+    }
+
+    if (!user || !uploadData) return
+
+    rejectUpload(uploadData.id, user.name, rejectionReason)
+
+    addNotification({
+      type: "error",
+      priority: "high",
+      title: "Upload Rejeitado",
+      message: `O envio foi rejeitado. ${uploadData.sender.name} foi notificado.`,
+    })
+
+    setRejectModal(false)
+    setRejectionReason("")
+    router.push("/supervisor")
+  }
+
+  const handleConfirmApproval = () => {
+    if (!user || !uploadData) return
+
+    approveUpload(uploadData.id, user.name)
+
+    addNotification({
+      type: "success",
+      priority: "high",
+      title: "Upload Aprovado!",
+      message: `O envio foi aprovado. ${uploadData.sender.name} e ${uploadData.recipient} foram notificados.`,
+    })
+
+    router.push("/supervisor")
+  }
+
   const handleUpdateExpiration = (newHours: number, reason: string) => {
     updateExpiration(params.id as string, newHours, user!.name, reason)
 
@@ -226,24 +279,21 @@ export default function SupervisorDetailPage() {
                 </Badge>
               </div>
 
-              <p className="text-sm text-muted-foreground mb-6">Informações gerais sobre o documento enviado.</p>
-
-              <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-4">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Nome do Arquivo</p>
-                  <p className="font-semibold text-foreground">{documentData.file.name}</p>
+                  <p className="font-semibold text-foreground text-lg">{documentData.file.name}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Tipo</p>
-                  <p className="font-semibold text-foreground">{documentData.file.type}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Tamanho</p>
-                  <p className="font-semibold text-foreground">{documentData.file.size}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Data de Upload</p>
-                  <p className="font-semibold text-foreground">{documentData.file.uploadDate}</p>
+
+                <div className="flex gap-6">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Tamanho</p>
+                    <p className="font-medium text-foreground">{documentData.file.size}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Data de Upload</p>
+                    <p className="font-medium text-foreground">{documentData.file.uploadDate}</p>
+                  </div>
                 </div>
               </div>
 
@@ -254,19 +304,21 @@ export default function SupervisorDetailPage() {
                     <div>
                       <h3 className="font-semibold text-foreground">Tempo de Disponibilidade</h3>
                       <p className="text-sm text-muted-foreground">
-                        Arquivos ficam disponíveis por {uploadData?.expirationHours || 72} horas após aprovação
+                        Arquivos ficam disponíveis por até 72 horas após aprovação
                       </p>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setExpirationModal(true)}
-                    className="border-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-950/40"
-                  >
-                    <Clock className="h-4 w-4 mr-2" />
-                    Ajustar Tempo
-                  </Button>
+                  {uploadData?.status === "pending" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setExpirationModal(true)}
+                      className="border-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-950/40"
+                    >
+                      <Clock className="h-4 w-4 mr-2" />
+                      Ajustar Tempo
+                    </Button>
+                  )}
                 </div>
 
                 {uploadData?.expiresAt && (
@@ -303,24 +355,64 @@ export default function SupervisorDetailPage() {
                   <Download className="h-4 w-4 mr-2" />
                   Baixar Arquivo Original
                 </Button>
-                <Button
-                  onClick={() => setApprovalModal({ open: true, action: "approve" })}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                  disabled={workflow.status !== "in_progress"}
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Aprovar Documento
-                </Button>
-                <Button
-                  onClick={() => setApprovalModal({ open: true, action: "reject" })}
-                  variant="destructive"
-                  className="flex-1"
-                  disabled={workflow.status !== "in_progress"}
-                >
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Rejeitar
-                </Button>
+
+                {uploadData?.status === "pending" && (
+                  <>
+                    <Button
+                      onClick={handleConfirmApproval}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Aprovar Documento
+                    </Button>
+                    <Button onClick={() => setRejectModal(true)} variant="destructive" className="flex-1">
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Rejeitar
+                    </Button>
+                  </>
+                )}
+
+                {uploadData?.status === "approved" && (
+                  <div className="flex-1 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg text-center">
+                    <p className="text-sm font-semibold text-green-800 dark:text-green-200">
+                      <CheckCircle className="h-4 w-4 inline mr-1" />
+                      Documento já aprovado
+                    </p>
+                  </div>
+                )}
+
+                {uploadData?.status === "rejected" && (
+                  <div className="flex-1 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg text-center">
+                    <p className="text-sm font-semibold text-red-800 dark:text-red-200">
+                      <XCircle className="h-4 w-4 inline mr-1" />
+                      Documento rejeitado
+                    </p>
+                    {uploadData.rejectionReason && (
+                      <p className="text-xs text-muted-foreground mt-1">Motivo: {uploadData.rejectionReason}</p>
+                    )}
+                  </div>
+                )}
               </div>
+
+              {uploadData && uploadData.files.length > 1 && (
+                <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                  <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Arquivos no pacote ({uploadData.files.length})
+                  </h3>
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                    {uploadData.files.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-background rounded">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <span className="text-sm text-foreground truncate">{file.name}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground ml-2">{file.size}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </Card>
 
             <Card className="p-6">
@@ -357,8 +449,7 @@ export default function SupervisorDetailPage() {
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-2xl font-bold text-foreground mb-6">Compartilhado Com</h2>
-
+              <h2 className="text-2xl font-bold text-foreground mb-4">Compartilhado Com</h2>
               <div className="space-y-4">
                 {documentData.sharedWith.map((person, index) => (
                   <div key={index} className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
@@ -381,29 +472,6 @@ export default function SupervisorDetailPage() {
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-2xl font-bold text-foreground mb-6">Metadados</h2>
-
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Tipo de Documento</p>
-                  <p className="font-semibold text-foreground">{documentData.metadata.documentType}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Número do Contrato</p>
-                  <p className="font-semibold text-foreground">{documentData.metadata.contractNumber}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Centro de Custo</p>
-                  <p className="font-semibold text-foreground">{documentData.metadata.costCenter}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Período Fiscal</p>
-                  <p className="font-semibold text-foreground">{documentData.metadata.fiscalPeriod}</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6">
               <h2 className="text-2xl font-bold text-foreground mb-4">Descrição do Remetente</h2>
               <div className="bg-blue-50 dark:bg-blue-950/20 border-l-4 border-[#0047BB] p-4 rounded">
                 <p className="text-foreground italic leading-relaxed">{documentData.description}</p>
@@ -413,39 +481,27 @@ export default function SupervisorDetailPage() {
 
           <div className="space-y-6">
             <Card className="p-6">
-              <h2 className="text-xl font-bold text-foreground mb-6">Informações do Remetente</h2>
-
-              <div className="flex flex-col items-center text-center mb-6">
-                <Avatar className="h-20 w-20 mb-4">
+              <h2 className="text-xl font-bold text-foreground mb-6">Remetente</h2>
+              <div className="flex items-center gap-4 mb-4">
+                <Avatar className="h-16 w-16">
                   <AvatarImage src={documentData.sender.avatar || "/placeholder.svg"} />
-                  <AvatarFallback className="bg-[#00A99D] text-white text-xl">
+                  <AvatarFallback className="bg-[#00A99D] text-white text-lg">
                     {documentData.sender.name
                       .split(" ")
                       .map((n) => n[0])
                       .join("")}
                   </AvatarFallback>
                 </Avatar>
-                <h3 className="font-bold text-lg text-foreground">{documentData.sender.name}</h3>
-                <p className="text-sm text-muted-foreground">{documentData.sender.role}</p>
-              </div>
-
-              <Separator className="my-6" />
-
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div className="p-4 rounded-lg bg-muted/50">
-                  <p className="text-3xl font-bold text-[#0047BB] mb-1">{documentData.sender.totalSent}</p>
-                  <p className="text-xs text-muted-foreground">Total de Envios</p>
-                </div>
-                <div className="p-4 rounded-lg bg-muted/50">
-                  <p className="text-3xl font-bold text-green-600 mb-1">{documentData.sender.successRate}%</p>
-                  <p className="text-xs text-muted-foreground">Arquivos Válidos</p>
+                <div className="flex-1">
+                  <h3 className="font-bold text-lg text-foreground">{documentData.sender.name}</h3>
+                  <p className="text-sm text-muted-foreground">{documentData.sender.email}</p>
+                  <p className="text-sm text-muted-foreground">{documentData.sender.role}</p>
                 </div>
               </div>
             </Card>
 
             <Card className="p-6">
               <h2 className="text-xl font-bold text-foreground mb-6">Histórico de Envios</h2>
-
               <div className="space-y-4">
                 {documentData.history.map((item, index) => (
                   <div key={index} className="flex items-start gap-3">
@@ -481,6 +537,56 @@ export default function SupervisorDetailPage() {
           onUpdate={handleUpdateExpiration}
         />
       )}
+
+      <Dialog open={rejectModal} onOpenChange={setRejectModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <XCircle className="h-6 w-6 text-red-600" />
+              Rejeitar Envio
+            </DialogTitle>
+            <DialogDescription>Informe o motivo da rejeição. O remetente receberá esta mensagem.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="font-semibold text-foreground mb-1">{uploadData?.name}</p>
+              <p className="text-sm text-muted-foreground">
+                De: {uploadData?.sender.name} → Para: {uploadData?.recipient}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="rejection-reason">Motivo da Rejeição *</Label>
+              <Textarea
+                id="rejection-reason"
+                placeholder="Explique o motivo da rejeição de forma clara e objetiva..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="min-h-[120px]"
+                required
+              />
+              <p className="text-xs text-muted-foreground">Este motivo será enviado por email ao remetente</p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRejectModal(false)
+                setRejectionReason("")
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmRejection} variant="destructive" disabled={!rejectionReason.trim()}>
+              <XCircle className="h-4 w-4 mr-2" />
+              Confirmar Rejeição
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

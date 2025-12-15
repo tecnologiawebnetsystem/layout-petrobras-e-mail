@@ -28,7 +28,6 @@ const MOCK_DOCUMENTS: Document[] = [
     downloaded: true,
     downloadedAt: "18/07/2024 14:30",
     downloadCount: 1,
-    requiresPassword: false,
   },
   {
     id: "2",
@@ -39,7 +38,6 @@ const MOCK_DOCUMENTS: Document[] = [
     type: "docx",
     downloaded: false,
     downloadCount: 0,
-    requiresPassword: true,
   },
   {
     id: "3",
@@ -51,7 +49,6 @@ const MOCK_DOCUMENTS: Document[] = [
     downloaded: false,
     downloadCount: 0,
     expiresAt: "25/12/2024",
-    requiresPassword: false,
   },
   {
     id: "4",
@@ -63,7 +60,6 @@ const MOCK_DOCUMENTS: Document[] = [
     downloaded: true,
     downloadedAt: "10/07/2024 09:15",
     downloadCount: 2,
-    requiresPassword: false,
   },
   {
     id: "5",
@@ -75,19 +71,6 @@ const MOCK_DOCUMENTS: Document[] = [
     downloaded: false,
     downloadCount: 0,
     expiresAt: "10/12/2024",
-    requiresPassword: true,
-  },
-  {
-    id: "6",
-    name: "Manual_Operacional.pdf",
-    sender: "Fernando Santos",
-    date: "01/07/2024",
-    size: "5.8 MB",
-    type: "pdf",
-    downloaded: false,
-    downloadCount: 0,
-    expiresAt: "01/06/2024",
-    requiresPassword: false,
   },
 ]
 
@@ -107,12 +90,10 @@ export default function DownloadPage() {
     show: boolean
     documentId: string
     documentName: string
-    requiresPassword: boolean
   }>({
     show: false,
     documentId: "",
     documentName: "",
-    requiresPassword: false,
   })
   const [notification, setNotification] = useState<{
     show: boolean
@@ -144,28 +125,28 @@ export default function DownloadPage() {
     }
   }, [isEmptyDemo, documents.length])
 
+  const availableDocuments = documents.filter((doc) => {
+    const isExpired = doc.expiresAt && new Date(doc.expiresAt) < new Date()
+    return !isExpired
+  })
+
   const stats = {
-    totalReceived: documents.length,
-    downloaded: documents.filter((d) => d.downloaded).length,
-    pending: documents.filter((d) => !d.downloaded && (!d.expiresAt || new Date(d.expiresAt) >= new Date())).length,
-    expired: documents.filter((d) => d.expiresAt && new Date(d.expiresAt) < new Date()).length,
+    totalReceived: availableDocuments.length,
+    downloaded: availableDocuments.filter((d) => d.downloaded).length,
+    pending: availableDocuments.filter((d) => !d.downloaded).length,
+    expired: 0,
   }
 
-  const filteredDocuments = documents.filter((doc) => {
-    const isExpired = doc.expiresAt && new Date(doc.expiresAt) < new Date()
-
+  const filteredDocuments = availableDocuments.filter((doc) => {
     if (filterStatus === "downloaded" && !doc.downloaded) return false
-    if (filterStatus === "pending" && (doc.downloaded || isExpired)) return false
-    if (filterStatus === "expired" && !isExpired) return false
+    if (filterStatus === "pending" && doc.downloaded) return false
 
     return true
   })
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const availableDocs = filteredDocuments
-        .filter((doc) => !doc.downloaded && (!doc.expiresAt || new Date(doc.expiresAt) >= new Date()))
-        .map((doc) => doc.id)
+      const availableDocs = filteredDocuments.filter((doc) => !doc.downloaded).map((doc) => doc.id)
       setSelectedDocs(availableDocs)
     } else {
       setSelectedDocs([])
@@ -187,19 +168,6 @@ export default function DownloadPage() {
         type: "warning",
         title: "Nenhum documento selecionado",
         message: "Por favor, selecione pelo menos um documento para download.",
-      })
-      return
-    }
-
-    const docsToDownload = documents.filter((d) => selectedDocs.includes(d.id))
-    const requiresPassword = docsToDownload.some((d) => d.requiresPassword)
-
-    if (requiresPassword) {
-      setNotification({
-        show: true,
-        type: "warning",
-        title: "Documentos protegidos selecionados",
-        message: "Alguns documentos requerem senha. Por favor, baixe-os individualmente.",
       })
       return
     }
@@ -232,22 +200,10 @@ export default function DownloadPage() {
     const doc = documents.find((d) => d.id === docId)
     if (!doc) return
 
-    const isExpired = doc.expiresAt && new Date(doc.expiresAt) < new Date()
-    if (isExpired) {
-      setNotification({
-        show: true,
-        type: "error",
-        title: "Arquivo Expirado",
-        message: `O arquivo "${doc.name}" não está mais disponível. O prazo de validade expirou.`,
-      })
-      return
-    }
-
     setSecurityModal({
       show: true,
       documentId: doc.id,
       documentName: doc.name,
-      requiresPassword: doc.requiresPassword || false,
     })
   }
 
@@ -309,7 +265,7 @@ export default function DownloadPage() {
       })
     }
 
-    setSecurityModal({ show: false, documentId: "", documentName: "", requiresPassword: false })
+    setSecurityModal({ show: false, documentId: "", documentName: "" })
     setNotification({
       show: true,
       type: "success",
@@ -320,7 +276,6 @@ export default function DownloadPage() {
 
   const handleNotificationClose = (show: boolean) => {
     if (!show && isEmptyDemo && documents.length === 0) {
-      // Usuário sem arquivos clicou OK, fazer logout e voltar ao login
       clearAuth()
       router.push("/")
     } else {
@@ -362,7 +317,7 @@ export default function DownloadPage() {
           userType="external"
         />
 
-        {documents.length === 0 ? (
+        {availableDocuments.length === 0 ? (
           <div className="bg-card rounded-lg border p-12 text-center space-y-6">
             <div className="flex justify-center">
               <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center">
@@ -404,7 +359,6 @@ export default function DownloadPage() {
                     <SelectItem value="all">Todos os status</SelectItem>
                     <SelectItem value="pending">Pendentes</SelectItem>
                     <SelectItem value="downloaded">Baixados</SelectItem>
-                    <SelectItem value="expired">Expirados</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -439,10 +393,7 @@ export default function DownloadPage() {
                     id="select-all"
                     checked={
                       selectedDocs.length > 0 &&
-                      selectedDocs.length ===
-                        filteredDocuments.filter(
-                          (d) => !d.downloaded && (!d.expiresAt || new Date(d.expiresAt) >= new Date()),
-                        ).length
+                      selectedDocs.length === filteredDocuments.filter((d) => !d.downloaded).length
                     }
                     onCheckedChange={handleSelectAll}
                   />
@@ -467,7 +418,6 @@ export default function DownloadPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredDocuments.map((doc) => {
-                const isExpired = doc.expiresAt && new Date(doc.expiresAt) < new Date()
                 const timeRemaining = getTimeRemaining(doc.expiresAt)
 
                 return (
@@ -480,13 +430,7 @@ export default function DownloadPage() {
                     />
 
                     {doc.expiresAt && !doc.downloaded && (
-                      <div
-                        className={`absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1 ${
-                          isExpired
-                            ? "bg-red-100 text-red-800 border border-red-300"
-                            : "bg-yellow-100 text-yellow-800 border border-yellow-300"
-                        }`}
-                      >
+                      <div className="absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1 bg-yellow-100 text-yellow-800 border border-yellow-300">
                         <Clock className="h-3 w-3" />
                         {timeRemaining}
                       </div>
@@ -498,7 +442,7 @@ export default function DownloadPage() {
 
             <div className="flex items-center justify-between pt-4">
               <p className="text-sm text-muted-foreground">
-                Mostrando {filteredDocuments.length} de {documents.length} documentos
+                Mostrando {filteredDocuments.length} de {availableDocuments.length} documentos
               </p>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm">
@@ -523,7 +467,7 @@ export default function DownloadPage() {
         open={securityModal.show}
         onOpenChange={(show) => setSecurityModal({ ...securityModal, show })}
         documentName={securityModal.documentName}
-        requiresPassword={securityModal.requiresPassword}
+        requiresPassword={false}
         onVerified={() => handleSecurityVerified(securityModal.documentId)}
       />
 

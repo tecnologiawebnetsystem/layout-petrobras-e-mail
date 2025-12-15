@@ -94,21 +94,6 @@ export function LoginBackground() {
               title: "Auditoria Completa",
               description: "Rastreabilidade total de uploads, aprovações e downloads",
             },
-            {
-              icon: (
-                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              ),
-              title: "Notificações em Tempo Real",
-              description: "Acompanhe o status dos seus arquivos instantaneamente",
-            },
           ].map((feature, index) => (
             <div
               key={index}

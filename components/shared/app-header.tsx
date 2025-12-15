@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, Moon, Sun, User, History, Book, Shield, Menu } from "lucide-react"
+import { LogOut, Moon, Sun, History, Shield, Menu } from "lucide-react"
 import { PetrobrasLogo } from "@/components/ui/petrobras-logo"
 import { Button } from "@/components/ui/button"
 import {
@@ -102,25 +102,6 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
               </Tooltip>
             )}
 
-            {!isExternalUser && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleViewWiki}
-                    className="h-11 w-11 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all duration-300 transform hover:scale-110 active:scale-95"
-                    aria-label="Central de Conhecimento"
-                  >
-                    <Book className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Central de Conhecimento</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -161,12 +142,6 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                 align="end"
                 className="w-56 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 shadow-xl"
               >
-                {!isExternalUser && (
-                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 hover:text-blue-900 dark:hover:text-blue-100 focus:text-blue-900 dark:focus:text-blue-100 min-h-[44px]">
-                    <User className="h-4 w-4" />
-                    <span>Meu Perfil</span>
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuItem
                   onClick={handleViewHistory}
                   className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 hover:text-blue-900 dark:hover:text-blue-100 focus:text-blue-900 dark:focus:text-blue-100 min-h-[44px]"
@@ -226,19 +201,6 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                 </SheetHeader>
 
                 <div className="flex flex-col gap-2 p-4">
-                  {!isExternalUser && (
-                    <Button
-                      variant="ghost"
-                      className="justify-start h-12 text-base hover:bg-accent transition-colors min-h-[44px]"
-                      onClick={() => {
-                        setMobileMenuOpen(false)
-                      }}
-                    >
-                      <User className="h-5 w-5 mr-3" />
-                      Meu Perfil
-                    </Button>
-                  )}
-
                   <Button
                     variant="ghost"
                     className="justify-start h-12 text-base hover:bg-accent transition-colors min-h-[44px]"
@@ -256,17 +218,6 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                     >
                       <Shield className="h-5 w-5 mr-3" />
                       Auditoria e Logs
-                    </Button>
-                  )}
-
-                  {!isExternalUser && (
-                    <Button
-                      variant="ghost"
-                      className="justify-start h-12 text-base hover:bg-accent transition-colors min-h-[44px]"
-                      onClick={handleViewWiki}
-                    >
-                      <Book className="h-5 w-5 mr-3" />
-                      Central de Conhecimento
                     </Button>
                   )}
 

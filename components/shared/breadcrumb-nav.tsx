@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation"
 import { ChevronRight, Home } from "lucide-react"
-import { Button } from "@/components/ui/button"
 
 interface BreadcrumbNavProps {
   items: { label: string; href?: string }[]
@@ -18,7 +17,7 @@ export function BreadcrumbNav({ items, dashboardLink }: BreadcrumbNavProps) {
         <button
           onClick={() => router.push(dashboardLink)}
           className="text-[#0047BB] hover:text-[#003A99] hover:bg-blue-50 dark:hover:bg-blue-950/20 p-1.5 rounded-md transition-all"
-          aria-label="Ir para Dashboard"
+          aria-label="Ir para Início"
         >
           <Home className="h-4 w-4" />
         </button>
@@ -39,15 +38,6 @@ export function BreadcrumbNav({ items, dashboardLink }: BreadcrumbNavProps) {
           </div>
         ))}
       </div>
-
-      <Button
-        variant="outline"
-        onClick={() => router.push(dashboardLink)}
-        className="text-[#0047BB] hover:text-[#003A99] hover:bg-blue-50 dark:hover:bg-blue-950/20 border-[#0047BB]/30 font-semibold"
-      >
-        <Home className="h-4 w-4 mr-2" />
-        Dashboard
-      </Button>
     </div>
   )
 }

@@ -47,7 +47,27 @@ export default function UploadPage() {
     }
   }, [isAuthenticated, user, router])
 
-  const handleFilesSelected = (newFiles: File[]) => {
+  const handleFilesSelected = async (newFiles: File[]) => {
+    const dangerousExtensions = [".exe", ".dll", ".bat", ".cmd", ".com", ".msi", ".scr", ".vbs", ".ps1", ".sh"]
+    const blockedFiles: string[] = []
+
+    for (const file of newFiles) {
+      const extension = "." + file.name.split(".").pop()?.toLowerCase()
+      if (dangerousExtensions.includes(extension)) {
+        blockedFiles.push(file.name)
+      }
+    }
+
+    if (blockedFiles.length > 0) {
+      setNotification({
+        show: true,
+        type: "error",
+        title: "Arquivos Bloqueados por Segurança",
+        message: `Os seguintes arquivos não podem ser enviados por motivos de segurança: ${blockedFiles.join(", ")}. Extensões bloqueadas: .exe, .dll, .bat, .cmd, .com, .msi, .scr, .vbs, .ps1, .sh`,
+      })
+      return
+    }
+
     setFiles((prev) => [...prev, ...newFiles])
   }
 
@@ -219,15 +239,11 @@ export default function UploadPage() {
                   <SelectItem value="24">24 horas (1 dia)</SelectItem>
                   <SelectItem value="48">48 horas (2 dias)</SelectItem>
                   <SelectItem value="72">72 horas (3 dias)</SelectItem>
-                  <SelectItem value="120">120 horas (5 dias)</SelectItem>
-                  <SelectItem value="168">168 horas (7 dias)</SelectItem>
-                  <SelectItem value="336">336 horas (14 dias)</SelectItem>
-                  <SelectItem value="720">720 horas (30 dias)</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Os arquivos ficarão disponíveis para download por {expirationHours} horas após a aprovação. O supervisor
-                poderá ajustar este tempo.
+                Os arquivos ficarão disponíveis para download por {expirationHours} horas após a aprovação. Máximo: 72
+                horas (3 dias).
               </p>
             </div>
 
