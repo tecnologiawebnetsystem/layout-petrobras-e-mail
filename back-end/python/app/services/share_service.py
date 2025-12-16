@@ -1,4 +1,3 @@
-
 from sqlmodel import Session, select
 from app.models.share import Share, ShareStatus, TokenConsumo
 from app.models.share_arquivo import ShareArquivo

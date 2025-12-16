@@ -1,0 +1,1606 @@
+"use client"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ArrowLeft, AlertTriangle, CheckCircle2, Database, Cloud, Lightbulb, Code2, GitCompare } from "lucide-react"
+import Link from "next/link"
+
+export default function IntegracaoPage() {
+  const [activeTab, setActiveTab] = useState("conflitos")
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 p-6 lg:p-8">
+      <div className="mx-auto max-w-7xl">
+        {/* Header */}
+        <div className="mb-8">
+          <Link href="/wiki-dev">
+            <Button variant="ghost" className="mb-4 -ml-2">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar para Wiki
+            </Button>
+          </Link>
+
+          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500 shadow-lg">
+            <GitCompare className="h-8 w-8 text-white" />
+          </div>
+
+          <h1 className="mb-3 text-4xl font-bold tracking-tight text-slate-900">Integração Front-Back</h1>
+          <p className="text-lg text-slate-600">
+            Análise completa de compatibilidade entre Next.js (Front-end) e FastAPI (Back-end)
+          </p>
+        </div>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto gap-2 bg-transparent p-0">
+            <TabsTrigger
+              value="conflitos"
+              className="data-[state=active]:bg-red-50 data-[state=active]:text-red-700 data-[state=active]:border-red-200 border-2 py-3"
+            >
+              <AlertTriangle className="mr-2 h-4 w-4" />
+              Conflitos
+            </TabsTrigger>
+            <TabsTrigger
+              value="campos"
+              className="data-[state=active]:bg-green-50 data-[state=active]:text-green-700 data-[state=active]:border-green-200 border-2 py-3"
+            >
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              Campos Comuns
+            </TabsTrigger>
+            <TabsTrigger
+              value="banco"
+              className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-200 border-2 py-3"
+            >
+              <Database className="mr-2 h-4 w-4" />
+              Banco de Dados
+            </TabsTrigger>
+            <TabsTrigger
+              value="aws"
+              className="data-[state=active]:bg-orange-50 data-[state=active]:text-orange-700 data-[state=active]:border-orange-200 border-2 py-3"
+            >
+              <Cloud className="mr-2 h-4 w-4" />
+              Serviços AWS
+            </TabsTrigger>
+            <TabsTrigger
+              value="estrategia"
+              className="data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700 data-[state=active]:border-purple-200 border-2 py-3"
+            >
+              <Lightbulb className="mr-2 h-4 w-4" />
+              Estratégia
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Conflitos */}
+          <TabsContent value="conflitos" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                  Análise de Conflitos e Incompatibilidades
+                </CardTitle>
+                <CardDescription>
+                  Campos e funcionalidades que existem no front-end mas ainda não estão implementados no back-end
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Conflito 1: Autenticação */}
+                <div className="border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                    <Code2 className="h-4 w-4" />
+                    1. Sistema de Autenticação
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-red-800 mb-1">Front-end (Next.js):</p>
+                      <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
+                        <li>
+                          <code className="bg-red-100 px-2 py-0.5 rounded">user.userType</code> - "internal" |
+                          "external" | "supervisor"
+                        </li>
+                        <li>
+                          <code className="bg-red-100 px-2 py-0.5 rounded">user.id</code>,{" "}
+                          <code className="bg-red-100 px-2 py-0.5 rounded">user.name</code>,{" "}
+                          <code className="bg-red-100 px-2 py-0.5 rounded">user.email</code>
+                        </li>
+                        <li>
+                          <code className="bg-red-100 px-2 py-0.5 rounded">accessToken</code> e{" "}
+                          <code className="bg-red-100 px-2 py-0.5 rounded">refreshToken</code> JWT
+                        </li>
+                        <li>Login com email/senha para usuários internos e supervisores</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="font-medium text-red-800 mb-1">Back-end (FastAPI):</p>
+                      <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
+                        <li>Apenas autenticação OTP para usuários externos via email</li>
+                        <li>
+                          <code className="bg-red-100 px-2 py-0.5 rounded">ACCESS_TOKEN</code> temporário sem refresh
+                        </li>
+                        <li>Não tem tabela de usuários internos ou supervisores</li>
+                        <li>Não tem login com senha</li>
+                      </ul>
+                    </div>
+                    <div className="bg-red-100 p-3 rounded-lg mt-2">
+                      <p className="font-semibold text-red-900 mb-1">Ação Necessária:</p>
+                      <p className="text-red-800">
+                        Criar tabela <code className="bg-red-200 px-1.5 py-0.5 rounded">users</code> no back-end com
+                        campos: id, email, password_hash, name, user_type, created_at. Implementar endpoints{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">POST /auth/login</code> e{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">POST /auth/refresh</code> com JWT.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Conflito 2: Upload com Aprovação */}
+                <div className="border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                    <Code2 className="h-4 w-4" />
+                    2. Workflow de Upload e Aprovação
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-red-800 mb-1">Front-end (Next.js):</p>
+                      <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
+                        <li>Status: "pending" | "approved" | "rejected"</li>
+                        <li>
+                          Campo <code className="bg-red-100 px-2 py-0.5 rounded">rejectionReason</code> (motivo da
+                          rejeição)
+                        </li>
+                        <li>
+                          Campo <code className="bg-red-100 px-2 py-0.5 rounded">expirationHours</code> configurável
+                          (24, 48, 72h)
+                        </li>
+                        <li>
+                          Array <code className="bg-red-100 px-2 py-0.5 rounded">expirationLogs</code> com histórico de
+                          alterações
+                        </li>
+                        <li>
+                          Campos <code className="bg-red-100 px-2 py-0.5 rounded">approvedBy</code>,{" "}
+                          <code className="bg-red-100 px-2 py-0.5 rounded">approvalDate</code>
+                        </li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="font-medium text-red-800 mb-1">Back-end (FastAPI):</p>
+                      <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
+                        <li>Não tem fluxo de aprovação/rejeição</li>
+                        <li>Compartilhamentos são criados diretamente ativos</li>
+                        <li>Não tem campo de motivo de rejeição</li>
+                        <li>Expiração fixa sem logs de alteração</li>
+                      </ul>
+                    </div>
+                    <div className="bg-red-100 p-3 rounded-lg mt-2">
+                      <p className="font-semibold text-red-900 mb-1">Ação Necessária:</p>
+                      <p className="text-red-800">
+                        Adicionar campos <code className="bg-red-200 px-1.5 py-0.5 rounded">status</code>,{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">approved_by</code>,{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">approval_date</code>,{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">rejection_reason</code> na tabela shares.
+                        Criar tabela <code className="bg-red-200 px-1.5 py-0.5 rounded">expiration_logs</code> para
+                        histórico. Implementar endpoints{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">POST /supervisor/approve/:id</code> e{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">POST /supervisor/reject/:id</code>.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Conflito 3: Auditoria */}
+                <div className="border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                    <Code2 className="h-4 w-4" />
+                    3. Sistema de Auditoria
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-red-800 mb-1">Front-end (Next.js):</p>
+                      <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
+                        <li>
+                          Ações detalhadas: "login", "logout", "upload", "approve", "reject", "download",
+                          "expiration_change"
+                        </li>
+                        <li>Níveis: "info", "success", "warning", "error"</li>
+                        <li>
+                          Metadados completos: <code className="bg-red-100 px-2 py-0.5 rounded">targetId</code>,{" "}
+                          <code className="bg-red-100 px-2 py-0.5 rounded">targetName</code>,{" "}
+                          <code className="bg-red-100 px-2 py-0.5 rounded">description</code>, metadata customizável
+                        </li>
+                        <li>IP do usuário registrado</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="font-medium text-red-800 mb-1">Back-end (FastAPI):</p>
+                      <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
+                        <li>Auditoria básica de downloads (ACK)</li>
+                        <li>Não registra login, upload, aprovação, rejeição</li>
+                        <li>Não tem níveis de log</li>
+                        <li>Metadados limitados</li>
+                      </ul>
+                    </div>
+                    <div className="bg-red-100 p-3 rounded-lg mt-2">
+                      <p className="font-semibold text-red-900 mb-1">Ação Necessária:</p>
+                      <p className="text-red-800">
+                        Criar tabela <code className="bg-red-200 px-1.5 py-0.5 rounded">audit_logs</code> com campos:
+                        id, timestamp, user_id, action, level, target_id, target_name, description, metadata_json,
+                        ip_address. Implementar middleware para registrar todas as ações automaticamente.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Conflito 4: Notificações */}
+                <div className="border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                    <Code2 className="h-4 w-4" />
+                    4. Sistema de Notificações
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-red-800 mb-1">Front-end (Next.js):</p>
+                      <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
+                        <li>Tipos: "approval", "success", "error", "info", "expiration"</li>
+                        <li>Prioridades: "low", "medium", "high"</li>
+                        <li>Sistema completo de notificações em tempo real</li>
+                        <li>Ações (actionLabel, actionUrl) para redirecionar</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="font-medium text-red-800 mb-1">Back-end (FastAPI):</p>
+                      <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
+                        <li>Não tem sistema de notificações</li>
+                        <li>Apenas envio de OTP por email (mock)</li>
+                      </ul>
+                    </div>
+                    <div className="bg-red-100 p-3 rounded-lg mt-2">
+                      <p className="font-semibold text-red-900 mb-1">Ação Necessária:</p>
+                      <p className="text-red-800">
+                        Criar tabela <code className="bg-red-200 px-1.5 py-0.5 rounded">notifications</code> e
+                        implementar endpoint{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">GET /notifications</code> para listar
+                        notificações por usuário. Integrar com WebSockets ou Server-Sent Events para tempo real.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Campos Comuns */}
+          <TabsContent value="campos" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  Campos e Estruturas Comuns
+                </CardTitle>
+                <CardDescription>
+                  Funcionalidades já compatíveis entre front-end e back-end que podem ser aproveitadas
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Campo Comum 1: OTP */}
+                <div className="border-l-4 border-green-500 bg-green-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" />
+                    1. Autenticação OTP para Usuários Externos
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-green-800 mb-1">Campos Compatíveis:</p>
+                      <ul className="list-disc list-inside text-green-700 space-y-1 pl-4">
+                        <li>
+                          <code className="bg-green-100 px-2 py-0.5 rounded">email</code> - Destinatário externo
+                        </li>
+                        <li>
+                          <code className="bg-green-100 px-2 py-0.5 rounded">codigo</code> - Código OTP de 6 dígitos
+                        </li>
+                        <li>
+                          <code className="bg-green-100 px-2 py-0.5 rounded">validade_minutos</code> - Tempo de
+                          expiração do OTP
+                        </li>
+                        <li>
+                          <code className="bg-green-100 px-2 py-0.5 rounded">tentativas</code> - Controle de tentativas
+                          inválidas
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="bg-green-100 p-3 rounded-lg">
+                      <p className="font-semibold text-green-900 mb-1">Status:</p>
+                      <Badge className="bg-green-600">Pronto para Integração</Badge>
+                      <p className="text-green-800 mt-2">
+                        Este fluxo já está completamente implementado no back-end e pode ser conectado ao front-end.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Campo Comum 2: Arquivos */}
+                <div className="border-l-4 border-green-500 bg-green-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" />
+                    2. Estrutura de Arquivos
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-green-800 mb-1">Campos Compatíveis:</p>
+                      <ul className="list-disc list-inside text-green-700 space-y-1 pl-4">
+                        <li>
+                          <code className="bg-green-100 px-2 py-0.5 rounded">nome</code> /{" "}
+                          <code className="bg-green-100 px-2 py-0.5 rounded">name</code> - Nome do arquivo
+                        </li>
+                        <li>
+                          <code className="bg-green-100 px-2 py-0.5 rounded">tamanho_bytes</code> /{" "}
+                          <code className="bg-green-100 px-2 py-0.5 rounded">size</code> - Tamanho em bytes/MB
+                        </li>
+                        <li>
+                          <code className="bg-green-100 px-2 py-0.5 rounded">tipo</code> /{" "}
+                          <code className="bg-green-100 px-2 py-0.5 rounded">type</code> - Extensão do arquivo
+                        </li>
+                        <li>
+                          <code className="bg-green-100 px-2 py-0.5 rounded">s3_key</code> - Caminho no S3 (back-end)
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="bg-green-100 p-3 rounded-lg">
+                      <p className="font-semibold text-green-900 mb-1">Mapeamento:</p>
+                      <code className="text-xs bg-green-200 px-2 py-1 rounded block">
+                        Front-end: files[].name, files[].size, files[].type
+                        <br />
+                        Back-end: arquivos.nome, arquivos.tamanho_bytes, extensão derivada do nome
+                      </code>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Campo Comum 3: Compartilhamento */}
+                <div className="border-l-4 border-green-500 bg-green-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" />
+                    3. Compartilhamento (Share)
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-green-800 mb-1">Campos Compatíveis:</p>
+                      <ul className="list-disc list-inside text-green-700 space-y-1 pl-4">
+                        <li>
+                          <code className="bg-green-100 px-2 py-0.5 rounded">recipient</code> /{" "}
+                          <code className="bg-green-100 px-2 py-0.5 rounded">email_destinatario</code>
+                        </li>
+                        <li>
+                          <code className="bg-green-100 px-2 py-0.5 rounded">description</code> /{" "}
+                          <code className="bg-green-100 px-2 py-0.5 rounded">descricao</code>
+                        </li>
+                        <li>
+                          <code className="bg-green-100 px-2 py-0.5 rounded">expirationHours</code> /{" "}
+                          <code className="bg-green-100 px-2 py-0.5 rounded">expira_em</code> (calculado)
+                        </li>
+                        <li>
+                          <code className="bg-green-100 px-2 py-0.5 rounded">uploadDate</code> /{" "}
+                          <code className="bg-green-100 px-2 py-0.5 rounded">criado_em</code>
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="bg-green-100 p-3 rounded-lg">
+                      <p className="font-semibold text-green-900 mb-1">Adaptação Necessária:</p>
+                      <p className="text-green-800 text-xs">
+                        Apenas renomear campos para padronizar (usar snake_case no back-end e camelCase no front-end com
+                        conversão automática).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Campo Comum 4: Tokens */}
+                <div className="border-l-4 border-green-500 bg-green-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" />
+                    4. Sistema de Tokens
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-green-800 mb-1">Campos Compatíveis:</p>
+                      <ul className="list-disc list-inside text-green-700 space-y-1 pl-4">
+                        <li>
+                          <code className="bg-green-100 px-2 py-0.5 rounded">accessToken</code> /{" "}
+                          <code className="bg-green-100 px-2 py-0.5 rounded">token</code> - Token JWT
+                        </li>
+                        <li>
+                          <code className="bg-green-100 px-2 py-0.5 rounded">expiresAt</code> /{" "}
+                          <code className="bg-green-100 px-2 py-0.5 rounded">expira_em</code>
+                        </li>
+                        <li>Validação de expiração em ambos os lados</li>
+                      </ul>
+                    </div>
+                    <div className="bg-green-100 p-3 rounded-lg">
+                      <p className="font-semibold text-green-900 mb-1">Expansão Necessária:</p>
+                      <p className="text-green-800 text-xs">
+                        Adicionar <code className="bg-green-200 px-1.5 py-0.5 rounded">refreshToken</code> no back-end
+                        para permitir renovação automática de sessão.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Banco de Dados */}
+          <TabsContent value="banco" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="h-5 w-5 text-blue-600" />
+                  Estrutura de Banco de Dados Unificada
+                </CardTitle>
+                <CardDescription>
+                  Proposta de estrutura de banco de dados que atende front-end e back-end simultaneamente
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-lg border-2 border-blue-200">
+                  <h3 className="font-bold text-blue-900 mb-4 text-lg">Decisão de Arquitetura</h3>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-start gap-3">
+                      <Badge className="bg-blue-600 mt-1">Opção 1</Badge>
+                      <div>
+                        <p className="font-semibold text-blue-900">PostgreSQL (Relacional)</p>
+                        <p className="text-blue-700">
+                          Melhor para transações complexas, relacionamentos fortes e auditoria detalhada. Já usado no
+                          back-end FastAPI com SQLAlchemy.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Badge className="bg-orange-600 mt-1">Opção 2</Badge>
+                      <div>
+                        <p className="font-semibold text-blue-900">DynamoDB (NoSQL)</p>
+                        <p className="text-blue-700">
+                          Melhor para escalabilidade massiva e baixa latência. Requer adaptação do back-end atual.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-blue-100 p-3 rounded mt-3">
+                      <p className="font-semibold text-blue-900 mb-1">Recomendação:</p>
+                      <p className="text-blue-800">
+                        Usar <strong>PostgreSQL no RDS</strong> pela compatibilidade com o back-end FastAPI existente e
+                        requisitos de auditoria rigorosa da Petrobras.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tabela: users */}
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="bg-blue-100 p-4 border-b">
+                    <h4 className="font-bold text-blue-900 flex items-center gap-2">
+                      <Database className="h-4 w-4" />
+                      Tabela: users
+                    </h4>
+                    <p className="text-sm text-blue-700 mt-1">Usuários internos, externos e supervisores</p>
+                  </div>
+                  <div className="p-4 bg-white">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50">
+                        <tr>
+                          <th className="text-left p-2 border">Campo</th>
+                          <th className="text-left p-2 border">Tipo</th>
+                          <th className="text-left p-2 border">Descrição</th>
+                          <th className="text-left p-2 border">Origem</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">id</td>
+                          <td className="p-2 border">UUID</td>
+                          <td className="p-2 border">Chave primária</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">email</td>
+                          <td className="p-2 border">VARCHAR(255)</td>
+                          <td className="p-2 border">Email único do usuário</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">password_hash</td>
+                          <td className="p-2 border">VARCHAR(255)</td>
+                          <td className="p-2 border">Hash bcrypt da senha (apenas internos/supervisores)</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                              Novo (Front)
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">name</td>
+                          <td className="p-2 border">VARCHAR(255)</td>
+                          <td className="p-2 border">Nome completo</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">user_type</td>
+                          <td className="p-2 border">ENUM</td>
+                          <td className="p-2 border">'internal', 'external', 'supervisor'</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                              Novo (Front)
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">created_at</td>
+                          <td className="p-2 border">TIMESTAMP</td>
+                          <td className="p-2 border">Data de criação</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">last_login</td>
+                          <td className="p-2 border">TIMESTAMP</td>
+                          <td className="p-2 border">Último acesso</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                              Novo (Front)
+                            </Badge>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Tabela: shares */}
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="bg-blue-100 p-4 border-b">
+                    <h4 className="font-bold text-blue-900 flex items-center gap-2">
+                      <Database className="h-4 w-4" />
+                      Tabela: shares
+                    </h4>
+                    <p className="text-sm text-blue-700 mt-1">Compartilhamentos/Uploads de arquivos</p>
+                  </div>
+                  <div className="p-4 bg-white">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50">
+                        <tr>
+                          <th className="text-left p-2 border">Campo</th>
+                          <th className="text-left p-2 border">Tipo</th>
+                          <th className="text-left p-2 border">Descrição</th>
+                          <th className="text-left p-2 border">Origem</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">id</td>
+                          <td className="p-2 border">UUID</td>
+                          <td className="p-2 border">Chave primária</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">name</td>
+                          <td className="p-2 border">VARCHAR(255)</td>
+                          <td className="p-2 border">Nome/Título do compartilhamento</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                              Novo (Front)
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">sender_id</td>
+                          <td className="p-2 border">UUID</td>
+                          <td className="p-2 border">FK → users.id (remetente)</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                              Novo (Front)
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">recipient_email</td>
+                          <td className="p-2 border">VARCHAR(255)</td>
+                          <td className="p-2 border">Email do destinatário externo</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">description</td>
+                          <td className="p-2 border">TEXT</td>
+                          <td className="p-2 border">Descrição do envio</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">status</td>
+                          <td className="p-2 border">ENUM</td>
+                          <td className="p-2 border">'pending', 'approved', 'rejected'</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                              Novo (Front)
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">created_at</td>
+                          <td className="p-2 border">TIMESTAMP</td>
+                          <td className="p-2 border">Data do upload</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">approved_by</td>
+                          <td className="p-2 border">UUID</td>
+                          <td className="p-2 border">FK → users.id (supervisor que aprovou)</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                              Novo (Front)
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">approval_date</td>
+                          <td className="p-2 border">TIMESTAMP</td>
+                          <td className="p-2 border">Data da aprovação/rejeição</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                              Novo (Front)
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">rejection_reason</td>
+                          <td className="p-2 border">TEXT</td>
+                          <td className="p-2 border">Motivo da rejeição</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                              Novo (Front)
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">expiration_hours</td>
+                          <td className="p-2 border">INTEGER</td>
+                          <td className="p-2 border">Horas de validade (24, 48, 72)</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                              Novo (Front)
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">expires_at</td>
+                          <td className="p-2 border">TIMESTAMP</td>
+                          <td className="p-2 border">Data/hora de expiração calculada</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Tabela: files */}
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="bg-blue-100 p-4 border-b">
+                    <h4 className="font-bold text-blue-900 flex items-center gap-2">
+                      <Database className="h-4 w-4" />
+                      Tabela: files
+                    </h4>
+                    <p className="text-sm text-blue-700 mt-1">Arquivos individuais dos compartilhamentos</p>
+                  </div>
+                  <div className="p-4 bg-white">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50">
+                        <tr>
+                          <th className="text-left p-2 border">Campo</th>
+                          <th className="text-left p-2 border">Tipo</th>
+                          <th className="text-left p-2 border">Descrição</th>
+                          <th className="text-left p-2 border">Origem</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">id</td>
+                          <td className="p-2 border">UUID</td>
+                          <td className="p-2 border">Chave primária</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">share_id</td>
+                          <td className="p-2 border">UUID</td>
+                          <td className="p-2 border">FK → shares.id</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">name</td>
+                          <td className="p-2 border">VARCHAR(255)</td>
+                          <td className="p-2 border">Nome do arquivo</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">size_bytes</td>
+                          <td className="p-2 border">BIGINT</td>
+                          <td className="p-2 border">Tamanho em bytes</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">file_type</td>
+                          <td className="p-2 border">VARCHAR(50)</td>
+                          <td className="p-2 border">Extensão/tipo (PDF, XLSX, etc)</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">s3_key</td>
+                          <td className="p-2 border">VARCHAR(512)</td>
+                          <td className="p-2 border">Caminho no S3</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">downloaded</td>
+                          <td className="p-2 border">BOOLEAN</td>
+                          <td className="p-2 border">Se já foi baixado</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 border font-mono text-xs">downloaded_at</td>
+                          <td className="p-2 border">TIMESTAMP</td>
+                          <td className="p-2 border">Data do download</td>
+                          <td className="p-2 border">
+                            <Badge variant="outline" className="text-xs">
+                              Front + Back
+                            </Badge>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Tabelas Adicionais */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="border rounded-lg p-4 bg-slate-50">
+                    <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+                      <Database className="h-4 w-4" />
+                      audit_logs
+                    </h4>
+                    <ul className="text-sm space-y-1 text-slate-700">
+                      <li className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                          Novo
+                        </Badge>
+                        <span>
+                          id, timestamp, user_id, action, level, target_id, description, metadata_json, ip_address
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="border rounded-lg p-4 bg-slate-50">
+                    <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+                      <Database className="h-4 w-4" />
+                      notifications
+                    </h4>
+                    <ul className="text-sm space-y-1 text-slate-700">
+                      <li className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                          Novo
+                        </Badge>
+                        <span>
+                          id, user_id, type, priority, title, message, read, action_label, action_url, created_at
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="border rounded-lg p-4 bg-slate-50">
+                    <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+                      <Database className="h-4 w-4" />
+                      expiration_logs
+                    </h4>
+                    <ul className="text-sm space-y-1 text-slate-700">
+                      <li className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
+                          Novo
+                        </Badge>
+                        <span>id, share_id, changed_by, previous_value, new_value, reason, timestamp</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="border rounded-lg p-4 bg-slate-50">
+                    <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+                      <Database className="h-4 w-4" />
+                      otp_codes
+                    </h4>
+                    <ul className="text-sm space-y-1 text-slate-700">
+                      <li className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          Existente
+                        </Badge>
+                        <span>id, email, codigo, tentativas, expira_em, share_id</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* AWS */}
+          <TabsContent value="aws" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Cloud className="h-5 w-5 text-orange-600" />
+                  Serviços AWS para Integração Completa
+                </CardTitle>
+                <CardDescription>
+                  Arquitetura AWS recomendada para suportar front-end Next.js e back-end FastAPI juntos
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Serviço 1: S3 */}
+                <div className="border-l-4 border-orange-500 bg-orange-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-orange-900 mb-2 flex items-center gap-2">
+                    <Cloud className="h-4 w-4" />
+                    1. Amazon S3 - Armazenamento de Arquivos
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-orange-800 mb-1">Por quê usar:</p>
+                      <p className="text-orange-700">
+                        Armazenamento seguro, escalável e durável para todos os arquivos enviados pelos usuários
+                        internos. Suporta URLs pré-assinadas para download seguro temporário.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-orange-800 mb-1">Como implementar:</p>
+                      <ul className="list-disc list-inside text-orange-700 space-y-1 pl-4">
+                        <li>Front-end: Upload direto para S3 usando presigned URLs do back-end</li>
+                        <li>
+                          Back-end FastAPI: Gera presigned URL com{" "}
+                          <code className="bg-orange-100 px-1.5 py-0.5 rounded">boto3.generate_presigned_url()</code>
+                        </li>
+                        <li>
+                          Estrutura de pastas:{" "}
+                          <code className="bg-orange-100 px-1.5 py-0.5 rounded">
+                            /uploads/{"<"}year{">/"}
+                            {"<"}share_id{">"}/arquivo.pdf
+                          </code>
+                        </li>
+                        <li>Lifecycle policy: Deletar arquivos expirados automaticamente</li>
+                      </ul>
+                    </div>
+                    <div className="bg-orange-100 p-3 rounded-lg">
+                      <p className="font-semibold text-orange-900 mb-1">Integração Front-Back:</p>
+                      <code className="text-xs bg-orange-200 px-2 py-1 rounded block">
+                        1. Front POST /api/uploads/presigned → Back gera URL
+                        <br />
+                        2. Front PUT direto no S3 com URL
+                        <br />
+                        3. Front POST /api/uploads/confirm → Back salva metadados no BD
+                      </code>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Serviço 2: RDS PostgreSQL */}
+                <div className="border-l-4 border-orange-500 bg-orange-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-orange-900 mb-2 flex items-center gap-2">
+                    <Cloud className="h-4 w-4" />
+                    2. Amazon RDS PostgreSQL - Banco de Dados
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-orange-800 mb-1">Por quê usar:</p>
+                      <p className="text-orange-700">
+                        Banco relacional gerenciado, compatível com SQLAlchemy do FastAPI. Backups automáticos,
+                        replicação multi-AZ para alta disponibilidade e performance consistente.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-orange-800 mb-1">Como implementar:</p>
+                      <ul className="list-disc list-inside text-orange-700 space-y-1 pl-4">
+                        <li>Criar RDS PostgreSQL 15+ com instância db.t3.medium</li>
+                        <li>
+                          Back-end: Conectar via{" "}
+                          <code className="bg-orange-100 px-1.5 py-0.5 rounded">
+                            postgresql://user:pass@rds-endpoint:5432/dbname
+                          </code>
+                        </li>
+                        <li>Front-end: Nunca acessa diretamente, apenas via API REST do back-end</li>
+                        <li>Migrations com Alembic para versionamento de schema</li>
+                      </ul>
+                    </div>
+                    <div className="bg-orange-100 p-3 rounded-lg">
+                      <p className="font-semibold text-orange-900 mb-1">Integração Front-Back:</p>
+                      <code className="text-xs bg-orange-200 px-2 py-1 rounded block">
+                        Front (Next.js) → API Gateway → Back (FastAPI) → RDS PostgreSQL
+                      </code>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Serviço 3: Lambda + API Gateway */}
+                <div className="border-l-4 border-orange-500 bg-orange-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-orange-900 mb-2 flex items-center gap-2">
+                    <Cloud className="h-4 w-4" />
+                    3. AWS Lambda + API Gateway - Back-end Serverless
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-orange-800 mb-1">Por quê usar:</p>
+                      <p className="text-orange-700">
+                        Deploy do FastAPI como função Lambda com Mangum adapter. Escala automaticamente, paga apenas
+                        pelo uso, sem gerenciamento de servidores.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-orange-800 mb-1">Como implementar:</p>
+                      <ul className="list-disc list-inside text-orange-700 space-y-1 pl-4">
+                        <li>
+                          Empacotar FastAPI com <code className="bg-orange-100 px-1.5 py-0.5 rounded">mangum</code>{" "}
+                          adapter
+                        </li>
+                        <li>Deploy via SAM ou Serverless Framework</li>
+                        <li>API Gateway expõe endpoints REST públicos</li>
+                        <li>
+                          Front-end chama:{" "}
+                          <code className="bg-orange-100 px-1.5 py-0.5 rounded">
+                            https://api-id.execute-api.us-east-1.amazonaws.com/prod
+                          </code>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Serviço 4: CloudFront */}
+                <div className="border-l-4 border-orange-500 bg-orange-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-orange-900 mb-2 flex items-center gap-2">
+                    <Cloud className="h-4 w-4" />
+                    4. Amazon CloudFront - CDN e Cache
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-orange-800 mb-1">Por quê usar:</p>
+                      <p className="text-orange-700">
+                        CDN global para distribuir front-end Next.js e assets estáticos com baixa latência. Cache de API
+                        responses para reduzir carga no back-end.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-orange-800 mb-1">Como implementar:</p>
+                      <ul className="list-disc list-inside text-orange-700 space-y-1 pl-4">
+                        <li>
+                          Origin 1: S3 bucket com build estático do Next.js (
+                          <code className="bg-orange-100 px-1.5 py-0.5 rounded">next export</code>)
+                        </li>
+                        <li>Origin 2: API Gateway (back-end FastAPI)</li>
+                        <li>Cache policy: Static assets 1 dia, API responses 5 minutos</li>
+                        <li>
+                          SSL/TLS com certificado ACM para{" "}
+                          <code className="bg-orange-100 px-1.5 py-0.5 rounded">app.petrobras.com.br</code>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Serviço 5: SES */}
+                <div className="border-l-4 border-orange-500 bg-orange-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-orange-900 mb-2 flex items-center gap-2">
+                    <Cloud className="h-4 w-4" />
+                    5. Amazon SES - Envio de Emails
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-orange-800 mb-1">Por quê usar:</p>
+                      <p className="text-orange-700">
+                        Envio de emails transacionais (OTP, notificações de aprovação/rejeição) com alta entregabilidade
+                        e baixo custo.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-orange-800 mb-1">Como implementar:</p>
+                      <ul className="list-disc list-inside text-orange-700 space-y-1 pl-4">
+                        <li>
+                          Back-end FastAPI usa{" "}
+                          <code className="bg-orange-100 px-1.5 py-0.5 rounded">boto3.client('ses')</code>
+                        </li>
+                        <li>Verificar domínio petrobras.com.br no SES</li>
+                        <li>Templates HTML para emails de OTP, aprovação, rejeição</li>
+                        <li>Tracking de bounces e complaints</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Serviço 6: Cognito */}
+                <div className="border-l-4 border-orange-500 bg-orange-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-orange-900 mb-2 flex items-center gap-2">
+                    <Cloud className="h-4 w-4" />
+                    6. Amazon Cognito (Opcional) - Autenticação Gerenciada
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-orange-800 mb-1">Por quê usar:</p>
+                      <p className="text-orange-700">
+                        Alternativa para gerenciar autenticação, tokens JWT e refresh tokens sem código customizado.
+                        Suporta MFA, OAuth, SAML.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-orange-800 mb-1">Como implementar:</p>
+                      <ul className="list-disc list-inside text-orange-700 space-y-1 pl-4">
+                        <li>Criar User Pool para usuários internos e supervisores</li>
+                        <li>Front-end Next.js usa amplify-js ou cognito-identity-js</li>
+                        <li>Back-end FastAPI valida tokens JWT do Cognito</li>
+                        <li>Alternativa: Implementação custom com PyJWT (mais controle, mais código)</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Arquitetura Completa */}
+                <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-6 rounded-lg border-2 border-orange-200">
+                  <h3 className="font-bold text-orange-900 mb-4 text-lg">Arquitetura AWS Completa</h3>
+                  <div className="space-y-2 text-sm text-orange-800 font-mono bg-white p-4 rounded border border-orange-200">
+                    <p>┌─────────────────────────────────────────────────┐</p>
+                    <p>│ Usuário Interno/Supervisor → CloudFront │</p>
+                    <p>│ (Next.js SSG/ISR hospedado no S3) │</p>
+                    <p>└──────────────────┬──────────────────────────────┘</p>
+                    <p> ↓</p>
+                    <p>┌──────────────────┴──────────────────────────────┐</p>
+                    <p>│ API Gateway │</p>
+                    <p>│ /auth/*, /uploads/*, /supervisor/* │</p>
+                    <p>└──────────────────┬──────────────────────────────┘</p>
+                    <p> ↓</p>
+                    <p>┌──────────────────┴──────────────────────────────┐</p>
+                    <p>│ AWS Lambda (FastAPI + Mangum) │</p>
+                    <p>│ - Autenticação JWT │</p>
+                    <p>│ - Upload/Approval workflow │</p>
+                    <p>│ - Geração presigned URLs S3 │</p>
+                    <p>└────┬─────────────────┬──────────────────────────┘</p>
+                    <p> ↓ ↓</p>
+                    <p> ┌────────┴─────┐ ┌────┴──────┐</p>
+                    <p> │ RDS PostgreSQL│ │ S3 Bucket │</p>
+                    <p> │ - users │ │ - Arquivos │</p>
+                    <p> │ - shares │ │ │</p>
+                    <p> │ - files │ │ │</p>
+                    <p> │ - audit_logs │ └───────────┘</p>
+                    <p> └──────────────┘</p>
+                    <p> ↓</p>
+                    <p> ┌──────────────┐</p>
+                    <p> │ Amazon SES │</p>
+                    <p> │ (Emails OTP) │</p>
+                    <p> └──────────────┘</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Estratégia */}
+          <TabsContent value="estrategia" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Lightbulb className="h-5 w-5 text-purple-600" />
+                  Estratégia de Integração Completa
+                </CardTitle>
+                <CardDescription>
+                  Passo a passo detalhado para conectar front-end Next.js e back-end FastAPI em todas as páginas e
+                  perfis
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Fase 1 */}
+                <div className="border-l-4 border-purple-500 bg-purple-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-purple-900 mb-3 flex items-center gap-2 text-lg">
+                    <Badge className="bg-purple-600">Fase 1</Badge>
+                    Preparação do Back-end
+                  </h3>
+                  <div className="space-y-4 text-sm">
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">1.1. Criar estrutura de banco de dados</p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>
+                          Criar migrations com Alembic para todas as tabelas (users, shares, files, audit_logs, etc)
+                        </li>
+                        <li>
+                          Adicionar campos <code className="bg-purple-100 px-1.5 py-0.5 rounded">status</code>,{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">rejection_reason</code>,{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">approved_by</code> na tabela shares
+                        </li>
+                        <li>Executar migrations no PostgreSQL RDS</li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">1.2. Implementar autenticação JWT</p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>
+                          Criar endpoint <code className="bg-purple-100 px-1.5 py-0.5 rounded">POST /auth/login</code>{" "}
+                          (email/password)
+                        </li>
+                        <li>
+                          Criar endpoint <code className="bg-purple-100 px-1.5 py-0.5 rounded">POST /auth/refresh</code>{" "}
+                          (renovar token)
+                        </li>
+                        <li>Retornar accessToken + refreshToken + user object</li>
+                        <li>Implementar middleware de validação JWT em todas as rotas protegidas</li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">1.3. Criar endpoints de upload</p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">POST /uploads/presigned</code> - Gerar
+                          URL pré-assinada S3
+                        </li>
+                        <li>
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">POST /uploads</code> - Confirmar upload
+                          e criar share (status: pending)
+                        </li>
+                        <li>
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">GET /uploads</code> - Listar uploads do
+                          usuário
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">1.4. Criar endpoints de supervisor</p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">GET /supervisor/pending</code> - Listar
+                          pendentes
+                        </li>
+                        <li>
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">GET /supervisor/all</code> - Listar
+                          todos (com filtro status)
+                        </li>
+                        <li>
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">POST /supervisor/approve/:id</code> -
+                          Aprovar
+                        </li>
+                        <li>
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">POST /supervisor/reject/:id</code> -
+                          Rejeitar (com motivo)
+                        </li>
+                        <li>
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">PATCH /supervisor/expiration/:id</code>{" "}
+                          - Ajustar tempo
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fase 2 */}
+                <div className="border-l-4 border-purple-500 bg-purple-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-purple-900 mb-3 flex items-center gap-2 text-lg">
+                    <Badge className="bg-purple-600">Fase 2</Badge>
+                    Adaptação do Front-end
+                  </h3>
+                  <div className="space-y-4 text-sm">
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">2.1. Criar serviço de API</p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>
+                          Criar <code className="bg-purple-100 px-1.5 py-0.5 rounded">lib/api/client.ts</code> com fetch
+                          wrapper
+                        </li>
+                        <li>Adicionar interceptor para incluir accessToken em headers</li>
+                        <li>Implementar refresh automático quando token expira (401)</li>
+                        <li>Converter snake_case (back-end) ↔ camelCase (front-end) automaticamente</li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">2.2. Conectar auth-store</p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>
+                          Função <code className="bg-purple-100 px-1.5 py-0.5 rounded">login()</code> chama{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">POST /auth/login</code>
+                        </li>
+                        <li>Salvar tokens e user no Zustand persist (mesmo schema atual)</li>
+                        <li>
+                          Função <code className="bg-purple-100 px-1.5 py-0.5 rounded">logout()</code> limpa store e
+                          redireciona
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">2.3. Conectar workflow-store</p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>
+                          Função <code className="bg-purple-100 px-1.5 py-0.5 rounded">addUpload()</code> chama{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">POST /uploads/presigned</code> + S3 +{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">POST /uploads</code>
+                        </li>
+                        <li>
+                          Função <code className="bg-purple-100 px-1.5 py-0.5 rounded">approveUpload()</code> chama{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">POST /supervisor/approve/:id</code>
+                        </li>
+                        <li>
+                          Função <code className="bg-purple-100 px-1.5 py-0.5 rounded">rejectUpload()</code> chama{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">POST /supervisor/reject/:id</code>
+                        </li>
+                        <li>
+                          Carregar dados iniciais com{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">GET /uploads</code> ou{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">GET /supervisor/all</code>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fase 3 */}
+                <div className="border-l-4 border-purple-500 bg-purple-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-purple-900 mb-3 flex items-center gap-2 text-lg">
+                    <Badge className="bg-purple-600">Fase 3</Badge>
+                    Integração por Página/Perfil
+                  </h3>
+                  <div className="space-y-4 text-sm">
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">3.1. Página de Login (app/page.tsx)</p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>
+                          <strong>Status Atual:</strong> Mock local com usuários hardcoded
+                        </li>
+                        <li>
+                          <strong>Mudança:</strong> Chamar{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">POST /auth/login</code> ao submeter
+                        </li>
+                        <li>
+                          <strong>Validação:</strong> Mensagens de erro do back-end (credenciais inválidas, usuário não
+                          existe)
+                        </li>
+                        <li>
+                          <strong>Redirecionamento:</strong> Conforme userType retornado (/upload, /supervisor,
+                          /download)
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">3.2. Upload (app/upload/page.tsx)</p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>
+                          <strong>Status Atual:</strong> Adiciona no Zustand local (mock)
+                        </li>
+                        <li>
+                          <strong>Mudança:</strong> Fluxo completo S3 + API
+                          <ol className="list-decimal list-inside ml-4 mt-1">
+                            <li>Solicitar presigned URL</li>
+                            <li>Upload direto para S3</li>
+                            <li>Confirmar upload com metadados</li>
+                          </ol>
+                        </li>
+                        <li>
+                          <strong>Validação:</strong> Arquivos perigosos já implementada (manter)
+                        </li>
+                        <li>
+                          <strong>Feedback:</strong> Progress bar real do upload S3
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">3.3. Supervisor (app/supervisor/page.tsx)</p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>
+                          <strong>Status Atual:</strong> Lista uploads do Zustand local
+                        </li>
+                        <li>
+                          <strong>Mudança:</strong> Carregar com{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">GET /supervisor/all</code>
+                        </li>
+                        <li>
+                          <strong>Widgets:</strong> Contadores (pendentes, aprovados, rejeitados) vêm do back-end
+                        </li>
+                        <li>
+                          <strong>Filtros:</strong> Enviar parâmetros status, search para API
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">
+                        3.4. Detalhes (app/supervisor/detalhes/[id]/page.tsx)
+                      </p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>
+                          <strong>Status Atual:</strong> Busca upload por ID no Zustand
+                        </li>
+                        <li>
+                          <strong>Mudança:</strong> Chamar{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">GET /supervisor/:id</code>
+                        </li>
+                        <li>
+                          <strong>Aprovar:</strong>{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">POST /supervisor/approve/:id</code> +
+                          recarregar dados
+                        </li>
+                        <li>
+                          <strong>Rejeitar:</strong> Modal com motivo →{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">POST /supervisor/reject/:id</code>
+                        </li>
+                        <li>
+                          <strong>Ajustar Expiração:</strong>{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">PATCH /supervisor/expiration/:id</code>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">
+                        3.5. Download Externo (app/download/page.tsx)
+                      </p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>
+                          <strong>Status Atual:</strong> Lista do Zustand apenas aprovados
+                        </li>
+                        <li>
+                          <strong>Mudança:</strong> Autenticação OTP mantém fluxo atual (já compatível!)
+                        </li>
+                        <li>
+                          <strong>Listar:</strong>{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">GET /externo/lista?token=...</code>
+                        </li>
+                        <li>
+                          <strong>Download:</strong> Usar presigned URL do back-end
+                        </li>
+                        <li>
+                          <strong>ACK:</strong>{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">POST /externo/ack</code> ao clicar
+                          download
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">3.6. Auditoria (app/auditoria/page.tsx)</p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>
+                          <strong>Status Atual:</strong> Lista do audit-log-store (Zustand)
+                        </li>
+                        <li>
+                          <strong>Mudança:</strong> Carregar com{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">GET /audit-logs</code> (com paginação)
+                        </li>
+                        <li>
+                          <strong>Filtros:</strong> Por usuário, ação, nível, data (query params)
+                        </li>
+                        <li>
+                          <strong>Exportar:</strong>{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">GET /audit-logs/export?format=csv</code>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">3.7. Histórico (app/historico/page.tsx)</p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>
+                          <strong>Status Atual:</strong> Lista todos uploads do Zustand
+                        </li>
+                        <li>
+                          <strong>Mudança:</strong> Carregar com{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">GET /uploads?user_id=current</code>
+                        </li>
+                        <li>
+                          <strong>Filtros:</strong> Status, data, destinatário
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fase 4 */}
+                <div className="border-l-4 border-purple-500 bg-purple-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-purple-900 mb-3 flex items-center gap-2 text-lg">
+                    <Badge className="bg-purple-600">Fase 4</Badge>
+                    Deploy e Testes
+                  </h3>
+                  <div className="space-y-4 text-sm">
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">4.1. Deploy Back-end</p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>Empacotar FastAPI com Docker ou SAM</li>
+                        <li>Deploy no Lambda + API Gateway</li>
+                        <li>Configurar variáveis de ambiente (DATABASE_URL, JWT_SECRET, S3_BUCKET, SES_SENDER)</li>
+                        <li>Executar migrations no RDS PostgreSQL</li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">4.2. Deploy Front-end</p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>
+                          Build estático Next.js:{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">next build</code>
+                        </li>
+                        <li>Upload para S3 bucket</li>
+                        <li>Configurar CloudFront para servir S3 + API Gateway</li>
+                        <li>
+                          Adicionar variável{" "}
+                          <code className="bg-purple-100 px-1.5 py-0.5 rounded">NEXT_PUBLIC_API_URL</code> apontando
+                          para API Gateway
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border border-purple-200">
+                      <p className="font-semibold text-purple-900 mb-2">4.3. Testes de Integração</p>
+                      <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                        <li>Login como interno → Upload → Aguardar aprovação</li>
+                        <li>Login como supervisor → Aprovar/Rejeitar</li>
+                        <li>Download externo com OTP → Verificar ACK</li>
+                        <li>Auditoria → Verificar todos logs registrados</li>
+                        <li>Testar expiração de tokens e refresh automático</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Checklist Final */}
+                <div className="bg-gradient-to-r from-purple-50 to-violet-50 p-6 rounded-lg border-2 border-purple-200">
+                  <h3 className="font-bold text-purple-900 mb-4 text-lg flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5" />
+                    Checklist de Integração
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div className="space-y-2">
+                      <p className="font-semibold text-purple-900">Back-end</p>
+                      <ul className="space-y-1 text-purple-700">
+                        <li className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Banco de dados PostgreSQL criado</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Migrations executadas</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Endpoints de auth implementados</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Endpoints de upload implementados</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Endpoints de supervisor implementados</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Sistema de auditoria implementado</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Integração S3 funcionando</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Envio de emails SES configurado</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="font-semibold text-purple-900">Front-end</p>
+                      <ul className="space-y-1 text-purple-700">
+                        <li className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>API client criado</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Auth store conectado</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Workflow store conectado</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Página de login integrada</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Página de upload integrada</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Página de supervisor integrada</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Página de download integrada</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <input type="checkbox" className="rounded" />
+                          <span>Página de auditoria integrada</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  )
+}

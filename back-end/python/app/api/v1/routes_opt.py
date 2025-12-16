@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlmodel import Session, select
 from pydantic import BaseModel, EmailStr
@@ -87,4 +86,3 @@ def verificar(payload: VerificarPayload, session: Session = Depends(get_session)
         return TokenRead(token=access.token, expira_em=access.expira_em)
     except TokenError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    

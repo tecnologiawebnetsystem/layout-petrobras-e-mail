@@ -59,6 +59,14 @@ export default function WikiDevPage() {
       color: "from-indigo-500 to-blue-500",
       topics: ["Usuário Interno", "Supervisor", "Externo", "Demo Vazio"],
     },
+    {
+      title: "Integração Front-Back",
+      description: "Análise completa de compatibilidade e estratégia de integração",
+      icon: Server,
+      href: "/wiki-dev/integracao",
+      color: "from-violet-500 to-purple-500",
+      topics: ["Conflitos", "Campos Comuns", "Banco de Dados", "AWS", "Estratégia"],
+    },
   ]
 
   const filteredCategories = wikiCategories.filter(

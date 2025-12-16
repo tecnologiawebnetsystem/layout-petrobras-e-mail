@@ -1,4 +1,3 @@
-
 # scripts/seed_dev.py
 import os
 from pathlib import Path
