@@ -11,7 +11,7 @@ Este guia simplificado permite fazer o deploy básico do sistema em **1 dia** us
 
 ## Passo 1: Configurar AWS CLI (10 min)
 
-\`\`\`bash
+```bash
 # Instalar AWS CLI
 pip install awscli
 
@@ -21,11 +21,11 @@ aws configure
 # AWS Secret Access Key: [seu-secret]
 # Default region: us-east-1
 # Output format: json
-\`\`\`
+```
 
 ## Passo 2: Deploy com CloudFormation (30 min)
 
-\`\`\`bash
+```bash
 # Clone o repositório
 cd sql/
 
@@ -46,11 +46,11 @@ aws cloudformation wait stack-create-complete \
 aws cloudformation describe-stacks \
   --stack-name petrobras-file-transfer \
   --query 'Stacks[0].Outputs'
-\`\`\`
+```
 
 ## Passo 3: Deploy do Backend (1 hora)
 
-\`\`\`bash
+```bash
 # Criar Lambda functions
 cd ../backend/
 
@@ -81,11 +81,11 @@ for func in functions/*/*.py; do
     
   cd -
 done
-\`\`\`
+```
 
 ## Passo 4: Deploy do Frontend (30 min)
 
-\`\`\`bash
+```bash
 # Build do Next.js
 cd ../../
 npm install
@@ -99,11 +99,11 @@ aws cloudformation describe-stacks \
   --stack-name petrobras-file-transfer \
   --query 'Stacks[0].Outputs[?OutputKey==`CloudFrontURL`].OutputValue' \
   --output text
-\`\`\`
+```
 
 ## Passo 5: Configurar Cognito (20 min)
 
-\`\`\`bash
+```bash
 # Criar usuário admin de teste
 aws cognito-idp admin-create-user \
   --user-pool-id [USER_POOL_ID] \
@@ -118,7 +118,7 @@ aws cognito-idp admin-set-user-password \
   --username admin@petrobras.com.br \
   --password AdminPass123! \
   --permanent
-\`\`\`
+```
 
 ## Passo 6: Testar o Sistema (30 min)
 
@@ -131,7 +131,7 @@ aws cognito-idp admin-set-user-password \
 ## Configurações Adicionais (Opcional)
 
 ### Domínio Customizado
-\`\`\`bash
+```bash
 # Solicitar certificado SSL
 aws acm request-certificate \
   --domain-name files.petrobras.com.br \
@@ -141,15 +141,15 @@ aws acm request-certificate \
 aws route53 change-resource-record-sets \
   --hosted-zone-id [ZONE_ID] \
   --change-batch file://route53-changes.json
-\`\`\`
+```
 
 ### Monitoramento Básico
-\`\`\`bash
+```bash
 # Criar dashboard CloudWatch
 aws cloudwatch put-dashboard \
   --dashboard-name petrobras-monitoring \
   --dashboard-body file://dashboard-basic.json
-\`\`\`
+```
 
 ## Verificação Final
 

@@ -54,7 +54,6 @@ export function DragDropZone({ onFilesSelected, selectedFiles, onRemoveFile }: D
 
       for (const file of files) {
         if (isZipFile(file)) {
-          console.log("[v0] Validating ZIP file:", file.name)
           const result: ZipValidationResult = await validateZipFile(file)
 
           if (!result.isValid) {

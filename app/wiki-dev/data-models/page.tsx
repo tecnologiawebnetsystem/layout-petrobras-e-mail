@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Database, Key, Zap } from "lucide-react"
+import { ArrowLeft, Database, Key, Zap, AlertCircle } from "lucide-react"
 import Link from "next/link"
 
 export default function DataModelsPage() {
@@ -27,8 +27,40 @@ export default function DataModelsPage() {
             <Database className="h-7 w-7 text-white" />
           </div>
           <h1 className="mb-3 text-4xl font-bold tracking-tight text-slate-900">Modelos de Dados</h1>
-          <p className="text-lg text-slate-600">Estrutura completa das tabelas DynamoDB e relacionamentos</p>
+          <p className="text-lg text-slate-600">
+            Estrutura completa das tabelas DynamoDB explicando <strong>ONDE</strong> cada campo é usado no sistema
+          </p>
         </div>
+
+        <Card className="mb-8 border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-900">
+              <AlertCircle className="h-5 w-5" />
+              Mudanças Recentes no Sistema
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-blue-900">
+            <p>
+              • <strong>Proteção removida:</strong> Campo "password" removido da tabela Files - arquivos não precisam
+              mais de senha
+            </p>
+            <p>
+              • <strong>Limite de disponibilidade:</strong> Campo "expiresAt" agora aceita máximo de 72 horas (3 dias)
+            </p>
+            <p>
+              • <strong>Validação de arquivos:</strong> Novos campos "blockedExtensions" e "validationResult" para
+              bloquear .exe, .dll, etc
+            </p>
+            <p>
+              • <strong>Motivo de rejeição:</strong> Novo campo "rejectionReason" na tabela Files para supervisores
+              informarem motivo
+            </p>
+            <p>
+              • <strong>Widgets separados:</strong> Status "pending", "approved", "rejected" agora são contados
+              separadamente no dashboard
+            </p>
+          </CardContent>
+        </Card>
 
         {/* Tables Overview */}
         <Tabs defaultValue="users" className="space-y-6">
@@ -53,6 +85,29 @@ export default function DataModelsPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                  <h4 className="mb-2 font-semibold text-blue-900">ONDE É USADO NO SISTEMA:</h4>
+                  <ul className="space-y-1 text-sm text-blue-800">
+                    <li>
+                      • <strong>Login:</strong> app/page.tsx e components/auth/login-form.tsx - validação de email/senha
+                    </li>
+                    <li>
+                      • <strong>Header:</strong> components/shared/app-header.tsx - exibe nome e tipo do usuário
+                      (userType: internal, external, supervisor)
+                    </li>
+                    <li>
+                      • <strong>Upload:</strong> app/upload/page.tsx - campo uploadedBy referencia userId
+                    </li>
+                    <li>
+                      • <strong>Supervisor:</strong> app/supervisor/page.tsx - filtra arquivos que precisam aprovação
+                      baseado em userType
+                    </li>
+                    <li>
+                      • <strong>Permissões:</strong> lib/stores/auth-store.ts - controla acesso baseado em userType
+                    </li>
+                  </ul>
+                </div>
+
                 {/* Primary Key */}
                 <div>
                   <div className="mb-3 flex items-center gap-2">
@@ -74,15 +129,60 @@ export default function DataModelsPage() {
                   <h4 className="mb-3 font-semibold text-slate-900">Atributos</h4>
                   <div className="space-y-2">
                     {[
-                      { name: "userId", type: "String", desc: "ID único do usuário (UUID)" },
-                      { name: "email", type: "String", desc: "Email do usuário (único)" },
-                      { name: "name", type: "String", desc: "Nome completo do usuário" },
-                      { name: "role", type: "String", desc: "Papel: internal, external, supervisor" },
-                      { name: "department", type: "String", desc: "Departamento (opcional)" },
-                      { name: "status", type: "String", desc: "Status: active, inactive, suspended" },
-                      { name: "createdAt", type: "String", desc: "Data de criação (ISO 8601)" },
-                      { name: "updatedAt", type: "String", desc: "Última atualização (ISO 8601)" },
-                      { name: "lastLogin", type: "String", desc: "Último login (ISO 8601)" },
+                      {
+                        name: "userId",
+                        type: "String",
+                        desc: "ID único do usuário (UUID)",
+                        where: "auth-store.ts - identifica usuário logado",
+                      },
+                      {
+                        name: "email",
+                        type: "String",
+                        desc: "Email do usuário (único)",
+                        where: "login-form.tsx - campo de login",
+                      },
+                      {
+                        name: "name",
+                        type: "String",
+                        desc: "Nome completo do usuário",
+                        where: "app-header.tsx - exibido no header",
+                      },
+                      {
+                        name: "userType",
+                        type: "String",
+                        desc: "Tipo: internal, external, supervisor",
+                        where: "supervisor/page.tsx - controla acesso às páginas",
+                      },
+                      {
+                        name: "department",
+                        type: "String",
+                        desc: "Departamento (opcional)",
+                        where: "app/upload/page.tsx - metadata do arquivo",
+                      },
+                      {
+                        name: "position",
+                        type: "String",
+                        desc: "Cargo do usuário",
+                        where: "supervisor/detalhes/[id]/page.tsx - mostra remetente",
+                      },
+                      {
+                        name: "status",
+                        type: "String",
+                        desc: "Status: active, inactive",
+                        where: "auth-store.ts - valida se pode logar",
+                      },
+                      {
+                        name: "createdAt",
+                        type: "String",
+                        desc: "Data de criação (ISO 8601)",
+                        where: "Auditoria e relatórios",
+                      },
+                      {
+                        name: "lastLogin",
+                        type: "String",
+                        desc: "Último login (ISO 8601)",
+                        where: "app/historico/page.tsx - histórico de acessos",
+                      },
                     ].map((attr, idx) => (
                       <div
                         key={idx}
@@ -91,6 +191,7 @@ export default function DataModelsPage() {
                         <div className="flex-1">
                           <div className="font-mono text-sm font-medium text-slate-900">{attr.name}</div>
                           <div className="text-sm text-slate-600">{attr.desc}</div>
+                          <div className="mt-1 text-xs text-blue-600">📍 {attr.where}</div>
                         </div>
                         <Badge variant="outline">{attr.type}</Badge>
                       </div>
@@ -137,6 +238,31 @@ export default function DataModelsPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
+                <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                  <h4 className="mb-2 font-semibold text-green-900">ONDE É USADO NO SISTEMA:</h4>
+                  <ul className="space-y-1 text-sm text-green-800">
+                    <li>
+                      • <strong>Upload:</strong> app/upload/page.tsx - cria registro ao enviar arquivo com limite de 72h
+                    </li>
+                    <li>
+                      • <strong>Download:</strong> app/download/page.tsx - lista apenas arquivos disponíveis (não
+                      expirados)
+                    </li>
+                    <li>
+                      • <strong>Supervisor (3 widgets):</strong> app/supervisor/page.tsx - filtra por status: pending,
+                      approved, rejected
+                    </li>
+                    <li>
+                      • <strong>Detalhes:</strong> app/supervisor/detalhes/[id]/page.tsx - exibe todos os campos +
+                      permite aprovar/rejeitar COM MOTIVO
+                    </li>
+                    <li>
+                      • <strong>Validação:</strong> lib/utils/zip-validator.ts - bloqueia .exe, .dll e atualiza campo
+                      blockedFiles
+                    </li>
+                  </ul>
+                </div>
+
                 {/* Primary Key */}
                 <div>
                   <div className="mb-3 flex items-center gap-2">
@@ -158,30 +284,111 @@ export default function DataModelsPage() {
                   <h4 className="mb-3 font-semibold text-slate-900">Atributos</h4>
                   <div className="space-y-2">
                     {[
-                      { name: "fileId", type: "String", desc: "ID único do arquivo (UUID)" },
-                      { name: "fileName", type: "String", desc: "Nome original do arquivo" },
-                      { name: "fileSize", type: "Number", desc: "Tamanho em bytes" },
-                      { name: "fileType", type: "String", desc: "MIME type do arquivo" },
-                      { name: "s3Key", type: "String", desc: "Chave do objeto no S3" },
-                      { name: "s3Bucket", type: "String", desc: "Nome do bucket S3" },
-                      { name: "uploadedBy", type: "String", desc: "ID do usuário que fez upload" },
-                      { name: "destinationUser", type: "String", desc: "ID do usuário de destino" },
-                      { name: "status", type: "String", desc: "pending, approved, rejected, downloaded" },
-                      { name: "expiresAt", type: "String", desc: "Data de expiração (ISO 8601)" },
-                      { name: "description", type: "String", desc: "Descrição opcional" },
-                      { name: "downloadCount", type: "Number", desc: "Número de downloads" },
-                      { name: "validationType", type: "String", desc: "Tipo de validação realizada" },
-                      { name: "validationResult", type: "Map", desc: "Resultado da validação ZIP" },
-                      { name: "createdAt", type: "String", desc: "Data de criação" },
-                      { name: "updatedAt", type: "String", desc: "Última atualização" },
+                      {
+                        name: "fileId",
+                        type: "String",
+                        desc: "ID único do arquivo (UUID)",
+                        where: "Todas as páginas - referência principal",
+                      },
+                      {
+                        name: "fileName",
+                        type: "String",
+                        desc: "Nome original do arquivo",
+                        where: "download/page.tsx e detalhes - exibe nome",
+                      },
+                      {
+                        name: "fileSize",
+                        type: "Number",
+                        desc: "Tamanho em bytes",
+                        where: "upload/page.tsx - validação de 5GB max",
+                      },
+                      {
+                        name: "s3Key",
+                        type: "String",
+                        desc: "Chave do objeto no S3",
+                        where: "Backend Lambda - download do arquivo",
+                      },
+                      {
+                        name: "uploadedBy",
+                        type: "String",
+                        desc: "ID do usuário que fez upload",
+                        where: "historico/page.tsx - filtro por usuário",
+                      },
+                      {
+                        name: "destinationUser",
+                        type: "String",
+                        desc: "Email do destinatário",
+                        where: "download/page.tsx - controla quem pode baixar",
+                      },
+                      {
+                        name: "status",
+                        type: "String",
+                        desc: "pending, approved, rejected",
+                        where: "supervisor/page.tsx - SEPARADO EM 3 WIDGETS",
+                        new: true,
+                      },
+                      {
+                        name: "rejectionReason",
+                        type: "String",
+                        desc: "Motivo da rejeição (obrigatório ao rejeitar)",
+                        where: "detalhes/[id]/page.tsx - modal de rejeição",
+                        new: true,
+                      },
+                      {
+                        name: "expiresAt",
+                        type: "String",
+                        desc: "Data de expiração (MAX 72 HORAS)",
+                        where: "upload/page.tsx - select com 24h, 48h, 72h",
+                        new: true,
+                      },
+                      {
+                        name: "blockedFiles",
+                        type: "List",
+                        desc: "Lista de arquivos bloqueados (.exe, .dll)",
+                        where: "upload/page.tsx - validação antes do upload",
+                        new: true,
+                      },
+                      {
+                        name: "validationResult",
+                        type: "Map",
+                        desc: "Resultado da validação ZIP",
+                        where: "zip-validator.ts - detalhes da validação",
+                      },
+                      {
+                        name: "downloadCount",
+                        type: "Number",
+                        desc: "Número de downloads",
+                        where: "download/page.tsx - incrementado a cada download",
+                      },
+                      {
+                        name: "approvedBy",
+                        type: "String",
+                        desc: "ID do supervisor que aprovou",
+                        where: "detalhes/[id]/page.tsx - registra quem aprovou",
+                      },
+                      {
+                        name: "approvedAt",
+                        type: "String",
+                        desc: "Data da aprovação",
+                        where: "historico/page.tsx - timeline de eventos",
+                      },
+                      { name: "createdAt", type: "String", desc: "Data de criação", where: "Ordenação de listas" },
                     ].map((attr, idx) => (
                       <div
                         key={idx}
                         className="flex items-start justify-between rounded-lg border border-slate-200 p-3"
                       >
                         <div className="flex-1">
-                          <div className="font-mono text-sm font-medium text-slate-900">{attr.name}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="font-mono text-sm font-medium text-slate-900">{attr.name}</div>
+                            {attr.new && (
+                              <Badge variant="outline" className="text-xs">
+                                Novo
+                              </Badge>
+                            )}
+                          </div>
                           <div className="text-sm text-slate-600">{attr.desc}</div>
+                          <div className="mt-1 text-xs text-green-600">📍 {attr.where}</div>
                         </div>
                         <Badge variant="outline">{attr.type}</Badge>
                       </div>

@@ -4,7 +4,7 @@
 
 Armazena informações dos usuários do sistema.
 
-\`\`\`json
+```json
 {
   "userId": "usr_123456",
   "email": "joao.silva@petrobras.com.br",
@@ -28,7 +28,7 @@ Armazena informações dos usuários do sistema.
     "failedLoginAttempts": 0
   }
 }
-\`\`\`
+```
 
 **Índices:**
 - EmailIndex (GSI): Busca por email
@@ -40,7 +40,7 @@ Armazena informações dos usuários do sistema.
 
 Armazena informações dos arquivos enviados e seu ciclo de vida.
 
-\`\`\`json
+```json
 {
   "fileId": "file_789012",
   "name": "Relatório Anual 2023",
@@ -79,7 +79,7 @@ Armazena informações dos arquivos enviados e seu ciclo de vida.
     "hasPassword": false
   }
 }
-\`\`\`
+```
 
 **Índices:**
 - UploaderIndex (GSI): Buscar uploads por usuário + data
@@ -95,7 +95,7 @@ Armazena informações dos arquivos enviados e seu ciclo de vida.
 
 Rastreamento completo de todas as ações do sistema.
 
-\`\`\`json
+```json
 {
   "logId": "log_555666",
   "timestamp": "2024-01-20T10:30:00Z",
@@ -118,7 +118,7 @@ Rastreamento completo de todas as ações do sistema.
     "newValue": 72
   }
 }
-\`\`\`
+```
 
 **Índices:**
 - UserIndex (GSI): Logs por usuário + timestamp
@@ -132,7 +132,7 @@ Rastreamento completo de todas as ações do sistema.
 
 Sistema de notificações em tempo real.
 
-\`\`\`json
+```json
 {
   "notificationId": "notif_111222",
   "userId": "usr_123456",
@@ -152,7 +152,7 @@ Sistema de notificações em tempo real.
   },
   "ttl": 1707318000
 }
-\`\`\`
+```
 
 **Índices:**
 - UserNotificationsIndex (GSI): Notificações por usuário + data
@@ -168,7 +168,7 @@ Sistema de notificações em tempo real.
 
 Controle de sessões e tokens JWT.
 
-\`\`\`json
+```json
 {
   "sessionId": "sess_333444",
   "userId": "usr_123456",
@@ -182,7 +182,7 @@ Controle de sessões e tokens JWT.
   "expiresAt": "2024-01-21T10:00:00Z",
   "ttl": 1705921200
 }
-\`\`\`
+```
 
 **Índices:**
 - UserSessionsIndex (GSI): Sessões por usuário
@@ -196,7 +196,7 @@ Controle de sessões e tokens JWT.
 
 Histórico de alterações de tempo de expiração.
 
-\`\`\`json
+```json
 {
   "logId": "explog_777888",
   "timestamp": "2024-01-20T15:00:00Z",
@@ -212,7 +212,7 @@ Histórico de alterações de tempo de expiração.
     "recipientEmail": "cliente@gmail.com"
   }
 }
-\`\`\`
+```
 
 **Índices:**
 - FileExpirationIndex (GSI): Logs por arquivo + timestamp
@@ -223,35 +223,35 @@ Histórico de alterações de tempo de expiração.
 ## Queries Comuns
 
 ### Buscar uploads de um usuário interno
-\`\`\`python
+```python
 response = table.query(
     IndexName='UploaderIndex',
     KeyConditionExpression='uploadedBy = :userId',
     ExpressionAttributeValues={':userId': 'usr_123456'}
 )
-\`\`\`
+```
 
 ### Buscar downloads de um externo
-\`\`\`python
+```python
 response = table.query(
     IndexName='RecipientIndex',
     KeyConditionExpression='recipientEmail = :email',
     ExpressionAttributeValues={':email': 'cliente@gmail.com'}
 )
-\`\`\`
+```
 
 ### Buscar arquivos pendentes
-\`\`\`python
+```python
 response = table.query(
     IndexName='StatusIndex',
     KeyConditionExpression='#status = :status',
     ExpressionAttributeNames={'#status': 'status'},
     ExpressionAttributeValues={':status': 'pending'}
 )
-\`\`\`
+```
 
 ### Buscar notificações não lidas
-\`\`\`python
+```python
 response = table.query(
     IndexName='UnreadNotificationsIndex',
     KeyConditionExpression='userId = :userId AND isRead = :isRead',
@@ -260,10 +260,10 @@ response = table.query(
         ':isRead': 'false'
     }
 )
-\`\`\`
+```
 
 ### Buscar logs de um arquivo específico
-\`\`\`python
+```python
 response = table.query(
     IndexName='FileIndex',
     KeyConditionExpression='fileId = :fileId',

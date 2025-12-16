@@ -193,24 +193,6 @@ export const useWorkflowStore = create<WorkflowState>()(
           actionLabel: "Ver Histórico",
           actionUrl: "/historico",
         })
-
-        console.log(`[v0] Email enviado para ${upload.recipient}:
-          
-Olá!
-
-Você recebeu ${upload.files.length} arquivo(s) da Petrobras.
-
-Remetente: ${upload.sender.name}
-Assunto: ${upload.name}
-Descrição: ${upload.description}
-
-Acesse o link abaixo para fazer o download seguro:
-https://petrobras-download.com/secure/${id}
-
-⚠️ ATENÇÃO: Este link expira em ${upload.expirationHours} horas (${expiresAt}).
-
-Atenciosamente,
-Sistema de Transferência Segura de Arquivos - Petrobras`)
       },
 
       rejectUpload: (id, rejectedBy, reason) => {
@@ -323,14 +305,6 @@ Sistema de Transferência Segura de Arquivos - Petrobras`)
           actionLabel: "Ver Detalhes",
           actionUrl: "/historico",
         })
-
-        console.log(`[v0] Log de alteração registrado:
-Upload: ${upload.name}
-Alterado por: ${changedBy}
-Valor anterior: ${previousValue} horas
-Novo valor: ${newHours} horas
-Motivo: ${reason || "Ajuste pelo supervisor"}
-Data: ${log.timestamp}`)
       },
 
       checkIfExpired: (id) => {

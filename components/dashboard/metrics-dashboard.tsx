@@ -55,9 +55,6 @@ interface MetricsDashboardProps {
 export function MetricsDashboard({ total, pending, approved, rejected, userType }: MetricsDashboardProps) {
   const [selectedMetric, setSelectedMetric] = useState<"total" | "pending" | "approved" | "rejected" | null>(null)
 
-  console.log("[v0] MetricsDashboard - userType:", userType)
-  console.log("[v0] MetricsDashboard - metrics:", { total, pending, approved, rejected })
-
   const getMockFiles = (status: "total" | "pending" | "approved" | "rejected") => {
     const mockFiles = {
       total: [
@@ -225,9 +222,6 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
 
   const metrics = getMetrics()
   const currentMetric = metrics.find((m) => m.type === selectedMetric)
-
-  console.log("[v0] selectedMetric:", selectedMetric)
-  console.log("[v0] currentMetric:", currentMetric)
 
   return (
     <>

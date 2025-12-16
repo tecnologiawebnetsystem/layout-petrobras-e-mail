@@ -1,365 +1,363 @@
-# Sistema de E-mail Petrobras
+# Sistema de Transferência de Arquivos Petrobras
 
-Sistema moderno de envio e gerenciamento de e-mails para domínios externos, desenvolvido com Next.js 16, React, TypeScript e integração preparada para backend Python.
+Sistema corporativo de transferência segura de arquivos com aprovação supervisionada, desenvolvido para atender aos rigorosos padrões de segurança e compliance da Petrobras.
+
+## Visão Geral
+
+O sistema permite que usuários internos da Petrobras façam upload de arquivos para compartilhamento com destinatários externos, passando por um fluxo de aprovação supervisionada antes da disponibilização. Toda a operação é auditada e monitorada para garantir segurança e rastreabilidade completa.
+
+## Características Principais
+
+### Segurança
+- Validação rigorosa de tipos de arquivos (bloqueia .exe, .dll, .bat, .cmd e outros executáveis)
+- Aprovação obrigatória por supervisor antes da disponibilização
+- Auditoria completa de todas as operações
+- Controle de acesso baseado em perfis (Interno/Supervisor)
+- Expiração automática de arquivos (máximo 72 horas)
+- Links temporários com token único por transferência
+
+### Fluxo de Trabalho
+1. **Upload**: Usuário interno faz upload dos arquivos
+2. **Aprovação**: Supervisor revisa e aprova/rejeita
+3. **Notificação**: Destinatário recebe link de download
+4. **Download**: Arquivo disponível por período limitado
+5. **Auditoria**: Todo o processo é registrado
+
+### Perfis de Usuário
+
+#### Usuário Interno
+- Fazer upload de arquivos
+- Definir destinatários e tempo de disponibilidade (até 72h)
+- Acompanhar status das transferências
+- Visualizar histórico de uploads
+
+#### Supervisor
+- Aprovar ou rejeitar transferências pendentes
+- Informar motivo em caso de rejeição
+- Visualizar dashboard com métricas (Pendentes, Aprovados, Rejeitados)
+- Ajustar tempo de disponibilidade antes de aprovar
+- Acessar detalhes completos de cada transferência
 
 ## Tecnologias
 
 ### Frontend
-- **Next.js 16** - Framework React com App Router
-- **React 19** - Biblioteca UI
-- **TypeScript** - Type-safety
+- **Next.js 16.0.10** - Framework React com App Router
+- **React 19.2** - Interface de usuário
+- **TypeScript** - Tipagem estática
 - **Tailwind CSS v4** - Estilização
-- **shadcn/ui** - Componentes UI de alta qualidade
+- **Shadcn/ui** - Componentes de interface
 - **Zustand** - Gerenciamento de estado
+- **React Hook Form** - Gerenciamento de formulários
 - **Lucide React** - Ícones
 
-### Backend (Preparado)
-- **Python/FastAPI** - API REST
-- **DynamoDB** - Banco de dados NoSQL AWS
-- Estrutura completa documentada em `Documentacao/BACKEND_STRUCTURE.md`
-- Infraestrutura AWS documentada em `sql/`
+### Backend
+- **Next.js API Routes** - Endpoints REST
+- **Server Actions** - Ações do servidor
+- **DynamoDB** - Banco de dados NoSQL (5 tabelas)
+
+### Infraestrutura AWS
+- **S3** - Armazenamento de arquivos
+- **CloudFront** - CDN para distribuição
+- **Lambda** - Processamento serverless
+- **SES** - Envio de emails
+- **CloudWatch** - Monitoramento e logs
+- **IAM** - Controle de acesso
+- **KMS** - Criptografia de dados
 
 ## Estrutura do Projeto
 
-\`\`\`
-.
-├── app/
+```
+├── app/                          # Páginas e rotas Next.js
 │   ├── page.tsx                 # Página de login
-│   ├── upload/                  # Módulo interno (upload)
-│   ├── download/                # Módulo externo (download)
-│   ├── supervisor/              # Módulo supervisor (aprovação)
-│   ├── historico/               # Histórico de atividades
-│   ├── auditoria/               # Logs de auditoria
-│   ├── configuracoes/           # Configurações do sistema
-│   └── wiki/                    # Central de conhecimento
-├── components/
-│   ├── auth/                    # Componentes de autenticação
-│   ├── shared/                  # Componentes compartilhados
-│   ├── upload/                  # Componentes de upload
-│   ├── download/                # Componentes de download
-│   ├── supervisor/              # Componentes de supervisor
-│   ├── dashboard/               # Componentes de dashboard
-│   └── ui/                      # Componentes UI base (shadcn)
-├── lib/
-│   ├── services/                # Serviços e API clients
-│   ├── stores/                  # Zustand stores
-│   └── utils/                   # Utilitários
-├── sql/                         # Estrutura de banco DynamoDB
-│   ├── dynamodb-tables.json     # Definição das tabelas
-│   ├── create-tables.py         # Script Python para criar tabelas
-│   └── cloudformation-template.yaml  # Template CloudFormation
-├── Documentacao/                # Documentação técnica completa
-│   ├── BACKEND_STRUCTURE.md     # Estrutura completa do backend Python/FastAPI
-│   ├── DEMO_CREDENTIALS.md      # Todas as credenciais de demonstração
-│   ├── SECURITY_VALIDATION.md   # Sistema de validação de segurança
-│   ├── API-DOCUMENTATION.md     # Documentação completa da API REST
-│   ├── DEPLOYMENT-GUIDE.md      # Guia detalhado de deployment AWS
-│   ├── DATA-MODELS.md           # Modelos de dados e queries DynamoDB
-│   ├── AWS-IMPLEMENTATION-GUIDE.md  # Guia completo de implementação AWS (23 serviços)
-│   ├── QUICK-START.md           # Deploy rápido em 1 dia
-│   └── SQL-README.md            # Visão geral da estrutura de dados
-└── types/                       # TypeScript types
-\`\`\`
+│   ├── upload/                  # Upload de arquivos (usuário interno)
+│   ├── supervisor/              # Dashboard do supervisor
+│   │   └── detalhes/[id]/      # Detalhes e aprovação
+│   ├── download/                # Download de arquivos (destinatário)
+│   ├── historico/               # Histórico de transferências
+│   ├── configuracoes/           # Configurações do usuário
+│   ├── wiki-dev/                # Wiki interna de desenvolvimento
+│   │   ├── aws-implementation/ # Guia AWS
+│   │   ├── data-models/        # Modelos de dados
+│   │   ├── quick-start/        # Início rápido
+│   │   ├── sql-readme/         # Documentação SQL
+│   │   └── deployment/         # Guia de deploy
+│   └── api/                     # API Routes
+│       ├── upload/             # Endpoints de upload
+│       ├── files/              # Gerenciamento de arquivos
+│       └── notifications/      # Sistema de notificações
+│
+├── components/                  # Componentes React
+│   ├── auth/                   # Autenticação
+│   ├── dashboard/              # Componentes do dashboard
+│   ├── shared/                 # Componentes compartilhados
+│   └── ui/                     # Componentes de UI (shadcn)
+│
+├── lib/                        # Bibliotecas e utilitários
+│   ├── stores/                # Stores Zustand
+│   │   ├── auth-store.ts     # Autenticação
+│   │   ├── workflow-store.ts # Fluxo de aprovação
+│   │   ├── notification-store.ts # Notificações
+│   │   └── audit-log-store.ts # Auditoria
+│   ├── utils/                 # Utilitários
+│   │   ├── zip-validator.ts  # Validação de arquivos
+│   │   └── file-security.ts  # Segurança de arquivos
+│   └── aws/                   # Integrações AWS
+│
+├── Documentacao/               # Documentação técnica
+│   ├── AWS-IMPLEMENTATION-GUIDE.md
+│   ├── DATA-MODELS.md
+│   ├── DEPLOYMENT-GUIDE.md
+│   ├── QUICK-START.md
+│   ├── SQL-README.md
+│   └── CHANGELOG.md
+│
+└── sql/                        # Scripts SQL/DynamoDB
+    ├── 001_create_users_table.sql
+    ├── 002_create_files_table.sql
+    ├── 003_create_sessions_table.sql
+    ├── 004_create_audit_logs_table.sql
+    ├── 005_create_notifications_table.sql
+    └── seed_demo_data.sql
+```
 
-## Credenciais de Demonstração
-
-Veja todas as credenciais em `Documentacao/DEMO_CREDENTIALS.md`
-
-### Usuário Interno (Upload)
-- **E-mail:** admin@petrobras.com.br
-- **Senha:** demo123
-
-### Usuário Externo (Download)
-- **E-mail:** cliente@empresa.com
-- **Senha:** demo123
-
-### Usuário Externo (Demo Vazio)
-- **E-mail:** demo@exemplo.com.br
-- **Senha:** demo123
-
-### Usuário Supervisor (Aprovação)
-- **E-mail:** supervisor@petrobras.com.br
-- **Senha:** demo123
-
-## Instalação
-
-\`\`\`bash
-# Instalar dependências
-npm install
-
-# Ou com pnpm
-pnpm install
-
-# Executar em desenvolvimento
-npm run dev
-
-# Build para produção
-npm run build
-npm start
-\`\`\`
-
-## Funcionalidades
-
-### Autenticação
-- Login com validação em tempo real
-- Detecção automática de tipo de usuário (@petrobras = interno)
-- Recuperação de senha via modal elegante
-- Sistema de notificações modernas
-- Credenciais de demonstração para testes
-- Usuário demo vazio para demonstração
-
-### Sistema de Auditoria e Logs
-- Registro completo de todas as ações do sistema
-- Logs de login, upload, download, aprovação, rejeição
-- Filtros avançados por tipo, usuário e data
-- Busca em tempo real
-- Detalhes completos de cada log com metadados
-- Métricas e estatísticas visuais
-
-### Sistema de Notificações
-- Notificações em tempo real para usuários
-- Alertas de arquivos expirados
-- Notificações de aprovação/rejeição
-- Avisos preventivos (24h antes da expiração)
-- Centro de notificações no header
-
-### Validação de Segurança
-- Validação de arquivos ZIP em upload
-- Detecção de extensões bloqueadas (.exe, .bat, etc.)
-- Sistema de quarentena
-- Logs de tentativas de upload de arquivos bloqueados
-- Veja detalhes em `Documentacao/SECURITY_VALIDATION.md`
-
-### Modo Escuro
-- Toggle sutil no header da aplicação
-- Transições suaves entre modos
-- Cores otimizadas para ambos os modos
-- Persistência da preferência do usuário
-
-### Página de Upload (Usuário Interno)
-- Upload de múltiplos arquivos simultaneamente
-- Drag-and-drop intuitivo
-- Preview dos arquivos selecionados
-- Campo de destinatário com validação
-- Descrição obrigatória dos arquivos
-- Validações de segurança em tempo real
-- Dashboard com métricas clicáveis
-- Breadcrumb navigation
-
-### Página de Download (Usuário Externo)
-- Listagem de documentos confidenciais
-- Sistema de busca avançado
-- Filtros por tipo de arquivo
-- Ordenação personalizada
-- Seleção múltipla para download em lote
-- Download individual de documentos
-- Aviso de confidencialidade
-- Histórico de downloads
-
-### Sistema de Histórico de Atividades
-- Timeline visual com ícones coloridos
-- Filtros avançados por tipo e período
-- Modal de detalhes completos
-- Contadores em tempo real
-- Rastreamento de todas as ações
-
-### Página de Supervisor (Aprovação)
-- Visualização detalhada de documentos
-- Dashboard com métricas clicáveis
-- Informações completas do arquivo
-- Dados do remetente com estatísticas
-- Histórico de envios anteriores
-- Lista de destinatários
-- Aprovação/rejeição com justificativa
-- Alteração de tempo de expiração
-- Breadcrumb navigation
-
-### Central de Conhecimento (Wiki)
-- Documentação completa do sistema
-- Categorias organizadas
-- Busca avançada
-- Artigos detalhados com exemplos
-- Guias passo a passo
-
-## Infraestrutura AWS e Backend
-
-### DynamoDB
-A estrutura completa de banco de dados está na pasta `sql/`:
-- 5 tabelas DynamoDB (users, files, audit-logs, notifications, sessions)
-- Índices GSI otimizados para consultas
-- TTL configurado para dados temporários
-- Script Python automatizado para criação
-
-### CloudFormation
-Template completo com:
-- DynamoDB Tables
-- S3 Buckets para arquivos
-- Lambda Functions
-- API Gateway
-- SQS Queues
-- SNS Topics
-- IAM Roles e Policies
-
-### API REST
-Documentação completa em `Documentacao/API-DOCUMENTATION.md`:
-- Autenticação com JWT
-- Endpoints de Upload/Download
-- Sistema de Aprovação
-- Auditoria e Logs
-- Notificações
-
-### Frontend Preparado
-O cliente API está em `lib/services/api-client.ts`:
-- Interceptors configurados
-- Refresh token automático
-- Tratamento de erros
-- TypeScript types completos
-
-## Integração Backend Python
-
-Veja exemplos completos em `Documentacao/BACKEND_STRUCTURE.md`
-
-### Endpoints Esperados
-
-#### Autenticação
-- `POST /api/v1/auth/login` - Login de usuário
-- `POST /api/v1/auth/refresh` - Renovar access token
-- `POST /api/v1/auth/logout` - Logout
-
-#### Upload (Interno)
-- `POST /api/v1/uploads` - Upload de arquivos
-- `GET /api/v1/uploads` - Listar uploads
-- `DELETE /api/v1/uploads/:id` - Deletar upload
-
-#### Download (Externo)
-- `GET /api/v1/files` - Listar arquivos disponíveis
-- `GET /api/v1/files/:id/download` - Download de arquivo
-- `POST /api/v1/files/bulk-download` - Download múltiplo
-
-#### Supervisor (Aprovação)
-- `GET /api/v1/approvals` - Listar pendentes
-- `POST /api/v1/approvals/:id/approve` - Aprovar
-- `POST /api/v1/approvals/:id/reject` - Rejeitar
-- `PATCH /api/v1/approvals/:id/expiration` - Alterar expiração
-
-#### Auditoria
-- `GET /api/v1/audit-logs` - Listar logs
-- `GET /api/v1/audit-logs/:id` - Detalhes do log
-- `POST /api/v1/audit-logs` - Criar log
-
-#### Notificações
-- `GET /api/v1/notifications` - Listar notificações
-- `PATCH /api/v1/notifications/:id/read` - Marcar como lida
-- `DELETE /api/v1/notifications/:id` - Deletar notificação
-
-## Design System
-
-O projeto utiliza as cores oficiais da Petrobras com melhorias de UX/UI:
-- **Teal Primário:** #00A99D
-- **Azul Ação:** #0047BB
-- **Gradiente Animado:** Teal → Azul → Verde
-
-### UX/UI Profissional
-- Hierarquia visual clara com espaçamento otimizado
-- Tipografia escalável e acessível (16px mínimo)
-- Estados de hover, focus e active bem definidos
-- Feedback visual em todas as interações
-- Loading states e skeleton screens
-- Micro-interações suaves (300ms transitions)
-- Mobile-first responsivo
-- Touch targets de 44px mínimo
-- Focus states visíveis para acessibilidade
-- Breadcrumb navigation com ícone home
-- Botão scroll to top em páginas longas
-
-## Deployment na AWS
+## Início Rápido
 
 ### Pré-requisitos
-1. Conta AWS configurada
-2. AWS CLI instalado
-3. Python 3.9+ e boto3
-4. Credenciais IAM com permissões adequadas
+- Node.js 18+
+- Conta AWS configurada
+- Credenciais AWS (Access Key e Secret Key)
 
-### Passo 1: Deploy do Backend
-\`\`\`bash
-cd sql/
-python create-tables.py
-# Ou use CloudFormation
-aws cloudformation create-stack --stack-name petrobras-email-system --template-body file://cloudformation-template.yaml
-\`\`\`
+### Instalação
 
-### Passo 2: Deploy do Frontend
-\`\`\`bash
-# Build Next.js
+```bash
+# Clone o repositório
+git clone https://github.com/petrobras/sistema-transferencia-arquivos.git
+
+# Entre na pasta
+cd sistema-transferencia-arquivos
+
+# Instale as dependências
+npm install
+
+# Configure as variáveis de ambiente
+cp .env.example .env.local
+# Edite o .env.local com suas credenciais AWS
+```
+
+### Configuração AWS
+
+1. **S3 Bucket**
+   ```bash
+   aws s3 mb s3://petrobras-file-transfer-prod
+   ```
+
+2. **DynamoDB Tables**
+   ```bash
+   # Execute os scripts SQL na ordem
+   npm run db:setup
+   ```
+
+3. **CloudFront Distribution**
+   - Configure no console AWS ou via CLI
+   - Adicione o domain no .env.local
+
+### Executar Localmente
+
+```bash
+# Modo desenvolvimento
+npm run dev
+
+# Acesse http://localhost:3000
+```
+
+### Build e Deploy
+
+```bash
+# Build de produção
 npm run build
 
-# Deploy no Vercel ou AWS Amplify
+# Deploy para Vercel
 vercel --prod
-\`\`\`
 
-Veja o guia completo em `Documentacao/DEPLOYMENT-GUIDE.md` ou o quick start em `Documentacao/QUICK-START.md`
-
-## Próximos Passos
-
-1. ✅ Sistema de login com validação
-2. ✅ Páginas de Upload, Download e Supervisor
-3. ✅ Modo escuro
-4. ✅ Sistema de notificações elegante
-5. ✅ Sistema de Histórico de Atividades
-6. ✅ Sistema de Auditoria e Logs
-7. ✅ Estrutura DynamoDB completa
-8. ✅ Melhorias UX/UI profissionais
-9. ✅ Mobile responsive
-10. ⬜ Implementar backend Python/FastAPI
-11. ⬜ Conectar endpoints reais da API
-12. ⬜ Upload de arquivos real para S3
-13. ⬜ Sistema de autenticação JWT completo
-14. ⬜ Processamento de arquivos com Lambda
-15. ⬜ Deploy completo na AWS
-
-## Scripts Disponíveis
-
-\`\`\`bash
-npm run dev          # Inicia servidor de desenvolvimento
-npm run build        # Build de produção
-npm run start        # Inicia servidor de produção
-npm run lint         # Executa ESLint
-npm run type-check   # Verifica tipos TypeScript
-\`\`\`
+# Ou deploy para AWS
+npm run deploy:aws
+```
 
 ## Variáveis de Ambiente
 
-Crie um arquivo `.env.local` com:
+```env
+# AWS
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+AWS_S3_BUCKET=petrobras-file-transfer-prod
+AWS_CLOUDFRONT_DOMAIN=d1234567890.cloudfront.net
 
-\`\`\`env
-# API Backend
-NEXT_PUBLIC_API_URL=http://localhost:8000
+# DynamoDB
+DYNAMODB_USERS_TABLE=petrobras-users
+DYNAMODB_FILES_TABLE=petrobras-files
+DYNAMODB_SESSIONS_TABLE=petrobras-sessions
+DYNAMODB_AUDIT_TABLE=petrobras-audit-logs
+DYNAMODB_NOTIFICATIONS_TABLE=petrobras-notifications
 
-# AWS (para produção)
-NEXT_PUBLIC_AWS_REGION=us-east-1
-NEXT_PUBLIC_S3_BUCKET=petrobras-email-files
-\`\`\`
+# Email
+AWS_SES_FROM_EMAIL=noreply@petrobras.com.br
+AWS_SES_REPLY_TO=suporte@petrobras.com.br
 
-Veja `.env.example` para todas as variáveis disponíveis.
+# Aplicação
+NEXT_PUBLIC_APP_URL=https://transfer.petrobras.com.br
+NEXT_PUBLIC_MAX_FILE_SIZE=524288000
+NEXT_PUBLIC_MAX_AVAILABILITY_HOURS=72
+```
+
+## Usuários de Demonstração
+
+### Usuário Interno
+- **Email**: joao.silva@petrobras.com.br
+- **Senha**: demo123
+- **Perfil**: Usuário interno que faz upload de arquivos
+
+### Supervisor
+- **Email**: supervisor@petrobras.com.br
+- **Senha**: supervisor123
+- **Perfil**: Supervisor que aprova/rejeita transferências
+
+## Wiki de Desenvolvimento
+
+O sistema possui uma wiki interna completa acessível em `/wiki-dev` com:
+
+- **Implementação AWS**: Guia detalhado de todos os serviços AWS utilizados, com justificativas técnicas e exemplos
+- **Modelos de Dados**: Estrutura completa das 5 tabelas DynamoDB com campos, tipos e onde são usados
+- **Quick Start**: Guia passo a passo para deploy rápido em 1 dia
+- **SQL & DynamoDB**: Documentação completa do banco de dados
+- **Deployment**: Guia completo de produção com segurança, monitoramento e CI/CD
+
+## Banco de Dados
+
+O sistema utiliza 5 tabelas DynamoDB:
+
+### 1. Users
+Armazena dados dos usuários (internos e supervisores)
+- Partition Key: `userId` (String)
+- Campos: email, name, userType, createdAt
+
+### 2. Files
+Metadados dos arquivos transferidos
+- Partition Key: `fileId` (String)
+- GSI: `uploaderUserId`, `recipientEmail`
+- 8 índices secundários globais para queries otimizadas
+
+### 3. Sessions
+Sessões de autenticação dos usuários
+- Partition Key: `sessionId` (String)
+- GSI: `userId`
+- TTL automático após expiração
+
+### 4. Audit Logs
+Registro completo de todas as operações
+- Partition Key: `logId` (String)
+- GSI: `userId`, `action`, `timestamp`
+
+### 5. Notifications
+Notificações enviadas aos usuários
+- Partition Key: `notificationId` (String)
+- GSI: `recipientEmail`, `sentAt`
+
+## Segurança
+
+### Validação de Arquivos
+Extensões bloqueadas automaticamente:
+- Executáveis: .exe, .dll, .bat, .cmd, .com, .msi
+- Scripts: .ps1, .vbs, .js, .jar
+- Outros: .scr, .pif, .app, .deb, .rpm
+
+### Controle de Acesso
+- Autenticação obrigatória para todas as operações
+- Perfis separados (Interno/Supervisor)
+- Validação de permissões em cada endpoint
+- Tokens únicos e temporários para downloads
+
+### Auditoria
+Todos os eventos são registrados:
+- Login/Logout
+- Upload de arquivos
+- Aprovação/Rejeição
+- Downloads
+- Alterações de configuração
+
+## Monitoramento
+
+### Métricas Disponíveis
+- Total de transferências
+- Taxa de aprovação/rejeição
+- Tempo médio de aprovação
+- Volume de dados transferidos
+- Erros e exceções
+
+### Logs
+- CloudWatch Logs para todos os serviços
+- Logs estruturados em JSON
+- Retenção configurável (90 dias padrão)
+
+## Testes
+
+```bash
+# Testes unitários
+npm run test
+
+# Testes E2E
+npm run test:e2e
+
+# Cobertura
+npm run test:coverage
+```
+
+## Scripts Úteis
+
+```bash
+# Desenvolvimento
+npm run dev              # Inicia servidor de desenvolvimento
+npm run build           # Build de produção
+npm run start           # Inicia servidor de produção
+npm run lint            # Verifica código com ESLint
+npm run format          # Formata código com Prettier
+
+# Banco de Dados
+npm run db:setup        # Cria todas as tabelas
+npm run db:seed         # Popula dados de demonstração
+npm run db:reset        # Apaga e recria tudo
+
+# Deploy
+npm run deploy:staging  # Deploy para staging
+npm run deploy:prod     # Deploy para produção
+```
 
 ## Documentação
 
-### Documentação Técnica (Pasta `Documentacao/`)
-- **BACKEND_STRUCTURE.md** - Estrutura completa do backend Python/FastAPI
-- **DEMO_CREDENTIALS.md** - Todas as credenciais de demonstração
-- **SECURITY_VALIDATION.md** - Sistema de validação de segurança
-- **API-DOCUMENTATION.md** - Documentação completa da API REST
-- **DEPLOYMENT-GUIDE.md** - Guia detalhado de deployment AWS
-- **DATA-MODELS.md** - Modelos de dados e queries DynamoDB
-- **AWS-IMPLEMENTATION-GUIDE.md** - Guia completo de implementação AWS (23 serviços)
-- **QUICK-START.md** - Deploy rápido em 1 dia
-- **SQL-README.md** - Visão geral da estrutura de dados
+Para documentação técnica detalhada, consulte:
 
-### Scripts SQL (Pasta `sql/`)
-- **dynamodb-tables.json** - Definição completa das tabelas
-- **create-tables.py** - Script automatizado de criação
-- **cloudformation-template.yaml** - Infraestrutura completa AWS
+- [Guia de Implementação AWS](Documentacao/AWS-IMPLEMENTATION-GUIDE.md)
+- [Modelos de Dados](Documentacao/DATA-MODELS.md)
+- [Guia de Deployment](Documentacao/DEPLOYMENT-GUIDE.md)
+- [Quick Start](Documentacao/QUICK-START.md)
+- [SQL README](Documentacao/SQL-README.md)
+
+## Suporte
+
+Para suporte técnico ou dúvidas:
+- Email: suporte-dev@petrobras.com.br
+- Wiki Interna: `/wiki-dev`
+- Documentação: `/Documentacao`
 
 ## Licença
 
-© 2025 Petrobras. Todos os direitos reservados.
+Copyright © 2025 Petrobras. Todos os direitos reservados.
+
+Sistema de uso interno corporativo.
+
+---
+
+**Versão**: 1.0.0  
+**Última Atualização**: Janeiro 2025  
+**Next.js**: 16.0.10  
+**React**: 19.2

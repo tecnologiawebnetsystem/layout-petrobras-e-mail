@@ -119,8 +119,6 @@ export const useAuditLogStore = create<AuditLogState>()(
         set((state) => ({
           logs: [newLog, ...state.logs],
         }))
-
-        console.log("[v0] Audit Log:", newLog)
       },
 
       getLogsByUser: (userId) => {

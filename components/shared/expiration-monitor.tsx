@@ -147,7 +147,7 @@ export function ExpirationMonitor() {
             }
           }
         } catch (error) {
-          console.error("[v0] Erro ao processar expiração:", error)
+          console.error("Erro ao processar expiração:", error)
         }
       })
     }

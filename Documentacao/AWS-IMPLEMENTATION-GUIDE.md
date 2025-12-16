@@ -20,7 +20,7 @@
 
 ## 🏗️ Visão Geral da Arquitetura
 
-\`\`\`
+```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        USUÁRIOS                                  │
 │  (Internos, Supervisores, Externos)                             │
@@ -68,7 +68,7 @@
                         │ EventBridge   │
                         │ (Agendador)   │
                         └───────────────┘
-\`\`\`
+```
 
 ---
 
@@ -123,15 +123,15 @@
 ### **FASE 1: Fundação (Semana 1)**
 
 #### 1.1 Configurar Conta AWS
-\`\`\`bash
+```bash
 # Criar conta AWS
 # Configurar billing alerts
 # Ativar MFA no root account
 # Criar IAM user administrativo
-\`\`\`
+```
 
 #### 1.2 Configurar AWS CLI
-\`\`\`bash
+```bash
 # Instalar AWS CLI
 pip install awscli
 
@@ -141,10 +141,10 @@ aws configure
 # AWS Secret Access Key: [seu-secret-key]
 # Default region name: us-east-1
 # Default output format: json
-\`\`\`
+```
 
 #### 1.3 Criar VPC e Networking
-\`\`\`bash
+```bash
 # Criar VPC
 aws ec2 create-vpc --cidr-block 10.0.0.0/16
 
@@ -152,7 +152,7 @@ aws ec2 create-vpc --cidr-block 10.0.0.0/16
 # Configurar Internet Gateway
 # Configurar NAT Gateway
 # Configurar Route Tables
-\`\`\`
+```
 
 ---
 
@@ -161,7 +161,7 @@ aws ec2 create-vpc --cidr-block 10.0.0.0/16
 #### 2.1 Criar S3 Buckets
 
 **Bucket 1: Frontend (Next.js)**
-\`\`\`bash
+```bash
 aws s3 mb s3://petrobras-file-transfer-frontend --region us-east-1
 
 # Configurar como website estático
@@ -173,10 +173,10 @@ aws s3 website s3://petrobras-file-transfer-frontend \
 aws s3api put-bucket-cors \
   --bucket petrobras-file-transfer-frontend \
   --cors-configuration file://cors-config.json
-\`\`\`
+```
 
 **Bucket 2: Arquivos Enviados**
-\`\`\`bash
+```bash
 aws s3 mb s3://petrobras-file-transfer-uploads --region us-east-1
 
 # Habilitar versionamento
@@ -193,10 +193,10 @@ aws s3api put-bucket-lifecycle-configuration \
 aws s3api put-bucket-encryption \
   --bucket petrobras-file-transfer-uploads \
   --server-side-encryption-configuration file://encryption-config.json
-\`\`\`
+```
 
 **Bucket 3: Logs e Backups**
-\`\`\`bash
+```bash
 aws s3 mb s3://petrobras-file-transfer-logs --region us-east-1
 
 # Bloquear acesso público
@@ -204,11 +204,11 @@ aws s3api put-public-access-block \
   --bucket petrobras-file-transfer-logs \
   --public-access-block-configuration \
   BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
-\`\`\`
+```
 
 #### 2.2 Criar Tabelas DynamoDB
 
-\`\`\`bash
+```bash
 # Executar o script Python fornecido
 cd sql/
 python create-tables.py
@@ -218,7 +218,7 @@ aws cloudformation create-stack \
   --stack-name petrobras-dynamodb-tables \
   --template-body file://cloudformation-template.yaml \
   --capabilities CAPABILITY_IAM
-\`\`\`
+```
 
 **Tabelas a serem criadas:**
 - ✅ `petrobras-users` (PK: userId)
@@ -234,14 +234,14 @@ aws cloudformation create-stack \
 #### 3.1 Configurar AWS Cognito
 
 **Criar User Pool:**
-\`\`\`bash
+```bash
 aws cognito-idp create-user-pool \
   --pool-name petrobras-file-transfer-users \
   --policies file://cognito-policies.json \
   --auto-verified-attributes email \
   --username-attributes email \
   --schema file://cognito-schema.json
-\`\`\`
+```
 
 **Configurações do User Pool:**
 - ✅ Email como username
@@ -251,26 +251,26 @@ aws cognito-idp create-user-pool \
 - ✅ Verificação de email obrigatória
 
 **Criar App Client:**
-\`\`\`bash
+```bash
 aws cognito-idp create-user-pool-client \
   --user-pool-id [user-pool-id] \
   --client-name petrobras-web-client \
   --no-generate-secret \
   --explicit-auth-flows ALLOW_USER_PASSWORD_AUTH ALLOW_REFRESH_TOKEN_AUTH
-\`\`\`
+```
 
 **Criar Identity Pool:**
-\`\`\`bash
+```bash
 aws cognito-identity create-identity-pool \
   --identity-pool-name petrobras-identity-pool \
   --allow-unauthenticated-identities false \
   --cognito-identity-providers file://identity-providers.json
-\`\`\`
+```
 
 #### 3.2 Configurar IAM Roles
 
 **Role para Lambda Functions:**
-\`\`\`json
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -321,11 +321,11 @@ aws cognito-identity create-identity-pool \
     }
   ]
 }
-\`\`\`
+```
 
 #### 3.3 Configurar AWS Secrets Manager
 
-\`\`\`bash
+```bash
 # Armazenar secrets da aplicação
 aws secretsmanager create-secret \
   --name petrobras/file-transfer/prod \
@@ -336,11 +336,11 @@ aws secretsmanager create-secret \
 # - API keys de serviços externos
 # - JWT secret key
 # - Email SMTP credentials
-\`\`\`
+```
 
 #### 3.4 Configurar AWS WAF
 
-\`\`\`bash
+```bash
 # Criar Web ACL
 aws wafv2 create-web-acl \
   --name petrobras-file-transfer-waf \
@@ -354,7 +354,7 @@ aws wafv2 create-web-acl \
 # - XSS protection
 # - Geo-blocking (permitir apenas Brasil)
 # - IP whitelist da Petrobras
-\`\`\`
+```
 
 ---
 
@@ -362,7 +362,7 @@ aws wafv2 create-web-acl \
 
 #### 4.1 Estrutura do Backend Python
 
-\`\`\`
+```
 backend/
 ├── requirements.txt
 ├── layers/
@@ -392,12 +392,12 @@ backend/
 └── events/
     ├── check-expiration.py
     └── cleanup-old-files.py
-\`\`\`
+```
 
 #### 4.2 Criar Lambda Functions
 
 **Exemplo: Upload Function**
-\`\`\`bash
+```bash
 # Criar ZIP com código
 cd backend/functions/files/
 zip -r upload.zip upload.py ../../layers/common/*
@@ -416,7 +416,7 @@ aws lambda create-function \
     S3_BUCKET=petrobras-file-transfer-uploads,
     MAX_FILE_SIZE=524288000
   }"
-\`\`\`
+```
 
 **Lambda Functions necessárias:**
 
@@ -455,7 +455,7 @@ aws lambda create-function \
 
 #### 4.3 Criar Lambda Layers
 
-\`\`\`bash
+```bash
 # Criar layer com dependências Python
 mkdir python
 pip install -r requirements.txt -t python/
@@ -470,10 +470,10 @@ aws lambda publish-layer-version \
 aws lambda update-function-configuration \
   --function-name petrobras-file-upload \
   --layers arn:aws:lambda:us-east-1:ACCOUNT_ID:layer:petrobras-dependencies:1
-\`\`\`
+```
 
 **Dependências (requirements.txt):**
-\`\`\`txt
+```txt
 boto3==1.28.0
 fastapi==0.104.0
 pydantic==2.4.0
@@ -481,7 +481,7 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-multipart==0.0.6
 mangum==0.17.0
-\`\`\`
+```
 
 ---
 
@@ -489,17 +489,17 @@ mangum==0.17.0
 
 #### 5.1 Criar REST API
 
-\`\`\`bash
+```bash
 aws apigateway create-rest-api \
   --name petrobras-file-transfer-api \
   --description "API para sistema de transferência de arquivos Petrobras" \
   --endpoint-configuration types=REGIONAL
-\`\`\`
+```
 
 #### 5.2 Definir Recursos e Métodos
 
 **Estrutura da API:**
-\`\`\`
+```
 /
 ├── /auth
 │   ├── POST /login
@@ -521,11 +521,11 @@ aws apigateway create-rest-api \
 │   └── GET /audit/logs
 └── /metrics
     └── GET /metrics/dashboard
-\`\`\`
+```
 
 #### 5.3 Configurar Authorizer
 
-\`\`\`bash
+```bash
 # Criar Cognito Authorizer
 aws apigateway create-authorizer \
   --rest-api-id [api-id] \
@@ -533,11 +533,11 @@ aws apigateway create-authorizer \
   --type COGNITO_USER_POOLS \
   --provider-arns arn:aws:cognito-idp:us-east-1:ACCOUNT_ID:userpool/[pool-id] \
   --identity-source method.request.header.Authorization
-\`\`\`
+```
 
 #### 5.4 Deploy API
 
-\`\`\`bash
+```bash
 # Criar deployment
 aws apigateway create-deployment \
   --rest-api-id [api-id] \
@@ -546,7 +546,7 @@ aws apigateway create-deployment \
 
 # URL da API:
 # https://[api-id].execute-api.us-east-1.amazonaws.com/prod
-\`\`\`
+```
 
 ---
 
@@ -555,30 +555,30 @@ aws apigateway create-deployment \
 #### 6.1 Criar SQS Queues
 
 **Fila de Processamento de Upload:**
-\`\`\`bash
+```bash
 aws sqs create-queue \
   --queue-name petrobras-file-upload-queue \
   --attributes file://sqs-attributes.json
-\`\`\`
+```
 
 **Fila de Notificações:**
-\`\`\`bash
+```bash
 aws sqs create-queue \
   --queue-name petrobras-notifications-queue \
   --attributes VisibilityTimeout=300,MessageRetentionPeriod=1209600
-\`\`\`
+```
 
 **Fila Dead Letter (DLQ):**
-\`\`\`bash
+```bash
 aws sqs create-queue \
   --queue-name petrobras-dlq \
   --attributes MaximumMessageSize=262144,MessageRetentionPeriod=1209600
-\`\`\`
+```
 
 #### 6.2 Criar SNS Topics
 
 **Tópico de Notificações:**
-\`\`\`bash
+```bash
 aws sns create-topic \
   --name petrobras-file-notifications
 
@@ -587,11 +587,11 @@ aws sns subscribe \
   --topic-arn arn:aws:sns:us-east-1:ACCOUNT_ID:petrobras-file-notifications \
   --protocol email \
   --notification-endpoint supervisor@petrobras.com.br
-\`\`\`
+```
 
 #### 6.3 Configurar SES (Email)
 
-\`\`\`bash
+```bash
 # Verificar domínio
 aws ses verify-domain-identity --domain petrobras.com.br
 
@@ -601,7 +601,7 @@ aws ses verify-email-identity --email-address noreply@petrobras.com.br
 # Criar template de email
 aws ses create-template \
   --cli-input-json file://email-template.json
-\`\`\`
+```
 
 ---
 
@@ -610,7 +610,7 @@ aws ses create-template \
 #### 7.1 Configurar EventBridge Rules
 
 **Verificar Arquivos Expirados (Diariamente às 2h):**
-\`\`\`bash
+```bash
 aws events put-rule \
   --name petrobras-check-expiration \
   --schedule-expression "cron(0 2 * * ? *)" \
@@ -619,23 +619,23 @@ aws events put-rule \
 aws events put-targets \
   --rule petrobras-check-expiration \
   --targets "Id"="1","Arn"="arn:aws:lambda:us-east-1:ACCOUNT_ID:function:petrobras-check-expiration"
-\`\`\`
+```
 
 **Limpar Arquivos Antigos (Semanalmente aos domingos às 3h):**
-\`\`\`bash
+```bash
 aws events put-rule \
   --name petrobras-cleanup-old-files \
   --schedule-expression "cron(0 3 ? * SUN *)" \
   --description "Limpar arquivos antigos semanalmente"
-\`\`\`
+```
 
 **Gerar Relatório Semanal (Sextas às 18h):**
-\`\`\`bash
+```bash
 aws events put-rule \
   --name petrobras-weekly-report \
   --schedule-expression "cron(0 18 ? * FRI *)" \
   --description "Gerar relatório semanal"
-\`\`\`
+```
 
 ---
 
@@ -643,7 +643,7 @@ aws events put-rule \
 
 #### 8.1 Build do Next.js
 
-\`\`\`bash
+```bash
 # Build estático
 npm run build
 npm run export  # ou next export
@@ -655,16 +655,16 @@ aws s3 sync out/ s3://petrobras-file-transfer-frontend --delete
 aws cloudfront create-invalidation \
   --distribution-id [distribution-id] \
   --paths "/*"
-\`\`\`
+```
 
 #### 8.2 Configurar CloudFront
 
-\`\`\`bash
+```bash
 aws cloudfront create-distribution \
   --origin-domain-name petrobras-file-transfer-frontend.s3.amazonaws.com \
   --default-root-object index.html \
   --distribution-config file://cloudfront-config.json
-\`\`\`
+```
 
 **Configurações CloudFront:**
 - ✅ HTTPS obrigatório
@@ -677,7 +677,7 @@ aws cloudfront create-distribution \
 
 #### 8.3 Configurar Route 53
 
-\`\`\`bash
+```bash
 # Criar hosted zone
 aws route53 create-hosted-zone \
   --name files.petrobras.com.br \
@@ -687,7 +687,7 @@ aws route53 create-hosted-zone \
 aws route53 change-resource-record-sets \
   --hosted-zone-id [zone-id] \
   --change-batch file://route53-changes.json
-\`\`\`
+```
 
 ---
 
@@ -696,7 +696,7 @@ aws route53 change-resource-record-sets \
 #### 9.1 Configurar CloudWatch Logs
 
 **Log Groups para cada Lambda:**
-\`\`\`bash
+```bash
 # Criar log groups
 for func in upload download approve reject notify; do
   aws logs create-log-group \
@@ -707,10 +707,10 @@ done
 aws logs put-retention-policy \
   --log-group-name /aws/lambda/petrobras-file-upload \
   --retention-in-days 30
-\`\`\`
+```
 
 **Log Insights Queries:**
-\`\`\`
+```
 # Erros nas últimas 24h
 fields @timestamp, @message
 | filter @message like /ERROR/
@@ -723,12 +723,12 @@ fields userId, count(*) as uploads
 | stats count() by userId
 | sort uploads desc
 | limit 10
-\`\`\`
+```
 
 #### 9.2 Configurar CloudWatch Alarms
 
 **Alarm: Lambda Errors**
-\`\`\`bash
+```bash
 aws cloudwatch put-metric-alarm \
   --alarm-name petrobras-lambda-errors \
   --alarm-description "Alerta quando Lambda tem muitos erros" \
@@ -740,10 +740,10 @@ aws cloudwatch put-metric-alarm \
   --comparison-operator GreaterThanThreshold \
   --evaluation-periods 1 \
   --alarm-actions arn:aws:sns:us-east-1:ACCOUNT_ID:petrobras-alerts
-\`\`\`
+```
 
 **Alarm: API Gateway 5xx Errors**
-\`\`\`bash
+```bash
 aws cloudwatch put-metric-alarm \
   --alarm-name petrobras-api-5xx-errors \
   --metric-name 5XXError \
@@ -753,10 +753,10 @@ aws cloudwatch put-metric-alarm \
   --threshold 5 \
   --comparison-operator GreaterThanThreshold \
   --evaluation-periods 2
-\`\`\`
+```
 
 **Alarm: DynamoDB Throttling**
-\`\`\`bash
+```bash
 aws cloudwatch put-metric-alarm \
   --alarm-name petrobras-dynamodb-throttle \
   --metric-name UserErrors \
@@ -765,11 +765,11 @@ aws cloudwatch put-metric-alarm \
   --period 300 \
   --threshold 10 \
   --comparison-operator GreaterThanThreshold
-\`\`\`
+```
 
 #### 9.3 Configurar X-Ray
 
-\`\`\`bash
+```bash
 # Habilitar tracing em Lambda
 aws lambda update-function-configuration \
   --function-name petrobras-file-upload \
@@ -780,15 +780,15 @@ aws apigateway update-stage \
   --rest-api-id [api-id] \
   --stage-name prod \
   --patch-operations op=replace,path=/tracingEnabled,value=true
-\`\`\`
+```
 
 #### 9.4 Dashboard Customizado
 
-\`\`\`bash
+```bash
 aws cloudwatch put-dashboard \
   --dashboard-name petrobras-file-transfer \
   --dashboard-body file://dashboard-config.json
-\`\`\`
+```
 
 **Métricas no Dashboard:**
 - Total de uploads (últimas 24h)
@@ -806,7 +806,7 @@ aws cloudwatch put-dashboard \
 
 #### 10.1 AWS Backup
 
-\`\`\`bash
+```bash
 # Criar Backup Vault
 aws backup create-backup-vault \
   --backup-vault-name petrobras-backup-vault
@@ -814,10 +814,10 @@ aws backup create-backup-vault \
 # Criar Backup Plan
 aws backup create-backup-plan \
   --backup-plan file://backup-plan.json
-\`\`\`
+```
 
 **Backup Plan:**
-\`\`\`json
+```json
 {
   "BackupPlanName": "petrobras-daily-backup",
   "Rules": [
@@ -834,7 +834,7 @@ aws backup create-backup-plan \
     }
   ]
 }
-\`\`\`
+```
 
 **Recursos para Backup:**
 - ✅ Todas as tabelas DynamoDB
@@ -843,21 +843,21 @@ aws backup create-backup-plan \
 
 #### 10.2 Replicação S3
 
-\`\`\`bash
+```bash
 # Habilitar replicação cross-region
 aws s3api put-bucket-replication \
   --bucket petrobras-file-transfer-uploads \
   --replication-configuration file://replication-config.json
-\`\`\`
+```
 
 #### 10.3 Point-in-Time Recovery (DynamoDB)
 
-\`\`\`bash
+```bash
 # Habilitar PITR
 aws dynamodb update-continuous-backups \
   --table-name petrobras-files \
   --point-in-time-recovery-specification PointInTimeRecoveryEnabled=true
-\`\`\`
+```
 
 ---
 
@@ -896,7 +896,7 @@ aws dynamodb update-continuous-backups \
 ### IAM Policies Recomendadas
 
 **Policy: S3 Upload com Limite de Tamanho**
-\`\`\`json
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -914,10 +914,10 @@ aws dynamodb update-continuous-backups \
     }
   ]
 }
-\`\`\`
+```
 
 **Policy: DynamoDB com Condition**
-\`\`\`json
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -936,7 +936,7 @@ aws dynamodb update-continuous-backups \
     }
   ]
 }
-\`\`\`
+```
 
 ---
 
@@ -1176,7 +1176,7 @@ aws dynamodb update-continuous-backups \
 ### Logs Importantes
 
 #### Formato de Log Estruturado (JSON)
-\`\`\`json
+```json
 {
   "timestamp": "2024-01-15T10:30:00Z",
   "level": "INFO",
@@ -1195,39 +1195,39 @@ aws dynamodb update-continuous-backups \
     "userAgent": "Mozilla/5.0..."
   }
 }
-\`\`\`
+```
 
 #### Queries Úteis do CloudWatch Insights
 
 **Top 10 usuários mais ativos:**
-\`\`\`
+```
 fields userId, count(*) as actions
 | stats count() by userId
 | sort actions desc
 | limit 10
-\`\`\`
+```
 
 **Arquivos grandes (>100MB):**
-\`\`\`
+```
 fields fileName, fileSize, userId, timestamp
 | filter fileSize > 104857600
 | sort timestamp desc
-\`\`\`
+```
 
 **Erros nos últimos 7 dias:**
-\`\`\`
+```
 fields @timestamp, level, service, message
 | filter level = "ERROR"
 | filter @timestamp > ago(7d)
 | sort @timestamp desc
-\`\`\`
+```
 
 **Latência por endpoint:**
-\`\`\`
+```
 fields endpoint, avg(duration) as avgLatency, max(duration) as maxLatency
 | stats avg(duration), max(duration) by endpoint
 | sort avgLatency desc
-\`\`\`
+```
 
 ---
 
@@ -1309,9 +1309,9 @@ fields endpoint, avg(duration) as avgLatency, max(duration) as maxLatency
 **Sintoma:** Requests falhando com erro 502 Bad Gateway
 
 **Diagnóstico:**
-\`\`\`bash
+```bash
 aws logs tail /aws/lambda/petrobras-file-upload --follow
-\`\`\`
+```
 
 **Soluções:**
 1. Aumentar timeout da Lambda (máx 15 min)
@@ -1323,7 +1323,7 @@ aws logs tail /aws/lambda/petrobras-file-upload --follow
 **Sintoma:** Erros 400 "ProvisionedThroughputExceededException"
 
 **Diagnóstico:**
-\`\`\`bash
+```bash
 aws cloudwatch get-metric-statistics \
   --namespace AWS/DynamoDB \
   --metric-name UserErrors \
@@ -1332,7 +1332,7 @@ aws cloudwatch get-metric-statistics \
   --end-time 2024-01-01T23:59:59Z \
   --period 3600 \
   --statistics Sum
-\`\`\`
+```
 
 **Soluções:**
 1. Habilitar Auto Scaling
@@ -1349,7 +1349,7 @@ aws cloudwatch get-metric-statistics \
 3. Compressão no cliente antes de enviar
 4. Gerar presigned URL direto do frontend
 
-\`\`\`python
+```python
 # Multipart Upload
 s3_client.upload_fileobj(
     file_obj,
@@ -1362,13 +1362,13 @@ s3_client.upload_fileobj(
         use_threads=True
     )
 )
-\`\`\`
+```
 
 #### Problema 4: CloudFront Cache Inválido
 **Sintoma:** Frontend mostrando versão antiga após deploy
 
 **Solução:**
-\`\`\`bash
+```bash
 # Invalidar cache
 aws cloudfront create-invalidation \
   --distribution-id E1234567890ABC \
@@ -1378,13 +1378,13 @@ aws cloudfront create-invalidation \
 aws cloudfront get-invalidation \
   --distribution-id E1234567890ABC \
   --id I1234567890ABC
-\`\`\`
+```
 
 #### Problema 5: Cognito Token Expirado
 **Sintoma:** Usuário deslogado frequentemente
 
 **Solução:**
-\`\`\`javascript
+```javascript
 // Implementar refresh token automático
 const refreshSession = async () => {
   const user = await Auth.currentAuthenticatedUser();
@@ -1402,13 +1402,13 @@ const refreshSession = async () => {
 
 // Chamar a cada 14 minutos (tokens expiram em 15min)
 setInterval(refreshSession, 14 * 60 * 1000);
-\`\`\`
+```
 
 #### Problema 6: WAF Bloqueando Requests Legítimos
 **Sintoma:** Erro 403 Forbidden em requests válidos
 
 **Diagnóstico:**
-\`\`\`bash
+```bash
 # Ver logs do WAF
 aws wafv2 get-sampled-requests \
   --web-acl-arn [web-acl-arn] \
@@ -1416,7 +1416,7 @@ aws wafv2 get-sampled-requests \
   --scope REGIONAL \
   --time-window StartTime=1640000000,EndTime=1640086400 \
   --max-items 100
-\`\`\`
+```
 
 **Solução:**
 1. Adicionar IP à whitelist
@@ -1427,9 +1427,9 @@ aws wafv2 get-sampled-requests \
 **Sintoma:** Notificações por email não sendo recebidas
 
 **Diagnóstico:**
-\`\`\`bash
+```bash
 aws ses get-send-statistics
-\`\`\`
+```
 
 **Soluções:**
 1. Verificar se está no sandbox (limita para emails verificados)
