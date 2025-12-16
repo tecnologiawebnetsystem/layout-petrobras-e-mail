@@ -5,11 +5,21 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, AlertTriangle, CheckCircle2, Database, Cloud, Lightbulb, Code2, GitCompare } from "lucide-react"
+import {
+  ArrowLeft,
+  AlertTriangle,
+  CheckCircle2,
+  Database,
+  Cloud,
+  Lightbulb,
+  Code2,
+  GitCompare,
+  Network,
+} from "lucide-react"
 import Link from "next/link"
 
 export default function IntegracaoPage() {
-  const [activeTab, setActiveTab] = useState("conflitos")
+  const [activeTab, setActiveTab] = useState("arquitetura")
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 p-6 lg:p-8">
@@ -29,13 +39,20 @@ export default function IntegracaoPage() {
 
           <h1 className="mb-3 text-4xl font-bold tracking-tight text-slate-900">Integração Front-Back</h1>
           <p className="text-lg text-slate-600">
-            Análise completa de compatibilidade entre Next.js (Front-end) e FastAPI (Back-end)
+            Análise completa: Next.js (Front) + Python FastAPI (Back) + Amazon DynamoDB
           </p>
         </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 h-auto gap-2 bg-transparent p-0">
+            <TabsTrigger
+              value="arquitetura"
+              className="data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-700 data-[state=active]:border-cyan-200 border-2 py-3"
+            >
+              <Network className="mr-2 h-4 w-4" />
+              Arquitetura
+            </TabsTrigger>
             <TabsTrigger
               value="conflitos"
               className="data-[state=active]:bg-red-50 data-[state=active]:text-red-700 data-[state=active]:border-red-200 border-2 py-3"
@@ -55,7 +72,7 @@ export default function IntegracaoPage() {
               className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-200 border-2 py-3"
             >
               <Database className="mr-2 h-4 w-4" />
-              Banco de Dados
+              DynamoDB
             </TabsTrigger>
             <TabsTrigger
               value="aws"
@@ -63,13 +80,6 @@ export default function IntegracaoPage() {
             >
               <Cloud className="mr-2 h-4 w-4" />
               Serviços AWS
-            </TabsTrigger>
-            <TabsTrigger
-              value="arquitetura"
-              className="data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-700 data-[state=active]:border-cyan-200 border-2 py-3"
-            >
-              <Code2 className="mr-2 h-4 w-4" />
-              Arquitetura
             </TabsTrigger>
             <TabsTrigger
               value="estrategia"
@@ -80,6 +90,492 @@ export default function IntegracaoPage() {
             </TabsTrigger>
           </TabsList>
 
+          {/* Arquitetura */}
+          <TabsContent value="arquitetura" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Network className="h-5 w-5 text-cyan-600" />
+                  Diagrama de Arquitetura Completa
+                </CardTitle>
+                <CardDescription>Visão geral de como Front-end, Back-end, AWS e DynamoDB se conectam</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                {/* Diagrama Visual */}
+                <div className="bg-gradient-to-br from-slate-50 to-slate-100 p-8 rounded-xl border-2 border-slate-200">
+                  <div className="space-y-6">
+                    {/* Camada 1: Usuários */}
+                    <div className="text-center">
+                      <div className="inline-flex items-center gap-3 bg-indigo-100 px-6 py-3 rounded-lg border-2 border-indigo-300">
+                        <div className="flex gap-2">
+                          <div className="h-10 w-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold">
+                            I
+                          </div>
+                          <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">
+                            S
+                          </div>
+                          <div className="h-10 w-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold">
+                            E
+                          </div>
+                        </div>
+                        <span className="font-semibold text-indigo-900">Usuários (Internal, Supervisor, External)</span>
+                      </div>
+                    </div>
+
+                    {/* Seta */}
+                    <div className="text-center">
+                      <div className="inline-block text-4xl text-slate-400">↓</div>
+                    </div>
+
+                    {/* Camada 2: Front-end */}
+                    <div className="bg-blue-50 p-6 rounded-lg border-2 border-blue-300">
+                      <div className="font-bold text-blue-900 mb-3 text-lg">
+                        FRONT-END: Next.js 16 + TypeScript + Zustand
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                        <div className="bg-white p-3 rounded border border-blue-200">
+                          <div className="font-semibold text-blue-800">Páginas</div>
+                          <div className="text-blue-600 text-xs mt-1">
+                            /upload
+                            <br />
+                            /download
+                            <br />
+                            /supervisor
+                            <br />
+                            /auditoria
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-blue-200">
+                          <div className="font-semibold text-blue-800">Stores</div>
+                          <div className="text-blue-600 text-xs mt-1">
+                            auth-store
+                            <br />
+                            workflow-store
+                            <br />
+                            audit-log-store
+                            <br />
+                            notification-store
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-blue-200">
+                          <div className="font-semibold text-blue-800">Componentes</div>
+                          <div className="text-blue-600 text-xs mt-1">
+                            LoginForm
+                            <br />
+                            UploadForm
+                            <br />
+                            FileCard
+                            <br />
+                            ApprovalDialog
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-blue-200">
+                          <div className="font-semibold text-blue-800">Validação</div>
+                          <div className="text-blue-600 text-xs mt-1">
+                            zip-validator
+                            <br />
+                            file-types
+                            <br />
+                            schemas
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Seta */}
+                    <div className="text-center">
+                      <div className="inline-block text-4xl text-slate-400">↓</div>
+                      <div className="text-sm text-slate-600 font-medium mt-2">HTTP REST API (axios/fetch)</div>
+                    </div>
+
+                    {/* Camada 3: Back-end */}
+                    <div className="bg-purple-50 p-6 rounded-lg border-2 border-purple-300">
+                      <div className="font-bold text-purple-900 mb-3 text-lg">
+                        BACK-END: Python 3.13 + FastAPI + Boto3
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                        <div className="bg-white p-3 rounded border border-purple-200">
+                          <div className="font-semibold text-purple-800">Rotas</div>
+                          <div className="text-purple-600 text-xs mt-1">
+                            /auth/...
+                            <br />
+                            /files/...
+                            <br />
+                            /supervisor/...
+                            <br />
+                            /audit/...
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-purple-200">
+                          <div className="font-semibold text-purple-800">Serviços</div>
+                          <div className="text-purple-600 text-xs mt-1">
+                            token_service
+                            <br />
+                            file_service
+                            <br />
+                            share_service
+                            <br />
+                            audit_service
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-purple-200">
+                          <div className="font-semibold text-purple-800">Modelos</div>
+                          <div className="text-purple-600 text-xs mt-1">
+                            User
+                            <br />
+                            File
+                            <br />
+                            Share
+                            <br />
+                            AuditLog
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-purple-200">
+                          <div className="font-semibold text-purple-800">Auth</div>
+                          <div className="text-purple-600 text-xs mt-1">
+                            JWT
+                            <br />
+                            OTP
+                            <br />
+                            Password Hash
+                            <br />
+                            Middleware
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Seta */}
+                    <div className="text-center">
+                      <div className="inline-block text-4xl text-slate-400">↓</div>
+                      <div className="text-sm text-slate-600 font-medium mt-2">AWS SDK (boto3)</div>
+                    </div>
+
+                    {/* Camada 4: Serviços AWS */}
+                    <div className="bg-orange-50 p-6 rounded-lg border-2 border-orange-300">
+                      <div className="font-bold text-orange-900 mb-3 text-lg">SERVIÇOS AWS</div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                        <div className="bg-white p-3 rounded border border-orange-200">
+                          <div className="font-semibold text-orange-800">S3</div>
+                          <div className="text-orange-600 text-xs mt-1">
+                            Armazenamento
+                            <br />
+                            Upload/Download
+                            <br />
+                            URLs Presignadas
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-orange-200">
+                          <div className="font-semibold text-orange-800">SES</div>
+                          <div className="text-orange-600 text-xs mt-1">
+                            Envio de Emails
+                            <br />
+                            OTP
+                            <br />
+                            Notificações
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-orange-200">
+                          <div className="font-semibold text-orange-800">CloudWatch</div>
+                          <div className="text-orange-600 text-xs mt-1">
+                            Logs
+                            <br />
+                            Métricas
+                            <br />
+                            Alarmes
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-orange-200">
+                          <div className="font-semibold text-orange-800">Lambda</div>
+                          <div className="text-orange-600 text-xs mt-1">
+                            Expiração
+                            <br />
+                            Limpeza TTL
+                            <br />
+                            Processamento
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-orange-200">
+                          <div className="font-semibold text-orange-800">API Gateway</div>
+                          <div className="text-orange-600 text-xs mt-1">
+                            Roteamento
+                            <br />
+                            Rate Limiting
+                            <br />
+                            CORS
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-orange-200">
+                          <div className="font-semibold text-orange-800">Secrets Manager</div>
+                          <div className="text-orange-600 text-xs mt-1">
+                            JWT Secret
+                            <br />
+                            AWS Credentials
+                            <br />
+                            Tokens
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Seta */}
+                    <div className="text-center">
+                      <div className="inline-block text-4xl text-slate-400">↓</div>
+                    </div>
+
+                    {/* Camada 5: Banco de Dados */}
+                    <div className="bg-emerald-50 p-6 rounded-lg border-2 border-emerald-300">
+                      <div className="font-bold text-emerald-900 mb-3 text-lg">BANCO DE DADOS: Amazon DynamoDB</div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                        <div className="bg-white p-3 rounded border border-emerald-200">
+                          <div className="font-semibold text-emerald-800">petrobras-users</div>
+                          <div className="text-emerald-600 text-xs mt-1">
+                            userId (PK)
+                            <br />
+                            email, name, role
+                            <br />+ GSI: EmailIndex
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-emerald-200">
+                          <div className="font-semibold text-emerald-800">petrobras-files</div>
+                          <div className="text-emerald-600 text-xs mt-1">
+                            fileId (PK)
+                            <br />
+                            status, s3Key, ttl
+                            <br />+ GSI: StatusIndex
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-emerald-200">
+                          <div className="font-semibold text-emerald-800">petrobras-audit-logs</div>
+                          <div className="text-emerald-600 text-xs mt-1">
+                            logId (PK)
+                            <br />
+                            userId, action, timestamp
+                            <br />+ GSI: UserIndex
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-emerald-200">
+                          <div className="font-semibold text-emerald-800">petrobras-notifications</div>
+                          <div className="text-emerald-600 text-xs mt-1">
+                            notificationId (PK)
+                            <br />
+                            userId, type, isRead
+                            <br />+ GSI: UserNotificationsIndex
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-emerald-200">
+                          <div className="font-semibold text-emerald-800">petrobras-sessions</div>
+                          <div className="text-emerald-600 text-xs mt-1">
+                            sessionId (PK)
+                            <br />
+                            userId, accessToken, ttl
+                            <br />+ GSI: UserSessionsIndex
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-emerald-200">
+                          <div className="font-semibold text-emerald-800">petrobras-expiration-logs</div>
+                          <div className="text-emerald-600 text-xs mt-1">
+                            logId (PK)
+                            <br />
+                            fileId, previousValue, newValue
+                            <br />+ GSI: FileExpirationIndex
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fluxos de Dados */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-slate-900">Fluxos de Dados por Perfil</h3>
+
+                  {/* Fluxo Interno */}
+                  <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                    <div className="font-semibold text-blue-900 mb-2">Usuário Interno (Upload)</div>
+                    <div className="text-sm text-blue-700 space-y-1">
+                      <div>
+                        1. Login → POST <code className="bg-blue-100 px-1.5 py-0.5 rounded">/auth/login</code> → JWT
+                        accessToken
+                      </div>
+                      <div>
+                        2. Upload → POST <code className="bg-blue-100 px-1.5 py-0.5 rounded">/files/upload</code> → S3 +
+                        DynamoDB (status: pending)
+                      </div>
+                      <div>
+                        3. Notificação criada em{" "}
+                        <code className="bg-blue-100 px-1.5 py-0.5 rounded">petrobras-notifications</code>
+                      </div>
+                      <div>4. Aguarda aprovação do supervisor</div>
+                    </div>
+                  </div>
+
+                  {/* Fluxo Supervisor */}
+                  <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                    <div className="font-semibold text-green-900 mb-2">Supervisor (Aprovação)</div>
+                    <div className="text-sm text-green-700 space-y-1">
+                      <div>
+                        1. Login → POST <code className="bg-green-100 px-1.5 py-0.5 rounded">/auth/login</code> → JWT
+                        accessToken
+                      </div>
+                      <div>
+                        2. Lista pendentes → GET{" "}
+                        <code className="bg-green-100 px-1.5 py-0.5 rounded">/supervisor/pending</code>
+                      </div>
+                      <div>
+                        3. Aprovar → POST{" "}
+                        <code className="bg-green-100 px-1.5 py-0.5 rounded">/supervisor/approve/:id</code> → Atualiza
+                        DynamoDB (status: approved)
+                      </div>
+                      <div>4. Gera OTP → SES envia email ao destinatário externo</div>
+                      <div>5. Audit log registrado automaticamente</div>
+                    </div>
+                  </div>
+
+                  {/* Fluxo Externo */}
+                  <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-500">
+                    <div className="font-semibold text-orange-900 mb-2">Usuário Externo (Download)</div>
+                    <div className="text-sm text-orange-700 space-y-1">
+                      <div>
+                        1. Solicita OTP → POST{" "}
+                        <code className="bg-orange-100 px-1.5 py-0.5 rounded">/auth/otp/request</code>
+                      </div>
+                      <div>2. Recebe código por email (SES)</div>
+                      <div>
+                        3. Verifica OTP → POST{" "}
+                        <code className="bg-orange-100 px-1.5 py-0.5 rounded">/auth/otp/verify</code> → ACCESS_TOKEN
+                        temporário
+                      </div>
+                      <div>
+                        4. Lista arquivos → GET{" "}
+                        <code className="bg-orange-100 px-1.5 py-0.5 rounded">/external/files?token=xxx</code>
+                      </div>
+                      <div>5. Download → URL presignada do S3</div>
+                      <div>
+                        6. ACK → POST <code className="bg-orange-100 px-1.5 py-0.5 rounded">/external/ack</code> →
+                        Registra download
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Integrações AWS Detalhadas */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-slate-900">Integrações AWS Necessárias</h3>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-white p-4 rounded-lg border-2 border-slate-200">
+                      <div className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
+                        <Badge className="bg-orange-500">S3</Badge>
+                        Armazenamento de Arquivos
+                      </div>
+                      <div className="text-sm text-slate-700 space-y-2">
+                        <div>
+                          <span className="font-medium">Biblioteca:</span> boto3
+                        </div>
+                        <div>
+                          <span className="font-medium">Operações:</span>
+                          <ul className="list-disc list-inside text-xs mt-1 pl-2">
+                            <li>put_object() - Upload</li>
+                            <li>generate_presigned_url() - Download seguro</li>
+                            <li>delete_object() - Limpeza TTL</li>
+                          </ul>
+                        </div>
+                        <div>
+                          <span className="font-medium">Config:</span>
+                          <code className="block bg-slate-100 p-2 rounded text-xs mt-1">
+                            s3 = boto3.client('s3')
+                            <br />
+                            bucket = 'petrobras-files'
+                          </code>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border-2 border-slate-200">
+                      <div className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
+                        <Badge className="bg-orange-500">DynamoDB</Badge>
+                        Banco NoSQL
+                      </div>
+                      <div className="text-sm text-slate-700 space-y-2">
+                        <div>
+                          <span className="font-medium">Biblioteca:</span> boto3
+                        </div>
+                        <div>
+                          <span className="font-medium">Operações:</span>
+                          <ul className="list-disc list-inside text-xs mt-1 pl-2">
+                            <li>put_item() - Criar</li>
+                            <li>get_item() - Buscar por PK</li>
+                            <li>query() - Buscar por GSI</li>
+                            <li>update_item() - Atualizar</li>
+                          </ul>
+                        </div>
+                        <div>
+                          <span className="font-medium">Config:</span>
+                          <code className="block bg-slate-100 p-2 rounded text-xs mt-1">
+                            dynamodb = boto3.resource('dynamodb')
+                            <br />
+                            table = dynamodb.Table('petrobras-files')
+                          </code>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border-2 border-slate-200">
+                      <div className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
+                        <Badge className="bg-orange-500">SES</Badge>
+                        Envio de Emails
+                      </div>
+                      <div className="text-sm text-slate-700 space-y-2">
+                        <div>
+                          <span className="font-medium">Biblioteca:</span> boto3
+                        </div>
+                        <div>
+                          <span className="font-medium">Operações:</span>
+                          <ul className="list-disc list-inside text-xs mt-1 pl-2">
+                            <li>send_email() - OTP</li>
+                            <li>send_templated_email() - Notificações</li>
+                          </ul>
+                        </div>
+                        <div>
+                          <span className="font-medium">Config:</span>
+                          <code className="block bg-slate-100 p-2 rounded text-xs mt-1">
+                            ses = boto3.client('ses')
+                            <br />
+                            sender = 'noreply@petrobras.com.br'
+                          </code>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border-2 border-slate-200">
+                      <div className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
+                        <Badge className="bg-orange-500">Lambda</Badge>
+                        Funções Serverless
+                      </div>
+                      <div className="text-sm text-slate-700 space-y-2">
+                        <div>
+                          <span className="font-medium">Uso:</span> Automações
+                        </div>
+                        <div>
+                          <span className="font-medium">Funções:</span>
+                          <ul className="list-disc list-inside text-xs mt-1 pl-2">
+                            <li>TTL Cleanup - Remove arquivos expirados do S3</li>
+                            <li>Notification Sender - Envia notificações agendadas</li>
+                            <li>Audit Aggregator - Gera relatórios</li>
+                          </ul>
+                        </div>
+                        <div>
+                          <span className="font-medium">Trigger:</span> CloudWatch Events (cron)
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Conflitos */}
           <TabsContent value="conflitos" className="space-y-6">
             <Card>
@@ -89,7 +585,8 @@ export default function IntegracaoPage() {
                   Análise de Conflitos e Incompatibilidades
                 </CardTitle>
                 <CardDescription>
-                  Campos e funcionalidades que existem no front-end mas ainda não estão implementados no back-end
+                  Campos e funcionalidades que existem no front-end mas ainda não estão implementados no back-end Python
+                  FastAPI
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -97,100 +594,109 @@ export default function IntegracaoPage() {
                 <div className="border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg">
                   <h3 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
                     <Code2 className="h-4 w-4" />
-                    1. Sistema de Autenticação
+                    1. Sistema de Autenticação JWT
                   </h3>
                   <div className="space-y-3 text-sm">
                     <div>
-                      <p className="font-medium text-red-800 mb-1">Front-end (Next.js):</p>
+                      <p className="font-medium text-red-800 mb-1">Front-end (Next.js + Zustand):</p>
                       <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
                         <li>
-                          <code className="bg-red-100 px-2 py-0.5 rounded">user.userType</code> - "internal" |
-                          "external" | "supervisor"
+                          <code className="bg-red-100 px-2 py-0.5 rounded">user.userType</code>: "internal" | "external"
+                          | "supervisor"
                         </li>
                         <li>
-                          <code className="bg-red-100 px-2 py-0.5 rounded">user.id</code>,{" "}
-                          <code className="bg-red-100 px-2 py-0.5 rounded">user.name</code>,{" "}
-                          <code className="bg-red-100 px-2 py-0.5 rounded">user.email</code>
+                          Campos:{" "}
+                          <code className="bg-red-100 px-2 py-0.5 rounded">id, name, email, department, phone</code>
                         </li>
                         <li>
                           <code className="bg-red-100 px-2 py-0.5 rounded">accessToken</code> e{" "}
-                          <code className="bg-red-100 px-2 py-0.5 rounded">refreshToken</code> JWT
+                          <code className="bg-red-100 px-2 py-0.5 rounded">refreshToken</code> JWT com refresh
+                          automático
                         </li>
-                        <li>Login com email/senha para usuários internos e supervisores</li>
+                        <li>Login com email/senha para internal e supervisor</li>
+                        <li>
+                          Usado em: <code className="bg-red-100 px-2 py-0.5 rounded">lib/stores/auth-store.ts</code>
+                        </li>
                       </ul>
                     </div>
                     <div>
-                      <p className="font-medium text-red-800 mb-1">Back-end (FastAPI):</p>
+                      <p className="font-medium text-red-800 mb-1">Back-end (Python FastAPI):</p>
                       <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
                         <li>Apenas autenticação OTP para usuários externos via email</li>
                         <li>
-                          <code className="bg-red-100 px-2 py-0.5 rounded">ACCESS_TOKEN</code> temporário sem refresh
+                          <code className="bg-red-100 px-2 py-0.5 rounded">ACCESS_TOKEN</code> temporário sem JWT
                         </li>
-                        <li>Não tem tabela de usuários internos ou supervisores</li>
-                        <li>Não tem login com senha</li>
+                        <li>Não tem tabela de usuários internos/supervisores no DynamoDB</li>
+                        <li>Não tem login com senha nem hash de senha</li>
+                        <li>Não tem refresh token</li>
                       </ul>
                     </div>
                     <div className="bg-red-100 p-3 rounded-lg mt-2">
                       <p className="font-semibold text-red-900 mb-1">Ação Necessária:</p>
                       <p className="text-red-800">
-                        Criar tabela <code className="bg-red-200 px-1.5 py-0.5 rounded">users</code> no back-end com
-                        campos: id, email, password_hash, name, user_type, created_at. Implementar endpoints{" "}
-                        <code className="bg-red-200 px-1.5 py-0.5 rounded">POST /auth/login</code> e{" "}
-                        <code className="bg-red-200 px-1.5 py-0.5 rounded">POST /auth/refresh</code> com JWT.
+                        Criar tabela <code className="bg-red-200 px-1.5 py-0.5 rounded">petrobras-users</code> no
+                        DynamoDB. Implementar endpoints{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">POST /auth/login</code>,{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">POST /auth/refresh</code> e{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">POST /auth/logout</code> com PyJWT. Usar
+                        bcrypt para hash de senhas.
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Conflito 2: Upload com Aprovação */}
+                {/* Conflito 2: Workflow */}
                 <div className="border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg">
                   <h3 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
                     <Code2 className="h-4 w-4" />
-                    2. Workflow de Upload e Aprovação
+                    2. Workflow de Aprovação/Rejeição
                   </h3>
                   <div className="space-y-3 text-sm">
                     <div>
                       <p className="font-medium text-red-800 mb-1">Front-end (Next.js):</p>
                       <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
-                        <li>Status: "pending" | "approved" | "rejected"</li>
                         <li>
-                          Campo <code className="bg-red-100 px-2 py-0.5 rounded">rejectionReason</code> (motivo da
-                          rejeição)
+                          Status:{" "}
+                          <code className="bg-red-100 px-2 py-0.5 rounded">"pending" | "approved" | "rejected"</code>
                         </li>
                         <li>
-                          Campo <code className="bg-red-100 px-2 py-0.5 rounded">expirationHours</code> configurável
-                          (24, 48, 72h)
+                          Campo <code className="bg-red-100 px-2 py-0.5 rounded">rejectionReason</code> obrigatório via
+                          modal
                         </li>
                         <li>
-                          Array <code className="bg-red-100 px-2 py-0.5 rounded">expirationLogs</code> com histórico de
-                          alterações
+                          Campo <code className="bg-red-100 px-2 py-0.5 rounded">expirationHours</code> ajustável: 24,
+                          48, 72h
                         </li>
                         <li>
-                          Campos <code className="bg-red-100 px-2 py-0.5 rounded">approvedBy</code>,{" "}
-                          <code className="bg-red-100 px-2 py-0.5 rounded">approvalDate</code>
+                          Campos{" "}
+                          <code className="bg-red-100 px-2 py-0.5 rounded">approvedBy, approverName, approvalDate</code>
+                        </li>
+                        <li>
+                          Widgets separados por status na página{" "}
+                          <code className="bg-red-100 px-2 py-0.5 rounded">app/supervisor/page.tsx</code>
                         </li>
                       </ul>
                     </div>
                     <div>
-                      <p className="font-medium text-red-800 mb-1">Back-end (FastAPI):</p>
+                      <p className="font-medium text-red-800 mb-1">Back-end (Python):</p>
                       <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
+                        <li>Compartilhamentos criados diretamente como ativos</li>
                         <li>Não tem fluxo de aprovação/rejeição</li>
-                        <li>Compartilhamentos são criados diretamente ativos</li>
                         <li>Não tem campo de motivo de rejeição</li>
-                        <li>Expiração fixa sem logs de alteração</li>
+                        <li>Expiração fixa sem ajuste dinâmico</li>
+                        <li>Não registra quem aprovou</li>
                       </ul>
                     </div>
                     <div className="bg-red-100 p-3 rounded-lg mt-2">
                       <p className="font-semibold text-red-900 mb-1">Ação Necessária:</p>
                       <p className="text-red-800">
-                        Adicionar campos <code className="bg-red-200 px-1.5 py-0.5 rounded">status</code>,{" "}
-                        <code className="bg-red-200 px-1.5 py-0.5 rounded">approved_by</code>,{" "}
-                        <code className="bg-red-200 px-1.5 py-0.5 rounded">approval_date</code>,{" "}
-                        <code className="bg-red-200 px-1.5 py-0.5 rounded">rejection_reason</code> na tabela shares.
-                        Criar tabela <code className="bg-red-200 px-1.5 py-0.5 rounded">expiration_logs</code> para
-                        histórico. Implementar endpoints{" "}
-                        <code className="bg-red-200 px-1.5 py-0.5 rounded">POST /supervisor/approve/:id</code> e{" "}
-                        <code className="bg-red-200 px-1.5 py-0.5 rounded">POST /supervisor/reject/:id</code>.
+                        Adicionar campos na tabela{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">petrobras-files</code>: status, approved_by,
+                        approval_date, rejection_reason, expiration_hours. Criar endpoints{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">POST /supervisor/approve/:id</code>,{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">POST /supervisor/reject/:id</code> (com
+                        reason obrigatório),{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">GET /supervisor/pending</code>.
                       </p>
                     </div>
                   </div>
@@ -200,29 +706,33 @@ export default function IntegracaoPage() {
                 <div className="border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg">
                   <h3 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
                     <Code2 className="h-4 w-4" />
-                    3. Sistema de Auditoria
+                    3. Sistema de Auditoria Completo
                   </h3>
                   <div className="space-y-3 text-sm">
                     <div>
                       <p className="font-medium text-red-800 mb-1">Front-end (Next.js):</p>
                       <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
                         <li>
-                          Ações detalhadas: "login", "logout", "upload", "approve", "reject", "download",
-                          "expiration_change"
+                          Ações: "login", "logout", "upload", "approve", "reject", "download", "expiration_change",
+                          "delete"
                         </li>
-                        <li>Níveis: "info", "success", "warning", "error"</li>
                         <li>
-                          Metadados completos: <code className="bg-red-100 px-2 py-0.5 rounded">targetId</code>,{" "}
-                          <code className="bg-red-100 px-2 py-0.5 rounded">targetName</code>,{" "}
-                          <code className="bg-red-100 px-2 py-0.5 rounded">description</code>, metadata customizável
+                          Níveis:{" "}
+                          <code className="bg-red-100 px-2 py-0.5 rounded">
+                            "info" | "success" | "warning" | "error"
+                          </code>
                         </li>
-                        <li>IP do usuário registrado</li>
+                        <li>Metadados completos: targetId, targetName, description, metadata JSON customizável</li>
+                        <li>Registra IP do usuário automaticamente</li>
+                        <li>
+                          Store: <code className="bg-red-100 px-2 py-0.5 rounded">lib/stores/audit-log-store.ts</code>
+                        </li>
                       </ul>
                     </div>
                     <div>
-                      <p className="font-medium text-red-800 mb-1">Back-end (FastAPI):</p>
+                      <p className="font-medium text-red-800 mb-1">Back-end (Python):</p>
                       <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
-                        <li>Auditoria básica de downloads (ACK)</li>
+                        <li>Auditoria apenas de ACK de downloads</li>
                         <li>Não registra login, upload, aprovação, rejeição</li>
                         <li>Não tem níveis de log</li>
                         <li>Metadados limitados</li>
@@ -231,9 +741,11 @@ export default function IntegracaoPage() {
                     <div className="bg-red-100 p-3 rounded-lg mt-2">
                       <p className="font-semibold text-red-900 mb-1">Ação Necessária:</p>
                       <p className="text-red-800">
-                        Criar tabela <code className="bg-red-200 px-1.5 py-0.5 rounded">audit_logs</code> com campos:
-                        id, timestamp, user_id, action, level, target_id, target_name, description, metadata_json,
-                        ip_address. Implementar middleware para registrar todas as ações automaticamente.
+                        Criar tabela <code className="bg-red-200 px-1.5 py-0.5 rounded">petrobras-audit-logs</code> com
+                        campos: logId (PK), timestamp, userId, action, level, fileId, description, ip_address,
+                        metadata_json. Implementar middleware FastAPI para registrar automaticamente todas as rotas
+                        protegidas. Endpoint <code className="bg-red-200 px-1.5 py-0.5 rounded">GET /audit/logs</code>{" "}
+                        com filtros.
                       </p>
                     </div>
                   </div>
@@ -243,32 +755,80 @@ export default function IntegracaoPage() {
                 <div className="border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg">
                   <h3 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
                     <Code2 className="h-4 w-4" />
-                    4. Sistema de Notificações
+                    4. Sistema de Notificações em Tempo Real
                   </h3>
                   <div className="space-y-3 text-sm">
                     <div>
                       <p className="font-medium text-red-800 mb-1">Front-end (Next.js):</p>
                       <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
-                        <li>Tipos: "approval", "success", "error", "info", "expiration"</li>
-                        <li>Prioridades: "low", "medium", "high"</li>
-                        <li>Sistema completo de notificações em tempo real</li>
-                        <li>Ações (actionLabel, actionUrl) para redirecionar</li>
+                        <li>
+                          Tipos:{" "}
+                          <code className="bg-red-100 px-2 py-0.5 rounded">
+                            "approval" | "success" | "error" | "info" | "expiration"
+                          </code>
+                        </li>
+                        <li>
+                          Prioridades: <code className="bg-red-100 px-2 py-0.5 rounded">"low" | "medium" | "high"</code>
+                        </li>
+                        <li>Sistema completo com título, mensagem, ações (actionLabel, actionUrl)</li>
+                        <li>Marcação de lidas/não lidas</li>
+                        <li>
+                          Store:{" "}
+                          <code className="bg-red-100 px-2 py-0.5 rounded">lib/stores/notification-store.ts</code>
+                        </li>
                       </ul>
                     </div>
                     <div>
-                      <p className="font-medium text-red-800 mb-1">Back-end (FastAPI):</p>
+                      <p className="font-medium text-red-800 mb-1">Back-end (Python):</p>
                       <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
                         <li>Não tem sistema de notificações</li>
-                        <li>Apenas envio de OTP por email (mock)</li>
+                        <li>Apenas mock de envio de OTP por email</li>
                       </ul>
                     </div>
                     <div className="bg-red-100 p-3 rounded-lg mt-2">
                       <p className="font-semibold text-red-900 mb-1">Ação Necessária:</p>
                       <p className="text-red-800">
-                        Criar tabela <code className="bg-red-200 px-1.5 py-0.5 rounded">notifications</code> e
-                        implementar endpoint{" "}
-                        <code className="bg-red-200 px-1.5 py-0.5 rounded">GET /notifications</code> para listar
-                        notificações por usuário. Integrar com WebSockets ou Server-Sent Events para tempo real.
+                        Criar tabela <code className="bg-red-200 px-1.5 py-0.5 rounded">petrobras-notifications</code>{" "}
+                        com TTL de 30 dias. Implementar endpoints{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">GET /notifications</code>,{" "}
+                        <code className="bg-red-200 px-1.5 py-0.5 rounded">PUT /notifications/:id/read</code>. Integrar
+                        AWS SES para envio de emails reais (substituir mock). Opcional: WebSockets com FastAPI para
+                        notificações em tempo real.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Conflito 5: Validação de Arquivos */}
+                <div className="border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg">
+                  <h3 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                    <Code2 className="h-4 w-4" />
+                    5. Validação de Arquivos Perigosos
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="font-medium text-red-800 mb-1">Front-end (Next.js):</p>
+                      <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
+                        <li>Bloqueio de extensões: .exe, .dll, .bat, .cmd, .scr, .vbs, .js, .jar, .app, .deb, .rpm</li>
+                        <li>
+                          Validação em{" "}
+                          <code className="bg-red-100 px-2 py-0.5 rounded">lib/utils/zip-validator.ts</code>
+                        </li>
+                        <li>Bloqueio antes do upload com notificação clara</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="font-medium text-red-800 mb-1">Back-end (Python):</p>
+                      <ul className="list-disc list-inside text-red-700 space-y-1 pl-4">
+                        <li>Não tem validação de extensões perigosas</li>
+                        <li>Aceita qualquer arquivo</li>
+                      </ul>
+                    </div>
+                    <div className="bg-red-100 p-3 rounded-lg mt-2">
+                      <p className="font-semibold text-red-900 mb-1">Ação Necessária:</p>
+                      <p className="text-red-800">
+                        Criar validador em Python que espelhe a lógica do front-end. Rejeitar uploads com extensões
+                        perigosas retornando HTTP 400. Adicionar validação de conteúdo MIME type além da extensão.
                       </p>
                     </div>
                   </div>
