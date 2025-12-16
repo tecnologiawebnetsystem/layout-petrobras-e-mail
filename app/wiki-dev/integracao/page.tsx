@@ -35,7 +35,7 @@ export default function IntegracaoPage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto gap-2 bg-transparent p-0">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 h-auto gap-2 bg-transparent p-0">
             <TabsTrigger
               value="conflitos"
               className="data-[state=active]:bg-red-50 data-[state=active]:text-red-700 data-[state=active]:border-red-200 border-2 py-3"
@@ -63,6 +63,13 @@ export default function IntegracaoPage() {
             >
               <Cloud className="mr-2 h-4 w-4" />
               Serviços AWS
+            </TabsTrigger>
+            <TabsTrigger
+              value="arquitetura"
+              className="data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-700 data-[state=active]:border-cyan-200 border-2 py-3"
+            >
+              <Code2 className="mr-2 h-4 w-4" />
+              Arquitetura
             </TabsTrigger>
             <TabsTrigger
               value="estrategia"
@@ -1138,6 +1145,475 @@ export default function IntegracaoPage() {
                     <p> │ Amazon SES │</p>
                     <p> │ (Emails OTP) │</p>
                     <p> └──────────────┘</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="arquitetura" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Code2 className="h-5 w-5 text-cyan-600" />
+                  Arquitetura Completa do Sistema
+                </CardTitle>
+                <CardDescription>
+                  Diagrama visual e soluções práticas para integrar Front-end, Back-end, AWS e Banco de Dados
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                {/* Diagrama Visual */}
+                <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-xl">
+                  <h3 className="font-bold text-white mb-6 text-xl text-center">Fluxo Completo do Sistema</h3>
+
+                  <div className="space-y-6">
+                    {/* Camada 1: Usuários */}
+                    <div className="bg-slate-800/50 border-2 border-cyan-400 rounded-lg p-4">
+                      <p className="text-cyan-300 font-semibold mb-3 text-center">CAMADA 1: USUÁRIOS</p>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="bg-cyan-900/50 p-3 rounded text-center">
+                          <p className="text-cyan-200 font-medium">👤 Interno</p>
+                          <p className="text-cyan-400 text-xs mt-1">Upload de arquivos</p>
+                        </div>
+                        <div className="bg-purple-900/50 p-3 rounded text-center">
+                          <p className="text-purple-200 font-medium">👨‍💼 Supervisor</p>
+                          <p className="text-purple-400 text-xs mt-1">Aprovação/Rejeição</p>
+                        </div>
+                        <div className="bg-green-900/50 p-3 rounded text-center">
+                          <p className="text-green-200 font-medium">🌐 Externo</p>
+                          <p className="text-green-400 text-xs mt-1">Download via OTP</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Seta */}
+                    <div className="text-center text-cyan-400 text-2xl">↓</div>
+
+                    {/* Camada 2: Front-end */}
+                    <div className="bg-slate-800/50 border-2 border-blue-400 rounded-lg p-4">
+                      <p className="text-blue-300 font-semibold mb-3 text-center">CAMADA 2: FRONT-END (Next.js 16)</p>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="space-y-2">
+                          <p className="text-blue-200 font-medium">Páginas:</p>
+                          <ul className="text-blue-400 space-y-1">
+                            <li>• /login - Autenticação</li>
+                            <li>• /upload - Upload de arquivos</li>
+                            <li>• /supervisor - Aprovação</li>
+                            <li>• /download - Download externo</li>
+                            <li>• /auditoria - Logs</li>
+                          </ul>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-blue-200 font-medium">Stores (Zustand):</p>
+                          <ul className="text-blue-400 space-y-1">
+                            <li>• auth-store.ts</li>
+                            <li>• workflow-store.ts</li>
+                            <li>• audit-log-store.ts</li>
+                            <li>• notification-store.ts</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Seta */}
+                    <div className="text-center text-blue-400 text-2xl">↓ API REST (fetch)</div>
+
+                    {/* Camada 3: Back-end */}
+                    <div className="bg-slate-800/50 border-2 border-orange-400 rounded-lg p-4">
+                      <p className="text-orange-300 font-semibold mb-3 text-center">
+                        CAMADA 3: BACK-END (FastAPI Python)
+                      </p>
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div className="space-y-2">
+                          <p className="text-orange-200 font-medium">Auth:</p>
+                          <ul className="text-orange-400 space-y-1 text-xs">
+                            <li>POST /auth/login</li>
+                            <li>POST /auth/refresh</li>
+                            <li>POST /auth/otp/solicitar</li>
+                            <li>POST /auth/otp/verificar</li>
+                          </ul>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-orange-200 font-medium">Upload/Supervisor:</p>
+                          <ul className="text-orange-400 space-y-1 text-xs">
+                            <li>POST /uploads</li>
+                            <li>GET /uploads/pending</li>
+                            <li>POST /uploads/:id/approve</li>
+                            <li>POST /uploads/:id/reject</li>
+                          </ul>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-orange-200 font-medium">Download/Audit:</p>
+                          <ul className="text-orange-400 space-y-1 text-xs">
+                            <li>GET /externo/lista</li>
+                            <li>POST /externo/ack</li>
+                            <li>GET /audit-logs</li>
+                            <li>GET /notifications</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Seta */}
+                    <div className="text-center text-orange-400 text-2xl">↓ SQL / SDK</div>
+
+                    {/* Camada 4: AWS Services */}
+                    <div className="bg-slate-800/50 border-2 border-yellow-400 rounded-lg p-4">
+                      <p className="text-yellow-300 font-semibold mb-3 text-center">CAMADA 4: SERVIÇOS AWS</p>
+                      <div className="grid grid-cols-4 gap-3 text-sm">
+                        <div className="bg-yellow-900/30 p-2 rounded text-center">
+                          <p className="text-yellow-200 font-medium text-xs">RDS PostgreSQL</p>
+                          <p className="text-yellow-400 text-xs mt-1">Dados estruturados</p>
+                        </div>
+                        <div className="bg-yellow-900/30 p-2 rounded text-center">
+                          <p className="text-yellow-200 font-medium text-xs">S3</p>
+                          <p className="text-yellow-400 text-xs mt-1">Arquivos ZIP</p>
+                        </div>
+                        <div className="bg-yellow-900/30 p-2 rounded text-center">
+                          <p className="text-yellow-200 font-medium text-xs">SES</p>
+                          <p className="text-yellow-400 text-xs mt-1">Envio de OTP</p>
+                        </div>
+                        <div className="bg-yellow-900/30 p-2 rounded text-center">
+                          <p className="text-yellow-200 font-medium text-xs">CloudWatch</p>
+                          <p className="text-yellow-400 text-xs mt-1">Logs e métricas</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Seta */}
+                    <div className="text-center text-yellow-400 text-2xl">↓ Persistência</div>
+
+                    {/* Camada 5: Banco de Dados */}
+                    <div className="bg-slate-800/50 border-2 border-emerald-400 rounded-lg p-4">
+                      <p className="text-emerald-300 font-semibold mb-3 text-center">
+                        CAMADA 5: BANCO DE DADOS (PostgreSQL)
+                      </p>
+                      <div className="grid grid-cols-4 gap-3 text-xs">
+                        <div className="bg-emerald-900/30 p-2 rounded">
+                          <p className="text-emerald-200 font-medium">users</p>
+                          <p className="text-emerald-400 text-xs">Autenticação</p>
+                        </div>
+                        <div className="bg-emerald-900/30 p-2 rounded">
+                          <p className="text-emerald-200 font-medium">uploads</p>
+                          <p className="text-emerald-400 text-xs">Arquivos enviados</p>
+                        </div>
+                        <div className="bg-emerald-900/30 p-2 rounded">
+                          <p className="text-emerald-200 font-medium">shares</p>
+                          <p className="text-emerald-400 text-xs">Compartilhamentos</p>
+                        </div>
+                        <div className="bg-emerald-900/30 p-2 rounded">
+                          <p className="text-emerald-200 font-medium">audit_logs</p>
+                          <p className="text-emerald-400 text-xs">Auditoria completa</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Soluções Práticas */}
+                <div className="space-y-6">
+                  <h3 className="font-bold text-slate-900 text-lg">Soluções Práticas de Integração</h3>
+
+                  {/* Solução 1: API Client */}
+                  <div className="bg-cyan-50 p-5 rounded-lg border-l-4 border-cyan-500">
+                    <h4 className="font-semibold text-cyan-900 mb-3 flex items-center gap-2">
+                      <Code2 className="h-4 w-4" />
+                      1. Criar API Client Centralizado no Front-end
+                    </h4>
+                    <div className="space-y-3 text-sm">
+                      <p className="text-cyan-800">
+                        <strong>ONDE:</strong>{" "}
+                        <code className="bg-cyan-100 px-2 py-0.5 rounded">lib/api/client.ts</code>
+                      </p>
+                      <div className="bg-white p-3 rounded border border-cyan-200">
+                        <pre className="text-xs text-cyan-900 overflow-x-auto">
+                          {`// lib/api/client.ts
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
+export class ApiClient {
+  async request(endpoint: string, options?: RequestInit) {
+    const token = localStorage.getItem('accessToken')
+    const response = await fetch(\`\${API_URL}\${endpoint}\`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': \`Bearer \${token}\` }),
+        ...options?.headers,
+      },
+    })
+    if (!response.ok) throw new Error(await response.text())
+    return response.json()
+  }
+
+  // Auth
+  async login(email: string, password: string) {
+    return this.request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    })
+  }
+
+  // Upload
+  async uploadFiles(formData: FormData) {
+    const token = localStorage.getItem('accessToken')
+    const response = await fetch(\`\${API_URL}/uploads\`, {
+      method: 'POST',
+      headers: { 'Authorization': \`Bearer \${token}\` },
+      body: formData,
+    })
+    return response.json()
+  }
+
+  // Supervisor
+  async getPendingUploads() {
+    return this.request('/uploads/pending')
+  }
+
+  async approveUpload(id: string, expirationHours: number) {
+    return this.request(\`/uploads/\${id}/approve\`, {
+      method: 'POST',
+      body: JSON.stringify({ expiration_hours: expirationHours }),
+    })
+  }
+
+  async rejectUpload(id: string, reason: string) {
+    return this.request(\`/uploads/\${id}/reject\`, {
+      method: 'POST',
+      body: JSON.stringify({ rejection_reason: reason }),
+    })
+  }
+}
+
+export const apiClient = new ApiClient()`}
+                        </pre>
+                      </div>
+                      <p className="text-cyan-700">
+                        <strong>BENEFÍCIO:</strong> Centraliza todas as chamadas de API, gerencia tokens automaticamente
+                        e facilita manutenção.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Solução 2: Atualizar Stores */}
+                  <div className="bg-blue-50 p-5 rounded-lg border-l-4 border-blue-500">
+                    <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                      <Database className="h-4 w-4" />
+                      2. Conectar Stores Zustand com API Real
+                    </h4>
+                    <div className="space-y-3 text-sm">
+                      <p className="text-blue-800">
+                        <strong>ONDE:</strong> Substituir dados mock nos stores por chamadas reais
+                      </p>
+                      <div className="bg-white p-3 rounded border border-blue-200">
+                        <pre className="text-xs text-blue-900 overflow-x-auto">
+                          {`// lib/stores/auth-store.ts
+import { apiClient } from '@/lib/api/client'
+
+export const useAuthStore = create<AuthStore>((set) => ({
+
+  login: async (email: string, password: string) => {
+    try {
+      const response = await apiClient.login(email, password)
+      localStorage.setItem('accessToken', response.access_token)
+      localStorage.setItem('refreshToken', response.refresh_token)
+      set({
+        user: {
+          id: response.user.id,
+          name: response.user.name,
+          email: response.user.email,
+          userType: response.user.user_type,
+        },
+        isAuthenticated: true,
+      })
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: 'Credenciais inválidas' }
+    }
+  },
+
+}))`}
+                        </pre>
+                      </div>
+                      <p className="text-blue-700">
+                        <strong>AÇÃO:</strong> Repetir para workflow-store, audit-log-store e notification-store.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Solução 3: Variáveis de Ambiente */}
+                  <div className="bg-purple-50 p-5 rounded-lg border-l-4 border-purple-500">
+                    <h4 className="font-semibold text-purple-900 mb-3 flex items-center gap-2">
+                      <Cloud className="h-4 w-4" />
+                      3. Configurar Variáveis de Ambiente
+                    </h4>
+                    <div className="space-y-3 text-sm">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-purple-800 font-medium mb-2">Front-end (.env.local):</p>
+                          <div className="bg-white p-3 rounded border border-purple-200">
+                            <pre className="text-xs text-purple-900">
+                              {`NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_APP_ENV=development`}
+                            </pre>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-purple-800 font-medium mb-2">Back-end (.env):</p>
+                          <div className="bg-white p-3 rounded border border-purple-200">
+                            <pre className="text-xs text-purple-900">
+                              {`DATABASE_URL=postgresql://user:pass@localhost:5432/petrobras
+AWS_ACCESS_KEY_ID=your_key
+AWS_SECRET_ACCESS_KEY=your_secret
+AWS_S3_BUCKET=petrobras-files
+AWS_REGION=us-east-1
+JWT_SECRET=your_secret_key
+SMTP_HOST=email-smtp.us-east-1.amazonaws.com`}
+                            </pre>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Solução 4: Deploy na AWS */}
+                  <div className="bg-orange-50 p-5 rounded-lg border-l-4 border-orange-500">
+                    <h4 className="font-semibold text-orange-900 mb-3 flex items-center gap-2">
+                      <Cloud className="h-4 w-4" />
+                      4. Estratégia de Deploy na AWS
+                    </h4>
+                    <div className="space-y-4 text-sm">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="bg-white p-4 rounded border border-orange-200">
+                          <p className="font-semibold text-orange-900 mb-2">Front-end (Vercel):</p>
+                          <ul className="list-disc list-inside text-orange-700 space-y-1">
+                            <li>Deploy automático via Git</li>
+                            <li>Variável: NEXT_PUBLIC_API_URL aponta para API Gateway</li>
+                            <li>CDN global automático</li>
+                            <li>SSL/HTTPS incluído</li>
+                          </ul>
+                        </div>
+                        <div className="bg-white p-4 rounded border border-orange-200">
+                          <p className="font-semibold text-orange-900 mb-2">Back-end (AWS):</p>
+                          <ul className="list-disc list-inside text-orange-700 space-y-1">
+                            <li>ECS Fargate: Container FastAPI</li>
+                            <li>API Gateway: Endpoint público</li>
+                            <li>RDS PostgreSQL: Multi-AZ</li>
+                            <li>S3: Arquivos com lifecycle policy</li>
+                            <li>CloudWatch: Logs e alertas</li>
+                          </ul>
+                        </div>
+                      </div>
+                      <div className="bg-orange-100 p-3 rounded">
+                        <p className="font-semibold text-orange-900 mb-1">Comandos de Deploy:</p>
+                        <pre className="text-xs text-orange-800 bg-white p-2 rounded mt-2">
+                          {`# 1. Build da imagem Docker
+cd back-end/python
+docker build -t petrobras-api .
+
+# 2. Push para ECR
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <account>.dkr.ecr.us-east-1.amazonaws.com
+docker tag petrobras-api:latest <account>.dkr.ecr.us-east-1.amazonaws.com/petrobras-api:latest
+docker push <account>.dkr.ecr.us-east-1.amazonaws.com/petrobras-api:latest
+
+# 3. Atualizar serviço ECS
+aws ecs update-service --cluster petrobras-cluster --service petrobras-api --force-new-deployment`}
+                        </pre>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Solução 5: Monitoramento */}
+                  <div className="bg-emerald-50 p-5 rounded-lg border-l-4 border-emerald-500">
+                    <h4 className="font-semibold text-emerald-900 mb-3 flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4" />
+                      5. Monitoramento e Logs
+                    </h4>
+                    <div className="space-y-3 text-sm">
+                      <div className="grid md:grid-cols-3 gap-4">
+                        <div className="bg-white p-3 rounded border border-emerald-200">
+                          <p className="font-semibold text-emerald-900 mb-2">CloudWatch Logs:</p>
+                          <ul className="text-emerald-700 space-y-1 text-xs">
+                            <li>• Log group: /aws/ecs/petrobras-api</li>
+                            <li>• Retenção: 30 dias</li>
+                            <li>• Filtros: ERROR, WARNING</li>
+                          </ul>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-emerald-200">
+                          <p className="font-semibold text-emerald-900 mb-2">CloudWatch Metrics:</p>
+                          <ul className="text-emerald-700 space-y-1 text-xs">
+                            <li>• CPU/Memory do ECS</li>
+                            <li>• Latência da API</li>
+                            <li>• Taxa de erros 4xx/5xx</li>
+                          </ul>
+                        </div>
+                        <div className="bg-white p-3 rounded border border-emerald-200">
+                          <p className="font-semibold text-emerald-900 mb-2">Alarmes:</p>
+                          <ul className="text-emerald-700 space-y-1 text-xs">
+                            <li>• CPU &gt; 80%</li>
+                            <li>• Erro 5xx &gt; 10/min</li>
+                            <li>• Latência &gt; 2s</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Resumo Final */}
+                <div className="bg-gradient-to-r from-cyan-50 to-blue-50 p-6 rounded-xl border-2 border-cyan-300">
+                  <h3 className="font-bold text-cyan-900 mb-4 text-lg">Resumo da Integração Completa</h3>
+                  <div className="grid md:grid-cols-2 gap-6 text-sm">
+                    <div className="space-y-3">
+                      <p className="font-semibold text-cyan-900">O que precisamos implementar:</p>
+                      <ul className="space-y-2 text-cyan-700">
+                        <li className="flex items-start gap-2">
+                          <Badge className="bg-red-600 mt-0.5">Crítico</Badge>
+                          <span>Tabela users e endpoints de autenticação JWT</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Badge className="bg-red-600 mt-0.5">Crítico</Badge>
+                          <span>Sistema de aprovação/rejeição no back-end</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Badge className="bg-orange-600 mt-0.5">Importante</Badge>
+                          <span>Sistema completo de auditoria e notificações</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Badge className="bg-orange-600 mt-0.5">Importante</Badge>
+                          <span>API Client no front-end conectando aos stores</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Badge className="bg-yellow-600 mt-0.5">Desejável</Badge>
+                          <span>WebSockets para notificações em tempo real</span>
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="space-y-3">
+                      <p className="font-semibold text-cyan-900">O que já está pronto:</p>
+                      <ul className="space-y-2 text-cyan-700">
+                        <li className="flex items-start gap-2">
+                          <Badge className="bg-green-600 mt-0.5">OK</Badge>
+                          <span>Autenticação OTP para usuários externos</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Badge className="bg-green-600 mt-0.5">OK</Badge>
+                          <span>Download com ACK de confirmação</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Badge className="bg-green-600 mt-0.5">OK</Badge>
+                          <span>Estrutura de arquivos compatível</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Badge className="bg-green-600 mt-0.5">OK</Badge>
+                          <span>UI completa no front-end Next.js</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Badge className="bg-green-600 mt-0.5">OK</Badge>
+                          <span>Documentação completa na Wiki</span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </CardContent>
