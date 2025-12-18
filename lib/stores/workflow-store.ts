@@ -298,7 +298,7 @@ export const useWorkflowStore = create<WorkflowState>()(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             to: "kleber.goncalves.prestserv@petrobras.com.br",
-            subject: `🔔 Novo Upload para Aprovação: ${upload.name}`,
+            subject: `Novo Upload para Aprovacao: ${upload.name}`,
             type: "supervisor",
             uploadData: {
               name: upload.name,
@@ -319,7 +319,7 @@ export const useWorkflowStore = create<WorkflowState>()(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             to: upload.sender.email,
-            subject: `✅ Confirmação de Envio: ${upload.name}`,
+            subject: `Confirmacao de Envio: ${upload.name}`,
             type: "sender",
             uploadData: {
               name: upload.name,

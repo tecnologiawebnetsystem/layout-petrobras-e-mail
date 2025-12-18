@@ -582,10 +582,12 @@ export async function POST(request: NextRequest) {
 
     const htmlContent = type === "supervisor" ? supervisorTemplate : senderTemplate
 
+    const cleanSubject = subject.replace(/\n/g, " ").trim()
+
     const { data, error } = await resend.emails.send({
       from: "Sistema Petrobras <onboarding@resend.dev>",
       to: [to],
-      subject: subject,
+      subject: cleanSubject,
       html: htmlContent,
     })
 
