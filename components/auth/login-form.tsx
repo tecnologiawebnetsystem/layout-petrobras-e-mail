@@ -18,9 +18,9 @@ import { useRouter } from "next/navigation"
 
 const DEMO_CREDENTIALS = {
   internal: {
-    email: "admin@petrobras.com.br",
+    email: "kleber.goncalves.prestserv@petrobras.com.br",
     password: "demo123",
-    name: "João Silva",
+    name: "Kleber Gonçalves",
   },
   external: {
     email: "cliente@empresa.com",
@@ -33,9 +33,9 @@ const DEMO_CREDENTIALS = {
     name: "Pedro Teste",
   },
   supervisor: {
-    email: "supervisor@petrobras.com.br",
+    email: "wagner.brazil@petrobras.com.br",
     password: "demo123",
-    name: "Carlos Mendes",
+    name: "Wagner Gaspar Brazil",
   },
 }
 
@@ -289,7 +289,9 @@ export function LoginForm() {
               >
                 <div className="flex flex-col items-start w-full">
                   <span className="text-xs font-semibold text-blue-900 dark:text-blue-100">Usuário Interno</span>
-                  <span className="text-[10px] text-blue-700 dark:text-blue-300">admin@petrobras.com.br</span>
+                  <span className="text-[10px] text-blue-700 dark:text-blue-300">
+                    kleber.goncalves.prestserv@petrobras.com.br
+                  </span>
                 </div>
               </Button>
 
@@ -327,7 +329,7 @@ export function LoginForm() {
               >
                 <div className="flex flex-col items-start w-full">
                   <span className="text-xs font-semibold text-blue-900 dark:text-blue-100">Supervisor</span>
-                  <span className="text-[10px] text-blue-700 dark:text-blue-300">supervisor@petrobras.com.br</span>
+                  <span className="text-[10px] text-blue-700 dark:text-blue-300">wagner.brazil@petrobras.com.br</span>
                 </div>
               </Button>
             </div>

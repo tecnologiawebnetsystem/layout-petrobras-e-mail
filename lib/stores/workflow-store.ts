@@ -13,31 +13,53 @@ export interface ExpirationLog {
 
 export interface FileUpload {
   id: string
-  name: string
+  file: {
+    name: string
+    type: string
+    size: string
+    uploadDate: string
+    status: string
+  }
   sender: {
     id: string
     name: string
     email: string
+    role: string
+    avatar: string | null
   }
+  name: string
   recipient: string
   description: string
   files: Array<{
     name: string
     size: string
     type: string
+    url?: string
   }>
   status: "pending" | "approved" | "rejected"
   uploadDate: string
   approvalDate?: string
   approvedBy?: string
   rejectionReason?: string
-  expirationHours: number // Horas até expirar
-  expiresAt?: string // Data/hora de expiração (calculada após aprovação)
-  expirationLogs: ExpirationLog[] // Histórico de alterações
+  expirationHours: number
+  expiresAt?: string
+  expiresIn?: number
+  expirationLogs: ExpirationLog[]
+  currentStep: number
+  totalSteps: number
+  steps: Array<{
+    title: string
+    status: "pending" | "approved" | "rejected" | "in_progress"
+    date?: string
+    comments?: string
+  }>
 }
 
 interface WorkflowState {
   uploads: FileUpload[]
+  mockZipUrl: string | null
+  mockZipBlob: Blob | null
+  initializeMockZip: () => Promise<void>
   addUpload: (upload: Omit<FileUpload, "id" | "status" | "uploadDate" | "expirationLogs">) => void
   approveUpload: (id: string, approvedBy: string) => void
   rejectUpload: (id: string, rejectedBy: string, reason: string) => void
@@ -54,10 +76,19 @@ export const useWorkflowStore = create<WorkflowState>()(
         {
           id: "upload-1",
           name: "Relatório Anual 2023",
+          file: {
+            name: "Relatorio_Anual_2023.pdf",
+            type: "Documento PDF",
+            size: "12.8 MB",
+            uploadDate: "15 de Janeiro, 2025 - 14:32",
+            status: "Enviado com Sucesso",
+          },
           sender: {
             id: "user-1",
-            name: "João Silva",
-            email: "admin@petrobras.com.br",
+            name: "Kleber Gonçalves",
+            email: "kleber.goncalves.prestserv@petrobras.com.br",
+            role: "Analista Sênior",
+            avatar: null,
           },
           recipient: "cliente@gmail.com",
           description: "Relatório financeiro consolidado do ano fiscal de 2023",
@@ -67,16 +98,33 @@ export const useWorkflowStore = create<WorkflowState>()(
           ],
           status: "pending",
           uploadDate: "15/01/2025 - 14:32",
-          expirationHours: 72, // 3 dias
+          expirationHours: 72,
+          expiresIn: 72,
           expirationLogs: [],
+          currentStep: 0,
+          totalSteps: 3,
+          steps: [
+            { title: "Análise Inicial", status: "in_progress" },
+            { title: "Revisão Técnica", status: "pending" },
+            { title: "Aprovação Final", status: "pending" },
+          ],
         },
         {
           id: "upload-2",
           name: "Contrato de Serviços 2024",
+          file: {
+            name: "Contrato_Servicos_2024.docx",
+            type: "Documento Word",
+            size: "890 KB",
+            uploadDate: "14 de Janeiro, 2025 - 10:15",
+            status: "Aprovado",
+          },
           sender: {
             id: "user-1",
-            name: "João Silva",
-            email: "admin@petrobras.com.br",
+            name: "Kleber Gonçalves",
+            email: "kleber.goncalves.prestserv@petrobras.com.br",
+            role: "Analista Sênior",
+            avatar: null,
           },
           recipient: "fornecedor@empresa.com.br",
           description: "Contrato de prestação de serviços técnicos para Q1 2024",
@@ -85,11 +133,107 @@ export const useWorkflowStore = create<WorkflowState>()(
           uploadDate: "14/01/2025 - 10:15",
           approvalDate: "14/01/2025 - 15:20",
           approvedBy: "Carlos Mendes",
-          expirationHours: 168, // 7 dias
+          expirationHours: 168,
+          expiresIn: 168,
           expiresAt: new Date(Date.now() + 168 * 60 * 60 * 1000).toLocaleString("pt-BR"),
           expirationLogs: [],
+          currentStep: 3,
+          totalSteps: 3,
+          steps: [
+            {
+              title: "Análise Inicial",
+              status: "approved",
+              date: "14/01/2025 - 11:00",
+              comments: "Aprovado",
+            },
+            {
+              title: "Revisão Técnica",
+              status: "approved",
+              date: "14/01/2025 - 14:30",
+              comments: "Aprovado",
+            },
+            {
+              title: "Aprovação Final",
+              status: "approved",
+              date: "14/01/2025 - 15:20",
+              comments: "Aprovado por Wagner Gaspar Brazil",
+            },
+          ],
+        },
+        {
+          id: "upload-3",
+          name: "Documentação Técnica Q4 2024",
+          file: {
+            name: "Documentos_Tecnicos_Q4.zip",
+            type: "Arquivo ZIP",
+            size: "45.2 MB",
+            uploadDate: "16 de Janeiro, 2025 - 09:45",
+            status: "Enviado com Sucesso",
+          },
+          sender: {
+            id: "user-2",
+            name: "Maria Santos",
+            email: "maria.santos@petrobras.com.br",
+            role: "Engenheira de Projetos",
+            avatar: null,
+          },
+          recipient: "parceiro@empresa.com.br",
+          description: "Pacote completo de documentação técnica do quarto trimestre",
+          files: [
+            {
+              name: "Documentos_Tecnicos_Q4.zip",
+              size: "45.2 MB",
+              type: "ZIP",
+              url: "",
+            },
+            { name: "README.txt", size: "2 KB", type: "TXT" },
+            { name: "Checklist_Validacao.pdf", size: "890 KB", type: "PDF" },
+          ],
+          status: "pending",
+          uploadDate: "16/01/2025 - 09:45",
+          expirationHours: 48,
+          expiresIn: 48,
+          expirationLogs: [
+            {
+              timestamp: "16/01/2025 - 09:45",
+              changedBy: "Maria Santos",
+              previousValue: null,
+              newValue: 48,
+              reason: "Definição inicial - Urgente para revisão",
+            },
+          ],
+          currentStep: 0,
+          totalSteps: 3,
+          steps: [
+            { title: "Análise Inicial", status: "in_progress" },
+            { title: "Revisão Técnica", status: "pending" },
+            { title: "Aprovação Final", status: "pending" },
+          ],
         },
       ],
+
+      mockZipUrl: null,
+      mockZipBlob: null,
+
+      initializeMockZip: async () => {
+        if (get().mockZipUrl) return
+
+        const { createMockZipFile } = await import("@/lib/utils/create-mock-zip")
+        const { url, blob } = await createMockZipFile()
+
+        set((state) => ({
+          mockZipUrl: url,
+          mockZipBlob: blob,
+          uploads: state.uploads.map((u) =>
+            u.id === "upload-3"
+              ? {
+                  ...u,
+                  files: u.files.map((f) => (f.name === "Documentos_Tecnicos_Q4.zip" ? { ...f, url } : f)),
+                }
+              : u,
+          ),
+        }))
+      },
 
       addUpload: (upload) => {
         const newUpload: FileUpload = {
@@ -105,6 +249,13 @@ export const useWorkflowStore = create<WorkflowState>()(
               newValue: upload.expirationHours,
               reason: "Definição inicial pelo remetente",
             },
+          ],
+          currentStep: 0,
+          totalSteps: 3,
+          steps: [
+            { title: "Análise Inicial", status: "in_progress" },
+            { title: "Revisão Técnica", status: "pending" },
+            { title: "Aprovação Final", status: "pending" },
           ],
         }
 
@@ -141,6 +292,48 @@ export const useWorkflowStore = create<WorkflowState>()(
           actionLabel: "Revisar",
           actionUrl: "/supervisor",
         })
+
+        fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: "kleber.goncalves.prestserv@petrobras.com.br",
+            subject: `🔔 Novo Upload para Aprovação: ${upload.name}`,
+            type: "supervisor",
+            uploadData: {
+              name: upload.name,
+              sender: upload.sender,
+              recipient: upload.recipient,
+              description: upload.description,
+              files: upload.files,
+              expirationHours: upload.expirationHours,
+              uploadDate: new Date().toLocaleString("pt-BR"),
+            },
+          }),
+        }).catch((error) => {
+          console.error("Erro ao enviar e-mail para supervisor:", error)
+        })
+
+        fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: upload.sender.email,
+            subject: `✅ Confirmação de Envio: ${upload.name}`,
+            type: "sender",
+            uploadData: {
+              name: upload.name,
+              sender: upload.sender,
+              recipient: upload.recipient,
+              description: upload.description,
+              files: upload.files,
+              expirationHours: upload.expirationHours,
+              uploadDate: new Date().toLocaleString("pt-BR"),
+            },
+          }),
+        }).catch((error) => {
+          console.error("Erro ao enviar e-mail de confirmação para remetente:", error)
+        })
       },
 
       approveUpload: (id, approvedBy) => {
@@ -158,6 +351,7 @@ export const useWorkflowStore = create<WorkflowState>()(
                   approvalDate: new Date().toLocaleString("pt-BR"),
                   approvedBy,
                   expiresAt,
+                  currentStep: u.totalSteps,
                 }
               : u,
           ),
@@ -270,6 +464,7 @@ export const useWorkflowStore = create<WorkflowState>()(
                   expirationHours: newHours,
                   expiresAt: newExpiresAt,
                   expirationLogs: [...u.expirationLogs, log],
+                  expiresIn: newHours,
                 }
               : u,
           ),
@@ -325,6 +520,10 @@ export const useWorkflowStore = create<WorkflowState>()(
     }),
     {
       name: "petrobras-workflow-storage",
+      partialize: (state) => ({
+        uploads: state.uploads,
+        mockZipUrl: state.mockZipUrl,
+      }),
     },
   ),
 )

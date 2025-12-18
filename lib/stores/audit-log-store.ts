@@ -58,8 +58,8 @@ export const useAuditLogStore = create<AuditLogState>()(
           level: "success",
           user: {
             id: "user-1",
-            name: "João Silva",
-            email: "admin@petrobras.com.br",
+            name: "Kleber Gonçalves",
+            email: "kleber.goncalves.prestserv@petrobras.com.br",
             type: "internal",
           },
           details: {
@@ -74,8 +74,8 @@ export const useAuditLogStore = create<AuditLogState>()(
           level: "info",
           user: {
             id: "user-1",
-            name: "João Silva",
-            email: "admin@petrobras.com.br",
+            name: "Kleber Gonçalves",
+            email: "kleber.goncalves.prestserv@petrobras.com.br",
             type: "internal",
           },
           details: {
@@ -96,8 +96,8 @@ export const useAuditLogStore = create<AuditLogState>()(
           level: "success",
           user: {
             id: "user-2",
-            name: "Carlos Mendes",
-            email: "supervisor@petrobras.com.br",
+            name: "Wagner Gaspar Brazil",
+            email: "wagner.brazil@petrobras.com.br",
             type: "supervisor",
           },
           details: {

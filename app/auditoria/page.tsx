@@ -10,7 +10,6 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Search,
   Download,
-  FileText,
   CheckCircle,
   XCircle,
   Upload,
@@ -120,54 +119,34 @@ export default function AuditoriaPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <Card className="bg-gradient-to-br from-petrobras-green to-petrobras-green-dark text-white p-4 border-none shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium opacity-90">Logins</p>
-                <p className="text-3xl font-bold mt-1">{stats.logins}</p>
-              </div>
-              <LogIn className="h-8 w-8 opacity-80" />
-            </div>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 border-none shadow-lg">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
+          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 border-none shadow-lg">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium opacity-90">Uploads</p>
-                <p className="text-3xl font-bold mt-1">{stats.uploads}</p>
+                <p className="text-4xl font-bold mt-2">{stats.uploads}</p>
               </div>
-              <Upload className="h-8 w-8 opacity-80" />
+              <Upload className="h-10 w-10 opacity-80" />
             </div>
           </Card>
 
-          <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-4 border-none shadow-lg">
+          <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-6 border-none shadow-lg">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium opacity-90">Downloads</p>
-                <p className="text-3xl font-bold mt-1">{stats.downloads}</p>
+                <p className="text-4xl font-bold mt-2">{stats.downloads}</p>
               </div>
-              <Download className="h-8 w-8 opacity-80" />
+              <Download className="h-10 w-10 opacity-80" />
             </div>
           </Card>
 
-          <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white p-4 border-none shadow-lg">
+          <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white p-6 border-none shadow-lg">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium opacity-90">Arquivos Expirados</p>
-                <p className="text-3xl font-bold mt-1">{stats.fileExpired}</p>
+                <p className="text-4xl font-bold mt-2">{stats.fileExpired}</p>
               </div>
-              <Trash2 className="h-8 w-8 opacity-80" />
-            </div>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-petrobras-blue to-petrobras-blue-dark text-white p-4 border-none shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium opacity-90">Total de Logs</p>
-                <p className="text-3xl font-bold mt-1">{stats.total}</p>
-              </div>
-              <FileText className="h-8 w-8 opacity-80" />
+              <Trash2 className="h-10 w-10 opacity-80" />
             </div>
           </Card>
         </div>

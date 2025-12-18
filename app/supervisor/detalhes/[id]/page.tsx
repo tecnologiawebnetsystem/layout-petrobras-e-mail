@@ -1,251 +1,208 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter, useParams } from "next/navigation"
-import { useAuthStore } from "@/lib/stores/auth-store"
-import { AppHeader } from "@/components/shared/app-header"
+import { useRouter } from "next/navigation"
+import { Download, CheckCircle2, XCircle, Clock, FileText, Search, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
-import { WorkflowTimeline } from "@/components/workflow/workflow-timeline"
-import { ApprovalModal } from "@/components/workflow/approval-modal"
-import { Download, CheckCircle2, CheckCircle, XCircle, Workflow, Clock, FileText } from "lucide-react"
-import { useNotificationStore } from "@/lib/stores/notification-store"
-import { ExpirationEditorModal } from "@/components/workflow/expiration-editor-modal"
-import { useWorkflowStore } from "@/lib/stores/workflow-store"
-import type { ApprovalWorkflow } from "@/types/workflow"
+import { ZipViewerModal } from "@/components/supervisor/zip-viewer-modal"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogDescription,
 } from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import { useWorkflowStore } from "@/lib/stores/workflow-store"
+import { useToast } from "@/hooks/use-toast"
+import { AppHeader } from "@/components/shared/app-header"
+import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
+import { Separator } from "@/components/ui/separator"
 
-const documentData = {
-  file: {
-    name: "Relatorio_Anual_Contratos_2023_Final.pdf",
-    type: "Documento PDF",
-    size: "12.8 MB",
-    uploadDate: "15 de Julho, 2024 - 14:32",
-    status: "Enviado com Sucesso",
-  },
-  sender: {
-    name: "Ana Clara Santos",
-    email: "ana.santos@fornecedor-xyz.com.br",
-    role: "Analista Financeira",
-    avatar: "/placeholder-user.jpg",
-  },
-  sharedWith: [
-    { name: "Carlos Pereira", role: "Supervisor de Contratos", avatar: null },
-    { name: "Mariana Costa", role: "Gerente de Operações", avatar: null },
-  ],
-  history: [
-    { name: "Relatorio_Mensal_Maio.pdf", date: "20/06/2024" },
-    { name: "Ajuste_Contrato_4850.docx", date: "15/05/2024" },
-    { name: "Nota_Fiscal_Servicos.xml", date: "02/05/2024" },
-  ],
-  metadata: {
-    documentType: "Relatório Financeiro",
-    contractNumber: "CTR-2023-4859",
-    costCenter: "CC-EXP-RJ-01",
-    fiscalPeriod: "2023",
-  },
-  description:
-    'Segue o relatório anual consolidado de todos os contratos firmados no ano de 2023. O documento foi revisado pela equipe financeira e está pronto para aprovação final. Por favor, revisar com urgência para cumprirmos o prazo interno."',
-}
-
-const mockWorkflow: ApprovalWorkflow = {
-  documentId: "1",
-  currentStep: 1,
-  totalSteps: 3,
-  status: "in_progress",
-  createdAt: new Date("2024-07-15"),
-  updatedAt: new Date(),
-  steps: [
-    {
-      id: "1",
-      name: "Análise Técnica",
-      approver: "Carlos Mendes",
-      role: "Supervisor Técnico",
-      status: "approved",
-      date: "16/07/2024 10:30",
-      comments: "Documento aprovado. Todos os requisitos técnicos foram atendidos.",
-      order: 1,
-    },
-    {
-      id: "2",
-      name: "Aprovação Financeira",
-      approver: "Maria Silva",
-      role: "Gerente Financeiro",
-      status: "pending",
-      order: 2,
-    },
-    {
-      id: "3",
-      name: "Aprovação Final",
-      approver: "Roberto Costa",
-      role: "Diretor Executivo",
-      status: "waiting",
-      order: 3,
-    },
-  ],
-}
-
-export default function SupervisorDetailPage() {
+export default function SupervisorDetailsPage({ params }: { params: { id: string } | Promise<{ id: string }> }) {
   const router = useRouter()
-  const params = useParams()
-  const { user, isAuthenticated } = useAuthStore()
-  const { addNotification } = useNotificationStore()
-  const { getUploadById, updateExpiration, approveUpload, rejectUpload } = useWorkflowStore()
-  const [isLoading, setIsLoading] = useState(true)
-  const [workflow, setWorkflow] = useState<ApprovalWorkflow>(mockWorkflow)
-  const [approvalModal, setApprovalModal] = useState<{
-    open: boolean
-    action: "approve" | "reject" | null
-  }>({
-    open: false,
-    action: null,
-  })
-  const [expirationModal, setExpirationModal] = useState(false)
-  const [rejectModal, setRejectModal] = useState(false)
-  const [rejectionReason, setRejectionReason] = useState("")
+  const { toast } = useToast()
+  const { uploads, approveUpload, rejectUpload, initializeMockZip, mockZipBlob } = useWorkflowStore()
 
-  const uploadData = getUploadById(params.id as string)
+  const [id, setId] = useState<string>("")
+  const [uploadData, setUploadData] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [zipViewerOpen, setZipViewerOpen] = useState(false)
+  const [selectedZipFile, setSelectedZipFile] = useState<{ name: string; url?: string; blob?: Blob } | null>(null)
+  const [showRejectDialog, setShowRejectDialog] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState("")
+  const [individualApprovalMode, setIndividualApprovalMode] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set())
 
   useEffect(() => {
-    if (!isAuthenticated || user?.userType !== "supervisor") {
-      router.push("/")
-    } else {
+    const resolveParams = async () => {
+      if (params instanceof Promise) {
+        const resolvedParams = await params
+        setId(resolvedParams.id)
+      } else {
+        setId(params.id)
+      }
+    }
+
+    resolveParams()
+  }, [params])
+
+  useEffect(() => {
+    if (!id) return
+
+    const init = async () => {
+      await initializeMockZip()
+      const foundUpload = uploads.find((u) => u.id === id)
+      setUploadData(foundUpload || null)
       setIsLoading(false)
     }
-  }, [isAuthenticated, user, router])
 
-  if (isLoading) {
-    return null
-  }
+    init()
+  }, [id, uploads, initializeMockZip])
 
-  const handleApprove = (comments: string) => {
-    const currentStepIndex = workflow.currentStep
-    const updatedSteps = workflow.steps.map((step, index) => {
-      if (index === currentStepIndex) {
-        return {
-          ...step,
-          status: "approved" as const,
-          date: new Date().toLocaleDateString("pt-BR") + " " + new Date().toLocaleTimeString("pt-BR"),
-          comments: comments || "Aprovado sem comentários",
-        }
-      }
-      if (index === currentStepIndex + 1) {
-        return {
-          ...step,
-          status: "pending" as const,
-        }
-      }
-      return step
-    })
+  const handleApprove = () => {
+    if (!uploadData) return
 
-    setWorkflow({
-      ...workflow,
-      currentStep: currentStepIndex + 1,
-      steps: updatedSteps,
-      status: currentStepIndex + 1 >= workflow.totalSteps ? "approved" : "in_progress",
-    })
+    approveUpload(uploadData.id, "Carlos Mendes")
 
-    addNotification({
-      type: "approval_approved",
-      priority: "medium",
+    toast({
       title: "Documento aprovado",
-      message: `O documento foi aprovado e avançou para a próxima etapa do workflow`,
-    })
-  }
-
-  const handleReject = (comments: string) => {
-    const currentStepIndex = workflow.currentStep
-    const updatedSteps = workflow.steps.map((step, index) => {
-      if (index === currentStepIndex) {
-        return {
-          ...step,
-          status: "rejected" as const,
-          date: new Date().toLocaleDateString("pt-BR") + " " + new Date().toLocaleTimeString("pt-BR"),
-          comments,
-        }
-      }
-      return step
+      description: `O documento foi aprovado com sucesso`,
     })
 
-    setWorkflow({
-      ...workflow,
-      steps: updatedSteps,
-      status: "rejected",
-    })
-
-    addNotification({
-      type: "approval_rejected",
-      priority: "high",
-      title: "Documento rejeitado",
-      message: `O documento foi rejeitado no workflow de aprovação`,
-    })
+    router.push("/supervisor")
   }
 
   const handleConfirmRejection = () => {
     if (!rejectionReason.trim()) {
-      addNotification({
-        type: "error",
-        priority: "high",
+      toast({
         title: "Motivo obrigatório",
-        message: "Por favor, informe o motivo da rejeição",
+        description: "Por favor, informe o motivo da rejeição",
+        variant: "destructive",
       })
       return
     }
 
-    if (!user || !uploadData) return
+    if (!uploadData) return
 
-    rejectUpload(uploadData.id, user.name, rejectionReason)
+    rejectUpload(uploadData.id, "Carlos Mendes", rejectionReason)
 
-    addNotification({
-      type: "error",
-      priority: "high",
+    toast({
       title: "Upload Rejeitado",
-      message: `O envio foi rejeitado. ${uploadData.sender.name} foi notificado.`,
+      description: `O envio foi rejeitado. ${uploadData.sender?.name || "Remetente"} foi notificado.`,
+      variant: "destructive",
     })
 
-    setRejectModal(false)
+    setShowRejectDialog(false)
     setRejectionReason("")
     router.push("/supervisor")
   }
 
-  const handleConfirmApproval = () => {
-    if (!user || !uploadData) return
-
-    approveUpload(uploadData.id, user.name)
-
-    addNotification({
-      type: "success",
-      priority: "high",
-      title: "Upload Aprovado!",
-      message: `O envio foi aprovado. ${uploadData.sender.name} e ${uploadData.recipient} foram notificados.`,
-    })
-
-    router.push("/supervisor")
+  const handleOpenZipViewer = (fileName: string, fileUrl?: string, blob?: Blob) => {
+    setSelectedZipFile({ name: fileName, url: fileUrl, blob })
+    setZipViewerOpen(true)
   }
 
-  const handleUpdateExpiration = (newHours: number, reason: string) => {
-    updateExpiration(params.id as string, newHours, user!.name, reason)
-
-    addNotification({
-      type: "info",
-      priority: "medium",
-      title: "Tempo de validade atualizado",
-      message: `Você alterou o tempo de validade para ${newHours} horas`,
-    })
+  const toggleFileSelection = (index: number) => {
+    const newSelected = new Set(selectedFiles)
+    if (newSelected.has(index)) {
+      newSelected.delete(index)
+    } else {
+      newSelected.add(index)
+    }
+    setSelectedFiles(newSelected)
   }
+
+  const selectAllFiles = () => {
+    if (uploadData?.files) {
+      setSelectedFiles(new Set(uploadData.files.map((_: any, i: number) => i)))
+    }
+  }
+
+  const deselectAllFiles = () => {
+    setSelectedFiles(new Set())
+  }
+
+  const handleApproveSelected = () => {
+    if (selectedFiles.size === 0) {
+      toast({
+        title: "Nenhum arquivo selecionado",
+        description: "Selecione pelo menos um arquivo para aprovar",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!uploadData?.files) return
+
+    const fileNames = uploadData.files
+      .filter((_: any, i: number) => selectedFiles.has(i))
+      .map((f: any) => f.name)
+      .join(", ")
+
+    toast({
+      title: `${selectedFiles.size} arquivo(s) aprovado(s)`,
+      description: `Arquivos aprovados: ${fileNames}`,
+    })
+
+    setIndividualApprovalMode(false)
+    setSelectedFiles(new Set())
+  }
+
+  const handleRejectSelected = () => {
+    if (selectedFiles.size === 0) {
+      toast({
+        title: "Nenhum arquivo selecionado",
+        description: "Selecione pelo menos um arquivo para rejeitar",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setShowRejectDialog(true)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <AppHeader subtitle="Módulo Supervisor" />
+        <div className="container mx-auto p-6">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <p className="text-lg text-muted-foreground">Carregando detalhes do documento...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!uploadData) {
+    return (
+      <div className="min-h-screen bg-background">
+        <AppHeader subtitle="Módulo Supervisor" />
+        <div className="container mx-auto p-6">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <p className="text-lg text-muted-foreground">Documento não encontrado</p>
+              <Button onClick={() => router.push("/supervisor")} className="mt-4">
+                Voltar para Supervisor
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const files = uploadData.files || []
+  const sender = uploadData.sender || { name: "Desconhecido", email: "", role: "" }
+  const history = uploadData.history || []
 
   return (
     <div className="min-h-screen bg-background">
@@ -273,77 +230,52 @@ export default function SupervisorDetailPage() {
             <Card className="p-6">
               <div className="flex items-start justify-between mb-6">
                 <h2 className="text-2xl font-bold text-foreground">Detalhes do Arquivo</h2>
-                <Badge className="bg-green-100 text-green-800 border-green-300 hover:bg-green-100">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                  {documentData.file.status}
+                <Badge
+                  className={
+                    uploadData.status === "approved"
+                      ? "bg-green-100 text-green-800 border-green-300"
+                      : uploadData.status === "rejected"
+                        ? "bg-red-100 text-red-800 border-red-300"
+                        : "bg-yellow-100 text-yellow-800 border-yellow-300"
+                  }
+                >
+                  {uploadData.status === "pending" && <Clock className="h-3 w-3 mr-1" />}
+                  {uploadData.status === "approved" && <CheckCircle2 className="h-3 w-3 mr-1" />}
+                  {uploadData.status === "rejected" && <XCircle className="h-3 w-3 mr-1" />}
+                  {uploadData.status === "pending"
+                    ? "Pendente"
+                    : uploadData.status === "approved"
+                      ? "Aprovado"
+                      : "Rejeitado"}
                 </Badge>
               </div>
 
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Nome do Arquivo</p>
-                  <p className="font-semibold text-foreground text-lg">{documentData.file.name}</p>
+                  <p className="font-semibold text-foreground text-lg">{uploadData.name}</p>
                 </div>
 
                 <div className="flex gap-6">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Tamanho</p>
-                    <p className="font-medium text-foreground">{documentData.file.size}</p>
+                    <p className="text-sm text-muted-foreground mb-1">Remetente</p>
+                    <p className="font-medium text-foreground">{sender.name}</p>
+                    <p className="text-sm text-muted-foreground">{sender.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Destinatário</p>
+                    <p className="font-medium text-foreground">{uploadData.recipient}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Data de Upload</p>
-                    <p className="font-medium text-foreground">{documentData.file.uploadDate}</p>
+                    <p className="font-medium text-foreground">{uploadData.uploadDate}</p>
                   </div>
                 </div>
-              </div>
 
-              <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                    <div>
-                      <h3 className="font-semibold text-foreground">Tempo de Disponibilidade</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Arquivos ficam disponíveis por até 72 horas após aprovação
-                      </p>
-                    </div>
-                  </div>
-                  {uploadData?.status === "pending" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setExpirationModal(true)}
-                      className="border-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-950/40"
-                    >
-                      <Clock className="h-4 w-4 mr-2" />
-                      Ajustar Tempo
-                    </Button>
-                  )}
-                </div>
-
-                {uploadData?.expiresAt && (
-                  <p className="text-xs text-muted-foreground">Expira em: {uploadData.expiresAt}</p>
-                )}
-
-                {uploadData && uploadData.expirationLogs.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-yellow-200 dark:border-yellow-800">
-                    <p className="text-xs font-semibold text-foreground mb-2">Histórico de Alterações:</p>
-                    <div className="space-y-1">
-                      {uploadData.expirationLogs.map((log, index) => (
-                        <div key={index} className="text-xs text-muted-foreground">
-                          <span className="font-medium">{log.changedBy}</span>
-                          {log.previousValue !== null && (
-                            <span>
-                              {" "}
-                              alterou de {log.previousValue}h para {log.newValue}h
-                            </span>
-                          )}
-                          {log.previousValue === null && <span> definiu {log.newValue}h</span>}
-                          <span className="text-muted-foreground/70"> - {log.timestamp}</span>
-                          {log.reason && <p className="mt-0.5 italic text-muted-foreground/60">Motivo: {log.reason}</p>}
-                        </div>
-                      ))}
-                    </div>
+                {uploadData.description && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Descrição</p>
+                    <p className="text-foreground">{uploadData.description}</p>
                   </div>
                 )}
               </div>
@@ -353,129 +285,127 @@ export default function SupervisorDetailPage() {
               <div className="flex gap-3">
                 <Button className="flex-1 bg-[#0047BB] hover:bg-[#003A99] text-white">
                   <Download className="h-4 w-4 mr-2" />
-                  Baixar Arquivo Original
+                  Baixar Arquivos
                 </Button>
 
-                {uploadData?.status === "pending" && (
+                {uploadData.status === "pending" && (
                   <>
-                    <Button
-                      onClick={handleConfirmApproval}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                    >
+                    <Button onClick={handleApprove} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      Aprovar Documento
+                      Aprovar
                     </Button>
-                    <Button onClick={() => setRejectModal(true)} variant="destructive" className="flex-1">
+                    <Button onClick={() => setShowRejectDialog(true)} variant="destructive" className="flex-1">
                       <XCircle className="h-4 w-4 mr-2" />
                       Rejeitar
                     </Button>
                   </>
                 )}
-
-                {uploadData?.status === "approved" && (
-                  <div className="flex-1 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg text-center">
-                    <p className="text-sm font-semibold text-green-800 dark:text-green-200">
-                      <CheckCircle className="h-4 w-4 inline mr-1" />
-                      Documento já aprovado
-                    </p>
-                  </div>
-                )}
-
-                {uploadData?.status === "rejected" && (
-                  <div className="flex-1 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg text-center">
-                    <p className="text-sm font-semibold text-red-800 dark:text-red-200">
-                      <XCircle className="h-4 w-4 inline mr-1" />
-                      Documento rejeitado
-                    </p>
-                    {uploadData.rejectionReason && (
-                      <p className="text-xs text-muted-foreground mt-1">Motivo: {uploadData.rejectionReason}</p>
-                    )}
-                  </div>
-                )}
               </div>
 
-              {uploadData && uploadData.files.length > 1 && (
+              {files.length > 0 && (
                 <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-                  <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    Arquivos no pacote ({uploadData.files.length})
-                  </h3>
-                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                    {uploadData.files.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-background rounded">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                          <span className="text-sm text-foreground truncate">{file.name}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground ml-2">{file.size}</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Arquivos no pacote ({files.length})
+                    </h3>
+                    {uploadData.status === "pending" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setIndividualApprovalMode(!individualApprovalMode)
+                          if (individualApprovalMode) {
+                            setSelectedFiles(new Set())
+                          }
+                        }}
+                      >
+                        {individualApprovalMode ? "Cancelar Seleção" : "Aprovar Individual"}
+                      </Button>
+                    )}
+                  </div>
+
+                  {individualApprovalMode && (
+                    <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <p className="text-sm text-blue-900 dark:text-blue-100 mb-2">
+                        Selecione os arquivos que deseja aprovar ou rejeitar individualmente
+                      </p>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={selectAllFiles}>
+                          Selecionar Todos
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={deselectAllFiles}>
+                          Desmarcar Todos
+                        </Button>
+                        {selectedFiles.size > 0 && (
+                          <>
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              onClick={handleApproveSelected}
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Aprovar {selectedFiles.size}
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={handleRejectSelected}>
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Rejeitar {selectedFiles.size}
+                            </Button>
+                          </>
+                        )}
                       </div>
-                    ))}
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    {files.map((file: any, index: number) => {
+                      const isZip = file.name?.toLowerCase().endsWith(".zip")
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-center justify-between p-3 rounded transition-colors ${
+                            individualApprovalMode
+                              ? selectedFiles.has(index)
+                                ? "bg-blue-100 dark:bg-blue-950/40 border-2 border-blue-500"
+                                : "bg-background hover:bg-muted cursor-pointer border-2 border-transparent"
+                              : "bg-background"
+                          }`}
+                          onClick={() => individualApprovalMode && toggleFileSelection(index)}
+                        >
+                          <div className="flex items-center gap-3 flex-1">
+                            {individualApprovalMode && (
+                              <Checkbox
+                                checked={selectedFiles.has(index)}
+                                onCheckedChange={() => toggleFileSelection(index)}
+                              />
+                            )}
+                            <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-foreground truncate">{file.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {file.size} • {file.type}
+                              </p>
+                            </div>
+                          </div>
+                          {isZip && file.url && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleOpenZipViewer(file.name, file.url, mockZipBlob || undefined)
+                              }}
+                            >
+                              <Search className="h-4 w-4 mr-2" />
+                              Ver Conteúdo
+                            </Button>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}
-            </Card>
-
-            <Card className="p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <Workflow className="h-6 w-6 text-[#00A99D]" />
-                <h2 className="text-2xl font-bold text-foreground">Workflow de Aprovação</h2>
-              </div>
-
-              <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Status do Workflow</p>
-                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                      Etapa {workflow.currentStep + 1} de {workflow.totalSteps}
-                    </p>
-                  </div>
-                  <Badge
-                    className={
-                      workflow.status === "approved"
-                        ? "bg-green-100 text-green-800"
-                        : workflow.status === "rejected"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
-                    }
-                  >
-                    {workflow.status === "approved" && "Aprovado"}
-                    {workflow.status === "rejected" && "Rejeitado"}
-                    {workflow.status === "in_progress" && "Em Andamento"}
-                  </Badge>
-                </div>
-              </div>
-
-              <WorkflowTimeline steps={workflow.steps} currentStep={workflow.currentStep} />
-            </Card>
-
-            <Card className="p-6">
-              <h2 className="text-2xl font-bold text-foreground mb-4">Compartilhado Com</h2>
-              <div className="space-y-4">
-                {documentData.sharedWith.map((person, index) => (
-                  <div key={index} className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={person.avatar || undefined} />
-                      <AvatarFallback className="bg-[#00A99D] text-white">
-                        {person.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p className="font-semibold text-foreground">{person.name}</p>
-                      <p className="text-sm text-muted-foreground">{person.role}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <h2 className="text-2xl font-bold text-foreground mb-4">Descrição do Remetente</h2>
-              <div className="bg-blue-50 dark:bg-blue-950/20 border-l-4 border-[#0047BB] p-4 rounded">
-                <p className="text-foreground italic leading-relaxed">{documentData.description}</p>
-              </div>
             </Card>
           </div>
 
@@ -483,19 +413,10 @@ export default function SupervisorDetailPage() {
             <Card className="p-6">
               <h2 className="text-xl font-bold text-foreground mb-6">Remetente</h2>
               <div className="flex items-center gap-4 mb-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={documentData.sender.avatar || "/placeholder.svg"} />
-                  <AvatarFallback className="bg-[#00A99D] text-white text-lg">
-                    {documentData.sender.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
                 <div className="flex-1">
-                  <h3 className="font-bold text-lg text-foreground">{documentData.sender.name}</h3>
-                  <p className="text-sm text-muted-foreground">{documentData.sender.email}</p>
-                  <p className="text-sm text-muted-foreground">{documentData.sender.role}</p>
+                  <h3 className="font-bold text-lg text-foreground">{sender.name}</h3>
+                  <p className="text-sm text-muted-foreground">{sender.email}</p>
+                  <p className="text-sm text-muted-foreground">{sender.role}</p>
                 </div>
               </div>
             </Card>
@@ -503,7 +424,7 @@ export default function SupervisorDetailPage() {
             <Card className="p-6">
               <h2 className="text-xl font-bold text-foreground mb-6">Histórico de Envios</h2>
               <div className="space-y-4">
-                {documentData.history.map((item, index) => (
+                {history.map((item: any, index: number) => (
                   <div key={index} className="flex items-start gap-3">
                     <div className="mt-1">
                       <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -520,73 +441,47 @@ export default function SupervisorDetailPage() {
         </div>
       </div>
 
-      <ApprovalModal
-        open={approvalModal.open}
-        onOpenChange={(open) => setApprovalModal({ ...approvalModal, open })}
-        documentName={documentData.file.name}
-        onApprove={handleApprove}
-        onReject={handleReject}
-        action={approvalModal.action}
-      />
-
-      {uploadData && (
-        <ExpirationEditorModal
-          open={expirationModal}
-          onOpenChange={setExpirationModal}
-          currentHours={uploadData.expirationHours}
-          onUpdate={handleUpdateExpiration}
-        />
-      )}
-
-      <Dialog open={rejectModal} onOpenChange={setRejectModal}>
-        <DialogContent className="sm:max-w-[500px]">
+      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <XCircle className="h-6 w-6 text-red-600" />
-              Rejeitar Envio
-            </DialogTitle>
-            <DialogDescription>Informe o motivo da rejeição. O remetente receberá esta mensagem.</DialogDescription>
+            <DialogTitle>Rejeitar Upload</DialogTitle>
+            <DialogDescription>Informe o motivo da rejeição para notificar o remetente</DialogDescription>
           </DialogHeader>
-
           <div className="space-y-4 py-4">
-            <div className="p-4 bg-muted rounded-lg">
-              <p className="font-semibold text-foreground mb-1">{uploadData?.name}</p>
-              <p className="text-sm text-muted-foreground">
-                De: {uploadData?.sender.name} → Para: {uploadData?.recipient}
-              </p>
-            </div>
-
             <div className="space-y-2">
-              <Label htmlFor="rejection-reason">Motivo da Rejeição *</Label>
+              <Label htmlFor="reason">Motivo da Rejeição *</Label>
               <Textarea
-                id="rejection-reason"
-                placeholder="Explique o motivo da rejeição de forma clara e objetiva..."
+                id="reason"
+                placeholder="Descreva o motivo da rejeição..."
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                className="min-h-[120px]"
-                required
+                rows={4}
               />
-              <p className="text-xs text-muted-foreground">Este motivo será enviado por email ao remetente</p>
             </div>
           </div>
-
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setRejectModal(false)
-                setRejectionReason("")
-              }}
-            >
+            <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleConfirmRejection} variant="destructive" disabled={!rejectionReason.trim()}>
-              <XCircle className="h-4 w-4 mr-2" />
+            <Button variant="destructive" onClick={handleConfirmRejection}>
               Confirmar Rejeição
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {selectedZipFile && (
+        <ZipViewerModal
+          isOpen={zipViewerOpen}
+          onClose={() => {
+            setZipViewerOpen(false)
+            setSelectedZipFile(null)
+          }}
+          fileName={selectedZipFile.name}
+          fileUrl={selectedZipFile.url}
+          fileBlob={selectedZipFile.blob}
+        />
+      )}
     </div>
   )
 }

@@ -19,7 +19,7 @@ O sistema permite que usuários internos da Petrobras façam upload de arquivos 
 ### Fluxo de Trabalho
 1. **Upload**: Usuário interno faz upload dos arquivos
 2. **Aprovação**: Supervisor revisa e aprova/rejeita
-3. **Notificação**: Destinatário recebe link de download
+3. **Notificação**: Destinatário recebe link de download (via e-mail automático)
 4. **Download**: Arquivo disponível por período limitado
 5. **Auditoria**: Todo o processo é registrado
 
@@ -37,6 +37,7 @@ O sistema permite que usuários internos da Petrobras façam upload de arquivos 
 - Visualizar dashboard com métricas (Pendentes, Aprovados, Rejeitados)
 - Ajustar tempo de disponibilidade antes de aprovar
 - Acessar detalhes completos de cada transferência
+- Receber notificações automáticas por e-mail quando houver novos uploads
 
 ## Tecnologias
 
@@ -54,12 +55,13 @@ O sistema permite que usuários internos da Petrobras façam upload de arquivos 
 - **Next.js API Routes** - Endpoints REST
 - **Server Actions** - Ações do servidor
 - **DynamoDB** - Banco de dados NoSQL (5 tabelas)
+- **Resend** - Envio de e-mails transacionais
 
 ### Infraestrutura AWS
 - **S3** - Armazenamento de arquivos
 - **CloudFront** - CDN para distribuição
 - **Lambda** - Processamento serverless
-- **SES** - Envio de emails
+- **SES** - Envio de emails (alternativa ao Resend)
 - **CloudWatch** - Monitoramento e logs
 - **IAM** - Controle de acesso
 - **KMS** - Criptografia de dados
@@ -200,7 +202,10 @@ DYNAMODB_SESSIONS_TABLE=petrobras-sessions
 DYNAMODB_AUDIT_TABLE=petrobras-audit-logs
 DYNAMODB_NOTIFICATIONS_TABLE=petrobras-notifications
 
-# Email
+# Email - Resend (Recomendado)
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Email - AWS SES (Alternativa)
 AWS_SES_FROM_EMAIL=noreply@petrobras.com.br
 AWS_SES_REPLY_TO=suporte@petrobras.com.br
 
@@ -208,6 +213,50 @@ AWS_SES_REPLY_TO=suporte@petrobras.com.br
 NEXT_PUBLIC_APP_URL=https://transfer.petrobras.com.br
 NEXT_PUBLIC_MAX_FILE_SIZE=524288000
 NEXT_PUBLIC_MAX_AVAILABILITY_HOURS=72
+```
+
+## Configuração de E-mail
+
+O sistema envia e-mails automáticos para o supervisor quando há novos uploads pendentes de aprovação. 
+
+### Opção 1: Resend (Recomendado)
+
+**Vantagens:**
+- Setup rápido e simples
+- Plano gratuito: 3.000 e-mails/mês
+- Interface moderna e API fácil
+- Templates HTML prontos
+
+**Como configurar:**
+
+1. Acesse [resend.com](https://resend.com) e crie uma conta gratuita
+2. No dashboard, vá em **API Keys**
+3. Clique em **Create API Key**
+4. Copie a chave gerada (começa com `re_`)
+5. Adicione no arquivo `.env.local`:
+   ```env
+   RESEND_API_KEY=re_sua_chave_aqui
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
+   ```
+
+6. No v0 (Vercel), adicione as variáveis:
+   - Clique em **Vars** na sidebar esquerda
+   - Adicione `RESEND_API_KEY` com sua chave
+   - Adicione `NEXT_PUBLIC_APP_URL` com sua URL
+
+**E-mail configurado:** kleber.goncalves.prestserv@petrobras.com.br
+
+### Opção 2: AWS SES
+
+Se preferir usar AWS SES:
+
+```bash
+# Configure via AWS CLI
+aws ses verify-email-identity --email-address noreply@petrobras.com.br
+
+# Adicione no .env.local
+AWS_SES_FROM_EMAIL=noreply@petrobras.com.br
+AWS_SES_REPLY_TO=suporte@petrobras.com.br
 ```
 
 ## Usuários de Demonstração
@@ -218,9 +267,11 @@ NEXT_PUBLIC_MAX_AVAILABILITY_HOURS=72
 - **Perfil**: Usuário interno que faz upload de arquivos
 
 ### Supervisor
-- **Email**: supervisor@petrobras.com.br
+- **Nome**: Wagner Gaspar Brazil
+- **Email**: wagner.brazil@petrobras.com.br
 - **Senha**: supervisor123
 - **Perfil**: Supervisor que aprova/rejeita transferências
+- **Notificações**: kleber.goncalves.prestserv@petrobras.com.br
 
 ## Wiki de Desenvolvimento
 

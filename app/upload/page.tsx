@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
@@ -18,6 +17,7 @@ import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
 import { ScrollToTop } from "@/components/shared/scroll-to-top"
+import { UploadSuccessModal } from "@/components/upload/upload-success-modal"
 
 export default function UploadPage() {
   const { user, isAuthenticated } = useAuthStore()
@@ -40,6 +40,14 @@ export default function UploadPage() {
     title: "",
     message: "",
   })
+
+  const [uploadSuccessData, setUploadSuccessData] = useState<{
+    name: string
+    recipient: string
+    files: Array<{ name: string; size: string; type: string }>
+    expirationHours: number
+    senderEmail: string // Adicionado campo senderEmail
+  } | null>(null)
 
   useEffect(() => {
     if (!isAuthenticated || user?.userType !== "internal") {
@@ -111,10 +119,7 @@ export default function UploadPage() {
     setIsLoading(true)
 
     try {
-      // Simular envio
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      addUpload({
+      const uploadData = {
         name: description.substring(0, 50),
         sender: {
           id: user!.id,
@@ -129,15 +134,21 @@ export default function UploadPage() {
           type: f.name.split(".").pop()?.toUpperCase() || "FILE",
         })),
         expirationHours,
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+
+      addUpload(uploadData)
+
+      setUploadSuccessData({
+        name: uploadData.name,
+        recipient: uploadData.recipient,
+        files: uploadData.files,
+        expirationHours: uploadData.expirationHours,
+        senderEmail: user!.email, // Adicionado email do remetente
       })
 
       setShowSuccess(true)
-      setNotification({
-        show: true,
-        type: "success",
-        title: "Arquivos enviados com sucesso!",
-        message: `${files.length} arquivo(s) enviado(s) para aprovação. Validade: ${expirationHours} horas após aprovação.`,
-      })
 
       setTimeout(() => {
         setRecipient("")
@@ -145,7 +156,7 @@ export default function UploadPage() {
         setFiles([])
         setExpirationHours(72)
         setShowSuccess(false)
-      }, 3000)
+      }, 1000)
     } catch (error) {
       setNotification({
         show: true,
@@ -182,8 +193,9 @@ export default function UploadPage() {
         <MetricsDashboard {...uploadStats} userType="internal" />
 
         <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-10 space-y-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#00A99D]/10 to-[#0047BB]/10 rounded-full blur-3xl -z-10" />
-
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
+            <Sparkles className="h-7 w-7 text-white" />
+          </div>
           <div className="relative">
             <div className="flex items-center gap-4 mb-3">
               <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
@@ -197,7 +209,6 @@ export default function UploadPage() {
               </div>
             </div>
           </div>
-
           <form onSubmit={handleSubmit} className="space-y-7">
             <div className="space-y-3">
               <Label htmlFor="recipient" className="text-base font-medium flex items-center gap-2">
@@ -216,7 +227,6 @@ export default function UploadPage() {
                 O destinatário receberá um email com link seguro para download
               </p>
             </div>
-
             <div className="space-y-3">
               <Label className="text-base font-medium">Anexar Arquivos</Label>
               <DragDropZone
@@ -225,7 +235,6 @@ export default function UploadPage() {
                 onRemoveFile={handleFileRemove}
               />
             </div>
-
             <div className="space-y-3">
               <Label htmlFor="expiration" className="text-base font-medium flex items-center gap-2">
                 <Clock className="h-4 w-4 text-[#FDB913]" />
@@ -246,7 +255,6 @@ export default function UploadPage() {
                 horas (3 dias).
               </p>
             </div>
-
             <div className="space-y-3">
               <Label htmlFor="description" className="text-base font-medium">
                 Descrição do Envio (obrigatório)
@@ -260,7 +268,6 @@ export default function UploadPage() {
                 required
               />
             </div>
-
             <div className="flex justify-end pt-6">
               <Button
                 type="submit"
@@ -279,9 +286,7 @@ export default function UploadPage() {
           </form>
         </div>
       </main>
-
       <ScrollToTop />
-
       <NotificationModal
         open={notification.show}
         onOpenChange={(show) => setNotification({ ...notification, show })}
@@ -289,6 +294,15 @@ export default function UploadPage() {
         title={notification.title}
         message={notification.message}
       />
+      {uploadSuccessData && (
+        <UploadSuccessModal
+          open={uploadSuccessData !== null}
+          onOpenChange={(open) => {
+            if (!open) setUploadSuccessData(null)
+          }}
+          uploadData={uploadSuccessData}
+        />
+      )}
     </div>
   )
 }
