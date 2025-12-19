@@ -35,7 +35,7 @@ export default function ServiceNowPage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7 h-auto gap-2 bg-transparent p-0">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-8 h-auto gap-2 bg-transparent p-0">
             <TabsTrigger
               value="visao-geral"
               className="data-[state=active]:bg-teal-50 data-[state=active]:text-teal-700 data-[state=active]:border-teal-200 border-2 py-3"
@@ -84,6 +84,14 @@ export default function ServiceNowPage() {
             >
               <UserCheck className="mr-2 h-4 w-4" />
               Implementação
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="aws-impl"
+              className="data-[state=active]:bg-red-50 data-[state=active]:text-red-700 data-[state=active]:border-red-200 border-2 py-3"
+            >
+              <Cloud className="mr-2 h-4 w-4" />
+              AWS Passo a Passo
             </TabsTrigger>
           </TabsList>
 
@@ -1697,6 +1705,1064 @@ CLIENT_SECRET = secrets['SERVICENOW_CLIENT_SECRET']`}
                       <p className="font-semibold text-green-900 mb-1">Trabalhando sozinho:</p>
                       <p className="text-4xl font-bold text-green-600">1 semana</p>
                       <p className="text-green-700 text-sm mt-1">Incluindo testes e documentação</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="aws-impl" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Cloud className="h-5 w-5 text-red-600" />
+                  Implementação AWS - Guia Completo para Leigos
+                </CardTitle>
+                <CardDescription>
+                  Passo a passo detalhado explicando TUDO o que você precisa fazer na AWS do ZERO
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                {/* O que é AWS? */}
+                <div className="bg-gradient-to-r from-red-50 to-orange-50 p-6 rounded-lg border-2 border-red-200">
+                  <h3 className="text-xl font-bold text-red-900 mb-4 flex items-center gap-2">
+                    <Cloud className="h-6 w-6" />O que é AWS? (Explicação Simples)
+                  </h3>
+
+                  <div className="space-y-4 text-slate-800">
+                    <p className="leading-relaxed">
+                      <strong>AWS (Amazon Web Services)</strong> é como se fosse um{" "}
+                      <strong>"shopping de serviços de computação"</strong>. Ao invés de você comprar computadores
+                      físicos, servidores, bancos de dados e colocar tudo na sua empresa, você "aluga" esses recursos da
+                      Amazon na nuvem.
+                    </p>
+
+                    <div className="bg-white p-4 rounded-lg border-2 border-red-200">
+                      <p className="font-semibold text-red-900 mb-2">Analogia do Mundo Real:</p>
+                      <p className="text-sm">
+                        É como a diferença entre comprar uma casa (servidor próprio) vs alugar um apartamento (AWS). No
+                        aluguel você paga só o que usa, não precisa se preocupar com manutenção, e pode mudar de tamanho
+                        conforme precisa.
+                      </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4 mt-4">
+                      <div className="bg-red-100 p-4 rounded-lg">
+                        <h4 className="font-bold text-red-900 mb-2">❌ Sem AWS (Problema)</h4>
+                        <ul className="text-sm space-y-1">
+                          <li>• Comprar servidores físicos (caros!)</li>
+                          <li>• Contratar equipe para manutenção</li>
+                          <li>• Preocupar com energia, refrigeração</li>
+                          <li>• Se quebrar, sistema cai</li>
+                          <li>• Difícil escalar (precisa comprar mais)</li>
+                        </ul>
+                      </div>
+
+                      <div className="bg-green-100 p-4 rounded-lg">
+                        <h4 className="font-bold text-green-900 mb-2">✅ Com AWS (Solução)</h4>
+                        <ul className="text-sm space-y-1">
+                          <li>• Paga só o que usa (como conta de luz)</li>
+                          <li>• Amazon cuida da manutenção</li>
+                          <li>• Alta disponibilidade automática</li>
+                          <li>• Se algo falha, AWS resolve sozinho</li>
+                          <li>• Escala com 1 clique</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Serviços AWS que vamos usar */}
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-4">Quais Serviços AWS vamos usar? (e por quê?)</h3>
+
+                  <div className="space-y-4">
+                    {/* DynamoDB */}
+                    <div className="border-l-4 border-blue-500 bg-blue-50 p-5 rounded-r-lg">
+                      <div className="flex items-start gap-3">
+                        <Database className="h-8 w-8 text-blue-600 mt-1 shrink-0" />
+                        <div className="flex-1">
+                          <h4 className="text-lg font-bold text-blue-900 mb-2">1. DynamoDB - Banco de Dados NoSQL</h4>
+
+                          <div className="space-y-3 text-sm">
+                            <div>
+                              <p className="font-semibold text-blue-800">O que é?</p>
+                              <p className="text-blue-700">
+                                É um banco de dados super rápido onde guardamos as informações dos arquivos
+                                compartilhados, quem fez upload, quando expira, etc. É NoSQL (não usa SQL tradicional).
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="font-semibold text-blue-800">Por que usar?</p>
+                              <ul className="list-disc list-inside text-blue-700 space-y-1 pl-4">
+                                <li>Extremamente rápido (milissegundos)</li>
+                                <li>Escala automaticamente conforme cresce</li>
+                                <li>Paga só pelo que usar</li>
+                                <li>Não precisa gerenciar servidores</li>
+                                <li>Perfeito para dados que expiram (TTL automático)</li>
+                              </ul>
+                            </div>
+
+                            <div>
+                              <p className="font-semibold text-blue-800">O que vamos guardar nele?</p>
+                              <ul className="list-disc list-inside text-blue-700 space-y-1 pl-4">
+                                <li>
+                                  <code className="bg-blue-100 px-1.5 py-0.5 rounded">users</code> - Dados dos usuários
+                                </li>
+                                <li>
+                                  <code className="bg-blue-100 px-1.5 py-0.5 rounded">file_shares</code> - Arquivos
+                                  compartilhados
+                                </li>
+                                <li>
+                                  <code className="bg-blue-100 px-1.5 py-0.5 rounded">audit_logs</code> - Logs de
+                                  auditoria
+                                </li>
+                                <li>
+                                  <code className="bg-blue-100 px-1.5 py-0.5 rounded">notifications</code> -
+                                  Notificações
+                                </li>
+                                <li>
+                                  <code className="bg-blue-100 px-1.5 py-0.5 rounded">sessions</code> - Sessões ativas
+                                </li>
+                              </ul>
+                            </div>
+
+                            <div className="bg-blue-100 p-3 rounded">
+                              <p className="font-semibold text-blue-900">💡 Analogia Simples:</p>
+                              <p className="text-blue-800 text-xs">
+                                É como uma planilha Excel gigante na nuvem, mas que aguenta milhões de linhas e responde
+                                em milissegundos. E ainda apaga automaticamente linhas antigas (arquivos expirados).
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* S3 */}
+                    <div className="border-l-4 border-green-500 bg-green-50 p-5 rounded-r-lg">
+                      <div className="flex items-start gap-3">
+                        <Server className="h-8 w-8 text-green-600 mt-1 shrink-0" />
+                        <div className="flex-1">
+                          <h4 className="text-lg font-bold text-green-900 mb-2">
+                            2. S3 (Simple Storage Service) - Armazenamento de Arquivos
+                          </h4>
+
+                          <div className="space-y-3 text-sm">
+                            <div>
+                              <p className="font-semibold text-green-800">O que é?</p>
+                              <p className="text-green-700">
+                                É como um HD externo gigante na nuvem onde guardamos os arquivos reais (PDFs, ZIPs,
+                                etc). É praticamente infinito e super seguro.
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="font-semibold text-green-800">Por que usar?</p>
+                              <ul className="list-disc list-inside text-green-700 space-y-1 pl-4">
+                                <li>Armazena arquivos de qualquer tamanho</li>
+                                <li>99.999999999% de durabilidade (não perde arquivos)</li>
+                                <li>Muito barato (poucos centavos por GB)</li>
+                                <li>Gera URLs temporárias para download seguro</li>
+                                <li>Criptografia automática</li>
+                              </ul>
+                            </div>
+
+                            <div>
+                              <p className="font-semibold text-green-800">Como funciona no nosso sistema?</p>
+                              <ol className="list-decimal list-inside text-green-700 space-y-1 pl-4">
+                                <li>Usuário faz upload de arquivo</li>
+                                <li>Arquivo vai direto para S3</li>
+                                <li>S3 retorna um ID único</li>
+                                <li>Guardamos esse ID no DynamoDB</li>
+                                <li>Quando alguém baixa, S3 gera URL temporária válida por 1 hora</li>
+                              </ol>
+                            </div>
+
+                            <div className="bg-green-100 p-3 rounded">
+                              <p className="font-semibold text-green-900">💡 Analogia Simples:</p>
+                              <p className="text-green-800 text-xs">
+                                É como o Google Drive da Amazon, mas feito para desenvolvedores. Você joga arquivos lá e
+                                eles ficam guardados pra sempre (ou até você apagar).
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SES */}
+                    <div className="border-l-4 border-purple-500 bg-purple-50 p-5 rounded-r-lg">
+                      <div className="flex items-start gap-3">
+                        <Lock className="h-8 w-8 text-purple-600 mt-1 shrink-0" />
+                        <div className="flex-1">
+                          <h4 className="text-lg font-bold text-purple-900 mb-2">
+                            3. SES (Simple Email Service) - Envio de E-mails
+                          </h4>
+
+                          <div className="space-y-3 text-sm">
+                            <div>
+                              <p className="font-semibold text-purple-800">O que é?</p>
+                              <p className="text-purple-700">
+                                Serviço da Amazon para enviar e-mails em massa. É como ter seu próprio servidor de
+                                e-mail profissional.
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="font-semibold text-purple-800">Por que usar?</p>
+                              <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                                <li>Muito mais barato que serviços como SendGrid</li>
+                                <li>Integrado com outros serviços AWS</li>
+                                <li>Alta taxa de entrega (não cai em spam)</li>
+                                <li>Rastreamento de aberturas e cliques</li>
+                              </ul>
+                            </div>
+
+                            <div>
+                              <p className="font-semibold text-purple-800">Quando vamos enviar e-mails?</p>
+                              <ul className="list-disc list-inside text-purple-700 space-y-1 pl-4">
+                                <li>Notificar supervisor quando houver novo upload</li>
+                                <li>Notificar remetente quando arquivo for aprovado</li>
+                                <li>Enviar link de download para destinatário externo</li>
+                                <li>Avisar quando arquivo estiver perto de expirar</li>
+                                <li>Notificar quando arquivo for rejeitado</li>
+                              </ul>
+                            </div>
+
+                            <div className="bg-purple-100 p-3 rounded">
+                              <p className="font-semibold text-purple-900">💡 Nota Importante:</p>
+                              <p className="text-purple-800 text-xs">
+                                Atualmente estamos usando <strong>Resend</strong> para e-mails, mas podemos migrar para
+                                AWS SES no futuro para reduzir custos e ter tudo centralizado na AWS.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Secrets Manager */}
+                    <div className="border-l-4 border-yellow-500 bg-yellow-50 p-5 rounded-r-lg">
+                      <div className="flex items-start gap-3">
+                        <Key className="h-8 w-8 text-yellow-600 mt-1 shrink-0" />
+                        <div className="flex-1">
+                          <h4 className="text-lg font-bold text-yellow-900 mb-2">
+                            4. Secrets Manager - Gerenciamento de Senhas e Chaves
+                          </h4>
+
+                          <div className="space-y-3 text-sm">
+                            <div>
+                              <p className="font-semibold text-yellow-800">O que é?</p>
+                              <p className="text-yellow-700">
+                                É um cofre digital super seguro onde guardamos senhas, chaves de API, tokens, etc. Nunca
+                                mais coloque senhas no código!
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="font-semibold text-yellow-800">Por que usar?</p>
+                              <ul className="list-disc list-inside text-yellow-700 space-y-1 pl-4">
+                                <li>Senhas não ficam expostas no código</li>
+                                <li>Rotação automática de senhas</li>
+                                <li>Criptografia forte</li>
+                                <li>Auditoria de quem acessou cada secret</li>
+                              </ul>
+                            </div>
+
+                            <div>
+                              <p className="font-semibold text-yellow-800">O que vamos guardar?</p>
+                              <ul className="list-disc list-inside text-yellow-700 space-y-1 pl-4">
+                                <li>
+                                  <code className="bg-yellow-100 px-1.5 py-0.5 rounded">SERVICENOW_CLIENT_ID</code>
+                                </li>
+                                <li>
+                                  <code className="bg-yellow-100 px-1.5 py-0.5 rounded">SERVICENOW_CLIENT_SECRET</code>
+                                </li>
+                                <li>
+                                  <code className="bg-yellow-100 px-1.5 py-0.5 rounded">RESEND_API_KEY</code>
+                                </li>
+                                <li>
+                                  <code className="bg-yellow-100 px-1.5 py-0.5 rounded">JWT_SECRET</code>
+                                </li>
+                              </ul>
+                            </div>
+
+                            <div className="bg-yellow-100 p-3 rounded">
+                              <p className="font-semibold text-yellow-900">💡 Analogia Simples:</p>
+                              <p className="text-yellow-800 text-xs">
+                                É como um cofre de banco onde você guarda as chaves de casa. Ao invés de deixar a chave
+                                embaixo do capacho (código), você guarda no cofre e só você tem acesso.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Lambda */}
+                    <div className="border-l-4 border-orange-500 bg-orange-50 p-5 rounded-r-lg">
+                      <div className="flex items-start gap-3">
+                        <Server className="h-8 w-8 text-orange-600 mt-1 shrink-0" />
+                        <div className="flex-1">
+                          <h4 className="text-lg font-bold text-orange-900 mb-2">5. Lambda - Funções Serverless</h4>
+
+                          <div className="space-y-3 text-sm">
+                            <div>
+                              <p className="font-semibold text-orange-800">O que é?</p>
+                              <p className="text-orange-700">
+                                São pedaços de código que rodam "na nuvem" sem você precisar gerenciar servidores. Você
+                                paga só pelos milissegundos que o código roda.
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="font-semibold text-orange-800">Por que usar?</p>
+                              <ul className="list-disc list-inside text-orange-700 space-y-1 pl-4">
+                                <li>Zero manutenção de servidores</li>
+                                <li>Escala automaticamente</li>
+                                <li>Muito barato (milhões de requests gratuitos/mês)</li>
+                                <li>Ideal para tarefas pontuais e automações</li>
+                              </ul>
+                            </div>
+
+                            <div>
+                              <p className="font-semibold text-orange-800">O que vamos fazer com Lambda?</p>
+                              <ul className="list-disc list-inside text-orange-700 space-y-1 pl-4">
+                                <li>
+                                  <strong>Limpeza automática:</strong> Apaga arquivos expirados do S3 todo dia à
+                                  meia-noite
+                                </li>
+                                <li>
+                                  <strong>Notificações:</strong> Envia e-mail quando arquivo vai expirar em 24h
+                                </li>
+                                <li>
+                                  <strong>Processamento:</strong> Escaneia vírus em arquivos enviados
+                                </li>
+                                <li>
+                                  <strong>Auditoria:</strong> Processa logs e gera relatórios
+                                </li>
+                              </ul>
+                            </div>
+
+                            <div className="bg-orange-100 p-3 rounded">
+                              <p className="font-semibold text-orange-900">💡 Analogia Simples:</p>
+                              <p className="text-orange-800 text-xs">
+                                É como contratar um freelancer que trabalha só quando você precisa. Você não paga
+                                salário mensal, só paga pelas horas trabalhadas. Lambda é assim: só paga quando o código
+                                está rodando.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Passo a Passo de Implementação */}
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <GitBranch className="h-6 w-6 text-blue-600" />
+                    Passo a Passo: Como Criar Tudo na AWS
+                  </h3>
+
+                  <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-lg mb-6">
+                    <p className="text-blue-900 font-semibold mb-2">⏱️ Tempo estimado total: 2-3 horas</p>
+                    <p className="text-blue-800 text-sm">
+                      Vamos usar <strong>AWS CDK (Python)</strong> para criar tudo automaticamente. É como um "script
+                      mágico" que cria toda a infraestrutura com 1 comando.
+                    </p>
+                  </div>
+
+                  <div className="space-y-6">
+                    {/* Passo 1: Pre-requisitos */}
+                    <div className="border-2 border-slate-200 rounded-lg p-5">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white font-bold">
+                          1
+                        </div>
+                        <h4 className="text-lg font-bold text-slate-900">Pré-requisitos (Instalar Ferramentas)</h4>
+                      </div>
+
+                      <div className="space-y-4 text-sm">
+                        <div>
+                          <p className="font-semibold text-slate-800 mb-2">
+                            O que você precisa ter instalado no seu computador:
+                          </p>
+
+                          <div className="space-y-3">
+                            <div className="bg-slate-50 p-3 rounded-lg">
+                              <p className="font-semibold text-slate-900 mb-1">1.1. Python 3.9 ou superior</p>
+                              <p className="text-slate-700 mb-2">Verificar se já tem:</p>
+                              <code className="bg-slate-900 text-green-400 px-3 py-2 rounded block">
+                                python3 --version
+                              </code>
+                              <p className="text-slate-600 text-xs mt-2">
+                                Deve mostrar algo como "Python 3.11.5". Se não tiver, baixe em{" "}
+                                <a href="https://python.org" className="text-blue-600 underline">
+                                  python.org
+                                </a>
+                              </p>
+                            </div>
+
+                            <div className="bg-slate-50 p-3 rounded-lg">
+                              <p className="font-semibold text-slate-900 mb-1">1.2. Node.js 18 ou superior</p>
+                              <p className="text-slate-700 mb-2">Verificar se já tem:</p>
+                              <code className="bg-slate-900 text-green-400 px-3 py-2 rounded block">
+                                node --version
+                              </code>
+                              <p className="text-slate-600 text-xs mt-2">
+                                Deve mostrar algo como "v20.10.0". Se não tiver, baixe em{" "}
+                                <a href="https://nodejs.org" className="text-blue-600 underline">
+                                  nodejs.org
+                                </a>
+                              </p>
+                            </div>
+
+                            <div className="bg-slate-50 p-3 rounded-lg">
+                              <p className="font-semibold text-slate-900 mb-1">1.3. AWS CLI (Command Line Interface)</p>
+                              <p className="text-slate-700 mb-2">Instalar:</p>
+                              <div className="space-y-1">
+                                <p className="text-xs text-slate-600">Windows:</p>
+                                <code className="bg-slate-900 text-green-400 px-3 py-2 rounded block text-xs">
+                                  msiexec.exe /i https://awscli.amazonaws.com/AWSCLIV2.msi
+                                </code>
+                                <p className="text-xs text-slate-600 mt-2">Mac:</p>
+                                <code className="bg-slate-900 text-green-400 px-3 py-2 rounded block text-xs">
+                                  brew install awscli
+                                </code>
+                                <p className="text-xs text-slate-600 mt-2">Linux:</p>
+                                <code className="bg-slate-900 text-green-400 px-3 py-2 rounded block text-xs">
+                                  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" &&
+                                  unzip awscliv2.zip && sudo ./aws/install
+                                </code>
+                              </div>
+                              <p className="text-slate-600 text-xs mt-2">
+                                Verificar instalação:{" "}
+                                <code className="bg-slate-200 px-1 py-0.5 rounded">aws --version</code>
+                              </p>
+                            </div>
+
+                            <div className="bg-slate-50 p-3 rounded-lg">
+                              <p className="font-semibold text-slate-900 mb-1">1.4. AWS CDK</p>
+                              <p className="text-slate-700 mb-2">Instalar globalmente:</p>
+                              <code className="bg-slate-900 text-green-400 px-3 py-2 rounded">
+                                npm install -g aws-cdk
+                              </code>
+                              <p className="text-slate-600 text-xs mt-2">
+                                Verificar instalação:{" "}
+                                <code className="bg-slate-200 px-1 py-0.5 rounded">cdk --version</code>
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Passo 2: Configurar Credenciais AWS */}
+                    <div className="border-2 border-slate-200 rounded-lg p-5">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-white font-bold">
+                          2
+                        </div>
+                        <h4 className="text-lg font-bold text-slate-900">Configurar Credenciais da AWS</h4>
+                      </div>
+
+                      <div className="space-y-4 text-sm">
+                        <div className="bg-yellow-50 border-2 border-yellow-200 p-3 rounded-lg">
+                          <p className="font-semibold text-yellow-900 mb-1">⚠️ Importante:</p>
+                          <p className="text-yellow-800 text-xs">
+                            Você precisa ter uma conta AWS e permissões de administrador para criar recursos. Se não
+                            tiver, peça para alguém da equipe de infra da Petrobras criar para você.
+                          </p>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="bg-slate-50 p-3 rounded-lg">
+                            <p className="font-semibold text-slate-900 mb-2">2.1. Obter Credenciais AWS</p>
+                            <ol className="list-decimal list-inside text-slate-700 space-y-1 pl-4 text-xs">
+                              <li>
+                                Acesse{" "}
+                                <a href="https://console.aws.amazon.com" className="text-blue-600 underline">
+                                  console.aws.amazon.com
+                                </a>
+                              </li>
+                              <li>Faça login com sua conta AWS</li>
+                              <li>Clique no seu nome no canto superior direito → "Security Credentials"</li>
+                              <li>Role até "Access keys" e clique em "Create access key"</li>
+                              <li>Escolha "Command Line Interface (CLI)"</li>
+                              <li>Confirme e clique em "Create access key"</li>
+                              <li>
+                                Copie o <strong>Access Key ID</strong> e o <strong>Secret Access Key</strong> (salve em
+                                lugar seguro!)
+                              </li>
+                            </ol>
+                          </div>
+
+                          <div className="bg-slate-50 p-3 rounded-lg">
+                            <p className="font-semibold text-slate-900 mb-2">2.2. Configurar no Terminal</p>
+                            <p className="text-slate-700 mb-2">Execute o comando:</p>
+                            <code className="bg-slate-900 text-green-400 px-3 py-2 rounded block mb-3">
+                              aws configure
+                            </code>
+
+                            <p className="text-slate-700 mb-2">Ele vai pedir 4 informações. Digite cada uma:</p>
+                            <div className="space-y-2">
+                              <div>
+                                <code className="bg-slate-900 text-green-400 px-2 py-1 rounded text-xs block">
+                                  AWS Access Key ID [None]: AKIAIOSFODNN7EXAMPLE
+                                </code>
+                                <p className="text-slate-600 text-xs mt-1">Cole o Access Key ID que você copiou</p>
+                              </div>
+                              <div>
+                                <code className="bg-slate-900 text-green-400 px-2 py-1 rounded text-xs block">
+                                  AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+                                </code>
+                                <p className="text-slate-600 text-xs mt-1">Cole o Secret Access Key</p>
+                              </div>
+                              <div>
+                                <code className="bg-slate-900 text-green-400 px-2 py-1 rounded text-xs block">
+                                  Default region name [None]: us-east-1
+                                </code>
+                                <p className="text-slate-600 text-xs mt-1">
+                                  Digite "us-east-1" (Virginia - região mais comum)
+                                </p>
+                              </div>
+                              <div>
+                                <code className="bg-slate-900 text-green-400 px-2 py-1 rounded text-xs block">
+                                  Default output format [None]: json
+                                </code>
+                                <p className="text-slate-600 text-xs mt-1">Digite "json"</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="bg-green-50 p-3 rounded-lg">
+                            <p className="font-semibold text-green-900 mb-1">✅ Testar se funcionou:</p>
+                            <code className="bg-slate-900 text-green-400 px-3 py-2 rounded block text-xs">
+                              aws sts get-caller-identity
+                            </code>
+                            <p className="text-green-700 text-xs mt-2">
+                              Se mostrar seu ID de conta AWS, está tudo certo!
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Passo 3: Preparar Scripts CDK */}
+                    <div className="border-2 border-slate-200 rounded-lg p-5">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-600 text-white font-bold">
+                          3
+                        </div>
+                        <h4 className="text-lg font-bold text-slate-900">Preparar os Scripts AWS CDK</h4>
+                      </div>
+
+                      <div className="space-y-4 text-sm">
+                        <p className="text-slate-700">
+                          Os scripts já foram criados na pasta{" "}
+                          <code className="bg-slate-200 px-1.5 py-0.5 rounded">back-end/aws/</code>. Agora vamos
+                          prepará-los para execução.
+                        </p>
+
+                        <div className="space-y-3">
+                          <div className="bg-slate-50 p-3 rounded-lg">
+                            <p className="font-semibold text-slate-900 mb-2">3.1. Navegar até a pasta AWS:</p>
+                            <code className="bg-slate-900 text-green-400 px-3 py-2 rounded">cd back-end/aws</code>
+                          </div>
+
+                          <div className="bg-slate-50 p-3 rounded-lg">
+                            <p className="font-semibold text-slate-900 mb-2">3.2. Criar ambiente virtual Python:</p>
+                            <p className="text-slate-700 mb-2 text-xs">
+                              Isso cria um ambiente isolado para as dependências:
+                            </p>
+                            <code className="bg-slate-900 text-green-400 px-3 py-2 rounded block mb-2">
+                              python3 -m venv .venv
+                            </code>
+
+                            <p className="text-slate-700 mb-2 text-xs mt-3">Ativar o ambiente virtual:</p>
+                            <div className="space-y-1">
+                              <p className="text-xs text-slate-600">Windows:</p>
+                              <code className="bg-slate-900 text-green-400 px-3 py-2 rounded block text-xs">
+                                .venv\Scripts\activate
+                              </code>
+                              <p className="text-xs text-slate-600 mt-2">Mac/Linux:</p>
+                              <code className="bg-slate-900 text-green-400 px-3 py-2 rounded block text-xs">
+                                source .venv/bin/activate
+                              </code>
+                            </div>
+
+                            <p className="text-slate-600 text-xs mt-2">
+                              Você vai ver <code className="bg-slate-200 px-1 py-0.5 rounded">(.venv)</code> no início
+                              da linha do terminal
+                            </p>
+                          </div>
+
+                          <div className="bg-slate-50 p-3 rounded-lg">
+                            <p className="font-semibold text-slate-900 mb-2">3.3. Instalar dependências Python:</p>
+                            <code className="bg-slate-900 text-green-400 px-3 py-2 rounded">
+                              pip install -r requirements.txt
+                            </code>
+                            <p className="text-slate-600 text-xs mt-2">
+                              Isso instala o AWS CDK para Python e outras bibliotecas necessárias. Vai levar ~2 minutos.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Passo 4: Bootstrap AWS CDK */}
+                    <div className="border-2 border-slate-200 rounded-lg p-5">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-600 text-white font-bold">
+                          4
+                        </div>
+                        <h4 className="text-lg font-bold text-slate-900">Bootstrap da AWS (Primeira Vez Apenas)</h4>
+                      </div>
+
+                      <div className="space-y-4 text-sm">
+                        <div className="bg-blue-50 border-2 border-blue-200 p-3 rounded-lg">
+                          <p className="font-semibold text-blue-900 mb-1">O que é Bootstrap?</p>
+                          <p className="text-blue-800 text-xs">
+                            É como "preparar o terreno" antes de construir uma casa. O CDK precisa criar alguns recursos
+                            básicos na sua conta AWS antes de poder criar sua infraestrutura. Você faz isso UMA VEZ só,
+                            nunca mais precisa repetir.
+                          </p>
+                        </div>
+
+                        <div className="bg-slate-50 p-3 rounded-lg">
+                          <p className="font-semibold text-slate-900 mb-2">Executar o bootstrap:</p>
+                          <code className="bg-slate-900 text-green-400 px-3 py-2 rounded block mb-2">
+                            cdk bootstrap
+                          </code>
+
+                          <p className="text-slate-600 text-xs mt-2">
+                            Isso vai criar um bucket S3 especial chamado "CDKToolkit" e algumas outras coisas. Demora ~2
+                            minutos.
+                          </p>
+                        </div>
+
+                        <div className="bg-green-50 p-3 rounded-lg">
+                          <p className="font-semibold text-green-900 mb-1">✅ O que você vai ver:</p>
+                          <code className="bg-slate-900 text-green-400 px-2 py-1 rounded block text-xs whitespace-pre-wrap">
+                            ⏳ Bootstrapping environment aws://123456789012/us-east-1...
+                            <br />✅ Environment aws://123456789012/us-east-1 bootstrapped.
+                          </code>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Passo 5: Deploy! */}
+                    <div className="border-2 border-green-200 bg-green-50 rounded-lg p-5">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-white font-bold">
+                          5
+                        </div>
+                        <h4 className="text-lg font-bold text-green-900">🚀 CRIAR TUDO NA AWS!</h4>
+                      </div>
+
+                      <div className="space-y-4 text-sm">
+                        <p className="text-green-800 font-semibold">
+                          Agora é a hora da mágica! Com UM comando, vamos criar TUDO:
+                        </p>
+
+                        <ul className="list-disc list-inside text-green-700 space-y-1 pl-4 text-xs">
+                          <li>5 tabelas DynamoDB</li>
+                          <li>2 buckets S3</li>
+                          <li>Configuração AWS SES</li>
+                          <li>Funções Lambda</li>
+                          <li>API Gateway</li>
+                          <li>IAM Roles e Policies</li>
+                          <li>Secrets Manager</li>
+                        </ul>
+
+                        <div className="bg-white border-2 border-green-300 p-4 rounded-lg">
+                          <p className="font-semibold text-green-900 mb-2">Execute o comando mágico:</p>
+                          <code className="bg-slate-900 text-green-400 px-4 py-3 rounded block text-lg font-bold">
+                            cdk deploy --all
+                          </code>
+
+                          <div className="mt-4 space-y-2">
+                            <p className="text-green-800 text-xs">Ele vai mostrar o que será criado e perguntar:</p>
+                            <code className="bg-slate-900 text-yellow-400 px-2 py-1 rounded block text-xs">
+                              Do you wish to deploy these changes (y/n)?
+                            </code>
+                            <p className="text-green-800 text-xs">
+                              Digite <strong>y</strong> e aperte Enter.
+                            </p>
+                          </div>
+
+                          <div className="mt-4 bg-green-100 p-3 rounded">
+                            <p className="font-semibold text-green-900 mb-1">⏱️ Tempo de criação:</p>
+                            <p className="text-green-800 text-xs">
+                              ~10 minutos. Você vai ver várias barras de progresso. Relaxe e tome um café ☕
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="bg-green-100 border-2 border-green-300 p-3 rounded-lg">
+                          <p className="font-semibold text-green-900 mb-1">✅ Sucesso! O que você vai ver:</p>
+                          <code className="bg-slate-900 text-green-400 px-2 py-1 rounded block text-xs whitespace-pre-wrap">
+                            {`✅ PetrobrasFileShareDatabaseStack
+✅ PetrobrasFileShareStorageStack
+✅ PetrobrasFileShareEmailStack
+✅ PetrobrasFileShareLambdaStack
+✅ PetrobrasFileShareApiStack
+
+Stack ARN:
+arn:aws:cloudformation:us-east-1:123456789012:stack/...
+
+Outputs:
+PetrobrasFileShareApiStack.ApiUrl = https://abc123xyz.execute-api.us-east-1.amazonaws.com/prod
+PetrobrasFileShareStorageStack.FilesBucketName = petrobras-fileshare-files-abc123
+PetrobrasFileShareStorageStack.TempBucketName = petrobras-fileshare-temp-abc123
+
+✨ Deployment time: 612.34s`}
+                          </code>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Passo 6: Verificar */}
+                    <div className="border-2 border-slate-200 rounded-lg p-5">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-600 text-white font-bold">
+                          6
+                        </div>
+                        <h4 className="text-lg font-bold text-slate-900">Verificar se Tudo Foi Criado</h4>
+                      </div>
+
+                      <div className="space-y-4 text-sm">
+                        <p className="text-slate-700">
+                          Vamos conferir no console da AWS se tudo foi criado corretamente:
+                        </p>
+
+                        <div className="space-y-3">
+                          <div className="bg-slate-50 p-3 rounded-lg">
+                            <p className="font-semibold text-slate-900 mb-2">6.1. Verificar DynamoDB:</p>
+                            <ol className="list-decimal list-inside text-slate-700 space-y-1 pl-4 text-xs">
+                              <li>
+                                Acesse{" "}
+                                <a href="https://console.aws.amazon.com/dynamodb" className="text-blue-600 underline">
+                                  console.aws.amazon.com/dynamodb
+                                </a>
+                              </li>
+                              <li>Clique em "Tables" no menu esquerdo</li>
+                              <li>
+                                Você deve ver 5 tabelas:
+                                <ul className="list-disc list-inside pl-4 mt-1">
+                                  <li>
+                                    <code className="bg-slate-200 px-1 py-0.5 rounded">petrobras-users</code>
+                                  </li>
+                                  <li>
+                                    <code className="bg-slate-200 px-1 py-0.5 rounded">petrobras-file-shares</code>
+                                  </li>
+                                  <li>
+                                    <code className="bg-slate-200 px-1 py-0.5 rounded">petrobras-audit-logs</code>
+                                  </li>
+                                  <li>
+                                    <code className="bg-slate-200 px-1 py-0.5 rounded">petrobras-notifications</code>
+                                  </li>
+                                  <li>
+                                    <code className="bg-slate-200 px-1 py-0.5 rounded">petrobras-sessions</code>
+                                  </li>
+                                </ul>
+                              </li>
+                            </ol>
+                          </div>
+
+                          <div className="bg-slate-50 p-3 rounded-lg">
+                            <p className="font-semibold text-slate-900 mb-2">6.2. Verificar S3:</p>
+                            <ol className="list-decimal list-inside text-slate-700 space-y-1 pl-4 text-xs">
+                              <li>
+                                Acesse{" "}
+                                <a href="https://console.aws.amazon.com/s3" className="text-blue-600 underline">
+                                  console.aws.amazon.com/s3
+                                </a>
+                              </li>
+                              <li>
+                                Você deve ver 2 buckets:
+                                <ul className="list-disc list-inside pl-4 mt-1">
+                                  <li>
+                                    <code className="bg-slate-200 px-1 py-0.5 rounded">
+                                      petrobras-fileshare-files-*
+                                    </code>{" "}
+                                    (arquivos permanentes)
+                                  </li>
+                                  <li>
+                                    <code className="bg-slate-200 px-1 py-0.5 rounded">petrobras-fileshare-temp-*</code>{" "}
+                                    (arquivos temporários)
+                                  </li>
+                                </ul>
+                              </li>
+                            </ol>
+                          </div>
+
+                          <div className="bg-slate-50 p-3 rounded-lg">
+                            <p className="font-semibold text-slate-900 mb-2">6.3. Verificar Lambda:</p>
+                            <ol className="list-decimal list-inside text-slate-700 space-y-1 pl-4 text-xs">
+                              <li>
+                                Acesse{" "}
+                                <a href="https://console.aws.amazon.com/lambda" className="text-blue-600 underline">
+                                  console.aws.amazon.com/lambda
+                                </a>
+                              </li>
+                              <li>Clique em "Functions"</li>
+                              <li>Você deve ver funções Lambda criadas para limpeza automática e notificações</li>
+                            </ol>
+                          </div>
+
+                          <div className="bg-slate-50 p-3 rounded-lg">
+                            <p className="font-semibold text-slate-900 mb-2">6.4. Copiar URL da API:</p>
+                            <p className="text-slate-700 mb-2 text-xs">
+                              No output do comando <code className="bg-slate-200 px-1 py-0.5 rounded">cdk deploy</code>,
+                              você viu uma linha com "ApiUrl". Copie essa URL, você vai precisar dela no back-end
+                              Python!
+                            </p>
+                            <code className="bg-slate-900 text-green-400 px-2 py-1 rounded block text-xs">
+                              PetrobrasFileShareApiStack.ApiUrl =
+                              https://abc123xyz.execute-api.us-east-1.amazonaws.com/prod
+                            </code>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Passo 7: Conectar Back-end */}
+                    <div className="border-2 border-purple-200 bg-purple-50 rounded-lg p-5">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-600 text-white font-bold">
+                          7
+                        </div>
+                        <h4 className="text-lg font-bold text-purple-900">Conectar o Back-end Python</h4>
+                      </div>
+
+                      <div className="space-y-4 text-sm">
+                        <p className="text-purple-800">
+                          Agora que a infraestrutura AWS está criada, vamos conectar o back-end Python para usar ela:
+                        </p>
+
+                        <div className="bg-white border-2 border-purple-300 p-4 rounded-lg">
+                          <p className="font-semibold text-purple-900 mb-2">
+                            7.1. Criar arquivo .env no back-end Python:
+                          </p>
+                          <code className="bg-slate-900 text-green-400 px-2 py-1 rounded block text-xs mb-3">
+                            cd ../../python
+                            <br />
+                            nano .env
+                          </code>
+
+                          <p className="text-purple-800 mb-2 text-xs">Cole este conteúdo (substitua os valores):</p>
+                          <div className="bg-slate-900 p-3 rounded-lg">
+                            <pre className="text-xs text-green-400 overflow-x-auto">
+                              {`# AWS Configuration
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=<seu_access_key>
+AWS_SECRET_ACCESS_KEY=<seu_secret_key>
+
+# DynamoDB Tables
+DYNAMODB_USERS_TABLE=petrobras-users
+DYNAMODB_FILESHARES_TABLE=petrobras-file-shares
+DYNAMODB_AUDIT_TABLE=petrobras-audit-logs
+DYNAMODB_NOTIFICATIONS_TABLE=petrobras-notifications
+DYNAMODB_SESSIONS_TABLE=petrobras-sessions
+
+# S3 Buckets (copie os nomes que apareceram no output do CDK)
+S3_FILES_BUCKET=petrobras-fileshare-files-abc123
+S3_TEMP_BUCKET=petrobras-fileshare-temp-abc123
+
+# API Gateway URL (copie do output do CDK)
+AWS_API_URL=https://abc123xyz.execute-api.us-east-1.amazonaws.com/prod
+
+# ServiceNow (você vai pegar com a equipe de infra)
+SERVICENOW_INSTANCE=petrobras.service-now.com
+SERVICENOW_CLIENT_ID=<pedir_para_infra>
+SERVICENOW_CLIENT_SECRET=<pedir_para_infra>
+
+# JWT Secret (gere um aleatório)
+JWT_SECRET=$(openssl rand -hex 32)
+
+# Resend (para e-mails)
+RESEND_API_KEY=<sua_chave_resend>`}
+                            </pre>
+                          </div>
+                        </div>
+
+                        <div className="bg-purple-100 p-3 rounded-lg">
+                          <p className="font-semibold text-purple-900 mb-1">✅ Pronto!</p>
+                          <p className="text-purple-800 text-xs">
+                            Agora o back-end Python consegue conversar com todos os serviços AWS que você acabou de
+                            criar!
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Passo 8: Testar */}
+                    <div className="border-2 border-green-200 bg-green-50 rounded-lg p-5">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-white font-bold">
+                          8
+                        </div>
+                        <h4 className="text-lg font-bold text-green-900">Testar Tudo!</h4>
+                      </div>
+
+                      <div className="space-y-4 text-sm">
+                        <p className="text-green-800">Vamos testar se conseguimos gravar e ler dados do DynamoDB:</p>
+
+                        <div className="bg-white border-2 border-green-300 p-4 rounded-lg">
+                          <p className="font-semibold text-green-900 mb-2">Criar script de teste:</p>
+                          <code className="bg-slate-900 text-green-400 px-2 py-1 rounded block text-xs mb-3">
+                            nano test_aws.py
+                          </code>
+
+                          <p className="text-green-800 mb-2 text-xs">Cole este código:</p>
+                          <div className="bg-slate-900 p-3 rounded-lg">
+                            <pre className="text-xs text-green-400 overflow-x-auto">
+                              {`import boto3
+from datetime import datetime
+
+# Conectar ao DynamoDB
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+table = dynamodb.Table('petrobras-users')
+
+# Criar um usuário de teste
+user = {
+    'user_id': 'test-001',
+    'email': 'teste@petrobras.com.br',
+    'name': 'Usuário de Teste',
+    'role': 'internal',
+    'created_at': datetime.now().isoformat()
+}
+
+# Salvar no DynamoDB
+table.put_item(Item=user)
+print("✅ Usuário criado com sucesso!")
+
+# Ler do DynamoDB
+response = table.get_item(Key={'user_id': 'test-001'})
+print("✅ Usuário lido com sucesso:")
+print(response['Item'])`}
+                            </pre>
+                          </div>
+
+                          <p className="text-green-800 mb-2 text-xs mt-3">Executar o teste:</p>
+                          <code className="bg-slate-900 text-green-400 px-2 py-1 rounded block text-xs">
+                            python test_aws.py
+                          </code>
+
+                          <div className="bg-green-100 p-3 rounded mt-3">
+                            <p className="font-semibold text-green-900 mb-1">Se funcionou, você vai ver:</p>
+                            <code className="bg-slate-900 text-green-400 px-2 py-1 rounded block text-xs">
+                              ✅ Usuário criado com sucesso!
+                              <br />✅ Usuário lido com sucesso:
+                              <br />
+                              {"{'user_id': 'test-001', 'email': 'teste@petrobras.com.br', ...}"}
+                            </code>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Troubleshooting */}
+                <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-5">
+                  <h3 className="text-xl font-bold text-yellow-900 mb-4 flex items-center gap-2">
+                    <Shield className="h-6 w-6" />
+                    Problemas Comuns e Soluções
+                  </h3>
+
+                  <div className="space-y-4 text-sm">
+                    <div className="bg-white p-4 rounded-lg">
+                      <p className="font-semibold text-yellow-900 mb-2">❌ Erro: "Unable to locate credentials"</p>
+                      <p className="text-yellow-800 mb-2 text-xs">
+                        <strong>Causa:</strong> AWS CLI não está configurado ou as credenciais expiraram.
+                      </p>
+                      <p className="text-yellow-800 mb-2 text-xs">
+                        <strong>Solução:</strong> Execute{" "}
+                        <code className="bg-yellow-100 px-1 py-0.5 rounded">aws configure</code> novamente e coloque
+                        suas credenciais.
+                      </p>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg">
+                      <p className="font-semibold text-yellow-900 mb-2">❌ Erro: "Access Denied"</p>
+                      <p className="text-yellow-800 mb-2 text-xs">
+                        <strong>Causa:</strong> Sua conta AWS não tem permissões para criar recursos.
+                      </p>
+                      <p className="text-yellow-800 mb-2 text-xs">
+                        <strong>Solução:</strong> Peça para o administrador da conta AWS adicionar permissões de
+                        "AdministratorAccess" ou pelo menos "PowerUserAccess" para seu usuário.
+                      </p>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg">
+                      <p className="font-semibold text-yellow-900 mb-2">❌ Erro: "Stack already exists"</p>
+                      <p className="text-yellow-800 mb-2 text-xs">
+                        <strong>Causa:</strong> Você já executou o{" "}
+                        <code className="bg-yellow-100 px-1 py-0.5 rounded">cdk deploy</code> antes.
+                      </p>
+                      <p className="text-yellow-800 mb-2 text-xs">
+                        <strong>Solução:</strong> Para atualizar os recursos, execute:
+                      </p>
+                      <code className="bg-slate-900 text-green-400 px-2 py-1 rounded block text-xs">
+                        cdk deploy --all --force
+                      </code>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg">
+                      <p className="font-semibold text-yellow-900 mb-2">
+                        ❌ Erro no teste Python: "Cannot connect to DynamoDB"
+                      </p>
+                      <p className="text-yellow-800 mb-2 text-xs">
+                        <strong>Causa:</strong> Nome da tabela errado ou região errada.
+                      </p>
+                      <p className="text-yellow-800 mb-2 text-xs">
+                        <strong>Solução:</strong> Verifique se o nome da tabela no código é exatamente igual ao que
+                        aparece no console AWS e se a região está correta (us-east-1).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Próximos Passos */}
+                <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-5">
+                  <h3 className="text-xl font-bold text-blue-900 mb-4">🎉 Parabéns! E Agora?</h3>
+
+                  <div className="space-y-3 text-sm">
+                    <p className="text-blue-800">
+                      Você acabou de criar toda a infraestrutura AWS do projeto! Agora você pode:
+                    </p>
+
+                    <div className="grid md:grid-cols-2 gap-3">
+                      <div className="bg-white p-3 rounded-lg border-2 border-blue-200">
+                        <p className="font-semibold text-blue-900 mb-1">1. Conectar o Front-end</p>
+                        <p className="text-blue-700 text-xs">
+                          Atualizar o Next.js para usar a URL da API Gateway que você copiou
+                        </p>
+                      </div>
+
+                      <div className="bg-white p-3 rounded-lg border-2 border-blue-200">
+                        <p className="font-semibold text-blue-900 mb-1">2. Implementar ServiceNow</p>
+                        <p className="text-blue-700 text-xs">
+                          Seguir a aba "ServiceNow" da Wiki para integrar autenticação
+                        </p>
+                      </div>
+
+                      <div className="bg-white p-3 rounded-lg border-2 border-blue-200">
+                        <p className="font-semibold text-blue-900 mb-1">3. Testar Upload/Download</p>
+                        <p className="text-blue-700 text-xs">Fazer upload de um arquivo e ver ele sendo salvo no S3</p>
+                      </div>
+
+                      <div className="bg-white p-3 rounded-lg border-2 border-blue-200">
+                        <p className="font-semibold text-blue-900 mb-1">4. Configurar Monitoramento</p>
+                        <p className="text-blue-700 text-xs">Ativar CloudWatch Alarms para ser notificado de erros</p>
+                      </div>
                     </div>
                   </div>
                 </div>

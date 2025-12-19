@@ -5,8 +5,24 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("=== INÍCIO DO ENVIO DE E-MAIL ===")
+
+    // Verificar se API Key está configurada
+    if (!process.env.RESEND_API_KEY) {
+      console.error("ERRO CRÍTICO: RESEND_API_KEY não está configurada!")
+      return NextResponse.json(
+        { error: "RESEND_API_KEY não configurada. Adicione a variável de ambiente." },
+        { status: 500 },
+      )
+    }
+
+    console.log("✓ RESEND_API_KEY encontrada")
+
     const body = await request.json()
     const { to, subject, uploadData, type = "supervisor" } = body
+
+    console.log("Dados recebidos:", { to, subject, type })
+    console.log("Upload data:", uploadData)
 
     const supervisorTemplate = `
       <!DOCTYPE html>
@@ -582,7 +598,11 @@ export async function POST(request: NextRequest) {
 
     const htmlContent = type === "supervisor" ? supervisorTemplate : senderTemplate
 
+    console.log(`Enviando e-mail tipo "${type}" para: ${to}`)
+
     const cleanSubject = subject.replace(/\n/g, " ").trim()
+
+    console.log(`Subject limpo: ${cleanSubject}`)
 
     const { data, error } = await resend.emails.send({
       from: "Sistema Petrobras <onboarding@resend.dev>",
@@ -592,11 +612,17 @@ export async function POST(request: NextRequest) {
     })
 
     if (error) {
+      console.error("ERRO AO ENVIAR E-MAIL:", error)
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
+    console.log("✓ E-MAIL ENVIADO COM SUCESSO!")
+    console.log("Resposta Resend:", data)
+    console.log("=== FIM DO ENVIO DE E-MAIL ===")
+
     return NextResponse.json({ success: true, data }, { status: 200 })
   } catch (error: any) {
+    console.error("ERRO FATAL NO ENVIO:", error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
