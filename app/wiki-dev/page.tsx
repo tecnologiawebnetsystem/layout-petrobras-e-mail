@@ -67,6 +67,14 @@ export default function WikiDevPage() {
       color: "from-violet-500 to-purple-500",
       topics: ["Conflitos", "Campos Comuns", "Banco de Dados", "AWS", "Estratégia"],
     },
+    {
+      title: "ServiceNow Integration",
+      description: "Integração completa com ServiceNow para autenticação e gestão de usuários",
+      icon: Shield,
+      href: "/wiki-dev/servicenow",
+      color: "from-teal-500 to-cyan-500",
+      topics: ["API Endpoints", "Autenticação", "Front-end", "Back-end Python", "AWS", "DynamoDB"],
+    },
   ]
 
   const filteredCategories = wikiCategories.filter(
