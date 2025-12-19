@@ -5,24 +5,29 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("=== INÍCIO DO ENVIO DE E-MAIL ===")
+    console.log("[v0] === INÍCIO DO ENVIO DE E-MAIL ===")
 
-    // Verificar se API Key está configurada
     if (!process.env.RESEND_API_KEY) {
-      console.error("ERRO CRÍTICO: RESEND_API_KEY não está configurada!")
+      console.error("[v0] ERRO CRÍTICO: RESEND_API_KEY não está configurada!")
       return NextResponse.json(
-        { error: "RESEND_API_KEY não configurada. Adicione a variável de ambiente." },
+        {
+          error: "RESEND_API_KEY não configurada. Vá em 'Vars' na sidebar e adicione a chave do Resend.",
+          success: false,
+        },
         { status: 500 },
       )
     }
 
-    console.log("✓ RESEND_API_KEY encontrada")
+    console.log("[v0] ✓ RESEND_API_KEY encontrada")
 
     const body = await request.json()
     const { to, subject, uploadData, type = "supervisor" } = body
 
-    console.log("Dados recebidos:", { to, subject, type })
-    console.log("Upload data:", uploadData)
+    console.log("[v0] Dados recebidos:")
+    console.log("[v0] - Para:", to)
+    console.log("[v0] - Assunto:", subject)
+    console.log("[v0] - Tipo:", type)
+    console.log("[v0] - Upload:", uploadData?.name)
 
     const supervisorTemplate = `
       <!DOCTYPE html>
@@ -598,12 +603,21 @@ export async function POST(request: NextRequest) {
 
     const htmlContent = type === "supervisor" ? supervisorTemplate : senderTemplate
 
-    console.log(`Enviando e-mail tipo "${type}" para: ${to}`)
+    console.log(`[v0] Enviando e-mail tipo "${type}" para: ${to}`)
 
-    const cleanSubject = subject.replace(/\n/g, " ").trim()
+    const cleanSubject = subject
+      .replace(/[áàãâä]/gi, "a")
+      .replace(/[éèêë]/gi, "e")
+      .replace(/[íìîï]/gi, "i")
+      .replace(/[óòõôö]/gi, "o")
+      .replace(/[úùûü]/gi, "u")
+      .replace(/[ç]/gi, "c")
+      .replace(/\n/g, " ")
+      .trim()
 
-    console.log(`Subject limpo: ${cleanSubject}`)
+    console.log(`[v0] Subject limpo: ${cleanSubject}`)
 
+    console.log("[v0] Enviando e-mail via Resend...")
     const { data, error } = await resend.emails.send({
       from: "Sistema Petrobras <onboarding@resend.dev>",
       to: [to],
@@ -612,17 +626,17 @@ export async function POST(request: NextRequest) {
     })
 
     if (error) {
-      console.error("ERRO AO ENVIAR E-MAIL:", error)
-      return NextResponse.json({ error: error.message }, { status: 400 })
+      console.error("[v0] ERRO do Resend:", error)
+      return NextResponse.json({ error: error.message, success: false }, { status: 400 })
     }
 
-    console.log("✓ E-MAIL ENVIADO COM SUCESSO!")
-    console.log("Resposta Resend:", data)
-    console.log("=== FIM DO ENVIO DE E-MAIL ===")
+    console.log("[v0] ✓ E-mail enviado com sucesso!")
+    console.log("[v0] ID do e-mail:", data?.id)
+    console.log("[v0] === FIM DO ENVIO DE E-MAIL ===")
 
-    return NextResponse.json({ success: true, data }, { status: 200 })
+    return NextResponse.json({ success: true, id: data?.id }, { status: 200 })
   } catch (error: any) {
-    console.error("ERRO FATAL NO ENVIO:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error("[v0] ERRO CRÍTICO NO CATCH:", error)
+    return NextResponse.json({ error: error.message, success: false }, { status: 500 })
   }
 }

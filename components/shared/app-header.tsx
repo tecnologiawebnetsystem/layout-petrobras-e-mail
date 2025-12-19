@@ -15,7 +15,6 @@ import { useAuthStore } from "@/lib/stores/auth-store"
 import { useThemeStore } from "@/lib/stores/theme-store"
 import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { NotificationCenter } from "@/components/notifications/notification-center"
 import { GlobalSearch } from "@/components/search/global-search"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { useState } from "react"
@@ -81,8 +80,6 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
           <div className="hidden md:flex items-center gap-2">
             {!isExternalUser && <GlobalSearch />}
 
-            {!isExternalUser && <NotificationCenter />}
-
             {!isExternalUser && (user?.userType === "supervisor" || user?.userType === "internal") && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -123,7 +120,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="gap-2 px-2 h-11 text-foreground hover:bg-accent/10 transition-all duration-300 transform hover:scale-105 active:scale-95"
+                  className="gap-2 px-2 h-11 text-foreground hover:bg-accent/10 transition-all duration-300 transform hover:scale-105 active:scale-95 ml-auto"
                 >
                   <Avatar className="h-8 w-8 ring-2 ring-primary/20">
                     <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">

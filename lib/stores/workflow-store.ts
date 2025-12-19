@@ -293,12 +293,17 @@ export const useWorkflowStore = create<WorkflowState>()(
           actionUrl: "/supervisor",
         })
 
+        console.log("[v0] Iniciando envio de e-mails...")
+        console.log("[v0] E-mail supervisor:", "kleber.goncalves.prestserv@petrobras.com.br")
+        console.log("[v0] E-mail remetente:", upload.sender.email)
+
+        // E-mail para supervisor
         fetch("/api/send-email", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             to: "kleber.goncalves.prestserv@petrobras.com.br",
-            subject: `Novo Upload para Aprovacao: ${upload.name}`,
+            subject: `Novo Upload para Aprovacao - ${upload.name}`,
             type: "supervisor",
             uploadData: {
               name: upload.name,
@@ -310,16 +315,32 @@ export const useWorkflowStore = create<WorkflowState>()(
               uploadDate: new Date().toLocaleString("pt-BR"),
             },
           }),
-        }).catch((error) => {
-          console.error("Erro ao enviar e-mail para supervisor:", error)
         })
+          .then((res) => {
+            console.log("[v0] Resposta supervisor - Status:", res.status)
+            return res.json()
+          })
+          .then((data) => {
+            console.log("[v0] Resposta supervisor - Data:", data)
+            if (data.error) {
+              console.error("[v0] ERRO ao enviar e-mail supervisor:", data.error)
+              alert(`ERRO ao enviar e-mail para supervisor: ${data.error}`)
+            } else {
+              console.log("[v0] ✓ E-mail enviado para supervisor com sucesso!")
+            }
+          })
+          .catch((error) => {
+            console.error("[v0] ERRO CRÍTICO ao enviar e-mail para supervisor:", error)
+            alert(`ERRO CRÍTICO ao enviar e-mail para supervisor: ${error.message}`)
+          })
 
+        // E-mail de confirmação para remetente
         fetch("/api/send-email", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             to: upload.sender.email,
-            subject: `Confirmacao de Envio: ${upload.name}`,
+            subject: `Confirmacao de Envio - ${upload.name}`,
             type: "sender",
             uploadData: {
               name: upload.name,
@@ -331,9 +352,24 @@ export const useWorkflowStore = create<WorkflowState>()(
               uploadDate: new Date().toLocaleString("pt-BR"),
             },
           }),
-        }).catch((error) => {
-          console.error("Erro ao enviar e-mail de confirmação para remetente:", error)
         })
+          .then((res) => {
+            console.log("[v0] Resposta remetente - Status:", res.status)
+            return res.json()
+          })
+          .then((data) => {
+            console.log("[v0] Resposta remetente - Data:", data)
+            if (data.error) {
+              console.error("[v0] ERRO ao enviar e-mail remetente:", data.error)
+              alert(`ERRO ao enviar e-mail de confirmação: ${data.error}`)
+            } else {
+              console.log("[v0] ✓ E-mail de confirmação enviado para remetente com sucesso!")
+            }
+          })
+          .catch((error) => {
+            console.error("[v0] ERRO CRÍTICO ao enviar e-mail para remetente:", error)
+            alert(`ERRO CRÍTICO ao enviar e-mail de confirmação: ${error.message}`)
+          })
       },
 
       approveUpload: (id, approvedBy) => {
