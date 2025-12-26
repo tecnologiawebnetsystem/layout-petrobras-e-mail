@@ -83,6 +83,14 @@ export default function WikiDevPage() {
       color: "from-blue-600 to-indigo-600",
       topics: ["SSO", "Azure AD", "Autenticação", "Documento Formal", "Código Pronto"],
     },
+    {
+      title: "Desenvolvimento Local AWS",
+      description: "Como rodar DynamoDB, S3, SES, Lambda localmente sem custo - Guia completo para iniciantes",
+      icon: Server,
+      href: "/wiki-dev/local-development",
+      color: "from-emerald-500 to-teal-500",
+      topics: ["DynamoDB Local", "LocalStack", "Docker", "Python Config", "Zero Custo"],
+    },
   ]
 
   const filteredCategories = wikiCategories.filter(

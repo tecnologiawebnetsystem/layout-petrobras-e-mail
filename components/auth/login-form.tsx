@@ -158,17 +158,11 @@ export function LoginForm() {
 
   const handleEntraIdLogin = async () => {
     try {
-      console.log("[v0] Iniciando login com Entra ID...")
-
       // Usar popup para login (mais amigável que redirect)
       const response = await instance.loginPopup(loginRequest)
 
-      console.log("[v0] Login Entra ID bem-sucedido:", response)
-
       // O EntraProvider vai lidar com o resto
     } catch (error: any) {
-      console.error("[v0] Erro ao fazer login com Entra ID:", error)
-
       setNotification({
         show: true,
         type: "error",

@@ -65,18 +65,19 @@ export default function EntraIdWikiPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-blue-500" />
-                  O que é Microsoft Entra ID?
+                  <Shield className="h-5 w-5 text-blue-500" />O que é Microsoft Entra ID?
                 </CardTitle>
                 <CardDescription>Entenda o sistema de autenticação corporativo da Microsoft</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-950/20">
-                  <h3 className="mb-2 font-semibold text-blue-900 dark:text-blue-100">Explicação Simples (para leigos)</h3>
+                  <h3 className="mb-2 font-semibold text-blue-900 dark:text-blue-100">
+                    Explicação Simples (para leigos)
+                  </h3>
                   <p className="text-sm leading-relaxed text-blue-800 dark:text-blue-200">
-                    O <strong>Microsoft Entra ID</strong> (antigo Azure Active Directory) é como uma "portaria digital" da
-                    Microsoft que gerencia quem pode entrar nos sistemas da empresa. É o mesmo sistema que você usa para
-                    fazer login no Windows, Outlook, Teams e outros aplicativos da Microsoft.
+                    O <strong>Microsoft Entra ID</strong> (antigo Azure Active Directory) é como uma "portaria digital"
+                    da Microsoft que gerencia quem pode entrar nos sistemas da empresa. É o mesmo sistema que você usa
+                    para fazer login no Windows, Outlook, Teams e outros aplicativos da Microsoft.
                   </p>
                   <p className="mt-2 text-sm leading-relaxed text-blue-800 dark:text-blue-200">
                     Quando integramos nosso sistema com o Entra ID, os usuários da Petrobras podem fazer login usando
@@ -91,9 +92,7 @@ export default function EntraIdWikiPage() {
                     <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-900 dark:bg-green-950/20">
                       <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600 dark:text-green-400" />
                       <div>
-                        <p className="text-sm font-medium text-green-900 dark:text-green-100">
-                          Login Automático (SSO)
-                        </p>
+                        <p className="text-sm font-medium text-green-900 dark:text-green-100">Login Automático (SSO)</p>
                         <p className="text-xs text-green-700 dark:text-green-300">
                           Se já estiver logado no Windows, entra automaticamente
                         </p>
@@ -188,9 +187,7 @@ export default function EntraIdWikiPage() {
                     </div>
                     <div>
                       <p className="font-medium text-slate-900">Retorna Access Token e ID Token</p>
-                      <p className="text-sm text-slate-600">
-                        Front-end recebe tokens JWT com dados do usuário
-                      </p>
+                      <p className="text-sm text-slate-600">Front-end recebe tokens JWT com dados do usuário</p>
                     </div>
                   </div>
                   <ArrowRight className="ml-4 h-5 w-5 text-slate-400" />
@@ -200,9 +197,7 @@ export default function EntraIdWikiPage() {
                     </div>
                     <div>
                       <p className="font-medium text-slate-900">Sistema autentica usuário</p>
-                      <p className="text-sm text-slate-600">
-                        Dados salvos no DynamoDB e usuário redirecionado
-                      </p>
+                      <p className="text-sm text-slate-600">Dados salvos no DynamoDB e usuário redirecionado</p>
                     </div>
                   </div>
                 </div>
@@ -332,11 +327,7 @@ export default function EntraIdWikiPage() {
                         copyToClipboard("npm install @azure/msal-browser @azure/msal-react", "npm-install")
                       }
                     >
-                      {copiedStates["npm-install"] ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
-                      )}
+                      {copiedStates["npm-install"] ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </Button>
                   </div>
                   <p className="mt-2 text-sm text-slate-600">
@@ -374,8 +365,7 @@ NEXT_PUBLIC_REDIRECT_URI=http://localhost:3000`}</code>
                     <Key className="h-4 w-4" />
                     <AlertTitle>IMPORTANTE</AlertTitle>
                     <AlertDescription>
-                      Substitua os valores <code>xxxxxxxx</code> pelas credenciais reais fornecidas pelo time de
-                      infra.
+                      Substitua os valores <code>xxxxxxxx</code> pelas credenciais reais fornecidas pelo time de infra.
                     </AlertDescription>
                   </Alert>
                 </div>
@@ -418,8 +408,8 @@ NEXT_PUBLIC_REDIRECT_URI=http://localhost:3000`}</code>
                   <CheckCircle2 className="h-4 w-4" />
                   <AlertTitle>Pronto para Uso!</AlertTitle>
                   <AlertDescription>
-                    Assim que você receber as credenciais do time de infra e adicionar no .env.local, o botão "Login
-                    com Microsoft" aparecerá automaticamente na tela de login.
+                    Assim que você receber as credenciais do time de infra e adicionar no .env.local, o botão "Login com
+                    Microsoft" aparecerá automaticamente na tela de login.
                   </AlertDescription>
                 </Alert>
               </CardContent>
@@ -465,7 +455,8 @@ NEXT_PUBLIC_REDIRECT_URI=http://localhost:3000`}</code>
                 <div>
                   <h3 className="mb-3 font-semibold text-slate-900">2. Criar Validador de Token</h3>
                   <p className="mb-2 text-sm text-slate-600">
-                    Arquivo: <code className="rounded bg-slate-100 px-1 py-0.5">back-end/python/auth/entra_validator.py</code>
+                    Arquivo:{" "}
+                    <code className="rounded bg-slate-100 px-1 py-0.5">back-end/python/auth/entra_validator.py</code>
                   </p>
                   <div className="relative">
                     <pre className="overflow-x-auto rounded-lg bg-slate-900 p-4 text-sm text-slate-50">
@@ -545,8 +536,8 @@ async def create_upload(
                   <Lock className="h-4 w-4" />
                   <AlertTitle>Segurança Garantida</AlertTitle>
                   <AlertDescription>
-                    Com essa validação, mesmo se alguém tentar falsificar um token, o back-end vai detectar e bloquear
-                    o acesso.
+                    Com essa validação, mesmo se alguém tentar falsificar um token, o back-end vai detectar e bloquear o
+                    acesso.
                   </AlertDescription>
                 </Alert>
               </CardContent>
@@ -565,7 +556,9 @@ async def create_upload(
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="rounded-lg bg-orange-50 p-4 dark:bg-orange-950/20">
-                  <p className="text-sm font-semibold text-orange-900 dark:text-orange-100">Por que usar Secrets Manager?</p>
+                  <p className="text-sm font-semibold text-orange-900 dark:text-orange-100">
+                    Por que usar Secrets Manager?
+                  </p>
                   <p className="mt-2 text-sm text-orange-800 dark:text-orange-200">
                     As credenciais do Entra ID (Client ID, Client Secret, Tenant ID) são sensíveis e NÃO devem estar em
                     arquivos .env no código. O AWS Secrets Manager armazena essas credenciais de forma segura e
@@ -606,7 +599,8 @@ async def create_upload(
                     <div className="flex items-start gap-2">
                       <span className="font-semibold text-slate-900">e)</span>
                       <span>
-                        Nome do secret: <code className="rounded bg-slate-100 px-1 py-0.5">petrobras/entra-id-credentials</code>
+                        Nome do secret:{" "}
+                        <code className="rounded bg-slate-100 px-1 py-0.5">petrobras/entra-id-credentials</code>
                       </span>
                     </div>
                     <div className="flex items-start gap-2">
@@ -968,4 +962,16 @@ def save_entra_user(user_data: dict):
                       </div>
                       <div className="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-200">
                         <input type="checkbox" className="h-4 w-4" />
-                        <span>Teste 5: Logout e novo\
+                        <span>Teste 5: Logout e novo login</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  )
+}

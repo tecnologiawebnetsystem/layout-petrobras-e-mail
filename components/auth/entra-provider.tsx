@@ -83,8 +83,6 @@ export function EntraProvider({ children }: EntraProviderProps) {
   }, [setAuth, addLog])
 
   const handleLoginSuccess = (response: AuthenticationResult) => {
-    console.log("[v0] Entra ID login success:", response)
-
     const account = response.account
     if (!account) {
       console.error("[Entra ID] Conta não encontrada no response")
@@ -95,8 +93,6 @@ export function EntraProvider({ children }: EntraProviderProps) {
     const email = account.username || account.homeAccountId
     const name = account.name || "Usuário"
     const userType = getUserTypeFromEmail(email)
-
-    console.log("[v0] Dados do usuário Entra ID:", { email, name, userType })
 
     // Salvar no auth store
     setAuth(

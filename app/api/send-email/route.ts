@@ -5,10 +5,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("[v0] === INÍCIO DO ENVIO DE E-MAIL ===")
-
     if (!process.env.RESEND_API_KEY) {
-      console.error("[v0] ERRO CRÍTICO: RESEND_API_KEY não está configurada!")
       return NextResponse.json(
         {
           error: "RESEND_API_KEY não configurada. Vá em 'Vars' na sidebar e adicione a chave do Resend.",
@@ -18,16 +15,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log("[v0] ✓ RESEND_API_KEY encontrada")
-
     const body = await request.json()
     const { to, subject, uploadData, type = "supervisor" } = body
-
-    console.log("[v0] Dados recebidos:")
-    console.log("[v0] - Para:", to)
-    console.log("[v0] - Assunto:", subject)
-    console.log("[v0] - Tipo:", type)
-    console.log("[v0] - Upload:", uploadData?.name)
 
     const supervisorTemplate = `
       <!DOCTYPE html>
@@ -603,8 +592,6 @@ export async function POST(request: NextRequest) {
 
     const htmlContent = type === "supervisor" ? supervisorTemplate : senderTemplate
 
-    console.log(`[v0] Enviando e-mail tipo "${type}" para: ${to}`)
-
     const cleanSubject = subject
       .replace(/[áàãâä]/gi, "a")
       .replace(/[éèêë]/gi, "e")
@@ -615,9 +602,6 @@ export async function POST(request: NextRequest) {
       .replace(/\n/g, " ")
       .trim()
 
-    console.log(`[v0] Subject limpo: ${cleanSubject}`)
-
-    console.log("[v0] Enviando e-mail via Resend...")
     const { data, error } = await resend.emails.send({
       from: "Sistema Petrobras <onboarding@resend.dev>",
       to: [to],
@@ -626,17 +610,11 @@ export async function POST(request: NextRequest) {
     })
 
     if (error) {
-      console.error("[v0] ERRO do Resend:", error)
       return NextResponse.json({ error: error.message, success: false }, { status: 400 })
     }
 
-    console.log("[v0] ✓ E-mail enviado com sucesso!")
-    console.log("[v0] ID do e-mail:", data?.id)
-    console.log("[v0] === FIM DO ENVIO DE E-MAIL ===")
-
     return NextResponse.json({ success: true, id: data?.id }, { status: 200 })
   } catch (error: any) {
-    console.error("[v0] ERRO CRÍTICO NO CATCH:", error)
     return NextResponse.json({ error: error.message, success: false }, { status: 500 })
   }
 }

@@ -34,15 +34,11 @@ export function ZipViewerModal({ isOpen, onClose, fileName, fileUrl, fileBlob }:
       setError(null)
 
       try {
-        console.log("[v0] Carregando ZIP real:", { fileName, hasBlob: !!fileBlob, hasUrl: !!fileUrl })
-
         let zipData: Blob | null = null
 
         if (fileBlob) {
           zipData = fileBlob
-          console.log("[v0] Usando blob fornecido")
         } else if (fileUrl) {
-          console.log("[v0] Buscando ZIP da URL:", fileUrl)
           const response = await fetch(fileUrl)
           if (!response.ok) throw new Error(`Falha ao buscar arquivo: ${response.statusText}`)
           zipData = await response.blob()
@@ -64,10 +60,8 @@ export function ZipViewerModal({ isOpen, onClose, fileName, fileUrl, fileBlob }:
           })
         })
 
-        console.log("[v0] Arquivos encontrados no ZIP:", zipFiles.length)
         setFiles(zipFiles)
       } catch (err) {
-        console.error("[v0] Erro ao ler ZIP:", err)
         setError(err instanceof Error ? err.message : "Erro ao ler arquivo ZIP")
       } finally {
         setLoading(false)
