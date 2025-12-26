@@ -7,20 +7,7 @@ import { AppHeader } from "@/components/shared/app-header"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import {
-  Search,
-  Book,
-  Upload,
-  Download,
-  CheckSquare,
-  Settings,
-  Bell,
-  Tags,
-  Shield,
-  Users,
-  HelpCircle,
-  ChevronRight,
-} from "lucide-react"
+import { Search, Book, Upload, Download, CheckSquare, Settings, Clock, HelpCircle, ChevronRight } from "lucide-react"
 
 interface WikiCategory {
   id: string
@@ -35,82 +22,58 @@ const wikiCategories: WikiCategory[] = [
   {
     id: "getting-started",
     title: "Primeiros Passos",
-    description: "Aprenda o básico do sistema de e-mails da Petrobras",
+    description: "Aprenda a usar o sistema de compartilhamento de arquivos",
     icon: Book,
     articles: 5,
-    color: "text-blue-600 bg-blue-100 dark:bg-blue-900/30",
+    color: "text-[#00A859] bg-[#00A859]/10",
   },
   {
     id: "upload",
     title: "Envio de Arquivos",
-    description: "Como fazer upload e compartilhar documentos",
+    description: "Como fazer upload e compartilhar documentos com externos",
     icon: Upload,
-    articles: 8,
-    color: "text-green-600 bg-green-100 dark:bg-green-900/30",
+    articles: 6,
+    color: "text-[#003F7F] bg-[#003F7F]/10",
   },
   {
     id: "download",
     title: "Download de Documentos",
-    description: "Baixe arquivos de forma segura e organizada",
+    description: "Acesse e baixe arquivos compartilhados com você",
     icon: Download,
-    articles: 6,
-    color: "text-purple-600 bg-purple-100 dark:bg-purple-900/30",
+    articles: 4,
+    color: "text-[#FDB913] bg-[#FDB913]/20",
   },
   {
     id: "approval",
     title: "Sistema de Aprovação",
-    description: "Workflow de aprovação multi-nível e gerenciamento",
+    description: "Como supervisores aprovam ou rejeitam documentos",
     icon: CheckSquare,
-    articles: 7,
-    color: "text-orange-600 bg-orange-100 dark:bg-orange-900/30",
-  },
-  {
-    id: "tags",
-    title: "Tags e Categorias",
-    description: "Organize documentos com tags personalizadas",
-    icon: Tags,
-    articles: 4,
-    color: "text-teal-600 bg-teal-100 dark:bg-teal-900/30",
-  },
-  {
-    id: "security",
-    title: "Segurança",
-    description: "Recursos de segurança e proteção de dados",
-    icon: Shield,
-    articles: 9,
-    color: "text-red-600 bg-red-100 dark:bg-red-900/30",
-  },
-  {
-    id: "notifications",
-    title: "Notificações",
-    description: "Configure e gerencie suas notificações",
-    icon: Bell,
     articles: 5,
-    color: "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30",
+    color: "text-[#00A859] bg-[#00A859]/10",
+  },
+  {
+    id: "historico",
+    title: "Histórico e Auditoria",
+    description: "Acompanhe todas as ações e movimentações",
+    icon: Clock,
+    articles: 4,
+    color: "text-[#003F7F] bg-[#003F7F]/10",
   },
   {
     id: "settings",
     title: "Configurações",
-    description: "Personalize sua conta e preferências",
+    description: "Personalize sua conta e preferências do sistema",
     icon: Settings,
-    articles: 6,
-    color: "text-gray-600 bg-gray-100 dark:bg-gray-900/30",
-  },
-  {
-    id: "users",
-    title: "Gerenciamento de Usuários",
-    description: "Perfis e permissões de usuários",
-    icon: Users,
-    articles: 4,
-    color: "text-indigo-600 bg-indigo-100 dark:bg-indigo-900/30",
+    articles: 3,
+    color: "text-[#FDB913] bg-[#FDB913]/20",
   },
   {
     id: "faq",
     title: "Perguntas Frequentes",
-    description: "Respostas para dúvidas comuns",
+    description: "Dúvidas comuns e suas respostas",
     icon: HelpCircle,
-    articles: 12,
-    color: "text-pink-600 bg-pink-100 dark:bg-pink-900/30",
+    articles: 8,
+    color: "text-[#00A859] bg-[#00A859]/10",
   },
 ]
 
@@ -148,7 +111,8 @@ export default function WikiPage() {
           </div>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">Central de Conhecimento</h1>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Bem-vindo à Wiki do sistema de e-mails Petrobras. Encontre guias, tutoriais e respostas para suas dúvidas.
+            Bem-vindo à Wiki do sistema de compartilhamento de arquivos Petrobras. Encontre guias, tutoriais e respostas
+            para suas dúvidas.
           </p>
         </div>
 
@@ -165,22 +129,22 @@ export default function WikiPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
-          <Card className="p-6">
+          <Card className="p-6 border-l-4 border-l-[#00A859]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total de Artigos</p>
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">{totalArticles}</p>
               </div>
-              <Book className="h-12 w-12 text-[#00A99D]" />
+              <Book className="h-12 w-12 text-[#00A859]" />
             </div>
           </Card>
-          <Card className="p-6">
+          <Card className="p-6 border-l-4 border-l-[#003F7F]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Categorias</p>
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">{wikiCategories.length}</p>
               </div>
-              <Tags className="h-12 w-12 text-[#0047BB]" />
+              <Clock className="h-12 w-12 text-[#003F7F]" />
             </div>
           </Card>
         </div>
@@ -202,10 +166,10 @@ export default function WikiPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-[#00A99D] transition-colors">
+                      <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-[#00A859] transition-colors">
                         {category.title}
                       </h3>
-                      <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-[#00A99D] transition-colors" />
+                      <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-[#00A859] transition-colors" />
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{category.description}</p>
                     <Badge variant="secondary" className="text-xs">

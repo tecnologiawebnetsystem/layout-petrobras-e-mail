@@ -31,7 +31,7 @@ const mockArticles: Record<string, Article[]> = {
   "getting-started": [
     {
       id: "1",
-      title: "Bem-vindo ao Sistema de E-mails Petrobras",
+      title: "Bem-vindo ao Sistema de Compartilhamento Petrobras",
       description: "Introdução ao sistema e principais funcionalidades",
       readTime: "5 min",
       author: "Equipe Petrobras",
@@ -41,7 +41,7 @@ const mockArticles: Record<string, Article[]> = {
     {
       id: "2",
       title: "Como fazer seu primeiro login",
-      description: "Guia passo a passo para acessar sua conta",
+      description: "Guia passo a passo para acessar sua conta via ServiceNow ou Entra ID",
       readTime: "3 min",
       author: "Suporte Técnico",
       type: "tutorial",
@@ -49,7 +49,7 @@ const mockArticles: Record<string, Article[]> = {
     },
     {
       id: "3",
-      title: "Entendendo os diferentes tipos de usuário",
+      title: "Entendendo os perfis de usuário",
       description: "Interno, Externo e Supervisor - diferenças e permissões",
       readTime: "7 min",
       author: "Equipe Petrobras",
@@ -58,18 +58,18 @@ const mockArticles: Record<string, Article[]> = {
     },
     {
       id: "4",
-      title: "Tour pelo sistema",
-      description: "Vídeo tutorial mostrando a interface completa",
-      readTime: "10 min",
+      title: "Navegando pelo Dashboard",
+      description: "Conheça os widgets e informações da tela principal",
+      readTime: "6 min",
       author: "Tutorial Team",
-      type: "video",
+      type: "tutorial",
       difficulty: "beginner",
     },
     {
       id: "5",
-      title: "Configurando sua conta pela primeira vez",
-      description: "Personalize seu perfil e preferências",
-      readTime: "6 min",
+      title: "Configurando notificações por e-mail",
+      description: "Receba alertas sobre uploads, aprovações e downloads",
+      readTime: "4 min",
       author: "Suporte Técnico",
       type: "tutorial",
       difficulty: "beginner",
@@ -79,7 +79,7 @@ const mockArticles: Record<string, Article[]> = {
     {
       id: "1",
       title: "Como fazer upload de arquivos",
-      description: "Passo a passo para enviar documentos",
+      description: "Passo a passo completo para enviar documentos para externos",
       readTime: "5 min",
       author: "Equipe Técnica",
       type: "tutorial",
@@ -87,8 +87,8 @@ const mockArticles: Record<string, Article[]> = {
     },
     {
       id: "2",
-      title: "Adicionando tags aos documentos",
-      description: "Organize seus arquivos com categorias",
+      title: "Preenchendo os campos do formulário",
+      description: "Destinatário, validade, descrição e anexos",
       readTime: "4 min",
       author: "Equipe Técnica",
       type: "article",
@@ -96,10 +96,263 @@ const mockArticles: Record<string, Article[]> = {
     },
     {
       id: "3",
-      title: "Limites de tamanho e formatos suportados",
-      description: "Especificações técnicas de upload",
+      title: "Adicionando múltiplos arquivos",
+      description: "Como anexar vários documentos de uma vez",
+      readTime: "3 min",
+      author: "Suporte Técnico",
+      type: "tutorial",
+      difficulty: "beginner",
+    },
+    {
+      id: "4",
+      title: "Definindo prazo de validade",
+      description: "Configure por quanto tempo o arquivo ficará disponível",
       readTime: "3 min",
       author: "Documentação",
+      type: "article",
+      difficulty: "intermediate",
+    },
+    {
+      id: "5",
+      title: "Enviando arquivos ZIP",
+      description: "Como visualizar conteúdo de arquivos compactados",
+      readTime: "4 min",
+      author: "Equipe Técnica",
+      type: "tutorial",
+      difficulty: "intermediate",
+    },
+    {
+      id: "6",
+      title: "E-mails de confirmação",
+      description: "Entenda os e-mails enviados após o upload",
+      readTime: "3 min",
+      author: "Suporte Técnico",
+      type: "article",
+      difficulty: "beginner",
+    },
+  ],
+  download: [
+    {
+      id: "1",
+      title: "Acessando a área de download",
+      description: "Como usuários externos acessam os arquivos",
+      readTime: "4 min",
+      author: "Equipe Técnica",
+      type: "tutorial",
+      difficulty: "beginner",
+    },
+    {
+      id: "2",
+      title: "Baixando documentos",
+      description: "Passo a passo para fazer download seguro",
+      readTime: "3 min",
+      author: "Suporte Técnico",
+      type: "tutorial",
+      difficulty: "beginner",
+    },
+    {
+      id: "3",
+      title: "Verificando integridade dos arquivos",
+      description: "Como garantir que o download foi completo e seguro",
+      readTime: "5 min",
+      author: "Segurança",
+      type: "article",
+      difficulty: "intermediate",
+    },
+    {
+      id: "4",
+      title: "O que fazer se o link expirou",
+      description: "Prazo de validade vencido - próximos passos",
+      readTime: "3 min",
+      author: "Suporte Técnico",
+      type: "article",
+      difficulty: "beginner",
+    },
+  ],
+  approval: [
+    {
+      id: "1",
+      title: "Como funciona o workflow de aprovação",
+      description: "Entenda o processo completo desde o upload até a aprovação",
+      readTime: "6 min",
+      author: "Equipe Técnica",
+      type: "article",
+      difficulty: "beginner",
+    },
+    {
+      id: "2",
+      title: "Aprovando documentos como supervisor",
+      description: "Passo a passo para revisar e aprovar uploads",
+      readTime: "5 min",
+      author: "Wagner Gaspar Brazil",
+      type: "tutorial",
+      difficulty: "intermediate",
+    },
+    {
+      id: "3",
+      title: "Rejeitando uploads com motivo",
+      description: "Como rejeitar documentos e informar o motivo",
+      readTime: "4 min",
+      author: "Wagner Gaspar Brazil",
+      type: "tutorial",
+      difficulty: "intermediate",
+    },
+    {
+      id: "4",
+      title: "Visualizando conteúdo de arquivos ZIP",
+      description: "Aprove ou rejeite arquivos individuais dentro de um ZIP",
+      readTime: "5 min",
+      author: "Equipe Técnica",
+      type: "tutorial",
+      difficulty: "advanced",
+    },
+    {
+      id: "5",
+      title: "Notificações de aprovação",
+      description: "E-mails automáticos para remetente e destinatário",
+      readTime: "3 min",
+      author: "Suporte Técnico",
+      type: "article",
+      difficulty: "beginner",
+    },
+  ],
+  historico: [
+    {
+      id: "1",
+      title: "Acessando o histórico de uploads",
+      description: "Veja todos os documentos enviados e seu status",
+      readTime: "4 min",
+      author: "Equipe Técnica",
+      type: "tutorial",
+      difficulty: "beginner",
+    },
+    {
+      id: "2",
+      title: "Logs de auditoria",
+      description: "Rastreabilidade completa de todas as ações",
+      readTime: "5 min",
+      author: "Auditoria",
+      type: "article",
+      difficulty: "intermediate",
+    },
+    {
+      id: "3",
+      title: "Filtrando por status e data",
+      description: "Encontre rapidamente o que procura",
+      readTime: "3 min",
+      author: "Suporte Técnico",
+      type: "tutorial",
+      difficulty: "beginner",
+    },
+    {
+      id: "4",
+      title: "Exportando relatórios",
+      description: "Gere relatórios de atividades para análise",
+      readTime: "4 min",
+      author: "Equipe Técnica",
+      type: "tutorial",
+      difficulty: "intermediate",
+    },
+  ],
+  settings: [
+    {
+      id: "1",
+      title: "Alterando suas preferências",
+      description: "Personalize idioma, tema e notificações",
+      readTime: "4 min",
+      author: "Suporte Técnico",
+      type: "tutorial",
+      difficulty: "beginner",
+    },
+    {
+      id: "2",
+      title: "Modo escuro e claro",
+      description: "Escolha o tema que prefere",
+      readTime: "2 min",
+      author: "Equipe Design",
+      type: "tutorial",
+      difficulty: "beginner",
+    },
+    {
+      id: "3",
+      title: "Gerenciando notificações",
+      description: "Configure quais e-mails você quer receber",
+      readTime: "3 min",
+      author: "Suporte Técnico",
+      type: "tutorial",
+      difficulty: "beginner",
+    },
+  ],
+  faq: [
+    {
+      id: "1",
+      title: "Não consigo fazer login",
+      description: "Soluções para problemas de acesso",
+      readTime: "3 min",
+      author: "Suporte Técnico",
+      type: "article",
+      difficulty: "beginner",
+    },
+    {
+      id: "2",
+      title: "Quanto tempo os arquivos ficam disponíveis?",
+      description: "Entenda o prazo de validade padrão e customizado",
+      readTime: "2 min",
+      author: "Suporte Técnico",
+      type: "article",
+      difficulty: "beginner",
+    },
+    {
+      id: "3",
+      title: "Posso enviar arquivos maiores que 100MB?",
+      description: "Limites de tamanho e como proceder",
+      readTime: "3 min",
+      author: "Equipe Técnica",
+      type: "article",
+      difficulty: "beginner",
+    },
+    {
+      id: "4",
+      title: "O destinatário não recebeu o e-mail",
+      description: "Checklist de troubleshooting para e-mails",
+      readTime: "4 min",
+      author: "Suporte Técnico",
+      type: "article",
+      difficulty: "beginner",
+    },
+    {
+      id: "5",
+      title: "Como cancelar um upload pendente?",
+      description: "Remova arquivos antes da aprovação",
+      readTime: "2 min",
+      author: "Suporte Técnico",
+      type: "tutorial",
+      difficulty: "beginner",
+    },
+    {
+      id: "6",
+      title: "Posso reenviar um arquivo expirado?",
+      description: "Como fazer um novo envio do mesmo documento",
+      readTime: "3 min",
+      author: "Suporte Técnico",
+      type: "tutorial",
+      difficulty: "beginner",
+    },
+    {
+      id: "7",
+      title: "O sistema tem integração com ServiceNow?",
+      description: "Sim, entenda como funciona a autenticação",
+      readTime: "5 min",
+      author: "Equipe Técnica",
+      type: "article",
+      difficulty: "intermediate",
+    },
+    {
+      id: "8",
+      title: "Meus dados estão seguros?",
+      description: "Segurança, criptografia e conformidade LGPD",
+      readTime: "6 min",
+      author: "Segurança da Informação",
       type: "article",
       difficulty: "intermediate",
     },
@@ -158,11 +411,8 @@ export default function WikiCategoryPage() {
       upload: "Envio de Arquivos",
       download: "Download de Documentos",
       approval: "Sistema de Aprovação",
-      tags: "Tags e Categorias",
-      security: "Segurança",
-      notifications: "Notificações",
+      historico: "Histórico e Auditoria",
       settings: "Configurações",
-      users: "Gerenciamento de Usuários",
       faq: "Perguntas Frequentes",
     }
     return titles[category] || category
@@ -176,7 +426,7 @@ export default function WikiCategoryPage() {
         <Breadcrumb className="mb-6">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/wiki" className="text-[#0047BB] hover:text-[#003A99]">
+              <BreadcrumbLink href="/wiki" className="text-[#003F7F] hover:text-[#00A859]">
                 Wiki
               </BreadcrumbLink>
             </BreadcrumbItem>
@@ -212,15 +462,15 @@ export default function WikiCategoryPage() {
                 onClick={() => router.push(`/wiki/${params.category}/${article.id}`)}
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-[#00A99D]/10 flex items-center justify-center">
-                    <TypeIcon className="h-6 w-6 text-[#00A99D]" />
+                  <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-[#00A859]/10 flex items-center justify-center">
+                    <TypeIcon className="h-6 w-6 text-[#00A859]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-[#00A99D] transition-colors">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-[#00A859] transition-colors">
                         {article.title}
                       </h3>
-                      <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-[#00A99D] transition-colors flex-shrink-0" />
+                      <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-[#00A859] transition-colors flex-shrink-0" />
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{article.description}</p>
                     <div className="flex items-center gap-4 flex-wrap">
