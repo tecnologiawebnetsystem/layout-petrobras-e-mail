@@ -75,6 +75,14 @@ export default function WikiDevPage() {
       color: "from-teal-500 to-cyan-500",
       topics: ["API Endpoints", "Autenticação", "Front-end", "Back-end Python", "AWS", "DynamoDB"],
     },
+    {
+      title: "Microsoft Entra ID",
+      description: "SSO corporativo com Microsoft Entra ID (Azure AD) - Código completo pronto",
+      icon: Shield,
+      href: "/wiki-dev/entra-id",
+      color: "from-blue-600 to-indigo-600",
+      topics: ["SSO", "Azure AD", "Autenticação", "Documento Formal", "Código Pronto"],
+    },
   ]
 
   const filteredCategories = wikiCategories.filter(

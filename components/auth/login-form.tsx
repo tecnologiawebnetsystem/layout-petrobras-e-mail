@@ -15,6 +15,8 @@ import { ExternalVerificationModal } from "@/components/auth/external-verificati
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useAuditLogStore } from "@/lib/stores/audit-log-store"
 import { useRouter } from "next/navigation"
+import { useMsal } from "@azure/msal-react"
+import { loginRequest, checkEntraIdConfig } from "@/lib/auth/entra-config"
 
 const DEMO_CREDENTIALS = {
   internal: {
@@ -57,6 +59,9 @@ export function LoginForm() {
     title: "",
     message: "",
   })
+
+  const { instance } = useMsal()
+  const entraIdConfig = checkEntraIdConfig()
 
   const { setAuth } = useAuthStore()
   const router = useRouter()
@@ -149,6 +154,28 @@ export function LoginForm() {
     })
 
     router.push("/download")
+  }
+
+  const handleEntraIdLogin = async () => {
+    try {
+      console.log("[v0] Iniciando login com Entra ID...")
+
+      // Usar popup para login (mais amigável que redirect)
+      const response = await instance.loginPopup(loginRequest)
+
+      console.log("[v0] Login Entra ID bem-sucedido:", response)
+
+      // O EntraProvider vai lidar com o resto
+    } catch (error: any) {
+      console.error("[v0] Erro ao fazer login com Entra ID:", error)
+
+      setNotification({
+        show: true,
+        type: "error",
+        title: "Erro ao fazer login",
+        message: error.message || "Não foi possível conectar ao Entra ID",
+      })
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -413,6 +440,35 @@ export function LoginForm() {
           <div className="text-center text-sm text-muted-foreground pt-8">
             © 2025 Petrobras. Todos os direitos reservados.
           </div>
+
+          {/* Entra ID Login Button */}
+          {entraIdConfig.configured && (
+            <div className="space-y-4">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Ou continue com</span>
+                </div>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleEntraIdLogin}
+                className="w-full h-12 text-base font-medium border-2 hover:bg-accent bg-transparent"
+              >
+                <svg className="mr-2 h-5 w-5" viewBox="0 0 23 23" fill="none">
+                  <path
+                    d="M11.5 0L0 4.6V11.5C0 17.8 4.6 23 11.5 23C18.4 23 23 17.8 23 11.5V4.6L11.5 0Z"
+                    fill="#00A4EF"
+                  />
+                </svg>
+                Login com Microsoft
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
