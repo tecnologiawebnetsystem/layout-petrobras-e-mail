@@ -4,7 +4,8 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, BookOpen, Database, Cloud, Rocket, Server, FileCode, Shield, Users } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Search, BookOpen, Database, Cloud, Rocket, Server, FileCode, Shield, Users, Home } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
@@ -103,6 +104,15 @@ export default function WikiDevPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
+        <div className="mb-8">
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <Home className="h-4 w-4" />
+              Voltar para Home
+            </Button>
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="mb-12 text-center">
           <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#00A859] to-[#0080C8] shadow-lg">

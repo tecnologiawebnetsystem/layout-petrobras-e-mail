@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -20,8 +21,9 @@ import {
   ArrowRight,
   Copy,
   Check,
+  ArrowLeft,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default function EntraIdWikiPage() {
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({})
@@ -37,6 +39,15 @@ export default function EntraIdWikiPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 p-6 lg:p-8">
       <div className="mx-auto max-w-6xl">
+        <div className="mb-8">
+          <Link href="/wiki-dev">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Voltar para Wiki
+            </Button>
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="mb-8">
           <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg">
@@ -50,13 +61,14 @@ export default function EntraIdWikiPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 lg:w-auto">
+          <TabsList className="grid w-full grid-cols-8 lg:w-auto">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="solicitacao">Solicitação</TabsTrigger>
             <TabsTrigger value="frontend">Front-end</TabsTrigger>
             <TabsTrigger value="backend">Back-end</TabsTrigger>
             <TabsTrigger value="aws">AWS</TabsTrigger>
             <TabsTrigger value="database">DynamoDB</TabsTrigger>
+            <TabsTrigger value="teste">Como Testar</TabsTrigger>
             <TabsTrigger value="checklist">Checklist</TabsTrigger>
           </TabsList>
 
@@ -793,6 +805,250 @@ def save_entra_user(user_data: dict):
                     atualizadas no DynamoDB.
                   </AlertDescription>
                 </Alert>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="teste" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  Como Testar o Entra ID
+                </CardTitle>
+                <CardDescription>
+                  Guia passo a passo para testar assim que receber as credenciais do time de infra
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <Alert>
+                  <Shield className="h-4 w-4" />
+                  <AlertTitle>Tudo está pronto!</AlertTitle>
+                  <AlertDescription>
+                    O código está 100% configurado e funcionando. Você só precisa adicionar as 3 variáveis de ambiente.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Passo 1: Receba as Credenciais</h3>
+                  <p className="text-sm text-muted-foreground">
+                    O time de infra da Petrobras vai te enviar um email com 3 informações:
+                  </p>
+                  <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <Badge variant="outline">1</Badge>
+                      <div>
+                        <p className="font-medium">Tenant ID</p>
+                        <p className="text-sm text-muted-foreground">
+                          ID do inquilino da Petrobras (ex: a1b2c3d4-e5f6-7890-abcd-ef1234567890)
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Badge variant="outline">2</Badge>
+                      <div>
+                        <p className="font-medium">Client ID (Application ID)</p>
+                        <p className="text-sm text-muted-foreground">
+                          ID da aplicação criada (ex: 98765fedc-ba09-8765-4321-0fedcba98765)
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Badge variant="outline">3</Badge>
+                      <div>
+                        <p className="font-medium">Client Secret</p>
+                        <p className="text-sm text-muted-foreground">
+                          Chave secreta (ex: AbC~1dEf2GhI3jKl4MnO5pQr6StU7vWx8YzA9bCd0)
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Passo 2: Configure no v0</h3>
+                  <ol className="space-y-3 list-decimal list-inside">
+                    <li className="text-sm">
+                      Na interface do v0, clique em <strong>Vars</strong> na sidebar esquerda
+                    </li>
+                    <li className="text-sm">
+                      Clique em <strong>Add Variable</strong> e adicione as 3 variáveis:
+                    </li>
+                  </ol>
+
+                  <div className="space-y-3 ml-6">
+                    <div className="rounded-lg border p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <code className="text-sm font-mono">NEXT_PUBLIC_ENTRA_TENANT_ID</code>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard("NEXT_PUBLIC_ENTRA_TENANT_ID", "tenant")}
+                        >
+                          {copiedStates["tenant"] ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Cole o Tenant ID que você recebeu</p>
+                    </div>
+
+                    <div className="rounded-lg border p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <code className="text-sm font-mono">NEXT_PUBLIC_ENTRA_CLIENT_ID</code>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard("NEXT_PUBLIC_ENTRA_CLIENT_ID", "client")}
+                        >
+                          {copiedStates["client"] ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Cole o Client ID que você recebeu</p>
+                    </div>
+
+                    <div className="rounded-lg border p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <code className="text-sm font-mono">NEXT_PUBLIC_ENTRA_CLIENT_SECRET</code>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard("NEXT_PUBLIC_ENTRA_CLIENT_SECRET", "secret")}
+                        >
+                          {copiedStates["secret"] ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Cole o Client Secret que você recebeu</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Passo 3: Teste o Login</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <Badge className="mt-1">1</Badge>
+                      <div className="flex-1">
+                        <p className="font-medium">Abra a página de login</p>
+                        <p className="text-sm text-muted-foreground">Acesse a URL do seu sistema</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <Badge className="mt-1">2</Badge>
+                      <div className="flex-1">
+                        <p className="font-medium">Clique no botão azul da Microsoft</p>
+                        <p className="text-sm text-muted-foreground">
+                          Você verá um botão escrito Entrar com Microsoft com o logo da Microsoft
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <Badge className="mt-1">3</Badge>
+                      <div className="flex-1">
+                        <p className="font-medium">Faça login com sua conta Petrobras</p>
+                        <p className="text-sm text-muted-foreground">
+                          Use seu email @petrobras.com.br e senha corporativa
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <Badge className="mt-1">4</Badge>
+                      <div className="flex-1">
+                        <p className="font-medium">Autorize o aplicativo</p>
+                        <p className="text-sm text-muted-foreground">
+                          A Microsoft vai pedir para você autorizar o acesso (apenas na primeira vez)
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <Badge className="mt-1">5</Badge>
+                      <div className="flex-1">
+                        <p className="font-medium">Pronto!</p>
+                        <p className="text-sm text-muted-foreground">
+                          Você será redirecionado para o dashboard e estará logado automaticamente
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Checklist de Testes Completo</h3>
+                  <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">Botão Microsoft aparece na tela de login</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">Clique no botão abre popup de login Microsoft</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">Login com email @petrobras.com.br funciona</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">Após login, redireciona para dashboard correto</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">Nome e email do usuário aparecem no header</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">Sistema detecta se é supervisor ou usuário interno</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">Logout funciona e limpa sessão</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">Login é registrado na auditoria</span>
+                    </div>
+                  </div>
+                </div>
+
+                <Alert className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20">
+                  <AlertCircle className="h-4 w-4 text-yellow-600" />
+                  <AlertTitle>Problemas comuns e soluções</AlertTitle>
+                  <AlertDescription className="space-y-2 mt-2">
+                    <div>
+                      <p className="font-medium">Erro: redirect_uri mismatch</p>
+                      <p className="text-sm">
+                        Solução: Peça ao time de infra para adicionar sua URL exata nas configurações do Azure
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-medium">Erro: AADSTS50105 (usuário não atribuído)</p>
+                      <p className="text-sm">
+                        Solução: Peça ao time de infra para adicionar você como usuário autorizado no aplicativo
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-medium">Popup bloqueado</p>
+                      <p className="text-sm">Solução: Permita popups para este site nas configurações do navegador</p>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+
+                <div className="rounded-lg border-2 border-green-500 bg-green-50 p-4 dark:bg-green-950/20">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-green-900 dark:text-green-100">
+                        Tempo estimado de teste: 5 minutos
+                      </p>
+                      <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                        Após adicionar as variáveis de ambiente, todo o sistema funcionará automaticamente com login
+                        Microsoft corporativo da Petrobras.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

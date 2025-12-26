@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -16,7 +17,9 @@ import {
   DollarSign,
   FileCode,
   Boxes,
+  ArrowLeft,
 } from "lucide-react"
+import Link from "next/link"
 
 export default function LocalDevelopmentPage() {
   const [activeTab, setActiveTab] = useState("intro")
@@ -24,6 +27,15 @@ export default function LocalDevelopmentPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-6">
       <div className="mx-auto max-w-6xl">
+        <div className="mb-8">
+          <Link href="/wiki-dev">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Voltar para Wiki
+            </Button>
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="mb-8">
           <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-lg">
