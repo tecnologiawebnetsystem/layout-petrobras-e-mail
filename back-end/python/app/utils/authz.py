@@ -1,4 +1,3 @@
-
 from fastapi import HTTPException, Depends, Request
 from sqlmodel import Session, select
 from app.db.session import get_session

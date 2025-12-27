@@ -14,16 +14,87 @@ from app.api.v1 import (
     routes_shares
 )
 
-app = FastAPI(title="Compartilhamento Seguro de Arquivos (dev)", lifespan=None)
+app = FastAPI(
+    title="Sistema de Compartilhamento Seguro de Arquivos - Petrobras",
+    description="""
+    ## API de Compartilhamento Seguro de Arquivos
 
+    Sistema corporativo para envio, aprovação e compartilhamento seguro de arquivos 
+    entre usuários internos e externos da Petrobras.
 
-@app.on_event("startup")
-def on_startup():
-    init_db()
+    ### Funcionalidades Principais
+
+    * **Autenticação** - Login via ServiceNow e Microsoft Entra ID
+    * **Upload de Arquivos** - Envio seguro com aprovação de supervisor
+    * **Gerenciamento de Áreas** - Organização por departamentos
+    * **Compartilhamento Externo** - Links seguros com OTP para usuários externos
+    * **Auditoria Completa** - Rastreamento de todas as ações
+    * **Integração AWS** - S3, DynamoDB, SES e Lambda
+
+    ### Ambientes
+
+    * **Desenvolvimento:** Dados mockados e SQLite local
+    * **Produção:** AWS completo com DynamoDB e S3
+
+    ### Autenticação
+
+    A API usa JWT Bearer tokens. Obtenha seu token através dos endpoints `/api/v1/auth/*`.
+    """,
+    version="1.0.0",
+    terms_of_service="https://petrobras.com.br/termos",
+    contact={
+        "name": "Equipe de Desenvolvimento - Petrobras",
+        "email": "kleber.goncalves.prestserv@petrobras.com.br",
+        "url": "https://petrobras.com.br/suporte"
+    },
+    license_info={
+        "name": "Uso Interno - Petrobras",
+        "url": "https://petrobras.com.br/licenca"
+    },
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    openapi_tags=[
+        {
+            "name": "User",
+            "description": "Gerenciamento de usuários internos e supervisores"
+        },
+        {
+            "name": "Areas",
+            "description": "Gestão de áreas/departamentos da organização"
+        },
+        {
+            "name": "Files",
+            "description": "Upload, download e gerenciamento de arquivos"
+        },
+        {
+            "name": "Shares",
+            "description": "Compartilhamento e aprovação de arquivos"
+        },
+        {
+            "name": "External",
+            "description": "Acesso para usuários externos com OTP"
+        },
+        {
+            "name": "Auth / External",
+            "description": "Autenticação de usuários externos"
+        }
+    ],
+    lifespan=None
+)
+
+# Rotas existentes
+from app.api.v1 import (
+    routes_external,
+    routes_external_auth,
+    routes_files,
+    routes_internal_auth,
+    routes_users,
+    routes_areas,
+    routes_shares
+)
 
 # Middleware simples de logging
-
-
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     print(
@@ -40,8 +111,9 @@ app.include_router(routes_users.router, prefix=prefix_v1, tags=["User"])
 app.include_router(routes_areas.router, prefix=prefix_v1, tags=["Areas"])
 app.include_router(routes_files.router, prefix=prefix_v1, tags=["Files"])
 app.include_router(routes_shares.router, prefix=prefix_v1, tags=["Shares"])
-app.include_router(routes_external.router,prefix=prefix_v1, tags=["External"])
+app.include_router(routes_external.router, prefix=prefix_v1, tags=["External"])
 app.include_router(routes_external_auth.router, prefix=prefix_v1, tags=["Auth / External"])
+
 # Rotas de Login
 # auth local e interno protegido (apenas enquanto AUTH_MODE=local)
 app.include_router(routes_internal_auth.router, prefix=prefix_v1)
@@ -67,3 +139,8 @@ def version():
 @app.get("/")
 def health():
     return {"status": "ok", "storage": settings.storage_provider}
+
+# Evento de inicialização da aplicação
+@app.on_event("startup")
+def on_startup():
+    init_db()

@@ -13,7 +13,7 @@ Este diretório contém todos os scripts para criar automaticamente a infraestru
 ## Pré-requisitos
 
 ### 1. Instalar Node.js (necessário para o CDK CLI)
-```bash
+\`\`\`bash
 # Ubuntu/Debian
 sudo apt install nodejs npm
 
@@ -23,10 +23,10 @@ brew install node
 # Verificar instalação
 node --version
 npm --version
-```
+\`\`\`
 
 ### 2. Instalar AWS CLI
-```bash
+\`\`\`bash
 # Ubuntu/Debian
 sudo apt install awscli
 
@@ -35,12 +35,12 @@ brew install awscli
 
 # Verificar instalação
 aws --version
-```
+\`\`\`
 
 ### 3. Configurar credenciais AWS
-```bash
+\`\`\`bash
 aws configure
-```
+\`\`\`
 
 Você vai precisar informar:
 - **AWS Access Key ID**: Pegar no console AWS (IAM)
@@ -49,68 +49,68 @@ Você vai precisar informar:
 - **Default output format**: `json`
 
 ### 4. Instalar AWS CDK CLI
-```bash
+\`\`\`bash
 npm install -g aws-cdk
 
 # Verificar instalação
 cdk --version
-```
+\`\`\`
 
 ### 5. Instalar dependências Python
-```bash
+\`\`\`bash
 cd back-end/aws
 python3 -m venv .venv
 source .venv/bin/activate  # No Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-```
+\`\`\`
 
 ## Como Usar
 
 ### Passo 1: Configurar ID da conta AWS
 
 Abra o arquivo `app.py` e substitua:
-```python
+\`\`\`python
 account="YOUR_AWS_ACCOUNT_ID",  # Substitua pelo ID da sua conta AWS
-```
+\`\`\`
 
 Para descobrir seu ID da conta AWS:
-```bash
+\`\`\`bash
 aws sts get-caller-identity --query Account --output text
-```
+\`\`\`
 
 ### Passo 2: Bootstrap (Primeira vez apenas)
 
 O bootstrap prepara sua conta AWS para usar o CDK:
-```bash
+\`\`\`bash
 cdk bootstrap aws://SEU_ACCOUNT_ID/us-east-1
-```
+\`\`\`
 
 Exemplo:
-```bash
+\`\`\`bash
 cdk bootstrap aws://123456789012/us-east-1
-```
+\`\`\`
 
 ### Passo 3: Visualizar o que será criado
 
 Antes de criar, você pode ver o que o CDK vai fazer:
-```bash
+\`\`\`bash
 cdk synth
-```
+\`\`\`
 
 Isso gera o CloudFormation template (arquivo YAML gigante) - você não precisa entender, é só para ver.
 
 ### Passo 4: Ver diferenças (Opcional)
 
 Se já tiver infraestrutura criada, veja o que vai mudar:
-```bash
+\`\`\`bash
 cdk diff
-```
+\`\`\`
 
 ### Passo 5: DEPLOY - Criar tudo na AWS! 🚀
 
-```bash
+\`\`\`bash
 cdk deploy --all
-```
+\`\`\`
 
 O CDK vai:
 1. Mostrar tudo que será criado
@@ -123,19 +123,19 @@ O CDK vai:
 ### Passo 6: Ver os recursos criados
 
 Após deploy, o CDK mostra os outputs:
-```
+\`\`\`
 Outputs:
 PetrobrasDatabaseStack.UploadsTableName = petrobras-uploads
 PetrobrasDatabaseStack.UsersTableName = petrobras-users
 PetrobrasStorageStack.FilesBucketName = petrobras-shared-files
 PetrobrasApiStack.APIEndpoint = https://abc123.execute-api.us-east-1.amazonaws.com/prod/
-```
+\`\`\`
 
 Copie esses valores e adicione nas variáveis de ambiente do seu projeto.
 
 ## Estrutura do Projeto
 
-```
+\`\`\`
 back-end/aws/
 ├── app.py                    # Arquivo principal - orquestra todas as stacks
 ├── requirements.txt          # Dependências Python
@@ -146,7 +146,7 @@ back-end/aws/
     ├── email_stack.py       # Configura AWS SES
     ├── lambda_stack.py      # Cria funções Lambda
     └── api_stack.py         # Cria API Gateway
-```
+\`\`\`
 
 ## O que cada Stack cria
 
@@ -182,24 +182,24 @@ Cria API Gateway REST:
 ## Comandos Úteis
 
 ### Listar todas as stacks
-```bash
+\`\`\`bash
 cdk list
-```
+\`\`\`
 
 ### Fazer deploy de uma stack específica
-```bash
+\`\`\`bash
 cdk deploy PetrobrasDatabaseStack
-```
+\`\`\`
 
 ### Destruir tudo (CUIDADO!)
-```bash
+\`\`\`bash
 cdk destroy --all
-```
+\`\`\`
 
 ### Ver logs de uma stack
-```bash
+\`\`\`bash
 cdk watch
-```
+\`\`\`
 
 ## Custos Estimados
 
@@ -214,16 +214,16 @@ Com os recursos criados:
 ## Troubleshooting
 
 ### Erro: "Unable to resolve AWS account"
-```bash
+\`\`\`bash
 aws configure
 # Configure suas credenciais novamente
-```
+\`\`\`
 
 ### Erro: "Stack already exists"
-```bash
+\`\`\`bash
 cdk destroy NOME_DA_STACK
 # Depois faça deploy novamente
-```
+\`\`\`
 
 ### Erro: "Insufficient permissions"
 Sua conta AWS precisa ter permissões de administrador ou pelo menos:

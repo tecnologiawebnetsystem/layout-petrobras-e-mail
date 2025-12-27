@@ -92,6 +92,14 @@ export default function WikiDevPage() {
       color: "from-emerald-500 to-teal-500",
       topics: ["DynamoDB Local", "LocalStack", "Docker", "Python Config", "Zero Custo"],
     },
+    {
+      title: "Código Python (Back-end)",
+      description: "Análise completa do código Python atual - O que existe e o que falta",
+      icon: FileCode,
+      href: "/wiki-dev/python-code",
+      color: "from-yellow-500 to-orange-600",
+      topics: ["70 Arquivos", "FastAPI", "Estrutura", "Status", "O que falta"],
+    },
   ]
 
   const filteredCategories = wikiCategories.filter(

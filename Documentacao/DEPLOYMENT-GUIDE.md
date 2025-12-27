@@ -12,7 +12,7 @@
 
 ## Passo 1: Configurar AWS CLI
 
-```bash
+\`\`\`bash
 # Instalar AWS CLI
 pip install awscli
 
@@ -22,13 +22,13 @@ aws configure --profile petrobras-prod
 # AWS Secret Access Key: [Sua Secret Key]
 # Default region name: us-east-1
 # Default output format: json
-```
+\`\`\`
 
 ---
 
 ## Passo 2: Criar Infraestrutura com CloudFormation
 
-```bash
+\`\`\`bash
 cd sql
 
 # Deploy da infraestrutura
@@ -51,13 +51,13 @@ aws cloudformation describe-stacks \
   --stack-name petrobras-file-transfer-prod \
   --query 'Stacks[0].Outputs' \
   --profile petrobras-prod
-```
+\`\`\`
 
 ---
 
 ## Passo 3: Criar Tabelas DynamoDB
 
-```bash
+\`\`\`bash
 # Instalar dependências Python
 pip install boto3
 
@@ -66,13 +66,13 @@ python create-tables.py --profile petrobras-prod --region us-east-1
 
 # Verificar tabelas criadas
 aws dynamodb list-tables --profile petrobras-prod
-```
+\`\`\`
 
 ---
 
 ## Passo 4: Configurar S3 Bucket
 
-```bash
+\`\`\`bash
 # Obter nome do bucket do CloudFormation output
 BUCKET_NAME=$(aws cloudformation describe-stacks \
   --stack-name petrobras-file-transfer-prod \
@@ -84,7 +84,7 @@ echo "Bucket criado: $BUCKET_NAME"
 
 # Habilitar versionamento (já feito pelo CloudFormation)
 # Configurar lifecycle policies (já feito pelo CloudFormation)
-```
+\`\`\`
 
 ---
 
@@ -92,7 +92,7 @@ echo "Bucket criado: $BUCKET_NAME"
 
 ### Estrutura recomendada do backend:
 
-```
+\`\`\`
 backend/
 ├── app/
 │   ├── __init__.py
@@ -124,11 +124,11 @@ backend/
 ├── requirements.txt
 ├── Dockerfile
 └── serverless.yml  # ou sam-template.yaml
-```
+\`\`\`
 
 ### Deploy com AWS Lambda + API Gateway:
 
-```bash
+\`\`\`bash
 # Instalar Serverless Framework
 npm install -g serverless
 
@@ -139,13 +139,13 @@ serverless deploy --stage production --aws-profile petrobras-prod
 # Ou com AWS SAM
 sam build
 sam deploy --guided --profile petrobras-prod
-```
+\`\`\`
 
 ---
 
 ## Passo 6: Deploy do Frontend (Next.js)
 
-```bash
+\`\`\`bash
 # Instalar Vercel CLI
 npm install -g vercel
 
@@ -156,19 +156,19 @@ vercel --prod
 # Ou build para hospedagem própria
 npm run build
 npm run start
-```
+\`\`\`
 
 ### Configurar variáveis de ambiente no Vercel:
 
-```
+\`\`\`
 NEXT_PUBLIC_API_URL=https://api.petrobras-transfer.com.br/v1
-```
+\`\`\`
 
 ---
 
 ## Passo 7: Configurar SES para Emails
 
-```bash
+\`\`\`bash
 # Verificar domínio no SES
 aws ses verify-domain-identity \
   --domain petrobras-transfer.com.br \
@@ -181,13 +181,13 @@ aws ses verify-email-identity \
 
 # Sair do sandbox (produção)
 # Necessário abrir ticket no AWS Support
-```
+\`\`\`
 
 ---
 
 ## Passo 8: Configurar CloudWatch Alarms
 
-```bash
+\`\`\`bash
 # Criar alarme para erros Lambda
 aws cloudwatch put-metric-alarm \
   --alarm-name petrobras-lambda-errors \
@@ -200,13 +200,13 @@ aws cloudwatch put-metric-alarm \
   --comparison-operator GreaterThanThreshold \
   --evaluation-periods 1 \
   --profile petrobras-prod
-```
+\`\`\`
 
 ---
 
 ## Passo 9: Monitoramento e Logs
 
-```bash
+\`\`\`bash
 # Ver logs do Lambda
 aws logs tail /aws/lambda/petrobras-file-transfer-production \
   --follow \
@@ -216,13 +216,13 @@ aws logs tail /aws/lambda/petrobras-file-transfer-production \
 aws logs tail /aws/apigateway/petrobras-file-transfer-production \
   --follow \
   --profile petrobras-prod
-```
+\`\`\`
 
 ---
 
 ## Passo 10: Backup e Disaster Recovery
 
-```bash
+\`\`\`bash
 # Habilitar Point-in-Time Recovery para DynamoDB
 aws dynamodb update-continuous-backups \
   --table-name petrobras-users-production \
@@ -234,7 +234,7 @@ aws s3api put-bucket-versioning \
   --bucket $BUCKET_NAME \
   --versioning-configuration Status=Enabled \
   --profile petrobras-prod
-```
+\`\`\`
 
 ---
 
@@ -242,7 +242,7 @@ aws s3api put-bucket-versioning \
 
 ### Atualizar Stack CloudFormation
 
-```bash
+\`\`\`bash
 aws cloudformation update-stack \
   --stack-name petrobras-file-transfer-prod \
   --template-body file://cloudformation-template.yaml \
@@ -250,23 +250,23 @@ aws cloudformation update-stack \
     ParameterKey=Environment,ParameterValue=production \
   --capabilities CAPABILITY_NAMED_IAM \
   --profile petrobras-prod
-```
+\`\`\`
 
 ### Backup Manual DynamoDB
 
-```bash
+\`\`\`bash
 aws dynamodb create-backup \
   --table-name petrobras-files-production \
   --backup-name manual-backup-$(date +%Y%m%d) \
   --profile petrobras-prod
-```
+\`\`\`
 
 ### Limpar Arquivos Antigos S3
 
-```bash
+\`\`\`bash
 # Já configurado no lifecycle policy
 # Arquivos são deletados automaticamente após 30 dias
-```
+\`\`\`
 
 ---
 
@@ -289,17 +289,17 @@ aws dynamodb create-backup \
 
 ### Lambda retorna 502/504
 
-```bash
+\`\`\`bash
 # Aumentar timeout da função Lambda
 aws lambda update-function-configuration \
   --function-name petrobras-api-handler \
   --timeout 30 \
   --profile petrobras-prod
-```
+\`\`\`
 
 ### DynamoDB throttling
 
-```bash
+\`\`\`bash
 # Verificar métricas
 aws cloudwatch get-metric-statistics \
   --namespace AWS/DynamoDB \
@@ -310,16 +310,16 @@ aws cloudwatch get-metric-statistics \
   --period 3600 \
   --statistics Sum \
   --profile petrobras-prod
-```
+\`\`\`
 
 ### S3 upload falha
 
-```bash
+\`\`\`bash
 # Verificar CORS configuration
 aws s3api get-bucket-cors \
   --bucket $BUCKET_NAME \
   --profile petrobras-prod
-```
+\`\`\`
 
 ---
 

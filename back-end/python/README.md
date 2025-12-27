@@ -19,46 +19,46 @@ Backend da aplicação A12022 desenvolvido com FastAPI. Sistema de compartilhame
 ### Executando Localmente
 
 ## 1. **Criar ambiente virtual**
-```bash
+\`\`\`bash
 python -m venv venv
-```
+\`\`\`
 ## 2. **Ativar ambiente virtual**
 ## Windows:
-```bash
+\`\`\`bash
 venv\Scripts\activate
-```
+\`\`\`
 
 ## Linux/Mac:
-```bash
+\`\`\`bash
 source venv/bin/activate
-```
+\`\`\`
 
 ## 3. **Instalar dependências**
-```bash
+\`\`\`bash
 pip install -r requirements.txt
-```
+\`\`\`
 
 ## 4. **Executar aplicação**
-```bash
+\`\`\`bash
 uvicorn app.main:app --reload
-```
+\`\`\`
 
 # Executando com Docker
 ## 1. **Build da imagem**
-```bash
+\`\`\`bash
 docker-compose build
-```
+\`\`\`
 
 ## 2. **Executar containers**
 ### Modo interativo
-```bash
+\`\`\`bash
 docker-compose up
-```
+\`\`\`
 
 ### Modo background
-```bash
+\`\`\`bash
 docker-compose up -d
-```
+\`\`\`
 
 # Documentação da API
 **Após executar a aplicação, acesse:**
@@ -75,18 +75,18 @@ docker-compose up -d
 - *Um compartilhamento (Share)*
 - *Um OTP mock (impresso no console)*
 
-```bash
+\`\`\`bash
 python -m scripts_data.seed_dev
-```
+\`\`\`
 
 # Checklist Completo de Testes
 ## 1. **Verificar status da API**
 GET http://localhost:8000/api/v1
 
 Esperado: 
-```bash
+\`\`\`bash
 {"version":"001","sytem":"active"}
-```
+\`\`\`
 
 ## 2. **Listar áreas e arquivos criados pelo seed**
 GET /areas
@@ -98,24 +98,24 @@ Esperado: Área criada + arquivos relatorio.pdf e planilha.xlsx
 ## 3. **Solicitar código OTP**
 POST /auth/codigo/solicitar
 Body:
-```bash
+\`\`\`bash
 {
   "email": "destinatario@example.com",
   "validade_minutos": 10
 }
-```
+\`\`\`
 Esperado:
-```bash
+\`\`\`bash
 {
   "message": "Código enviado por e-mail.",
   "expira_em": "2025-12-06T18:20:00Z"
 }
-```
+\`\`\`
 
 ## 4. **Verificar OTP (gera ACCESS token)**
 POST /auth/codigo/verificar
 body:
-```bash
+\`\`\`bash
 {
   "email": "destinatario@example.com",
   "codigo": "832194",
@@ -123,23 +123,23 @@ body:
   "cooldown_minutes": 15,
   "validade_horas_access": 24
 }
-```
+\`\`\`
 
 Esperado:
-```bash
+\`\`\`bash
 {
   "token": "<ACCESS_TOKEN>",
   "expira_em": "2025-12-06T12:40:00Z",
   "share_id": 1
 }
-```
+\`\`\`
 
 ## 5. **Listar arquivos usando ACCESS token**
 form-data:
 GET /externo/lista?token=<ACCESS_TOKEN>
 
 Esperado:
-```bash
+\`\`\`bash
 {
   "arquivos": [
     {
@@ -161,7 +161,7 @@ Esperado:
   ],
   "token_expira_em": "2025-12-06T12:40:00Z"
 }
-```
+\`\`\`
 
 ## 6. **ACK de download**
 POST /externo/ack
@@ -171,9 +171,9 @@ token=<ACCESS_TOKEN>
 share_arquivo_id=1
 
 Esperado: 
-```bash
+\`\`\`bash
 {"status": "ok"}
-```
+\`\`\`
 
 ## 7. **Tentativas inválidas + cooldown**
 - Solicite novo OTP
@@ -181,12 +181,12 @@ Esperado:
 POST /auth/codigo/verificar
 
 body:
-```bash
+\`\`\`bash
 {
   "email": "destinatario@example.com",
   "codigo": "000000"
 }
-```
+\`\`\`
 **Verificar Retorno no console -> Gera uma senha de acesso**
 
 ## 8. **Expiração do ACCESS token**
@@ -194,20 +194,20 @@ No .env:
 ACCESS_VALID_HOURS=0
 
 Ou envie no Body:
-```bash
+\`\`\`bash
 {
   "validade_horas_access": 0
 }
-```
+\`\`\`
 
 *Verifique o OTP para gerar um token sem validade, espere alguns segundos, depois:*
 
 GET /externo/lista?token=<ACCESS_TOKEN>
 
 Esperado: 
-```bash
+\`\`\`bash
 {"detail": "Token expirado."}
-```
+\`\`\`
 
 # Arquitetura
 **Fluxo principal: solicitar → verificar → lista?token → ack**

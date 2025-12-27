@@ -58,4 +58,3 @@ def login(session: Session, email: str, password: str, max_attempts: int = 5, co
     session.add(cred); session.commit()
 
     return user
-   

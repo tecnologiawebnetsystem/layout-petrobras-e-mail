@@ -1,4 +1,3 @@
-
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional
 from typing import TYPE_CHECKING
@@ -16,4 +15,3 @@ class AreaSupervisor(SQLModel, table=True):
 
     area: Optional["SharedArea"] = Relationship(back_populates="supervisors")
     supervisor: Optional["User"] = Relationship(back_populates="supervised_areas")
-

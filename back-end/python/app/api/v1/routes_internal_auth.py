@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr
 from sqlmodel import Session

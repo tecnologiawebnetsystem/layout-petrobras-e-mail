@@ -55,27 +55,27 @@ Este diretório contém toda a infraestrutura de banco de dados e configuração
 
 ### 1. Criar Infraestrutura AWS
 
-```bash
+\`\`\`bash
 cd sql
 aws cloudformation create-stack \
   --stack-name petrobras-file-transfer-prod \
   --template-body file://cloudformation-template.yaml \
   --parameters ParameterKey=Environment,ParameterValue=production \
   --capabilities CAPABILITY_NAMED_IAM
-```
+\`\`\`
 
 ### 2. Criar Tabelas DynamoDB
 
-```bash
+\`\`\`bash
 python create-tables.py --profile default --region us-east-1
-```
+\`\`\`
 
 ### 3. Verificar Criação
 
-```bash
+\`\`\`bash
 aws dynamodb list-tables
 aws s3 ls
-```
+\`\`\`
 
 ## Integração Frontend → Backend
 
@@ -83,7 +83,7 @@ O frontend já está preparado para integração com o backend Python:
 
 ### 1. Usar o API Client
 
-```typescript
+\`\`\`typescript
 import { apiClient } from '@/lib/services/api-client'
 
 // Login
@@ -93,13 +93,13 @@ const response = await apiClient.login(email, password)
 const formData = new FormData()
 formData.append('file', file)
 const response = await apiClient.uploadFiles(formData)
-```
+\`\`\`
 
 ### 2. Configurar Variável de Ambiente
 
-```env
+\`\`\`env
 NEXT_PUBLIC_API_URL=https://api.petrobras-transfer.com.br/v1
-```
+\`\`\`
 
 ### 3. O API Client já implementa:
 
@@ -114,27 +114,27 @@ NEXT_PUBLIC_API_URL=https://api.petrobras-transfer.com.br/v1
 
 ### Backend Local (Python FastAPI)
 
-```bash
+\`\`\`bash
 cd backend
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
-```
+\`\`\`
 
 ### Frontend Local
 
-```bash
+\`\`\`bash
 cd frontend
 npm install
 npm run dev
-```
+\`\`\`
 
 ### Configurar DynamoDB Local (opcional)
 
-```bash
+\`\`\`bash
 docker run -p 8000:8000 amazon/dynamodb-local
-```
+\`\`\`
 
 ## Próximos Passos
 

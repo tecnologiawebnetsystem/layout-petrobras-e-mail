@@ -19,7 +19,7 @@ Quando você clica na **lupa** 🔍 ao lado de um arquivo ZIP na página do supe
 
 Edite o arquivo `lib/stores/workflow-store.ts` e modifique o upload que deseja usar arquivo real:
 
-```typescript
+\`\`\`typescript
 {
   id: "upload-3",
   name: "Documentação Técnica Q4 2024",
@@ -33,7 +33,7 @@ Edite o arquivo `lib/stores/workflow-store.ts` e modifique o upload que deseja u
   ],
   // ... resto do código
 }
-```
+\`\`\`
 
 ### Passo 3: Testar
 
@@ -54,7 +54,7 @@ O sistema já tem um utilitário que cria ZIPs fictícios. Você pode personaliz
 
 Edite `lib/utils/create-mock-zip.ts`:
 
-```typescript
+\`\`\`typescript
 export async function createMockZipFile() {
   const zip = new JSZip()
 
@@ -71,7 +71,7 @@ export async function createMockZipFile() {
 
   return { url, blob }
 }
-```
+\`\`\`
 
 ---
 
@@ -81,19 +81,19 @@ Para produção, você deve armazenar arquivos ZIP no **S3 da AWS**:
 
 ### Arquitetura
 
-```
+\`\`\`
 Usuário Upload → Next.js API → S3 Bucket → URL Pública
                                     ↓
                           DynamoDB (salva URL)
                                     ↓
                     Supervisor visualiza → Lê do S3
-```
+\`\`\`
 
 ### Implementação
 
 1. **Upload para S3:**
 
-```typescript
+\`\`\`typescript
 // app/api/upload-zip/route.ts
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
 
@@ -116,11 +116,11 @@ export async function POST(request: Request) {
   
   return Response.json({ url: fileUrl })
 }
-```
+\`\`\`
 
 2. **Salvar URL no DynamoDB:**
 
-```python
+\`\`\`python
 # back-end/python/services/upload_service.py
 import boto3
 
@@ -136,7 +136,7 @@ table.put_item(
         'file_size': '45.2 MB',
     }
 )
-```
+\`\`\`
 
 3. **Visualizar no Frontend:**
 
@@ -148,7 +148,7 @@ O componente `ZipViewerModal` já está preparado para ler de URLs públicas ou 
 
 ### 1. Quando você clica na lupa:
 
-```typescript
+\`\`\`typescript
 <Button onClick={() => handleOpenZipViewer(
   file.name,           // Nome do arquivo
   file.url,            // URL do ZIP (pode ser /public ou S3)
@@ -156,11 +156,11 @@ O componente `ZipViewerModal` já está preparado para ler de URLs públicas ou 
 )}>
   <Search /> Ver Conteúdo
 </Button>
-```
+\`\`\`
 
 ### 2. O modal recebe os dados:
 
-```typescript
+\`\`\`typescript
 function ZipViewerModal({ fileName, fileUrl, fileBlob }) {
   // Prioridade: fileBlob > fileUrl
   
@@ -174,11 +174,11 @@ function ZipViewerModal({ fileName, fileUrl, fileBlob }) {
     const zip = await JSZip.loadAsync(blob)
   }
 }
-```
+\`\`\`
 
 ### 3. JSZip extrai a lista de arquivos:
 
-```typescript
+\`\`\`typescript
 const zipFiles = []
 
 zip.forEach((relativePath, zipEntry) => {
@@ -189,17 +189,17 @@ zip.forEach((relativePath, zipEntry) => {
     path: relativePath
   })
 })
-```
+\`\`\`
 
 ### 4. Modal renderiza a lista:
 
-```tsx
+\`\`\`tsx
 {zipFiles.map(file => (
   <div>
     <FileText /> {file.name} - {file.size} KB
   </div>
 ))}
-```
+\`\`\`
 
 ---
 
@@ -207,7 +207,7 @@ zip.forEach((relativePath, zipEntry) => {
 
 ### Exemplo 1: ZIP com Documentos Petrobras
 
-```bash
+\`\`\`bash
 # Estrutura do ZIP
 documentos-petrobras.zip
 ├── contratos/
@@ -217,21 +217,21 @@ documentos-petrobras.zip
 │   ├── relatorio_anual_2023.pdf
 │   └── analise_financeira.xlsx
 └── README.txt
-```
+\`\`\`
 
 Coloque em `public/demo-files/documentos-petrobras.zip` e use:
 
-```typescript
+\`\`\`typescript
 files: [{
   name: "documentos-petrobras.zip",
   url: "/demo-files/documentos-petrobras.zip",
   type: "ZIP"
 }]
-```
+\`\`\`
 
 ### Exemplo 2: ZIP criado dinamicamente
 
-```typescript
+\`\`\`typescript
 async function criarZipPersonalizado() {
   const zip = new JSZip()
   
@@ -248,7 +248,7 @@ async function criarZipPersonalizado() {
   const blob = await zip.generateAsync({ type: "blob" })
   return blob
 }
-```
+\`\`\`
 
 ---
 
@@ -263,13 +263,13 @@ async function criarZipPersonalizado() {
 - Ou se a URL do S3 está pública
 - Verifique CORS no S3:
 
-```json
+\`\`\`json
 {
   "AllowedOrigins": ["*"],
   "AllowedMethods": ["GET"],
   "AllowedHeaders": ["*"]
 }
-```
+\`\`\`
 
 ### Problema: "Invalid ZIP file"
 

@@ -13,24 +13,24 @@
   3. Cole em "Vars" no v0
 
 **Localmente:**
-```bash
+\`\`\`bash
 # Verifique se existe .env.local
 cat .env.local | grep RESEND_API_KEY
 
 # Se não existir, crie:
 echo "RESEND_API_KEY=re_sua_chave_aqui" >> .env.local
-```
+\`\`\`
 
 ### 2. Verificar logs do console
 
 Após fazer upload, abra o Console do navegador (F12) e procure por:
 
-```
+\`\`\`
 === INÍCIO DO ENVIO DE E-MAIL ===
 ✓ RESEND_API_KEY encontrada
 Enviando e-mail tipo "supervisor" para: kleber.goncalves.prestserv@petrobras.com.br
 ✓ E-MAIL ENVIADO COM SUCESSO!
-```
+\`\`\`
 
 **Se ver erro:**
 - `RESEND_API_KEY não configurada` → Adicione a variável
@@ -74,7 +74,7 @@ E-mails de teste do Resend podem cair no spam:
 
 Execute este teste direto no console do navegador:
 
-```javascript
+\`\`\`javascript
 fetch('/api/send-email', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
@@ -93,15 +93,15 @@ fetch('/api/send-email', {
     }
   })
 }).then(r => r.json()).then(console.log)
-```
+\`\`\`
 
 **Resposta esperada:**
-```json
+\`\`\`json
 {
   "success": true,
   "data": { "id": "re_xxxxx..." }
 }
-```
+\`\`\`
 
 ## Problemas Comuns
 
@@ -125,13 +125,13 @@ fetch('/api/send-email', {
 ## Comandos úteis de debug
 
 ### Ver todos os logs de e-mail:
-```bash
+\`\`\`bash
 # Procure por "INÍCIO DO ENVIO"
 grep "ENVIO DE E-MAIL" logs/*.log
-```
+\`\`\`
 
 ### Testar conectividade Resend:
-```bash
+\`\`\`bash
 curl -X POST https://api.resend.com/emails \
   -H "Authorization: Bearer $RESEND_API_KEY" \
   -H "Content-Type: application/json" \
@@ -141,7 +141,7 @@ curl -X POST https://api.resend.com/emails \
     "subject": "Teste",
     "html": "<p>Teste</p>"
   }'
-```
+\`\`\`
 
 ## Suporte
 

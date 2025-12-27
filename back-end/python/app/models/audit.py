@@ -1,4 +1,3 @@
-
 from sqlmodel import SQLModel, Field
 from enum import Enum
 from datetime import datetime, UTC

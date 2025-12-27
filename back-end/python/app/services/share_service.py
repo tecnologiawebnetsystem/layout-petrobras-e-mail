@@ -1,5 +1,3 @@
-
-
 from sqlmodel import Session, select
 from datetime import datetime, UTC
 from pathlib import Path

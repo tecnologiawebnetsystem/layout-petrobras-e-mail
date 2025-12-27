@@ -15,15 +15,15 @@ Registrar uma nova aplicação no Microsoft Entra ID (Azure Active Directory) da
 ## Informações da Aplicação
 
 ### Nome da Aplicação
-```
+\`\`\`
 Sistema Compartilhamento Arquivos Petrobras
-```
+\`\`\`
 
 ### Descrição
-```
+\`\`\`
 Sistema web para envio seguro de arquivos para destinatários externos, 
 com workflow de aprovação por supervisores e auditoria completa.
-```
+\`\`\`
 
 ### Tipo de Aplicação
 - **Single Page Application (SPA)** - Aplicação React/Next.js
@@ -48,16 +48,16 @@ Solicitamos as seguintes permissões delegadas do Microsoft Graph:
 ## URLs de Redirecionamento (Redirect URIs)
 
 ### Ambiente de Desenvolvimento
-```
+\`\`\`
 http://localhost:3000/api/auth/callback/azure-ad
 http://localhost:3000
-```
+\`\`\`
 
 ### Ambiente de Produção
-```
+\`\`\`
 https://arquivos.petrobras.com.br/api/auth/callback/azure-ad
 https://arquivos.petrobras.com.br
-```
+\`\`\`
 
 **Tipo de URI:** Web (não é Native/Mobile)
 
@@ -68,24 +68,24 @@ https://arquivos.petrobras.com.br
 Após o registro da aplicação, solicitamos que nos forneçam:
 
 ### 1. Tenant ID (ID do Inquilino)
-```
+\`\`\`
 UUID do tenant da Petrobras no formato:
 xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-```
+\`\`\`
 **Onde encontrar:** Azure Portal > Entra ID > Overview > Tenant ID
 
 ### 2. Client ID (Application ID)
-```
+\`\`\`
 UUID da aplicação criada no formato:
 xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-```
+\`\`\`
 **Onde encontrar:** Azure Portal > App Registrations > [Nome da App] > Application (client) ID
 
 ### 3. Client Secret (Chave Secreta)
-```
+\`\`\`
 Valor secreto gerado para a aplicação.
 Sugerimos validade de 24 meses.
-```
+\`\`\`
 **Onde encontrar:** Azure Portal > App Registrations > [Nome da App] > Certificates & secrets > New client secret
 
 **IMPORTANTE:** O Client Secret só é exibido UMA VEZ durante a criação. Anotar e guardar em local seguro.
@@ -109,7 +109,7 @@ Sugerimos validade de 24 meses.
 
 ## Fluxo de Autenticação
 
-```mermaid
+\`\`\`mermaid
 sequenceDiagram
     Usuário->>Front-end: Clica em "Login com Entra ID"
     Front-end->>Entra ID: Redireciona para login.microsoftonline.com
@@ -119,7 +119,7 @@ sequenceDiagram
     Front-end->>Entra ID: Troca código por tokens
     Entra ID->>Front-end: Retorna Access Token + ID Token
     Front-end->>Sistema: Usuário autenticado
-```
+\`\`\`
 
 ---
 

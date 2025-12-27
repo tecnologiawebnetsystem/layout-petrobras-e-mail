@@ -48,4 +48,3 @@ else:
             Params={"Bucket": settings.aws_s3_bucket, "Key": key},
             ExpiresIn=expires_in,
         )
-

@@ -35,29 +35,29 @@ Toda a integração com Microsoft Entra ID está implementada e aguardando apena
 
 Você vai receber 3 valores:
 
-```
+\`\`\`
 TENANT_ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 CLIENT_ID: yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy
 CLIENT_SECRET: z~zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
-```
+\`\`\`
 
 ### Passo 2: Configurar Variáveis de Ambiente
 
 **No v0 (sidebar "Vars"):**
 Adicione estas 3 variáveis:
 
-```
+\`\`\`
 NEXT_PUBLIC_ENTRA_TENANT_ID = (cole o TENANT_ID aqui)
 NEXT_PUBLIC_ENTRA_CLIENT_ID = (cole o CLIENT_ID aqui)
 NEXT_PUBLIC_REDIRECT_URI = https://seu-projeto.vercel.app
-```
+\`\`\`
 
 **Localmente (.env.local):**
-```bash
+\`\`\`bash
 NEXT_PUBLIC_ENTRA_TENANT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 NEXT_PUBLIC_ENTRA_CLIENT_ID=yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy
 NEXT_PUBLIC_REDIRECT_URI=http://localhost:3000
-```
+\`\`\`
 
 ### Passo 3: Testar o Login
 
@@ -91,7 +91,7 @@ NEXT_PUBLIC_REDIRECT_URI=http://localhost:3000
 
 ## O que acontece nos bastidores:
 
-```
+\`\`\`
 ┌─────────────────┐
 │ 1. Usuário      │
 │ clica em        │
@@ -139,7 +139,7 @@ NEXT_PUBLIC_REDIRECT_URI=http://localhost:3000
 │ e redireciona   │
 │ para dashboard  │
 └─────────────────┘
-```
+\`\`\`
 
 ---
 
@@ -185,22 +185,22 @@ Use esta lista para garantir que tudo funciona:
 ## Comandos Úteis para Debug
 
 ### Ver logs no console do navegador:
-```
+\`\`\`
 F12 → Console → Filtrar por "Entra ID"
-```
+\`\`\`
 
 ### Limpar sessão manualmente:
-```javascript
+\`\`\`javascript
 // Cole no console do navegador:
 sessionStorage.clear()
 location.reload()
-```
+\`\`\`
 
 ### Ver token de acesso:
-```javascript
+\`\`\`javascript
 // Cole no console do navegador:
 sessionStorage.getItem('msal.token.keys')
-```
+\`\`\`
 
 ---
 
@@ -230,7 +230,7 @@ sessionStorage.getItem('msal.token.keys')
 
 ## Exemplo de Teste Completo (5 minutos)
 
-```bash
+\`\`\`bash
 # 1. Configure as variáveis (copie do time de infra)
 # Vá em Vars (sidebar) e adicione as 3 variáveis
 
@@ -258,7 +258,7 @@ sessionStorage.getItem('msal.token.keys')
 # Acesse /auditoria
 # ✓ Login registrado?
 # ✓ Logout registrado?
-```
+\`\`\`
 
 ---
 

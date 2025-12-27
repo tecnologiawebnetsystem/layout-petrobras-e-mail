@@ -68,7 +68,7 @@ O sistema permite que usuários internos da Petrobras façam upload de arquivos 
 
 ## Estrutura do Projeto
 
-```
+\`\`\`
 ├── app/                          # Páginas e rotas Next.js
 │   ├── page.tsx                 # Página de login
 │   ├── upload/                  # Upload de arquivos (usuário interno)
@@ -120,7 +120,7 @@ O sistema permite que usuários internos da Petrobras façam upload de arquivos 
     ├── 004_create_audit_logs_table.sql
     ├── 005_create_notifications_table.sql
     └── seed_demo_data.sql
-```
+\`\`\`
 
 ## Início Rápido
 
@@ -131,7 +131,7 @@ O sistema permite que usuários internos da Petrobras façam upload de arquivos 
 
 ### Instalação
 
-```bash
+\`\`\`bash
 # Clone o repositório
 git clone https://github.com/petrobras/sistema-transferencia-arquivos.git
 
@@ -144,20 +144,20 @@ npm install
 # Configure as variáveis de ambiente
 cp .env.example .env.local
 # Edite o .env.local com suas credenciais AWS
-```
+\`\`\`
 
 ### Configuração AWS
 
 1. **S3 Bucket**
-   ```bash
+   \`\`\`bash
    aws s3 mb s3://petrobras-file-transfer-prod
-   ```
+   \`\`\`
 
 2. **DynamoDB Tables**
-   ```bash
+   \`\`\`bash
    # Execute os scripts SQL na ordem
    npm run db:setup
-   ```
+   \`\`\`
 
 3. **CloudFront Distribution**
    - Configure no console AWS ou via CLI
@@ -165,16 +165,16 @@ cp .env.example .env.local
 
 ### Executar Localmente
 
-```bash
+\`\`\`bash
 # Modo desenvolvimento
 npm run dev
 
 # Acesse http://localhost:3000
-```
+\`\`\`
 
 ### Build e Deploy
 
-```bash
+\`\`\`bash
 # Build de produção
 npm run build
 
@@ -183,11 +183,11 @@ vercel --prod
 
 # Ou deploy para AWS
 npm run deploy:aws
-```
+\`\`\`
 
 ## Variáveis de Ambiente
 
-```env
+\`\`\`env
 # AWS
 AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=your_access_key
@@ -213,7 +213,7 @@ AWS_SES_REPLY_TO=suporte@petrobras.com.br
 NEXT_PUBLIC_APP_URL=https://transfer.petrobras.com.br
 NEXT_PUBLIC_MAX_FILE_SIZE=524288000
 NEXT_PUBLIC_MAX_AVAILABILITY_HOURS=72
-```
+\`\`\`
 
 ## Configuração de E-mail
 
@@ -234,10 +234,10 @@ O sistema envia e-mails automáticos para o supervisor quando há novos uploads 
 3. Clique em **Create API Key**
 4. Copie a chave gerada (começa com `re_`)
 5. Adicione no arquivo `.env.local`:
-   ```env
+   \`\`\`env
    RESEND_API_KEY=re_sua_chave_aqui
    NEXT_PUBLIC_APP_URL=http://localhost:3000
-   ```
+   \`\`\`
 
 6. No v0 (Vercel), adicione as variáveis:
    - Clique em **Vars** na sidebar esquerda
@@ -250,14 +250,14 @@ O sistema envia e-mails automáticos para o supervisor quando há novos uploads 
 
 Se preferir usar AWS SES:
 
-```bash
+\`\`\`bash
 # Configure via AWS CLI
 aws ses verify-email-identity --email-address noreply@petrobras.com.br
 
 # Adicione no .env.local
 AWS_SES_FROM_EMAIL=noreply@petrobras.com.br
 AWS_SES_REPLY_TO=suporte@petrobras.com.br
-```
+\`\`\`
 
 ## Usuários de Demonstração
 
@@ -352,7 +352,7 @@ Todos os eventos são registrados:
 
 ## Testes
 
-```bash
+\`\`\`bash
 # Testes unitários
 npm run test
 
@@ -361,11 +361,11 @@ npm run test:e2e
 
 # Cobertura
 npm run test:coverage
-```
+\`\`\`
 
 ## Scripts Úteis
 
-```bash
+\`\`\`bash
 # Desenvolvimento
 npm run dev              # Inicia servidor de desenvolvimento
 npm run build           # Build de produção
@@ -381,7 +381,7 @@ npm run db:reset        # Apaga e recria tudo
 # Deploy
 npm run deploy:staging  # Deploy para staging
 npm run deploy:prod     # Deploy para produção
-```
+\`\`\`
 
 ## Documentação
 
