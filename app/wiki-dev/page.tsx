@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Database, Cloud, Rocket, Server, FileCode, Shield, Users, Home } from "lucide-react"
+import { Search, BookOpen, Database, Cloud, Server, FileCode, Shield, Home } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
@@ -29,36 +29,12 @@ export default function WikiDevPage() {
       topics: ["5 Tabelas DynamoDB", "Índices", "Campos", "Validações"],
     },
     {
-      title: "Quick Start",
-      description: "Deploy rápido do sistema em 1 dia com comandos prontos",
-      icon: Rocket,
-      href: "/wiki-dev/quick-start",
-      color: "from-green-500 to-emerald-500",
-      topics: ["CloudFormation", "Scripts", "Comandos AWS CLI", "Configuração"],
-    },
-    {
       title: "SQL & DynamoDB",
       description: "Documentação completa da estrutura de banco de dados",
       icon: FileCode,
       href: "/wiki-dev/sql-readme",
       color: "from-purple-500 to-pink-500",
       topics: ["Scripts Python", "Tabelas", "Funções", "Migrations"],
-    },
-    {
-      title: "Deployment Guide",
-      description: "Guia passo a passo para deploy em produção",
-      icon: Server,
-      href: "/wiki-dev/deployment",
-      color: "from-red-500 to-rose-500",
-      topics: ["Pré-requisitos", "Instalação", "Configuração", "Monitoramento"],
-    },
-    {
-      title: "Credenciais Demo",
-      description: "Usuários de teste e credenciais de demonstração",
-      icon: Users,
-      href: "/wiki-dev/credentials",
-      color: "from-indigo-500 to-blue-500",
-      topics: ["Usuário Interno", "Supervisor", "Externo", "Demo Vazio"],
     },
     {
       title: "Integração Front-Back",

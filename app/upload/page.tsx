@@ -193,9 +193,6 @@ export default function UploadPage() {
         <MetricsDashboard {...uploadStats} userType="internal" />
 
         <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-10 space-y-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
-            <Sparkles className="h-7 w-7 text-white" />
-          </div>
           <div className="relative">
             <div className="flex items-center gap-4 mb-3">
               <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">

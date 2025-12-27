@@ -80,7 +80,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
           <div className="hidden md:flex items-center gap-2">
             {!isExternalUser && <GlobalSearch />}
 
-            {!isExternalUser && (user?.userType === "supervisor" || user?.userType === "internal") && (
+            {!isExternalUser && user?.userType === "supervisor" && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -207,7 +207,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                     Histórico de Atividades
                   </Button>
 
-                  {!isExternalUser && (user?.userType === "supervisor" || user?.userType === "internal") && (
+                  {!isExternalUser && user?.userType === "supervisor" && (
                     <Button
                       variant="ghost"
                       className="justify-start h-12 text-base hover:bg-accent transition-colors min-h-[44px]"
