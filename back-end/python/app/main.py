@@ -4,9 +4,17 @@ from app.core.config import settings
 from app.db.init_db import init_db
 
 # Rotas existentes
-from app.api.v1 import routes_usuarios, routes_areas, routes_arquivos, routes_shares, routes_externo_download, routes_opt
+from app.api.v1 import (
+    routes_external,
+    routes_external_auth,
+    routes_files,
+    routes_internal_auth,
+    routes_users,
+    routes_areas,
+    routes_shares
+)
 
-app = FastAPI(title="Compartilhamento Seguro de Arquivos (dev)")
+app = FastAPI(title="Compartilhamento Seguro de Arquivos (dev)", lifespan=None)
 
 
 @app.on_event("startup")
@@ -28,16 +36,17 @@ async def log_requests(request: Request, call_next):
 prefix_v1 = "/api/v1"
 
 # Rotas principais
-app.include_router(routes_usuarios.router, prefix=prefix_v1, tags=["Usuarios"])
+app.include_router(routes_users.router, prefix=prefix_v1, tags=["User"])
 app.include_router(routes_areas.router, prefix=prefix_v1, tags=["Areas"])
-app.include_router(routes_arquivos.router, prefix=prefix_v1, tags=["Arquivos"])
+app.include_router(routes_files.router, prefix=prefix_v1, tags=["Files"])
 app.include_router(routes_shares.router, prefix=prefix_v1, tags=["Shares"])
-app.include_router(routes_externo_download.router, prefix=prefix_v1, tags=["Externo"])
-app.include_router(routes_opt.router, prefix=prefix_v1, tags=["Auth / Código"])
+app.include_router(routes_external.router,prefix=prefix_v1, tags=["External"])
+app.include_router(routes_external_auth.router, prefix=prefix_v1, tags=["Auth / External"])
+# Rotas de Login
+# auth local e interno protegido (apenas enquanto AUTH_MODE=local)
+app.include_router(routes_internal_auth.router, prefix=prefix_v1)
 
 # Rotas MOCK (sem AWS): integradas com core/aws_utils.py
-
-
 @app.get("/mock/upload/{key}")
 def mock_upload(key: str, expires_in: int = 3600):
     # Aqui você pode simular um upload (ex.: gravar metadados, copiar arquivo local)
@@ -52,7 +61,8 @@ def mock_download(key: str, expires_in: int = 3600):
 
 @app.get(prefix_v1)
 def version():
-    return {"version":"001", "sytem": "active"}
+    return {"version": "001", "sytem": "active"}
+
 
 @app.get("/")
 def health():

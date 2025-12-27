@@ -1,35 +1,24 @@
+
 from sqlmodel import SQLModel
 from datetime import datetime
-from enum import Enum
-
-
-class ShareStatus(str, Enum):
-    ATIVO = "ativo"
-    CONCLUIDO = "concluido"
-    EXPIRADO = "expirado"
-    CANCELADO = "cancelado"
-
-
-class TokenConsumo(str, Enum):
-    APOS_TODOS = "apos_todos"
-    APOS_PRIMEIRO = "apos_primeiro"
+from app.models.share import ShareStatus, TokenConsumption
 
 
 class ShareCreate(SQLModel):
-    area_id: int
-    externo_email: str
-    criado_por_id: int
-    expira_em: datetime
-    consumo_policy: TokenConsumo = TokenConsumo.APOS_TODOS
-    arquivo_ids: list[int]
+    area_id: int | None
+    external_email: str
+    created_by_id: int
+    expira_at: datetime
+    consumption_policy: TokenConsumption = TokenConsumption.AFTER_ALL
+    file_ids: list[int] = []
 
 
 class ShareRead(SQLModel):
     id: int
     area_id: int
-    externo_email: str
-    criado_por_id: int
+    external_email: str
+    created_by_id: int
     status: ShareStatus
-    consumo_policy: TokenConsumo
-    expira_em: datetime
-    criado_em: datetime
+    consumption_policy: TokenConsumption
+    expira_at: datetime
+    created_at: datetime

@@ -1,11 +1,12 @@
+
 import secrets
 import random
 from datetime import datetime, timedelta, UTC
 from sqlmodel import Session, select
 from passlib.context import CryptContext
 
-from app.models.usuario import Usuario, TipoUsuario
-from app.models.token_acesso import TokenAcesso, TokenTipo
+from app.models.user import User, TypeUser
+from app.models.token_access import TokenAccess, TypeToken
 from app.models.share import Share, ShareStatus
 from app.services.audit_service import log_event
 
@@ -21,32 +22,32 @@ class TokenError(Exception):
 # =====================
 
 
-def _gerar_codigo_6_digitos() -> str:
+def _generate_code_6_digit() -> str:
     return f"{random.randint(0, 999999):06d}"
 
 
-def _hash_codigo(codigo: str) -> str:
+def _hash_code(codigo: str) -> str:
     return pwd_context.hash(codigo)
 
 
-def _verificar_hash(codigo: str, codigo_hash: str) -> bool:
+def _verify_hash(codigo: str, codigo_hash: str) -> bool:
     return pwd_context.verify(codigo, codigo_hash)
 
 
 # Fake de envio de e-mail (apenas para visualização)
-def enviar_email_mock(email: str, codigo: str) -> None:
+def send_id_email(email: str, codigo: str) -> None:
     print(f"[EMAIL MOCK] Código OTP para {email}: {codigo}")
 
 
 # Gerar senha de 6 digitos para o usuário de acesso externo
-def emitir_otp(session: Session, email: str, validade_minutos: int = 10, request_meta: dict | None = None) -> TokenAcesso:
+def issue_otp(session: Session, email: str, validity_minutes: int = 10, request_meta: dict | None = None) -> TokenAccess:
     # Obter share ativo por email do usuário externo
     share = session.exec(
         select(Share)
         .where(
-            Share.externo_email == email,
-            Share.status == ShareStatus.ATIVO,
-            Share.expira_em > datetime.now()
+            Share.external_email == email,
+            Share.status == ShareStatus.ACTIVE,
+            Share.expira_at > datetime.now(UTC)
         )
         .order_by(Share.id.desc())
     ).first()
@@ -55,49 +56,48 @@ def emitir_otp(session: Session, email: str, validade_minutos: int = 10, request
         raise TokenError("Não há compartilhamento ativo para este e-mail.")
 
     # Garante usuário externo
-    usuario = session.exec(select(Usuario).where(
-        Usuario.email == email)).first()
-    if not usuario:
-        usuario = Usuario(
-            nome_completo=email.split("@")[0],
+    user = session.exec(select(User).where(User.email == email)).first()
+    if not user:
+        user = User(
+            name=email.split("@")[0],
             email=email,
-            tipo=TipoUsuario.EXTERNO,
-            ativo=True
+            type=TypeUser.EXTERNAL,
+            status=True
         )
-        session.add(usuario)
+        session.add(user)
         session.commit()
-        session.refresh(usuario)
+        session.refresh(user)
 
     # Valida tipo e status
-    if usuario.tipo != TipoUsuario.EXTERNO:
+    if user.type != TypeUser.EXTERNAL:
         raise TokenError(
             "A emissão de token por e-mail é apenas para usuário EXTERNO.")
-    if not usuario.ativo:
+    if not user.status:
         raise TokenError("Usuário inativo. Contate o suporte.")
 
-    codigo = _gerar_codigo_6_digitos()
-    codigo_hash = _hash_codigo(codigo)
-    expira_em = datetime.now(UTC) + timedelta(minutes=validade_minutos)
+    code = _generate_code_6_digit()
+    code_hash = _hash_code(code)
+    expira_at = datetime.now(UTC) + timedelta(minutes=validity_minutes)
 
-    otp = TokenAcesso(
-        tipo=TokenTipo.OTP,
+    otp = TokenAccess(
+        type=TypeToken.OTP,
         token=None,
-        token_hash=codigo_hash,
-        usuario_id=usuario.id,
+        token_hash=code_hash,
+        user_id=user.id,
         share_id=share.id,
-        expira_em=expira_em,
-        usado=False
+        expira_at=expira_at,
+        used=False
     )
     session.add(otp)
     session.commit()
     session.refresh(otp)
 
-    enviar_email_mock(email, codigo)
+    send_id_email(email, code)
 
     log_event(
-        session, "EMITIR_OTP",
-        usuario_id=usuario.id,
-        detalhe=f"validade_minutos={validade_minutos}",
+        session, "issue_otp",
+        user_id=user.id,
+        detail=f"validity_minutes={validity_minutes}",
         ip=request_meta.get("ip") if request_meta else None,
         user_agent=request_meta.get("ua") if request_meta else None
     )
@@ -105,63 +105,64 @@ def emitir_otp(session: Session, email: str, validade_minutos: int = 10, request
     return otp
 
 
-def verificar_otp(
+def verify_otp(
         session: Session, 
         email: str, 
-        codigo: str, 
-        max_tentativas: int = 5,
+        code: str, 
+        max_attempts: int = 5,
         cooldown_minutes: int = 15,
-        request_meta: dict | None = None) -> TokenAcesso:
+        request_meta: dict | None = None) -> TokenAccess:
     # Pega o último OTP não usado do e-mail
     otp = session.exec(
-        select(TokenAcesso)
-        .where(TokenAcesso.tipo == TokenTipo.OTP, TokenAcesso.usado == False)
-        .where(TokenAcesso.usuario.has(Usuario.email == email))
-        .order_by(TokenAcesso.id.desc())
+        select(TokenAccess)
+        .where(TokenAccess.type == TypeToken.OTP, TokenAccess.used == False)
+        .where(TokenAccess.user.has(User.email == email))
+        .order_by(TokenAccess.id.desc())
     ).first()
 
     if not otp:
         raise TokenError("OTP não encontrado ou já utilizado.")
     
     # cooldown ativo?
-    if otp.bloqueado_ate and otp.bloqueado_ate > datetime.now():
-        raise TokenError(f"Tentativas excedidas. Tente novamente após {otp.bloqueado_ate.isoformat()}.")
+    if otp.blocked_until and otp.blocked_until > datetime.now(UTC):
+        raise TokenError(f"Tentativas excedidas. Tente novamente após {otp.blocked_until.isoformat()}.")
 
     # Expiração
-    if otp.expira_em <= datetime.now():
+    if otp.expira_at.replace(tzinfo=UTC) <= datetime.now(UTC):
         raise TokenError("OTP expirado.")
 
     # Verificar hash
-    if not _verificar_hash(codigo, otp.token_hash or ""):
-        otp.tentativas += 1
+    if not _verify_hash(code, otp.token_hash or ""):
+        otp.attempts += 1
         
-        if otp.tentativas >= max_tentativas:
-            otp.bloqueado_ate = datetime.now(UTC) + timedelta(minutes=cooldown_minutes)
+        if otp.attempts >= max_attempts:
+            otp.blocked_until = datetime.now(UTC) + timedelta(minutes=cooldown_minutes)
         session.add(otp)
         session.commit()
         
-        if otp.bloqueado_ate:
-            raise TokenError(f"Código inválido. Acesso bloqueado até {otp.bloqueado_ate.isoformat()}.")
+        if otp.blocked_until:
+            raise TokenError(f"Código inválido. Acesso bloqueado até {otp.blocked_until.isoformat()}.")
 
         raise TokenError("Código inválido.")
 
 
-    otp.usado = True
-    otp.tentativas = 0
-    otp.bloqueado_ate = None
+    otp.used = True
+    otp.attempts = 0
+    otp.blocked_until = None
     session.add(otp)
     session.commit()
     session.refresh(otp)
 
+
     share = otp.share
-    if not share or share.status != ShareStatus.ATIVO or share.expira_em <= datetime.now():
+    if not share or share.status != ShareStatus.ACTIVE or share.expira_at.replace(tzinfo=UTC) <= datetime.now(UTC):
         raise TokenError("Compartilhamento indisponível ou expirado.")
 
     # Registro do log da verificação
     log_event(
-        session, "VERIFICAR_OTP",
-        usuario_id=otp.usuario_id,
-        detalhe=f"otp_id={otp.id}",
+        session, "verify_otp",
+        user_id=otp.user_id,
+        detail=f"otp_id={otp.id}",
         ip=request_meta.get("ip") if request_meta else None,
         user_agent=request_meta.get("ua") if request_meta else None
     )
@@ -174,28 +175,28 @@ def verificar_otp(
 # =====================
 
 
-def emitir_token_access(
+def issue_token_access(
         session: Session,
-        otp: TokenAcesso, externo_email: str,
-        validade_horas: int = 24,
-        request_meta: dict | None = None) -> TokenAcesso:
+        otp: TokenAccess, 
+        validity_hours: int = 24,
+        request_meta: dict | None = None) -> TokenAccess:
     # Valida share
     share = otp.share
 
-    if not share or share.status != ShareStatus.ATIVO or share.expira_em <= datetime.now():
+    if not share or share.status != ShareStatus.ACTIVE or share.expira_at.replace(tzinfo=UTC) <= datetime.now(UTC):
         raise TokenError("Compartilhamento indisponível ou expirado.")
 
     token_str = secrets.token_urlsafe(32)
-    expira_em = datetime.now(UTC) + timedelta(hours=validade_horas)
+    expira_at = datetime.now(UTC) + timedelta(hours=validity_hours)
 
-    access = TokenAcesso(
-        tipo=TokenTipo.ACCESS,
+    access = TokenAccess(
+        type=TypeToken.ACCESS,
         token=token_str,
         token_hash=None,
-        usuario_id=otp.usuario_id,
+        user_id=otp.user_id,
         share_id=share.id,
-        expira_em=expira_em,
-        usado=False
+        expira_at=expira_at,
+        used=False
     )
     session.add(access)
     session.commit()
@@ -203,32 +204,32 @@ def emitir_token_access(
 
     log_event(
         session, "EMITIR_ACCESS",
-        usuario_id=access.usuario_id,
+        user_id=access.user_id,
         share_id=share.id,
-        detalhe=f"validade_horas={validade_horas}",
+        detail=f"validade_horas={validity_hours}",
         ip=request_meta.get("ip") if request_meta else None,
         user_agent=request_meta.get("ua") if request_meta else None)
 
     return access
 
 
-def obter_token_access(session: Session, token_str: str) -> TokenAcesso | None:
+def get_token_access(session: Session, token_str: str) -> TokenAccess | None:
     return session.exec(
-        select(TokenAcesso).where(
-            TokenAcesso.tipo == TokenTipo.ACCESS, 
-            TokenAcesso.token == token_str
+        select(TokenAccess).where(
+            TokenAccess.type == TypeToken.ACCESS, 
+            TokenAccess.token == token_str
         )
     ).first()
 
 
-def validar_token_access(token_obj: TokenAcesso) -> None:
-    if token_obj.usado:
+def validate_token_access(token_obj: TokenAccess) -> None:
+    if token_obj.used:
         raise TokenError("Token já utilizado.")
-    if token_obj.expira_em <= datetime.now():
+    if token_obj.expira_at.replace(tzinfo=UTC) <= datetime.now(UTC):
         raise TokenError("Token expirado.")
 
 
-def consumir_token(token_obj: TokenAcesso, session: Session) -> None:
-    token_obj.usado = True
+def consume_token(token_obj: TokenAccess, session: Session) -> None:
+    token_obj.used = True
     session.add(token_obj)
     session.commit()

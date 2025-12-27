@@ -4,13 +4,13 @@ from sqlmodel import SQLModel
 from app.db.session import engine
 
 # IMPORTAR MODELOS (garante que as tabelas existam):
-import app.models.usuario      
+import app.models.user      
 import app.models.area         
-import app.models.arquivo      
+import app.models.restricted_file      
 import app.models.share        
-import app.models.share_arquivo
-import app.models.token_acesso    
-import app.models.auditoria       
+import app.models.share_file
+import app.models.token_access    
+import app.models.audit       
 
 def init_db():
     SQLModel.metadata.create_all(engine)

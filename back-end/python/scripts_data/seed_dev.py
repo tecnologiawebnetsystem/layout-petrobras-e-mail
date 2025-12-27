@@ -1,110 +1,107 @@
-# scripts/seed_dev.py
-import os
+
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from sqlmodel import Session, select
 from app.db.session import engine
 from app.db.init_db import init_db
-from app.models.usuario import Usuario, TipoUsuario
-from app.models.area import AreaCompartilhamento
-from app.models.arquivo import Arquivo
-from app.models.share import Share, TokenConsumo, ShareStatus
-from app.models.share_arquivo import ShareArquivo
 
-# Opcional: usar serviço para emitir OTP
-from app.services.token_service import emitir_otp
+from app.models.user import User, TypeUser
+from app.models.share import TokenConsumption
+from app.models.credencial_local import CredentialLocal
+
+from app.services.token_service import issue_otp
+from app.services.share_service import create_share
+
+from passlib.context import CryptContext
+pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 STORAGE_ROOT = Path("./storage")
-AREA_PREFIX = "areas/PROJX/"
-EXTERNO_EMAIL = "destinatario@example.com"
+EXTERNAL_EMAIL = "destinatario@example.com"
 
 def main():
     init_db()
     STORAGE_ROOT.mkdir(exist_ok=True)
+
     with Session(engine) as session:
-        # 1) Usuário interno
-        interno = session.exec(select(Usuario).where(Usuario.email == "interno@empresa.com")).first()
-        if not interno:
-            interno = Usuario(
-                nome_completo="Usuário Interno",
-                email="interno@empresa.com",
-                tipo=TipoUsuario.INTERNO,
-                ativo=True
+        # 1) Usuário internal (dev) + credencial
+        internal = session.exec(select(User).where(User.email == "jefferson.breno.prestserv@petrobras.com.br")).first()
+        password_internal = "internal@123"
+        password_internal_hash = pwd.hash(password_internal)
+        if not internal:
+            internal = User(
+                name="Inerno Dev",
+                email="jefferson.breno.prestserv@petrobras.com.br",
+                type=TypeUser.INTERNAL,
+                status=True
             )
-            session.add(interno)
+            session.add(internal)
             session.commit()
-            session.refresh(interno)
-        print(f"[seed] interno_id={interno.id}")
-
-        # 2) Área
-        area = session.exec(select(AreaCompartilhamento).where(AreaCompartilhamento.prefixo_s3 == AREA_PREFIX)).first()
-        if not area:
-            area = AreaCompartilhamento(
-                nome_area="Projeto X",
-                descricao="Projeto de teste X",
-                prefixo_s3=AREA_PREFIX,
-                solicitante_id=interno.id,
-                expira_em=datetime.utcnow() + timedelta(days=30)
+            session.refresh(internal)
+        
+            cred = CredentialLocal(
+                 user_id=internal.id, 
+                 password_hash=password_internal_hash
             )
-            session.add(area)
+            session.add(cred); 
             session.commit()
-            session.refresh(area)
-        print(f"[seed] area_id={area.id}")
+        
+        print(f"[seed] interno_id={internal.id} email={internal.email} senha={password_internal}")
 
-        # 3) Arquivos locais (dummy)
-        area_path = STORAGE_ROOT / AREA_PREFIX
-        area_path.mkdir(parents=True, exist_ok=True)
 
-        files_to_create = [
-            ("relatorio.pdf", b"%PDF-1.4\n%dummy file for dev\n"),
-            ("planilha.xlsx", b"PK\x03\x04dummy xlsx\n"),
+        # 2) Share simplificado (sem area_id => cria/usa área automática)
+        new_uploads = [
+            ("relatorio.pdf", b"%PDF-1.4\nseed dev\n", "application/pdf"),
+            ("planilha.xlsx", b"PK\x03\x04seed dev\n", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
         ]
-        arquivo_ids = []
-        for nome, content in files_to_create:
-            dest = area_path / nome
-            if not dest.exists():
-                with dest.open("wb") as f:
-                    f.write(content)
-            arq = session.exec(select(Arquivo).where(Arquivo.area_id == area.id, Arquivo.nome_arquivo == nome)).first()
-            if not arq:
-                arq = Arquivo(
-                    area_id=area.id,
-                    nome_arquivo=nome,
-                    chave_s3=str(dest),
-                    tamanho_bytes=dest.stat().st_size,
-                    mime_type="application/octet-stream",
-                    upload_por_id=interno.id
-                )
-                session.add(arq)
-                session.commit()
-                session.refresh(arq)
-            arquivo_ids.append(arq.id)
-        print(f"[seed] arquivos_ids={arquivo_ids}")
 
-        # 4) Share
-        share = session.exec(select(Share).where(Share.area_id == area.id, Share.externo_email == EXTERNO_EMAIL)).first()
-        if not share:
-            share = Share(
-                area_id=area.id,
-                externo_email=EXTERNO_EMAIL,
-                criado_por_id=interno.id,
-                consumo_policy=TokenConsumo.APOS_TODOS,
-                expira_em=datetime.utcnow() + timedelta(days=7),
-                status=ShareStatus.ATIVO
+        share = create_share(
+            session=session,
+            created_by_id=internal.id,
+            external_email=EXTERNAL_EMAIL,
+            expira_at=datetime.now(UTC) + timedelta(days=7),
+            consumption_policy=TokenConsumption.AFTER_ALL,
+            area_id=None,
+            file_ids=[],
+            new_uploads=new_uploads,
+            request_meta={"ip":"127.0.0.1","ua":"seed-script"}
+        )
+
+        print(f"[seed] share_id={share.id} externo={EXTERNAL_EMAIL} area_id={share.area_id}")
+
+
+        # 3) Emitir OTP para o externo (mock)
+        otp = issue_otp(
+            session=session, 
+            email=EXTERNAL_EMAIL, 
+            validity_minutes=10, 
+            request_meta={"ip": "127.0.0.1", "ue":"seed-script"}
+        )
+
+        print(f"[seed] OTP expira_em={otp.expira_at.isoformat()}  (veja o código no console do servidor: [EMAIL MOCK])")
+
+
+        # 4) (Opcional) Supervisor local
+        supervisor = session.exec(select(User).where(User.email == "supervisor@empresa.com")).first()
+        if not supervisor:
+            supervisor = User(
+                name="Supervisor Dev",
+                email="supervisor@empresa.com",
+                type=TypeUser.SUPERVISOR,
+                status=True
             )
-            session.add(share)
+            password_supervisor = "supervisor@123"
+            password_supervisor_hash = pwd.hash("supervisor@123")
+
+            session.add(supervisor); 
+            session.commit(); 
+            session.refresh(supervisor)
+            
+            cred_sup = CredentialLocal(user_id=supervisor.id, password_hash=password_supervisor_hash)
+            session.add(cred_sup); 
             session.commit()
-            session.refresh(share)
+        
+        print(f"[seed] supervisor_id={supervisor.id} email={supervisor.email} senha={password_supervisor}")
 
-            for arq_id in arquivo_ids:
-                sa = ShareArquivo(share_id=share.id, arquivo_id=arq_id)
-                session.add(sa)
-            session.commit()
-        print(f"[seed] share_id={share.id} externo={EXTERNO_EMAIL}")
-
-        # 5) (Opcional) Emitir OTP para o externo — envio mock (console)
-        otp = emitir_otp(session=session, email=EXTERNO_EMAIL, validade_minutos=10, request_meta={"ip": "127.0.0.1", "ua": "seed-script"})
-        print(f"[seed] OTP expira_em={otp.expira_em.isoformat()} (código impresso no console acima via [EMAIL MOCK])")
-
+       
 if __name__ == "__main__":
     main()

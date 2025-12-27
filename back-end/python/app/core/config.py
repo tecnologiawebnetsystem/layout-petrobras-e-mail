@@ -14,15 +14,20 @@ class Settings(BaseSettings):
     storage_provider: str = "local"
 
     # OTP e cooldown
-    otp_max_tentativas: int = 5
+    otp_max_attempts: int = 5
     otp_cooldown_minutes: int = 15
-    otp_validade_minutos: int = 10
+    otp_validity_minutes: int = 10
 
     # ACCESS
     access_valid_hours: int = 24
 
     # Presigned TTL
     presigned_ttl_seconds_default: int = 300
+
+    
+    # Auth provider
+    auth_mode: str = "local"  # 'local' | 'entra'
+
 
     # AWS (preparado para prod; vazio no dev por enquanto)
     aws_region: str | None = None
