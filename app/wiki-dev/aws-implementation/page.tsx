@@ -362,6 +362,105 @@ export default function AWSImplementationPage() {
                         },
                       ],
                     },
+                    {
+                      phase: "FASE 4: Backend Lambda (3 horas)",
+                      steps: [
+                        {
+                          title: "4.1 - Preparar código Python",
+                          what: "Backend FastAPI com funções: upload, download, approval, notifications",
+                          why: "Lógica de negócio que processa as requisições",
+                          how: "cd backend && pip install -r requirements.txt && python -m pytest tests/",
+                        },
+                        {
+                          title: "4.2 - Criar função Lambda",
+                          what: "4 funções Lambda: uploadHandler, downloadHandler, approvalHandler, notificationHandler",
+                          why: "Cada função processa um tipo de requisição",
+                          how: "cd backend && ./deploy-lambda.sh (script cria funções, faz upload do código zipado)",
+                        },
+                        {
+                          title: "4.3 - Configurar variáveis de ambiente",
+                          what: "DYNAMODB_TABLE, S3_BUCKET, COGNITO_POOL_ID, etc.",
+                          why: "Lambda precisa saber onde estão DynamoDB, S3 e Cognito",
+                          how: "aws lambda update-function-configuration --function-name uploadHandler --environment Variables={S3_BUCKET=petrobras-files-prod}",
+                        },
+                        {
+                          title: "4.4 - Configurar permissões IAM",
+                          what: "Role com permissões: S3 read/write, DynamoDB read/write, CloudWatch logs",
+                          why: "Lambda precisa de permissão para acessar outros serviços AWS",
+                          how: "aws iam create-role --role-name PetrobrasLambdaRole --assume-role-policy-document file://trust-policy.json",
+                        },
+                      ],
+                    },
+                    {
+                      phase: "FASE 5: API Gateway (2 horas)",
+                      steps: [
+                        {
+                          title: "5.1 - Criar API REST",
+                          what: "API Gateway com nome 'petrobras-file-api'",
+                          why: "Porta de entrada única para todas as requisições HTTP",
+                          how: "aws apigateway create-rest-api --name petrobras-file-api --endpoint-configuration types=REGIONAL",
+                        },
+                        {
+                          title: "5.2 - Criar recursos e métodos",
+                          what: "Rotas: /auth/login (POST), /files/upload (POST), /files/download/:id (GET), /files/approve/:id (PUT)",
+                          why: "Cada rota mapeia para uma função Lambda específica",
+                          how: "aws apigateway create-resource --rest-api-id abc123 --parent-id xyz789 --path-part files",
+                        },
+                        {
+                          title: "5.3 - Integrar com Lambda",
+                          what: "Conectar cada rota do API Gateway com sua função Lambda correspondente",
+                          why: "Quando requisição chega em /files/upload, API Gateway chama uploadHandler Lambda",
+                          how: "aws apigateway put-integration --rest-api-id abc123 --resource-id xyz --http-method POST --type AWS_PROXY --integration-http-method POST --uri arn:aws:lambda:...",
+                        },
+                        {
+                          title: "5.4 - Deploy API",
+                          what: "Criar stage 'prod' e publicar API",
+                          why: "API só fica acessível após deploy",
+                          how: "aws apigateway create-deployment --rest-api-id abc123 --stage-name prod",
+                        },
+                        {
+                          title: "5.5 - Configurar CORS",
+                          what: "Permitir requisições do frontend (localhost:3000 em dev, domínio em prod)",
+                          why: "Browsers bloqueiam requisições cross-origin sem CORS configurado",
+                          how: "aws apigateway put-method-response --rest-api-id abc123 --resource-id xyz --http-method OPTIONS --status-code 200 --response-parameters method.response.header.Access-Control-Allow-Origin=true",
+                        },
+                      ],
+                    },
+                    {
+                      phase: "FASE 6: Autenticação Cognito (2 horas)",
+                      steps: [
+                        {
+                          title: "6.1 - Criar User Pool",
+                          what: "Cognito User Pool 'petrobras-users'",
+                          why: "Gerenciar usuários, senhas, tokens JWT",
+                          how: "aws cognito-idp create-user-pool --pool-name petrobras-users --policies file://password-policy.json",
+                        },
+                        {
+                          title: "6.2 - Criar App Client",
+                          what: "App client para frontend Next.js se comunicar com Cognito",
+                          why: "Frontend precisa de client_id para fazer login/signup",
+                          how: "aws cognito-idp create-user-pool-client --user-pool-id us-east-1_ABC123 --client-name petrobras-web-app",
+                        },
+                        {
+                          title: "6.3 - Configurar grupos de usuários",
+                          what: "3 grupos: INTERNAL, EXTERNAL, SUPERVISOR",
+                          why: "Controlar permissões: supervisor pode aprovar, externo só pode baixar",
+                          how: "aws cognito-idp create-group --user-pool-id us-east-1_ABC123 --group-name SUPERVISOR --description 'Supervisores que aprovam arquivos'",
+                        },
+                        {
+                          title: "6.4 - Criar usuário admin inicial",
+                          what: "Primeiro usuário supervisor para acessar o sistema",
+                          why: "Precisa de alguém para criar outros usuários",
+                          how: "aws cognito-idp admin-create-user --user-pool-id us-east-1_ABC123 --username admin@petrobras.com --user-attributes Name=email,Value=admin@petrobras.com",
+                        },
+                        {
+                          title: "6.5 - Integrar API Gateway com Cognito",
+                          what: "Autorização: toda requisição deve ter token JWT válido",
+                          why: "Bloquear acesso não autorizado às APIs",
+                          how: "aws apigateway create-authorizer --rest-api-id abc123 --name CognitoAuth --type COGNITO_USER_POOLS --provider-arns arn:aws:cognito-idp:us-east-1:...",
+                        },
+                      ],
+                    },
                   ].map((phase, phaseIdx) => (
                     <div key={phaseIdx} className="rounded-lg border-2 border-slate-200 p-6">
                       <h3 className="mb-6 text-2xl font-bold text-slate-900">{phase.phase}</h3>
@@ -398,7 +497,7 @@ export default function AWSImplementationPage() {
                 <div>
                   <h3 className="mb-2 text-lg font-semibold text-green-900">Próximos Passos</h3>
                   <p className="leading-relaxed text-green-800">
-                    Após completar essas 3 fases, consulte as outras páginas da Wiki para:
+                    Após completar essas 6 fases, consulte as outras páginas da Wiki para:
                     <br />• <strong>Data Models</strong> - Entender estrutura das tabelas
                     <br />• <strong>Quick Start</strong> - Deploy automatizado completo
                     <br />• <strong>Deployment Guide</strong> - Configurações de produção

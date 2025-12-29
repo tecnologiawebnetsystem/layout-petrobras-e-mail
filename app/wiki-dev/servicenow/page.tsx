@@ -1284,7 +1284,7 @@ CLIENT_SECRET = secrets['SERVICENOW_CLIENT_SECRET']`}
                     </div>
 
                     <div className="bg-blue-100 p-3 rounded-lg">
-                      <p className="font-semibold text-blue-900 mb-1">Configuração Importante:</p>
+                      <p className="font-semibold text-blue-900">Configuração Importante:</p>
                       <p className="text-blue-800 text-sm">
                         Ativar <strong>TTL</strong> na tabela{" "}
                         <code className="bg-blue-200 px-1 py-0.5 rounded">servicenow_users_cache</code> com campo{" "}
@@ -2349,8 +2349,9 @@ CLIENT_SECRET = secrets['SERVICENOW_CLIENT_SECRET']`}
                         <div className="bg-green-50 p-3 rounded-lg">
                           <p className="font-semibold text-green-900 mb-1">✅ O que você vai ver:</p>
                           <code className="bg-slate-900 text-green-400 px-2 py-1 rounded block text-xs whitespace-pre-wrap">
-                            ⏳ Bootstrapping environment aws://123456789012/us-east-1...
-                            <br />✅ Environment aws://123456789012/us-east-1 bootstrapped.
+                            {
+                              "⏳ Bootstrapping environment aws://123456789012/us-east-1...\n✅ Environment aws://123456789012/us-east-1 bootstrapped."
+                            }
                           </code>
                         </div>
                       </div>
@@ -2407,21 +2408,9 @@ CLIENT_SECRET = secrets['SERVICENOW_CLIENT_SECRET']`}
                         <div className="bg-green-100 border-2 border-green-300 p-3 rounded-lg">
                           <p className="font-semibold text-green-900 mb-1">✅ Sucesso! O que você vai ver:</p>
                           <code className="bg-slate-900 text-green-400 px-2 py-1 rounded block text-xs whitespace-pre-wrap">
-                            {`✅ PetrobrasFileShareDatabaseStack
-✅ PetrobrasFileShareStorageStack
-✅ PetrobrasFileShareEmailStack
-✅ PetrobrasFileShareLambdaStack
-✅ PetrobrasFileShareApiStack
-
-Stack ARN:
-arn:aws:cloudformation:us-east-1:123456789012:stack/...
-
-Outputs:
-PetrobrasFileShareApiStack.ApiUrl = https://abc123xyz.execute-api.us-east-1.amazonaws.com/prod
-PetrobrasFileShareStorageStack.FilesBucketName = petrobras-fileshare-files-abc123
-PetrobrasFileShareStorageStack.TempBucketName = petrobras-fileshare-temp-abc123
-
-✨ Deployment time: 612.34s`}
+                            {
+                              "✅ PetrobrasFileShareDatabaseStack\n✅ PetrobrasFileShareStorageStack\n✅ PetrobrasFileShareEmailStack\n✅ PetrobrasFileShareLambdaStack\n✅ PetrobrasFileShareApiStack\n\nStack ARN :\narn:aws:cloudformation:us-east-1:123456789012:stack/...\n\nOutputs:\nPetrobrasFileShareApiStack.ApiUrl = https://abc123xyz.execute-api.us-east-1.amazonaws.com/prod\nPetrobrasFileShareStorageStack.FilesBucketName = petrobras-fileshare-files-abc123\nPetrobrasFileShareStorageStack.TempBucketName = petrobras-fileshare-temp-abc123\n\n✨ Deployment time: 612.34s"
+                            }
                           </code>
                         </div>
                       </div>

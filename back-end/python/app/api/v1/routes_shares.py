@@ -65,3 +65,64 @@ def issue_token(share_id: int, validity_hours: int = 24, session: Session = Depe
         return TokenRead(token=token.token, expira_at=token.expira_at)
     except TokenError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.patch("/{share_id}/cancel", response_model=ShareRead)
+def cancel_share(
+    share_id: int,
+    cancelled_by: str,
+    cancellation_reason: str | None = None,
+    session: Session = Depends(get_session),
+    request: Request = None
+):
+    """
+    Cancela um compartilhamento que ainda está pendente de aprovação.
+    Apenas compartilhamentos com status 'pending' podem ser cancelados.
+    """
+    from app.models.shared_area import SharedArea
+    from app.services.audit_service import log_event
+    from datetime import datetime
+    
+    share = session.get(SharedArea, share_id)
+    if not share:
+        raise HTTPException(status_code=404, detail="Compartilhamento não encontrado.")
+    
+    if share.status == "approved":
+        raise HTTPException(
+            status_code=400,
+            detail="Não é possível cancelar. Este compartilhamento já foi aprovado pelo supervisor."
+        )
+    
+    if share.status == "rejected":
+        raise HTTPException(
+            status_code=400,
+            detail="Não é possível cancelar. Este compartilhamento já foi rejeitado pelo supervisor."
+        )
+    
+    if share.status == "cancelled":
+        raise HTTPException(
+            status_code=400,
+            detail="Este compartilhamento já foi cancelado anteriormente."
+        )
+    
+    # Atualiza o status para cancelled
+    share.status = "cancelled"
+    share.cancelled_by = cancelled_by
+    share.cancellation_date = datetime.utcnow()
+    share.cancellation_reason = cancellation_reason or "Cancelado pelo usuário"
+    
+    session.add(share)
+    session.commit()
+    session.refresh(share)
+    
+    # Registra no log de auditoria
+    log_event(
+        session=session,
+        action="CANCELAR_COMPARTILHAMENTO",
+        user_id=share.sender_id,
+        share_id=share_id,
+        detail=f"Compartilhamento cancelado por {cancelled_by}. Motivo: {cancellation_reason or 'Não informado'}",
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None
+    )
+    
+    return share

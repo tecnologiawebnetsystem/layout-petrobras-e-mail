@@ -36,11 +36,14 @@ export interface FileUpload {
     type: string
     url?: string
   }>
-  status: "pending" | "approved" | "rejected"
+  status: "pending" | "approved" | "rejected" | "cancelled"
   uploadDate: string
   approvalDate?: string
   approvedBy?: string
   rejectionReason?: string
+  cancellationDate?: string
+  cancelledBy?: string
+  cancellationReason?: string
   expirationHours: number
   expiresAt?: string
   expiresIn?: number
@@ -63,6 +66,7 @@ interface WorkflowState {
   addUpload: (upload: Omit<FileUpload, "id" | "status" | "uploadDate" | "expirationLogs">) => void
   approveUpload: (id: string, approvedBy: string) => void
   rejectUpload: (id: string, rejectedBy: string, reason: string) => void
+  cancelUpload: (id: string, cancelledBy: string, reason?: string) => void
   updateExpiration: (id: string, newHours: number, changedBy: string, reason?: string) => void
   checkIfExpired: (id: string) => boolean
   getUploadsByStatus: (status: FileUpload["status"]) => FileUpload[]
@@ -451,6 +455,89 @@ export const useWorkflowStore = create<WorkflowState>()(
           message: `Seu envio "${upload.name}" foi rejeitado por ${rejectedBy}. Motivo: ${reason}`,
           actionLabel: "Revisar",
           actionUrl: "/upload",
+        })
+      },
+
+      cancelUpload: (id, cancelledBy, reason) => {
+        const upload = get().uploads.find((u) => u.id === id)
+        if (!upload) return
+
+        if (upload.status === "approved") {
+          alert("Não é possível cancelar. Este compartilhamento já foi aprovado pelo supervisor.")
+          return
+        }
+
+        if (upload.status === "rejected") {
+          alert("Não é possível cancelar. Este compartilhamento já foi rejeitado pelo supervisor.")
+          return
+        }
+
+        if (upload.status === "cancelled") {
+          alert("Este compartilhamento já foi cancelado anteriormente.")
+          return
+        }
+
+        set((state) => ({
+          uploads: state.uploads.map((u) =>
+            u.id === id
+              ? {
+                  ...u,
+                  status: "cancelled" as const,
+                  cancellationDate: new Date().toLocaleString("pt-BR"),
+                  cancelledBy,
+                  cancellationReason: reason || "Cancelado pelo usuário",
+                }
+              : u,
+          ),
+        }))
+
+        useAuditLogStore.getState().addLog({
+          action: "cancel",
+          level: "info",
+          user: {
+            id: upload.sender.id,
+            name: cancelledBy,
+            email: upload.sender.email,
+            type: "internal",
+          },
+          details: {
+            targetId: id,
+            targetName: upload.name,
+            description: `Compartilhamento "${upload.name}" cancelado pelo usuário. Motivo: ${reason || "Não informado"}`,
+            metadata: {
+              recipient: upload.recipient,
+              cancellationReason: reason || "Não informado",
+              uploadDate: upload.uploadDate,
+            },
+          },
+        })
+
+        useNotificationStore.getState().addNotification({
+          type: "info",
+          priority: "medium",
+          title: "Compartilhamento Cancelado",
+          message: `Seu compartilhamento "${upload.name}" foi cancelado com sucesso.`,
+          actionLabel: "Ver Histórico",
+          actionUrl: "/historico",
+        })
+
+        fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: "kleber.goncalves.prestserv@petrobras.com.br",
+            subject: `Compartilhamento Cancelado - ${upload.name}`,
+            type: "cancellation",
+            uploadData: {
+              name: upload.name,
+              sender: upload.sender,
+              recipient: upload.recipient,
+              cancellationDate: new Date().toLocaleString("pt-BR"),
+              cancellationReason: reason || "Não informado",
+            },
+          }),
+        }).catch((error) => {
+          console.error("Erro ao enviar e-mail de cancelamento:", error)
         })
       },
 

@@ -12,6 +12,7 @@ export type LogAction =
   | "expiration_change"
   | "zip_validation"
   | "file_expired" // Adicionada nova ação de log para arquivos expirados
+  | "cancel" // Adicionando nova ação de cancelamento
 
 export type LogLevel = "info" | "warning" | "error" | "success"
 

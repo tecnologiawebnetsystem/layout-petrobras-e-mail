@@ -372,6 +372,16 @@ export default function PythonCodeDocPage() {
                         path: "/api/v1/shares/{share_id}/reject",
                         desc: "Rejeitar compartilhamento (supervisor)",
                       },
+                      {
+                        method: "PATCH",
+                        path: "/api/v1/shares/{share_id}/cancel",
+                        desc: "Cancelar compartilhamento (usuário interno) 🆕",
+                      },
+                      {
+                        method: "POST",
+                        path: "/api/v1/shares/{share_id}/token",
+                        desc: "Gerar token de acesso (após aprovação)",
+                      },
                     ],
                   },
                   {
@@ -409,45 +419,56 @@ export default function PythonCodeDocPage() {
                       { method: "GET", path: "/api/v1/audit/{event_id}", desc: "Buscar log específico" },
                     ],
                   },
-                ].map((group) => (
-                  <div key={group.title} className="rounded-lg border p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <h3 className="text-lg font-semibold">{group.title}</h3>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant={group.status === "complete" ? "default" : "secondary"}
-                          className={group.status === "complete" ? "bg-green-600" : "bg-yellow-600"}
-                        >
-                          {group.status === "complete" ? "Completo" : "Parcial"}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {group.file}
-                        </Badge>
+                ].map((category, idx) => (
+                  <div key={idx} className="rounded-lg border p-4">
+                    <div className="mb-4 flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold">{category.title}</h3>
+                        <p className="text-sm text-slate-600">{category.file}</p>
                       </div>
+                      <Badge
+                        variant={
+                          category.status === "complete"
+                            ? "default"
+                            : category.status === "partial"
+                              ? "secondary"
+                              : "destructive"
+                        }
+                        className={
+                          category.status === "complete"
+                            ? "bg-green-600"
+                            : category.status === "partial"
+                              ? "bg-yellow-600"
+                              : ""
+                        }
+                      >
+                        {category.status === "complete" && "Completo"}
+                        {category.status === "partial" && "Parcial"}
+                        {category.status === "missing" && "Faltando"}
+                      </Badge>
                     </div>
                     <div className="space-y-2">
-                      {group.endpoints.map((endpoint, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-start gap-3 rounded border-l-2 border-slate-200 bg-slate-50 p-2 text-sm"
-                        >
+                      {category.endpoints.map((endpoint, epIdx) => (
+                        <div key={epIdx} className="flex items-start gap-3 rounded-md bg-slate-50 p-3">
                           <Badge
                             variant="outline"
-                            className={`shrink-0 ${
+                            className={`shrink-0 font-mono ${
                               endpoint.method === "GET"
-                                ? "border-blue-600 text-blue-600"
+                                ? "border-blue-500 text-blue-700"
                                 : endpoint.method === "POST"
-                                  ? "border-green-600 text-green-600"
+                                  ? "border-green-500 text-green-700"
                                   : endpoint.method === "PUT"
-                                    ? "border-yellow-600 text-yellow-600"
-                                    : "border-red-600 text-red-600"
+                                    ? "border-yellow-500 text-yellow-700"
+                                    : endpoint.method === "PATCH"
+                                      ? "border-orange-500 text-orange-700"
+                                      : "border-red-500 text-red-700"
                             }`}
                           >
                             {endpoint.method}
                           </Badge>
                           <div className="flex-1">
-                            <code className="text-xs text-slate-700">{endpoint.path}</code>
-                            <p className="mt-1 text-xs text-slate-600">{endpoint.desc}</p>
+                            <p className="font-mono text-sm text-slate-700">{endpoint.path}</p>
+                            <p className="text-xs text-slate-600">{endpoint.desc}</p>
                           </div>
                         </div>
                       ))}
@@ -455,10 +476,10 @@ export default function PythonCodeDocPage() {
                   </div>
                 ))}
 
-                <div className="rounded-lg border-l-4 border-green-500 bg-green-50 p-4">
-                  <p className="text-sm text-green-900">
-                    <strong>Total:</strong> 30+ endpoints REST implementados e funcionando localmente. Sistema pronto
-                    para testes.
+                <div className="mt-6 rounded-lg border-l-4 border-blue-500 bg-blue-50 p-4">
+                  <p className="text-sm text-blue-900">
+                    <strong>Total:</strong> 33+ endpoints REST organizados em 7 categorias. Novo endpoint PATCH
+                    /shares/:id/cancel adicionado para permitir cancelamento de compartilhamentos pendentes.
                   </p>
                 </div>
               </CardContent>
