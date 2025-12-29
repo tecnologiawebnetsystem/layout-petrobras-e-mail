@@ -182,7 +182,7 @@ export default function UploadPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <AppHeader subtitle="Módulo de Upload" />
+      <AppHeader subtitle="Solução de Compartilhamento de Arquivos Confidenciais" />
 
       <main className="container max-w-5xl mx-auto px-6 py-10 pb-20">
         <BreadcrumbNav
