@@ -866,14 +866,12 @@ def save_entra_user(user_data: dict):
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Passo 2: Configure no v0</h3>
+                  <h3 className="text-lg font-semibold">Passo 2: Configure as Variáveis de Ambiente</h3>
                   <ol className="space-y-3 list-decimal list-inside">
                     <li className="text-sm">
-                      Na interface do v0, clique em <strong>Vars</strong> na sidebar esquerda
+                      Acesse a seção de <strong>Variáveis de Ambiente</strong> do projeto
                     </li>
-                    <li className="text-sm">
-                      Clique em <strong>Add Variable</strong> e adicione as 3 variáveis:
-                    </li>
+                    <li className="text-sm">Adicione as 3 variáveis necessárias para autenticação:</li>
                   </ol>
 
                   <div className="space-y-3 ml-6">
