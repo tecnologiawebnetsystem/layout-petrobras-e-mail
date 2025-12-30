@@ -71,6 +71,7 @@ interface WorkflowState {
   checkIfExpired: (id: string) => boolean
   getUploadsByStatus: (status: FileUpload["status"]) => FileUpload[]
   getUploadById: (id: string) => FileUpload | undefined
+  getUploadsByRecipient: (recipientEmail: string) => FileUpload[]
 }
 
 export const useWorkflowStore = create<WorkflowState>()(
@@ -620,13 +621,13 @@ export const useWorkflowStore = create<WorkflowState>()(
       getUploadById: (id) => {
         return get().uploads.find((u) => u.id === id)
       },
+
+      getUploadsByRecipient: (recipientEmail: string) => {
+        return get().uploads.filter((u) => u.recipient === recipientEmail && u.status === "approved")
+      },
     }),
     {
       name: "petrobras-workflow-storage",
-      partialize: (state) => ({
-        uploads: state.uploads,
-        mockZipUrl: state.mockZipUrl,
-      }),
     },
   ),
 )

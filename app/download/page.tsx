@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
+import { useWorkflowStore } from "@/lib/stores/workflow-store"
 import { useAuditLogStore } from "@/lib/stores/audit-log-store"
 import { AppHeader } from "@/components/shared/app-header"
 import { DocumentCard } from "@/components/download/document-card"
@@ -76,36 +77,57 @@ const MOCK_DOCUMENTS: Document[] = [
 
 export default function DownloadPage() {
   const { user, isAuthenticated, clearAuth } = useAuthStore()
+  const { uploads, getUploadsByStatus } = useWorkflowStore()
   const router = useRouter()
 
   const isEmptyDemo = user?.id === "demo-empty-user-id"
-  const [documents, setDocuments] = useState<Document[]>(isEmptyDemo ? [] : MOCK_DOCUMENTS)
 
-  const [searchQuery, setSearchQuery] = useState("")
+  console.log("Total de uploads:", uploads.length)
+  console.log("Email do usuário externo:", user?.email)
+
+  const approvedUploads = uploads.filter((upload) => {
+    const isApproved = upload.status === "approved"
+    const isForThisUser = upload.recipient === user?.email
+
+    console.log(
+      `Upload ${upload.id}: status=${upload.status}, recipient=${upload.recipient}, match=${isApproved && isForThisUser}`,
+    )
+
+    return isApproved && isForThisUser
+  })
+
+  console.log("Uploads aprovados filtrados:", approvedUploads.length)
+
+  const documentsFromUploads: Document[] = approvedUploads.map((upload) => ({
+    id: upload.id,
+    name: upload.name,
+    sender: upload.sender.name,
+    date: upload.uploadDate,
+    size: upload.size,
+    type: upload.type,
+    downloaded: false,
+    downloadCount: 0,
+    expiresAt: upload.expiresAt,
+  }))
+
+  const [documents, setDocuments] = useState<Document[]>(isEmptyDemo ? [] : documentsFromUploads)
+  const [notification, setNotification] = useState({ show: false, type: "", title: "", message: "" })
   const [selectedDocs, setSelectedDocs] = useState<string[]>([])
+  const [filterStatus, setFilterStatus] = useState("all")
   const [sortBy, setSortBy] = useState("recent")
   const [filterType, setFilterType] = useState("all")
-  const [filterStatus, setFilterStatus] = useState("all")
-  const [securityModal, setSecurityModal] = useState<{
-    show: boolean
-    documentId: string
-    documentName: string
-  }>({
-    show: false,
-    documentId: "",
-    documentName: "",
-  })
-  const [notification, setNotification] = useState<{
-    show: boolean
-    type: "success" | "error" | "warning" | "info"
-    title: string
-    message: string
-  }>({
-    show: false,
-    type: "info",
-    title: "",
-    message: "",
-  })
+  const [searchQuery, setSearchQuery] = useState("")
+  const [securityModal, setSecurityModal] = useState({ show: false, documentId: "", documentName: "" })
+
+  useEffect(() => {
+    console.log("useEffect disparado - Atualizando documentos")
+    console.log("Uploads no store:", uploads)
+    console.log("Uploads aprovados para este usuário:", approvedUploads.length)
+
+    if (!isEmptyDemo) {
+      setDocuments(documentsFromUploads)
+    }
+  }, [uploads, user?.email, isEmptyDemo])
 
   useEffect(() => {
     if (!isAuthenticated || user?.userType !== "external") {
@@ -289,7 +311,7 @@ export default function DownloadPage() {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <AppHeader subtitle="Módulo de Download" />
+      <AppHeader subtitle="Solução de Compartilhamento de Arquivos Confidenciais" />
 
       <main className="container max-w-7xl mx-auto px-6 py-12 pb-20 space-y-10">
         <div>

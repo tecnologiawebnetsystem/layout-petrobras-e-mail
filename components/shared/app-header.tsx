@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, Moon, Sun, History, Shield, Menu } from "lucide-react"
+import { LogOut, Moon, Sun, Menu, FolderOpen } from "lucide-react"
 import { PetrobrasLogo } from "@/components/ui/petrobras-logo"
 import { Button } from "@/components/ui/button"
 import {
@@ -37,18 +37,13 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
     setMobileMenuOpen(false)
   }
 
-  const handleViewHistory = () => {
-    router.push("/historico")
+  const handleViewCompartilhamentos = () => {
+    router.push("/compartilhamentos")
     setMobileMenuOpen(false)
   }
 
   const handleViewWiki = () => {
     router.push("/wiki")
-    setMobileMenuOpen(false)
-  }
-
-  const handleViewAuditoria = () => {
-    router.push("/auditoria")
     setMobileMenuOpen(false)
   }
 
@@ -86,15 +81,15 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={handleViewAuditoria}
+                    onClick={handleViewWiki}
                     className="h-11 w-11 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all duration-300 transform hover:scale-110 active:scale-95"
-                    aria-label="Auditoria e Logs"
+                    aria-label="Wiki"
                   >
-                    <Shield className="h-4 w-4" />
+                    <FolderOpen className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Auditoria e Logs</p>
+                  <p>Wiki</p>
                 </TooltipContent>
               </Tooltip>
             )}
@@ -139,14 +134,30 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                 align="end"
                 className="w-56 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 shadow-xl"
               >
-                <DropdownMenuItem
-                  onClick={handleViewHistory}
-                  className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 hover:text-blue-900 dark:hover:text-blue-100 focus:text-blue-900 dark:focus:text-blue-100 min-h-[44px]"
-                >
-                  <History className="h-4 w-4" />
-                  <span>Histórico de Atividades</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
+                {!isExternalUser && user?.userType === "internal" && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={handleViewCompartilhamentos}
+                      className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 hover:text-blue-900 dark:hover:text-blue-100 focus:text-blue-900 dark:focus:text-blue-100 min-h-[44px]"
+                    >
+                      <FolderOpen className="h-4 w-4" />
+                      <span>Meus Compartilhamentos</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
+                  </>
+                )}
+                {!isExternalUser && user?.userType === "supervisor" && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={handleViewWiki}
+                      className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 hover:text-blue-900 dark:hover:text-blue-100 focus:text-blue-900 dark:focus:text-blue-100 min-h-[44px]"
+                    >
+                      <FolderOpen className="h-4 w-4" />
+                      <span>Wiki</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
+                  </>
+                )}
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="flex items-center gap-2 cursor-pointer text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/40 focus:bg-red-100 dark:focus:bg-red-900/40 hover:text-red-900 dark:hover:text-red-200 focus:text-red-900 dark:focus:text-red-200 min-h-[44px]"
@@ -198,23 +209,25 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                 </SheetHeader>
 
                 <div className="flex flex-col gap-2 p-4">
-                  <Button
-                    variant="ghost"
-                    className="justify-start h-12 text-base hover:bg-accent transition-colors min-h-[44px]"
-                    onClick={handleViewHistory}
-                  >
-                    <History className="h-5 w-5 mr-3" />
-                    Histórico de Atividades
-                  </Button>
+                  {!isExternalUser && user?.userType === "internal" && (
+                    <Button
+                      variant="ghost"
+                      className="justify-start h-12 text-base hover:bg-accent transition-colors min-h-[44px]"
+                      onClick={handleViewCompartilhamentos}
+                    >
+                      <FolderOpen className="h-5 w-5 mr-3" />
+                      Meus Compartilhamentos
+                    </Button>
+                  )}
 
                   {!isExternalUser && user?.userType === "supervisor" && (
                     <Button
                       variant="ghost"
                       className="justify-start h-12 text-base hover:bg-accent transition-colors min-h-[44px]"
-                      onClick={handleViewAuditoria}
+                      onClick={handleViewWiki}
                     >
-                      <Shield className="h-5 w-5 mr-3" />
-                      Auditoria e Logs
+                      <FolderOpen className="h-5 w-5 mr-3" />
+                      Wiki
                     </Button>
                   )}
 
