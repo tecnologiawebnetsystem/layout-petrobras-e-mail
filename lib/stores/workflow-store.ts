@@ -2,6 +2,7 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { useNotificationStore } from "./notification-store"
 import { useAuditLogStore } from "./audit-log-store"
+import { otpService } from "@/lib/auth/otp-service"
 
 export interface ExpirationLog {
   timestamp: string
@@ -77,145 +78,7 @@ interface WorkflowState {
 export const useWorkflowStore = create<WorkflowState>()(
   persist(
     (set, get) => ({
-      uploads: [
-        {
-          id: "upload-1",
-          name: "Relatório Anual 2023",
-          file: {
-            name: "Relatorio_Anual_2023.pdf",
-            type: "Documento PDF",
-            size: "12.8 MB",
-            uploadDate: "15 de Janeiro, 2025 - 14:32",
-            status: "Enviado com Sucesso",
-          },
-          sender: {
-            id: "user-1",
-            name: "Kleber Gonçalves",
-            email: "kleber.goncalves.prestserv@petrobras.com.br",
-            role: "Analista Sênior",
-            avatar: null,
-          },
-          recipient: "cliente@gmail.com",
-          description: "Relatório financeiro consolidado do ano fiscal de 2023",
-          files: [
-            { name: "Relatorio_Anual_2023.pdf", size: "12.8 MB", type: "PDF" },
-            { name: "Anexo_Graficos.xlsx", size: "2.4 MB", type: "XLS" },
-          ],
-          status: "pending",
-          uploadDate: "15/01/2025 - 14:32",
-          expirationHours: 72,
-          expiresIn: 72,
-          expirationLogs: [],
-          currentStep: 0,
-          totalSteps: 3,
-          steps: [
-            { title: "Análise Inicial", status: "in_progress" },
-            { title: "Revisão Técnica", status: "pending" },
-            { title: "Aprovação Final", status: "pending" },
-          ],
-        },
-        {
-          id: "upload-2",
-          name: "Contrato de Serviços 2024",
-          file: {
-            name: "Contrato_Servicos_2024.docx",
-            type: "Documento Word",
-            size: "890 KB",
-            uploadDate: "14 de Janeiro, 2025 - 10:15",
-            status: "Aprovado",
-          },
-          sender: {
-            id: "user-1",
-            name: "Kleber Gonçalves",
-            email: "kleber.goncalves.prestserv@petrobras.com.br",
-            role: "Analista Sênior",
-            avatar: null,
-          },
-          recipient: "fornecedor@empresa.com.br",
-          description: "Contrato de prestação de serviços técnicos para Q1 2024",
-          files: [{ name: "Contrato_Servicos_2024.docx", size: "890 KB", type: "DOCX" }],
-          status: "approved",
-          uploadDate: "14/01/2025 - 10:15",
-          approvalDate: "14/01/2025 - 15:20",
-          approvedBy: "Carlos Mendes",
-          expirationHours: 168,
-          expiresIn: 168,
-          expiresAt: new Date(Date.now() + 168 * 60 * 60 * 1000).toLocaleString("pt-BR"),
-          expirationLogs: [],
-          currentStep: 3,
-          totalSteps: 3,
-          steps: [
-            {
-              title: "Análise Inicial",
-              status: "approved",
-              date: "14/01/2025 - 11:00",
-              comments: "Aprovado",
-            },
-            {
-              title: "Revisão Técnica",
-              status: "approved",
-              date: "14/01/2025 - 14:30",
-              comments: "Aprovado",
-            },
-            {
-              title: "Aprovação Final",
-              status: "approved",
-              date: "14/01/2025 - 15:20",
-              comments: "Aprovado por Wagner Gaspar Brazil",
-            },
-          ],
-        },
-        {
-          id: "upload-3",
-          name: "Documentação Técnica Q4 2024",
-          file: {
-            name: "Documentos_Tecnicos_Q4.zip",
-            type: "Arquivo ZIP",
-            size: "45.2 MB",
-            uploadDate: "16 de Janeiro, 2025 - 09:45",
-            status: "Enviado com Sucesso",
-          },
-          sender: {
-            id: "user-2",
-            name: "Maria Santos",
-            email: "maria.santos@petrobras.com.br",
-            role: "Engenheira de Projetos",
-            avatar: null,
-          },
-          recipient: "parceiro@empresa.com.br",
-          description: "Pacote completo de documentação técnica do quarto trimestre",
-          files: [
-            {
-              name: "Documentos_Tecnicos_Q4.zip",
-              size: "45.2 MB",
-              type: "ZIP",
-              url: "",
-            },
-            { name: "README.txt", size: "2 KB", type: "TXT" },
-            { name: "Checklist_Validacao.pdf", size: "890 KB", type: "PDF" },
-          ],
-          status: "pending",
-          uploadDate: "16/01/2025 - 09:45",
-          expirationHours: 48,
-          expiresIn: 48,
-          expirationLogs: [
-            {
-              timestamp: "16/01/2025 - 09:45",
-              changedBy: "Maria Santos",
-              previousValue: null,
-              newValue: 48,
-              reason: "Definição inicial - Urgente para revisão",
-            },
-          ],
-          currentStep: 0,
-          totalSteps: 3,
-          steps: [
-            { title: "Análise Inicial", status: "in_progress" },
-            { title: "Revisão Técnica", status: "pending" },
-            { title: "Aprovação Final", status: "pending" },
-          ],
-        },
-      ],
+      uploads: [],
 
       mockZipUrl: null,
       mockZipBlob: null,
@@ -378,6 +241,21 @@ export const useWorkflowStore = create<WorkflowState>()(
           ),
         }))
 
+        const otpCode = otpService.generateOTP(upload.recipient)
+
+        fetch("/api/send-otp-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: upload.recipient,
+            code: otpCode,
+            shareInfo: {
+              senderName: upload.sender.name,
+              fileName: upload.name,
+            },
+          }),
+        }).catch((err) => console.error("Erro ao enviar email OTP:", err))
+
         useAuditLogStore.getState().addLog({
           action: "approve",
           level: "success",
@@ -396,6 +274,7 @@ export const useWorkflowStore = create<WorkflowState>()(
               recipient: upload.recipient,
               expiresAt,
               expirationHours: upload.expirationHours,
+              otpSent: true,
             },
           },
         })

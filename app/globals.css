@@ -41,6 +41,13 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Adicionando variáveis de gráficos faltantes */
+  --chart-1: #00a859;
+  --chart-2: #003f7f;
+  --chart-3: #fdb913;
+  --chart-4: #0055aa;
+  --chart-5: #008a48;
 }
 
 .dark {
@@ -63,6 +70,13 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+
+  /* Adicionando variáveis de gráficos para tema escuro */
+  --chart-1: #00a859;
+  --chart-2: #0055aa;
+  --chart-3: #fdb913;
+  --chart-4: #008a48;
+  --chart-5: #e5a510;
 }
 
 @theme inline {

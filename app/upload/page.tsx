@@ -205,6 +205,57 @@ export default function UploadPage() {
               </div>
             </div>
             <form onSubmit={handleSubmit} className="space-y-7">
+              {user?.manager && (
+                <div className="bg-muted/30 border border-border/50 rounded-xl p-5 space-y-3">
+                  <Label className="text-base font-medium flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-[#0047BB]" />
+                    Aprovador Automático (Active Directory)
+                  </Label>
+                  <div className="bg-background/50 rounded-lg p-4 space-y-2">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <p className="font-semibold text-foreground">{user.manager.name}</p>
+                        <p className="text-sm text-muted-foreground">{user.manager.email}</p>
+                        {user.manager.jobTitle && (
+                          <p className="text-sm text-muted-foreground">
+                            <span className="font-medium">Cargo:</span> {user.manager.jobTitle}
+                          </p>
+                        )}
+                        {user.manager.department && (
+                          <p className="text-sm text-muted-foreground">
+                            <span className="font-medium">Departamento:</span> {user.manager.department}
+                          </p>
+                        )}
+                      </div>
+                      <div className="px-3 py-1.5 bg-[#0047BB]/10 text-[#0047BB] rounded-full text-xs font-medium">
+                        Supervisor Direto
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Este compartilhamento será enviado automaticamente para aprovação do seu supervisor direto
+                    cadastrado no Active Directory da Petrobras.
+                  </p>
+                </div>
+              )}
+
+              {!user?.manager && (
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-5 space-y-2">
+                  <div className="flex items-start gap-3">
+                    <div className="h-8 w-8 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-yellow-600 font-bold text-sm">!</span>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-yellow-800 dark:text-yellow-500">Supervisor não identificado</p>
+                      <p className="text-sm text-yellow-700 dark:text-yellow-600 leading-relaxed">
+                        Não foi possível identificar seu supervisor no Active Directory. Entre em contato com o RH ou TI
+                        para atualizar seu cadastro hierárquico antes de realizar compartilhamentos.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-3">
                 <Label htmlFor="recipient" className="text-base font-medium flex items-center gap-2">
                   <Lock className="h-4 w-4 text-[#00A99D]" />
@@ -266,9 +317,9 @@ export default function UploadPage() {
               <div className="flex justify-end pt-6">
                 <Button
                   type="submit"
-                  disabled={isLoading || showSuccess}
+                  disabled={isLoading || showSuccess || !user?.manager}
                   size="lg"
-                  className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:from-[#008A81] hover:to-[#003A99] text-white font-semibold px-10 text-base shadow-lg hover:shadow-xl"
+                  className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:from-[#008A81] hover:to-[#003A99] text-white font-semibold px-10 text-base shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading && (
                     <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />

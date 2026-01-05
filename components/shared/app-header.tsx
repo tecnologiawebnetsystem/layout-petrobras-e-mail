@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, Moon, Sun, Menu, FolderOpen } from "lucide-react"
+import { LogOut, Moon, Sun, Menu, FolderOpen, Building2, MapPin, User } from "lucide-react"
 import { PetrobrasLogo } from "@/components/ui/petrobras-logo"
 import { Button } from "@/components/ui/button"
 import {
@@ -9,12 +9,13 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useThemeStore } from "@/lib/stores/theme-store"
 import { useRouter } from "next/navigation"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { GlobalSearch } from "@/components/search/global-search"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { useState } from "react"
@@ -118,6 +119,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                   className="gap-2 px-2 h-11 text-foreground hover:bg-accent/10 transition-all duration-300 transform hover:scale-105 active:scale-95 ml-auto"
                 >
                   <Avatar className="h-8 w-8 ring-2 ring-primary/20">
+                    {user?.photoUrl && <AvatarImage src={user.photoUrl || "/placeholder.svg"} alt={user.name} />}
                     <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                       {user?.name ? getInitials(user.name) : "U"}
                     </AvatarFallback>
@@ -126,14 +128,64 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                     <span className="text-sm font-semibold text-foreground truncate max-w-[150px]">
                       {user?.name || "Usuário"}
                     </span>
-                    <span className="text-xs text-muted-foreground truncate max-w-[150px]">{user?.email || ""}</span>
+                    <span className="text-xs text-muted-foreground truncate max-w-[150px]">
+                      {user?.jobTitle || user?.email || ""}
+                    </span>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-56 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 shadow-xl"
+                className="w-72 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 shadow-xl"
               >
+                <DropdownMenuLabel className="pb-3">
+                  <div className="flex items-start gap-3">
+                    <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+                      {user?.photoUrl && <AvatarImage src={user.photoUrl || "/placeholder.svg"} alt={user.name} />}
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
+                        {user?.name ? getInitials(user.name) : "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground">{user?.name || "Usuário"}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user?.email || ""}</p>
+                      {user?.jobTitle && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <Building2 className="h-3 w-3 text-muted-foreground" />
+                          <p className="text-xs text-muted-foreground">{user.jobTitle}</p>
+                        </div>
+                      )}
+                      {user?.department && (
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <MapPin className="h-3 w-3 text-muted-foreground" />
+                          <p className="text-xs text-muted-foreground">{user.department}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </DropdownMenuLabel>
+
+                {user?.manager && (
+                  <>
+                    <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
+                    <DropdownMenuLabel className="py-2">
+                      <div className="flex items-start gap-2">
+                        <User className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-muted-foreground">Supervisor</p>
+                          <p className="text-sm font-semibold text-foreground">{user.manager.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{user.manager.email}</p>
+                          {user.manager.jobTitle && (
+                            <p className="text-xs text-muted-foreground mt-0.5">{user.manager.jobTitle}</p>
+                          )}
+                        </div>
+                      </div>
+                    </DropdownMenuLabel>
+                  </>
+                )}
+
+                <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
+
                 {!isExternalUser && user?.userType === "internal" && (
                   <>
                     <DropdownMenuItem
@@ -197,15 +249,32 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                 <SheetHeader className="p-6 bg-muted border-b">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+                      {user?.photoUrl && <AvatarImage src={user.photoUrl || "/placeholder.svg"} alt={user.name} />}
                       <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
                         {user?.name ? getInitials(user.name) : "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="text-left">
+                    <div className="text-left flex-1 min-w-0">
                       <SheetTitle className="text-foreground text-base">{user?.name || "Usuário"}</SheetTitle>
-                      <SheetDescription className="text-muted-foreground text-sm">{user?.email || ""}</SheetDescription>
+                      <SheetDescription className="text-muted-foreground text-sm truncate">
+                        {user?.email || ""}
+                      </SheetDescription>
+                      {user?.jobTitle && <p className="text-xs text-muted-foreground mt-1">{user.jobTitle}</p>}
                     </div>
                   </div>
+
+                  {user?.manager && (
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <div className="flex items-start gap-2">
+                        <User className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-muted-foreground">Supervisor</p>
+                          <p className="text-sm font-semibold text-foreground">{user.manager.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{user.manager.email}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </SheetHeader>
 
                 <div className="flex flex-col gap-2 p-4">

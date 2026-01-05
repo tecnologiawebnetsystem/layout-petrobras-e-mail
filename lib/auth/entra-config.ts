@@ -22,11 +22,12 @@ export const msalConfig: Configuration = {
     authority: `https://login.microsoftonline.com/${process.env.NEXT_PUBLIC_ENTRA_TENANT_ID}`,
 
     // URL de redirecionamento após login
-    redirectUri: process.env.NEXT_PUBLIC_REDIRECT_URI || (typeof window !== "undefined" ? window.location.origin : ""),
+    redirectUri:
+      process.env.NEXT_PUBLIC_ENTRA_REDIRECT_URI || (typeof window !== "undefined" ? window.location.origin : ""),
 
     // URL de redirecionamento após logout
     postLogoutRedirectUri:
-      process.env.NEXT_PUBLIC_REDIRECT_URI || (typeof window !== "undefined" ? window.location.origin : ""),
+      process.env.NEXT_PUBLIC_ENTRA_REDIRECT_URI || (typeof window !== "undefined" ? window.location.origin : ""),
 
     // Navegação para cliente (não servidor)
     navigateToLoginRequestUrl: true,
@@ -110,7 +111,7 @@ export function checkEntraIdConfig(): {
   configured: boolean
   missing: string[]
 } {
-  const required = ["NEXT_PUBLIC_ENTRA_CLIENT_ID", "NEXT_PUBLIC_ENTRA_TENANT_ID", "NEXT_PUBLIC_REDIRECT_URI"]
+  const required = ["NEXT_PUBLIC_ENTRA_CLIENT_ID", "NEXT_PUBLIC_ENTRA_TENANT_ID", "NEXT_PUBLIC_ENTRA_REDIRECT_URI"]
 
   const missing = required.filter((key) => !process.env[key])
 

@@ -17,6 +17,8 @@ import { useAuditLogStore } from "@/lib/stores/audit-log-store"
 import { useRouter } from "next/navigation"
 import { useMsal } from "@azure/msal-react"
 import { loginRequest, checkEntraIdConfig } from "@/lib/auth/entra-config"
+import { rateLimiter, generateIdentifier } from "@/lib/auth/rate-limiter"
+import { captureSessionContext, saveSessionContext } from "@/lib/auth/session-binding"
 
 const DEMO_CREDENTIALS = {
   internal: {
@@ -158,11 +160,22 @@ export function LoginForm() {
 
   const handleEntraIdLogin = async () => {
     try {
-      // Usar popup para login (mais amigável que redirect)
       const response = await instance.loginPopup(loginRequest)
 
       // O EntraProvider vai lidar com o resto
     } catch (error: any) {
+      if (error.errorCode === "user_cancelled" || error.message?.includes("user_cancelled")) {
+        // Usuário simplesmente fechou a janela - mostrar mensagem amigável
+        setNotification({
+          show: true,
+          type: "info",
+          title: "Login cancelado",
+          message: "Você cancelou o login. Clique novamente no botão quando quiser fazer login.",
+        })
+        return
+      }
+
+      // Outros erros devem ser mostrados
       setNotification({
         show: true,
         type: "error",
@@ -177,6 +190,20 @@ export function LoginForm() {
     setIsLoading(true)
 
     try {
+      const identifier = generateIdentifier("192.168.1.100", email)
+      const rateLimitCheck = rateLimiter.recordAttempt(identifier)
+
+      if (!rateLimitCheck.allowed) {
+        setNotification({
+          show: true,
+          type: "error",
+          title: "Muitas tentativas",
+          message: `Você excedeu o número de tentativas. Tente novamente em ${rateLimitCheck.retryAfter} segundos.`,
+        })
+        setIsLoading(false)
+        return
+      }
+
       const isInternalDemo =
         email === DEMO_CREDENTIALS.internal.email && password === DEMO_CREDENTIALS.internal.password
       const isExternalDemo =
@@ -187,6 +214,11 @@ export function LoginForm() {
         email === DEMO_CREDENTIALS.externalEmpty.email && password === DEMO_CREDENTIALS.externalEmpty.password
 
       if (isInternalDemo || isExternalDemo || isSupervisorDemo || isExternalEmptyDemo) {
+        rateLimiter.reset(identifier)
+
+        const sessionContext = captureSessionContext()
+        saveSessionContext(sessionContext)
+
         const userType = isInternalDemo
           ? "internal"
           : isExternalDemo
@@ -225,6 +257,9 @@ export function LoginForm() {
           details: {
             description: `Login realizado com sucesso via formulário`,
             ipAddress: "192.168.1.100",
+            metadata: {
+              attemptsRemaining: rateLimitCheck.attemptsRemaining,
+            },
           },
         })
 
@@ -255,6 +290,7 @@ export function LoginForm() {
             ipAddress: "192.168.1.100",
             metadata: {
               attemptedEmail: email,
+              attemptsRemaining: rateLimitCheck.attemptsRemaining,
             },
           },
         })
@@ -263,7 +299,7 @@ export function LoginForm() {
           show: true,
           type: "error",
           title: "Credenciais inválidas",
-          message: "E-mail ou senha incorretos. Use as credenciais de demonstração.",
+          message: `E-mail ou senha incorretos. Tentativas restantes: ${rateLimitCheck.attemptsRemaining}`,
         })
       }
     } catch (error) {

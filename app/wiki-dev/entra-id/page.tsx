@@ -61,13 +61,14 @@ export default function EntraIdWikiPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8 lg:w-auto">
+          <TabsList className="grid w-full grid-cols-9 lg:w-auto">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="solicitacao">Solicitação</TabsTrigger>
             <TabsTrigger value="frontend">Front-end</TabsTrigger>
             <TabsTrigger value="backend">Back-end</TabsTrigger>
             <TabsTrigger value="aws">AWS</TabsTrigger>
             <TabsTrigger value="database">DynamoDB</TabsTrigger>
+            <TabsTrigger value="seguranca">Segurança</TabsTrigger>
             <TabsTrigger value="teste">Como Testar</TabsTrigger>
             <TabsTrigger value="checklist">Checklist</TabsTrigger>
           </TabsList>
@@ -907,6 +908,176 @@ def save_entra_user(user_data: dict):
                   <AlertDescription>
                     Toda vez que um usuário fizer login via Entra ID, suas informações serão automaticamente salvas ou
                     atualizadas no DynamoDB.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Segurança Tab */}
+          <TabsContent value="seguranca" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Lock className="h-5 w-5 text-red-500" />
+                  Camada de Segurança Avançada
+                </CardTitle>
+                <CardDescription>Proteções e validações de segurança implementadas no SSO</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <Alert className="border-green-200 bg-green-50">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <AlertTitle className="text-green-900">Todas as Proteções Implementadas</AlertTitle>
+                  <AlertDescription className="text-green-800">
+                    O sistema possui camada completa de segurança conforme melhores práticas
+                  </AlertDescription>
+                </Alert>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-slate-900">1. Validação de Domínio</h3>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Badge className="bg-green-600">Implementado</Badge>
+                      <code className="text-sm">entra-security.ts</code>
+                    </div>
+                    <p className="mb-3 text-sm text-slate-700">
+                      <strong>O QUÊ:</strong> Apenas emails @petrobras.com.br podem fazer login
+                    </p>
+                    <p className="mb-3 text-sm text-slate-700">
+                      <strong>POR QUÊ:</strong> Prevenir acesso não autorizado de contas externas
+                    </p>
+                    <p className="text-sm text-slate-700">
+                      <strong>COMO:</strong> Função <code>validateEmailDomain()</code> verifica domínio após login. Se
+                      domínio inválido, faz logout automático e registra tentativa nos logs de auditoria.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-slate-900">2. Timeout de Sessão por Inatividade</h3>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Badge className="bg-green-600">Implementado</Badge>
+                      <code className="text-sm">SessionMonitor</code>
+                    </div>
+                    <p className="mb-3 text-sm text-slate-700">
+                      <strong>O QUÊ:</strong> Logout automático após 30 minutos de inatividade
+                    </p>
+                    <p className="mb-3 text-sm text-slate-700">
+                      <strong>POR QUÊ:</strong> Prevenir acesso não autorizado se usuário deixar sessão aberta
+                    </p>
+                    <p className="text-sm text-slate-700">
+                      <strong>COMO:</strong> Monitor detecta eventos (mouse, teclado, scroll). Sem atividade por 30min =
+                      logout automático com registro em auditoria.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-slate-900">3. Renovação Automática de Token</h3>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Badge className="bg-green-600">Implementado</Badge>
+                      <code className="text-sm">refreshToken()</code>
+                    </div>
+                    <p className="mb-3 text-sm text-slate-700">
+                      <strong>O QUÊ:</strong> Tokens renovados automaticamente antes de expirar
+                    </p>
+                    <p className="mb-3 text-sm text-slate-700">
+                      <strong>POR QUÊ:</strong> Manter sessão ativa sem interromper usuário com tela de login
+                    </p>
+                    <p className="text-sm text-slate-700">
+                      <strong>COMO:</strong> Monitor verifica tokens a cada 1 minuto. Se token expira em menos de 5min,
+                      chama <code>acquireTokenSilent()</code> para renovar sem popup.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-slate-900">4. Validação de Expiração de Token</h3>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Badge className="bg-green-600">Implementado</Badge>
+                      <code className="text-sm">isTokenValid()</code>
+                    </div>
+                    <p className="mb-3 text-sm text-slate-700">
+                      <strong>O QUÊ:</strong> Verificação constante se token ainda é válido
+                    </p>
+                    <p className="mb-3 text-sm text-slate-700">
+                      <strong>POR QUÊ:</strong> Prevenir uso de tokens expirados que podem ser comprometidos
+                    </p>
+                    <p className="text-sm text-slate-700">
+                      <strong>COMO:</strong> Compara timestamp de expiração com horário atual. Token expirado = logout
+                      automático com log de auditoria.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-slate-900">5. Logout Sincronizado (Cross-Tab)</h3>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Badge className="bg-green-600">Implementado</Badge>
+                      <code className="text-sm">setupCrossTabLogout()</code>
+                    </div>
+                    <p className="mb-3 text-sm text-slate-700">
+                      <strong>O QUÊ:</strong> Logout em uma aba desloga todas as outras abas abertas
+                    </p>
+                    <p className="mb-3 text-sm text-slate-700">
+                      <strong>POR QUÊ:</strong> Prevenir sessões residuais em múltiplas abas após logout
+                    </p>
+                    <p className="text-sm text-slate-700">
+                      <strong>COMO:</strong> Usa localStorage para comunicação entre abas. Ao fazer logout, envia sinal
+                      para todas as abas via storage event.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-slate-900">6. Auditoria Completa</h3>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Badge className="bg-green-600">Implementado</Badge>
+                      <code className="text-sm">audit-log-store.ts</code>
+                    </div>
+                    <p className="mb-3 text-sm text-slate-700">
+                      <strong>O QUÊ:</strong> Todos os eventos de segurança são registrados
+                    </p>
+                    <p className="mb-3 text-sm text-slate-700">
+                      <strong>POR QUÊ:</strong> Rastreabilidade e conformidade com políticas de segurança
+                    </p>
+                    <p className="text-sm text-slate-700">
+                      <strong>EVENTOS REGISTRADOS:</strong>
+                    </p>
+                    <ul className="mt-2 space-y-1 text-sm text-slate-600">
+                      <li>• Login bem-sucedido (com tenant ID e método)</li>
+                      <li>• Tentativas de login com domínio inválido</li>
+                      <li>• Logout por inatividade (com tempo de inatividade)</li>
+                      <li>• Logout por expiração de token</li>
+                      <li>• Erros de autenticação</li>
+                      <li>• Renovação de tokens</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <Alert className="border-blue-200 bg-blue-50">
+                  <AlertCircle className="h-4 w-4 text-blue-600" />
+                  <AlertTitle className="text-blue-900">Configurações Ajustáveis</AlertTitle>
+                  <AlertDescription className="text-blue-800">
+                    <p className="mb-2">
+                      As seguintes configurações podem ser ajustadas em <code>entra-security.ts</code>:
+                    </p>
+                    <ul className="list-inside list-disc space-y-1 text-sm">
+                      <li>
+                        <code>SESSION_TIMEOUT</code> - Tempo de inatividade (padrão: 30min)
+                      </li>
+                      <li>
+                        <code>TOKEN_CHECK_INTERVAL</code> - Frequência de verificação (padrão: 1min)
+                      </li>
+                      <li>
+                        <code>ALLOWED_DOMAINS</code> - Domínios permitidos (padrão: @petrobras.com.br)
+                      </li>
+                    </ul>
                   </AlertDescription>
                 </Alert>
               </CardContent>

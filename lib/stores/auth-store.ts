@@ -10,6 +10,19 @@ interface User {
   email: string
   name: string
   userType: "internal" | "external" | "supervisor"
+  jobTitle?: string
+  department?: string
+  officeLocation?: string
+  mobilePhone?: string
+  employeeId?: string
+  photoUrl?: string
+  manager?: {
+    id: string
+    name: string
+    email: string
+    jobTitle?: string
+    department?: string
+  }
 }
 
 interface AuthState {
@@ -20,6 +33,8 @@ interface AuthState {
   setAuth: (user: User, accessToken: string, refreshToken: string) => void
   clearAuth: () => void
   updateAccessToken: (accessToken: string) => void
+  setTokens: (accessToken: string, refreshToken: string) => void
+  enrichUserProfile: (enrichedData: Partial<User>) => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -44,6 +59,15 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
         }),
       updateAccessToken: (accessToken) => set({ accessToken }),
+      setTokens: (accessToken, refreshToken) =>
+        set({
+          accessToken,
+          refreshToken,
+        }),
+      enrichUserProfile: (enrichedData) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...enrichedData } : null,
+        })),
     }),
     {
       name: "petrobras-auth-storage",

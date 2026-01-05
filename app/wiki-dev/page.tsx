@@ -5,13 +5,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Database, Cloud, Server, FileCode, Shield, Home } from "lucide-react"
+import { Search, BookOpen, Database, Cloud, Server, FileCode, Shield, Home, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
   const [searchQuery, setSearchQuery] = useState("")
 
   const wikiCategories = [
+    {
+      title: "Implementações 04/01/2026",
+      description: "Resumo completo de todas as 14 funcionalidades implementadas hoje - 146-199 horas de trabalho",
+      icon: CheckCircle2,
+      href: "/wiki-dev/implementacoes-jan-2026",
+      color: "from-green-600 to-emerald-600",
+      topics: ["14 Funcionalidades", "SSO Entra ID", "Segurança Avançada", "OTP Externo", "146-199h"],
+    },
     {
       title: "Implementação AWS",
       description: "Guia completo de todos os serviços AWS necessários para o sistema",
@@ -75,6 +83,14 @@ export default function WikiDevPage() {
       href: "/wiki-dev/python-code",
       color: "from-yellow-500 to-orange-600",
       topics: ["70 Arquivos", "FastAPI", "Estrutura", "Status", "O que falta"],
+    },
+    {
+      title: "Sincronização Back-end",
+      description: "Guia completo passo a passo: o que fazer no Python para sincronizar com o front-end",
+      icon: Server,
+      href: "/wiki-dev/sincronizacao-backend",
+      color: "from-orange-600 to-red-600",
+      topics: ["5 Scripts SQL", "8 Endpoints API", "4 Services", "40-60h", "Código Pronto"],
     },
   ]
 
