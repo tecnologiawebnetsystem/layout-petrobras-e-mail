@@ -5,7 +5,19 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, AlertTriangle, CheckCircle2, Database, Cloud, Lightbulb, Network, Mail, Shield } from "lucide-react"
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Cloud,
+  Database,
+  Lightbulb,
+  Lock,
+  Mail,
+  Network,
+  Shield,
+  Zap,
+  AlertTriangle,
+} from "lucide-react"
 import Link from "next/link"
 
 export default function IntegracaoPage() {
@@ -169,7 +181,7 @@ export default function IntegracaoPage() {
                         </div>
                         <div className="bg-white p-2 rounded border">
                           <div className="font-semibold text-purple-800">6 Serviços</div>
-                          <div className="text-purple-600">token, file, share, email, audit, servicenow</div>
+                          <div className="text-purple-600">token, file, email, audit, servicenow</div>
                         </div>
                         <div className="bg-white p-2 rounded border">
                           <div className="font-semibold text-purple-800">6 Modelos</div>
@@ -306,15 +318,26 @@ export default function IntegracaoPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Sistema de Autenticação Híbrido</CardTitle>
-                <CardDescription>3 métodos de autenticação integrados</CardDescription>
+                <CardDescription>3 métodos de autenticação integrados com SSO e proteção de rotas</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                <div className="border-l-4 border-blue-500 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-950/50">
+                  <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                    <Zap className="h-5 w-5" />
+                    <h3 className="font-semibold">SSO Automático Ativado</h3>
+                  </div>
+                  <p className="mt-2 text-sm text-blue-600 dark:text-blue-300">
+                    O sistema agora detecta automaticamente se o usuário está logado no Windows/Office com conta
+                    Petrobras e faz login sem pedir senha. Rotas /upload e /compartilhamentos estão protegidas.
+                  </p>
+                </div>
+
                 {/* Método 1: Entra ID */}
                 <div className="bg-indigo-50 p-6 rounded-lg border-2 border-indigo-200">
                   <div className="flex items-center gap-3 mb-4">
                     <Shield className="h-6 w-6 text-indigo-600" />
                     <h3 className="text-lg font-bold text-indigo-900">1. Microsoft Entra ID (SSO)</h3>
-                    <Badge className="bg-green-600">Recomendado</Badge>
+                    <Badge className="bg-green-600">Implementado</Badge>
                   </div>
                   <div className="space-y-3 text-sm">
                     <div>
@@ -326,23 +349,51 @@ export default function IntegracaoPage() {
                     <div>
                       <div className="font-semibold text-indigo-800">Como funciona:</div>
                       <div className="text-indigo-700">
-                        1. Usuário clica em "Entrar com Microsoft"
+                        1. Usuário acessa /upload ou /compartilhamentos
                         <br />
-                        2. Redireciona para login.microsoftonline.com
+                        2. ProtectedRoute detecta se já está logado no Windows/Office
                         <br />
-                        3. Retorna com token OAuth2
+                        3. Se sim: Login AUTOMÁTICO sem pedir senha (ssoSilent)
                         <br />
-                        4. Front-end valida e cria sessão JWT
+                        4. Se não: Redireciona para tela de login
+                        <br />
+                        5. Usuário clica "Entrar com Microsoft" e faz login
+                        <br />
+                        6. Retorna com token OAuth2 e dados sincronizados
                       </div>
                     </div>
                     <div>
-                      <div className="font-semibold text-indigo-800">Configuração necessária:</div>
-                      <div className="text-indigo-700 font-mono text-xs bg-indigo-100 p-2 rounded mt-1">
-                        NEXT_PUBLIC_ENTRA_CLIENT_ID=...
-                        <br />
-                        NEXT_PUBLIC_ENTRA_TENANT_ID=...
-                        <br />
-                        NEXT_PUBLIC_ENTRA_REDIRECT_URI=...
+                      <div className="font-semibold text-indigo-800">Componentes implementados:</div>
+                      <div className="space-y-1 mt-2">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          <code className="text-xs bg-indigo-100 px-2 py-0.5 rounded">
+                            components/auth/protected-route.tsx
+                          </code>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          <code className="text-xs bg-indigo-100 px-2 py-0.5 rounded">
+                            components/auth/entra-provider.tsx
+                          </code>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          <code className="text-xs bg-indigo-100 px-2 py-0.5 rounded">lib/auth/entra-config.ts</code>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-indigo-800">Rotas protegidas:</div>
+                      <div className="space-y-1 mt-2">
+                        <div className="flex items-center gap-2">
+                          <Lock className="h-4 w-4 text-amber-600" />
+                          <span className="text-indigo-700">/upload - Requer autenticação Entra ID</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Lock className="h-4 w-4 text-amber-600" />
+                          <span className="text-indigo-700">/compartilhamentos - Requer autenticação Entra ID</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -416,7 +467,7 @@ export default function IntegracaoPage() {
 
                 {/* Fluxo JWT */}
                 <div className="bg-slate-50 p-6 rounded-lg border-2 border-slate-200">
-                  <h3 className="text-lg font-bold text-slate-900 mb-3">Fluxo JWT (Comum a Todos)</h3>
+                  <h3 className="text-lg font-bold text-slate-900 mb-3">Fluxo JWT e Proteção de Rotas</h3>
                   <div className="space-y-2 text-sm text-slate-700">
                     <div className="flex gap-2">
                       <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
@@ -435,8 +486,15 @@ export default function IntegracaoPage() {
                     <div className="flex gap-2">
                       <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
                       <div>
-                        <span className="font-semibold">Middleware:</span> Valida JWT em todas as rotas protegidas no
-                        Python
+                        <span className="font-semibold">ProtectedRoute:</span> Verifica auth antes de renderizar página,
+                        tenta SSO silencioso
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                      <div>
+                        <span className="font-semibold">Middleware Python:</span> Valida JWT em todas as rotas
+                        protegidas no back-end
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -578,7 +636,7 @@ export default function IntegracaoPage() {
                 {/* Template HTML */}
                 <div className="bg-slate-50 p-6 rounded-lg border-2 border-slate-200">
                   <h3 className="text-lg font-bold text-slate-900 mb-3">Design do Template</h3>
-                  <div className="space-y-2 text-sm text-slate-700">
+                  <div className="space-y-2 text-sm">
                     <div className="flex gap-2">
                       <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
                       <div>Gradiente verde e azul Petrobras (#00A859 → #003F7F)</div>
@@ -790,7 +848,7 @@ export default function IntegracaoPage() {
                 {/* TTL Explanation */}
                 <div className="bg-slate-50 p-6 rounded-lg border-2 border-slate-200">
                   <h3 className="text-lg font-bold text-slate-900 mb-3">TTL (Time To Live)</h3>
-                  <div className="space-y-2 text-sm text-slate-700">
+                  <div className="space-y-2 text-sm">
                     <div className="flex gap-2">
                       <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
                       <div>

@@ -127,7 +127,6 @@ export function EntraProvider({ children }: EntraProviderProps) {
   }
 
   const handleLogoutSuccess = () => {
-    console.log("[v0] Entra ID logout success")
     // O clearAuth já é chamado pelo botão de logout
   }
 

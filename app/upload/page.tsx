@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
 import { ScrollToTop } from "@/components/shared/scroll-to-top"
 import { UploadSuccessModal } from "@/components/upload/upload-success-modal"
+import { ProtectedRoute } from "@/components/auth/protected-route"
 
 export default function UploadPage() {
   const { user, isAuthenticated } = useAuthStore()
@@ -169,10 +170,6 @@ export default function UploadPage() {
     }
   }
 
-  if (!isAuthenticated || user?.userType !== "internal") {
-    return null
-  }
-
   const uploadStats = {
     total: uploads.length,
     pending: uploads.filter((u) => u.status === "pending").length,
@@ -181,125 +178,127 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <AppHeader subtitle="Solução de Compartilhamento de Arquivos Confidenciais" />
+    <ProtectedRoute allowedUserTypes={["internal"]}>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <AppHeader subtitle="Solução de Compartilhamento de Arquivos Confidenciais" />
 
-      <main className="container max-w-5xl mx-auto px-6 py-10 pb-20">
-        <BreadcrumbNav
-          items={[{ label: "Início", href: "/upload" }, { label: "Upload de Arquivos" }]}
-          dashboardLink="/upload"
-        />
+        <main className="container max-w-5xl mx-auto px-6 py-10 pb-20">
+          <BreadcrumbNav
+            items={[{ label: "Início", href: "/upload" }, { label: "Upload de Arquivos" }]}
+            dashboardLink="/upload"
+          />
 
-        <MetricsDashboard {...uploadStats} userType="internal" />
+          <MetricsDashboard {...uploadStats} userType="internal" />
 
-        <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-10 space-y-8 relative overflow-hidden">
-          <div className="relative">
-            <div className="flex items-center gap-4 mb-3">
-              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
-                <Sparkles className="h-7 w-7 text-white" />
+          <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-10 space-y-8 relative overflow-hidden">
+            <div className="relative">
+              <div className="flex items-center gap-4 mb-3">
+                <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
+                  <Sparkles className="h-7 w-7 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-foreground leading-tight">Transferência Segura de Arquivos</h1>
+                  <p className="text-muted-foreground text-base leading-relaxed">
+                    Envie documentos para destinatários externos com segurança
+                  </p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-3xl font-bold text-foreground leading-tight">Transferência Segura de Arquivos</h1>
-                <p className="text-muted-foreground text-base leading-relaxed">
-                  Envie documentos para destinatários externos com segurança
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-7">
+              <div className="space-y-3">
+                <Label htmlFor="recipient" className="text-base font-medium flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-[#00A99D]" />
+                  Destinatário Externo
+                </Label>
+                <Input
+                  id="recipient"
+                  type="email"
+                  placeholder="cliente@empresa.com"
+                  value={recipient}
+                  onChange={(e) => setRecipient(e.target.value)}
+                  required
+                />
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  O destinatário receberá um email com link seguro para download
                 </p>
               </div>
-            </div>
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Anexar Arquivos</Label>
+                <DragDropZone
+                  onFilesSelected={handleFilesSelected}
+                  selectedFiles={files}
+                  onRemoveFile={handleFileRemove}
+                />
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="expiration" className="text-base font-medium flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-[#FDB913]" />
+                  Tempo de Disponibilidade
+                </Label>
+                <Select value={expirationHours.toString()} onValueChange={(v) => setExpirationHours(Number(v))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="24">24 horas (1 dia)</SelectItem>
+                    <SelectItem value="48">48 horas (2 dias)</SelectItem>
+                    <SelectItem value="72">72 horas (3 dias)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Os arquivos ficarão disponíveis para download por {expirationHours} horas após a aprovação. Máximo: 72
+                  horas (3 dias).
+                </p>
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="description" className="text-base font-medium">
+                  Descrição do Envio (obrigatório)
+                </Label>
+                <Textarea
+                  id="description"
+                  placeholder="Descreva o conteúdo e a finalidade dos arquivos..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="min-h-[140px] resize-none text-base"
+                  required
+                />
+              </div>
+              <div className="flex justify-end pt-6">
+                <Button
+                  type="submit"
+                  disabled={isLoading || showSuccess}
+                  size="lg"
+                  className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:from-[#008A81] hover:to-[#003A99] text-white font-semibold px-10 text-base shadow-lg hover:shadow-xl"
+                >
+                  {isLoading && (
+                    <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  )}
+                  {showSuccess && <Sparkles className="h-5 w-5 mr-2" />}
+                  <Send className="h-5 w-5 mr-2" />
+                  {isLoading ? "Enviando..." : showSuccess ? "Enviado!" : "Enviar para Aprovação"}
+                </Button>
+              </div>
+            </form>
           </div>
-          <form onSubmit={handleSubmit} className="space-y-7">
-            <div className="space-y-3">
-              <Label htmlFor="recipient" className="text-base font-medium flex items-center gap-2">
-                <Lock className="h-4 w-4 text-[#00A99D]" />
-                Destinatário Externo
-              </Label>
-              <Input
-                id="recipient"
-                type="email"
-                placeholder="cliente@empresa.com"
-                value={recipient}
-                onChange={(e) => setRecipient(e.target.value)}
-                required
-              />
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                O destinatário receberá um email com link seguro para download
-              </p>
-            </div>
-            <div className="space-y-3">
-              <Label className="text-base font-medium">Anexar Arquivos</Label>
-              <DragDropZone
-                onFilesSelected={handleFilesSelected}
-                selectedFiles={files}
-                onRemoveFile={handleFileRemove}
-              />
-            </div>
-            <div className="space-y-3">
-              <Label htmlFor="expiration" className="text-base font-medium flex items-center gap-2">
-                <Clock className="h-4 w-4 text-[#FDB913]" />
-                Tempo de Disponibilidade
-              </Label>
-              <Select value={expirationHours.toString()} onValueChange={(v) => setExpirationHours(Number(v))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="24">24 horas (1 dia)</SelectItem>
-                  <SelectItem value="48">48 horas (2 dias)</SelectItem>
-                  <SelectItem value="72">72 horas (3 dias)</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Os arquivos ficarão disponíveis para download por {expirationHours} horas após a aprovação. Máximo: 72
-                horas (3 dias).
-              </p>
-            </div>
-            <div className="space-y-3">
-              <Label htmlFor="description" className="text-base font-medium">
-                Descrição do Envio (obrigatório)
-              </Label>
-              <Textarea
-                id="description"
-                placeholder="Descreva o conteúdo e a finalidade dos arquivos..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="min-h-[140px] resize-none text-base"
-                required
-              />
-            </div>
-            <div className="flex justify-end pt-6">
-              <Button
-                type="submit"
-                disabled={isLoading || showSuccess}
-                size="lg"
-                className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:from-[#008A81] hover:to-[#003A99] text-white font-semibold px-10 text-base shadow-lg hover:shadow-xl"
-              >
-                {isLoading && (
-                  <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                )}
-                {showSuccess && <Sparkles className="h-5 w-5 mr-2" />}
-                <Send className="h-5 w-5 mr-2" />
-                {isLoading ? "Enviando..." : showSuccess ? "Enviado!" : "Enviar para Aprovação"}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </main>
-      <ScrollToTop />
-      <NotificationModal
-        open={notification.show}
-        onOpenChange={(show) => setNotification({ ...notification, show })}
-        type={notification.type}
-        title={notification.title}
-        message={notification.message}
-      />
-      {uploadSuccessData && (
-        <UploadSuccessModal
-          open={uploadSuccessData !== null}
-          onOpenChange={(open) => {
-            if (!open) setUploadSuccessData(null)
-          }}
-          uploadData={uploadSuccessData}
+        </main>
+        <ScrollToTop />
+        <NotificationModal
+          open={notification.show}
+          onOpenChange={(show) => setNotification({ ...notification, show })}
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
         />
-      )}
-    </div>
+        {uploadSuccessData && (
+          <UploadSuccessModal
+            open={uploadSuccessData !== null}
+            onOpenChange={(open) => {
+              if (!open) setUploadSuccessData(null)
+            }}
+            uploadData={uploadSuccessData}
+          />
+        )}
+      </div>
+    </ProtectedRoute>
   )
 }

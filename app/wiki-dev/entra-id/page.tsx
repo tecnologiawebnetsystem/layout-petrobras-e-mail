@@ -325,8 +325,119 @@ export default function EntraIdWikiPage() {
                 <CardDescription>Como integrar o Entra ID no front-end React/Next.js</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
+                  <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <AlertTitle className="text-green-900 dark:text-green-100">Implementação Completa</AlertTitle>
+                  <AlertDescription className="text-green-800 dark:text-green-200">
+                    <p className="mb-2">O Entra ID já está totalmente implementado no sistema:</p>
+                    <ul className="list-inside list-disc space-y-1 text-sm">
+                      <li>SSO automático (login sem senha se já estiver logado no Windows)</li>
+                      <li>Proteção de rotas /upload e /compartilhamentos</li>
+                      <li>Componente ProtectedRoute criado</li>
+                      <li>Integração com auth-store para sincronizar dados</li>
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+
                 <div>
-                  <h3 className="mb-3 font-semibold text-slate-900">1. Instalar Bibliotecas MSAL</h3>
+                  <h3 className="mb-3 font-semibold text-slate-900">1. Arquivos Já Implementados</h3>
+                  <div className="space-y-2">
+                    <div className="rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-900 dark:bg-green-950/20">
+                      <div className="flex items-center justify-between">
+                        <code className="text-sm text-green-900 dark:text-green-100">lib/auth/entra-config.ts</code>
+                        <Badge className="bg-green-600">Configurado</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-green-700 dark:text-green-300">
+                        Configuração MSAL com credenciais da Petrobras
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-900 dark:bg-green-950/20">
+                      <div className="flex items-center justify-between">
+                        <code className="text-sm text-green-900 dark:text-green-100">
+                          components/auth/entra-provider.tsx
+                        </code>
+                        <Badge className="bg-green-600">Integrado</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-green-700 dark:text-green-300">
+                        Provider MSAL integrado ao app/layout.tsx
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-900 dark:bg-green-950/20">
+                      <div className="flex items-center justify-between">
+                        <code className="text-sm text-green-900 dark:text-green-100">
+                          components/auth/protected-route.tsx
+                        </code>
+                        <Badge className="bg-blue-600">Novo</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-green-700 dark:text-green-300">
+                        Componente de proteção de rotas com SSO automático
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="mb-3 font-semibold text-slate-900">2. Como Funciona o SSO Automático</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/20">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                        1
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Detecção de Sessão</p>
+                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                          Quando usuário acessa /upload, o ProtectedRoute verifica se há token Entra ID ativo
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/20">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                        2
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Login Silencioso</p>
+                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                          Se usuário está logado no Windows/Office, tenta ssoSilent() para login automático
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/20">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                        3
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Sincronização</p>
+                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                          Dados do Microsoft (nome, email, foto) são sincronizados com auth-store automaticamente
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="mb-3 font-semibold text-slate-900">3. Rotas Protegidas</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-amber-600" />
+                      <code className="rounded bg-slate-100 px-2 py-0.5">/upload</code>
+                      <span className="text-slate-600">- Apenas usuários internos autenticados</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-amber-600" />
+                      <code className="rounded bg-slate-100 px-2 py-0.5">/compartilhamentos</code>
+                      <span className="text-slate-600">- Apenas usuários internos autenticados</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <code className="rounded bg-slate-100 px-2 py-0.5">/download</code>
+                      <span className="text-slate-600">- Acesso público (externos)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="mb-3 font-semibold text-slate-900">4. Instalar Bibliotecas MSAL (se necessário)</h3>
                   <div className="relative">
                     <pre className="overflow-x-auto rounded-lg bg-slate-900 p-4 text-sm text-slate-50">
                       <code>npm install @azure/msal-browser @azure/msal-react</code>
@@ -348,72 +459,32 @@ export default function EntraIdWikiPage() {
                 </div>
 
                 <div>
-                  <h3 className="mb-3 font-semibold text-slate-900">2. Configurar Variáveis de Ambiente</h3>
+                  <h3 className="mb-3 font-semibold text-slate-900">5. Configurar Variáveis de Ambiente</h3>
                   <p className="mb-2 text-sm text-slate-600">
-                    Adicione ao arquivo <code className="rounded bg-slate-100 px-1 py-0.5">.env.local</code>:
+                    Adicione as seguintes variáveis ao arquivo{" "}
+                    <code className="rounded bg-slate-100 px-1 py-0.5">.env.local</code>:
                   </p>
-                  <div className="relative">
-                    <pre className="overflow-x-auto rounded-lg bg-slate-900 p-4 text-sm text-slate-50">
-                      <code>{`NEXT_PUBLIC_ENTRA_TENANT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-NEXT_PUBLIC_ENTRA_CLIENT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-ENTRA_CLIENT_SECRET=seu-client-secret-aqui
-NEXT_PUBLIC_REDIRECT_URI=http://localhost:3000`}</code>
-                    </pre>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="absolute right-2 top-2"
-                      onClick={() =>
-                        copyToClipboard(
-                          "NEXT_PUBLIC_ENTRA_TENANT_ID=\nNEXT_PUBLIC_ENTRA_CLIENT_ID=\nENTRA_CLIENT_SECRET=\nNEXT_PUBLIC_REDIRECT_URI=http://localhost:3000",
-                          "env-vars",
-                        )
-                      }
-                    >
-                      {copiedStates["env-vars"] ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                  <Alert className="mt-3">
+                  <Alert>
                     <Key className="h-4 w-4" />
-                    <AlertTitle>IMPORTANTE</AlertTitle>
+                    <AlertTitle>Variáveis Necessárias</AlertTitle>
                     <AlertDescription>
-                      Substitua os valores <code>xxxxxxxx</code> pelas credenciais reais fornecidas pelo time de infra.
+                      <ul className="mt-2 space-y-1 text-sm">
+                        <li>
+                          <code>NEXT_PUBLIC_ENTRA_TENANT_ID</code> - ID do inquilino
+                        </li>
+                        <li>
+                          <code>NEXT_PUBLIC_ENTRA_CLIENT_ID</code> - ID da aplicação
+                        </li>
+                        <li>Client Secret - Chave secreta (configurar apenas no servidor)</li>
+                        <li>
+                          <code>NEXT_PUBLIC_REDIRECT_URI</code> - URL de redirecionamento
+                        </li>
+                      </ul>
+                      <p className="mt-2 text-sm">
+                        As credenciais reais serão fornecidas pelo time de infra da Petrobras.
+                      </p>
                     </AlertDescription>
                   </Alert>
-                </div>
-
-                <div>
-                  <h3 className="mb-3 font-semibold text-slate-900">3. Arquivos Já Criados</h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-900 dark:bg-green-950/20">
-                      <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
-                      <div className="flex-1">
-                        <code className="text-sm">lib/auth/entra-config.ts</code>
-                        <p className="text-xs text-green-700">Configuração MSAL e funções auxiliares</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-900 dark:bg-green-950/20">
-                      <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
-                      <div className="flex-1">
-                        <code className="text-sm">components/auth/entra-provider.tsx</code>
-                        <p className="text-xs text-green-700">Provider que envolve a aplicação</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-900 dark:bg-green-950/20">
-                      <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
-                      <div className="flex-1">
-                        <code className="text-sm">components/auth/login-form.tsx</code>
-                        <p className="text-xs text-green-700">Login atualizado com botão Entra ID</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-900 dark:bg-green-950/20">
-                      <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
-                      <div className="flex-1">
-                        <code className="text-sm">app/layout.tsx</code>
-                        <p className="text-xs text-green-700">Layout atualizado com EntraProvider</p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
                 <Alert>
@@ -567,6 +638,38 @@ async def create_upload(
                 <CardDescription>Onde armazenar as credenciais do Entra ID com segurança</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
+                  <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <AlertTitle className="text-green-900 dark:text-green-100">Credenciais Configuradas</AlertTitle>
+                  <AlertDescription className="text-green-800 dark:text-green-200">
+                    <p className="mb-2">As credenciais do Entra ID da Petrobras já foram fornecidas:</p>
+                    <ul className="list-inside list-disc space-y-1 text-sm">
+                      <li>
+                        Aplicação: <strong>AAD-DEV-A12022</strong>
+                      </li>
+                      <li>
+                        Tenant ID:{" "}
+                        <code className="rounded bg-green-100 px-1 py-0.5 dark:bg-green-900">
+                          5b6f6241-9a57-4be4-8e50-1dfa72e79a57
+                        </code>
+                      </li>
+                      <li>
+                        Client ID:{" "}
+                        <code className="rounded bg-green-100 px-1 py-0.5 dark:bg-green-900">
+                          da3aaaad-619f-4bee-a434-51efd11faf7c
+                        </code>
+                      </li>
+                      <li>
+                        Client Secret:{" "}
+                        <code className="rounded bg-green-100 px-1 py-0.5 dark:bg-green-900">Pnt8Q~0CQeLtKfv2T...</code>
+                      </li>
+                    </ul>
+                    <p className="mt-2 font-semibold">
+                      ⚠️ ATENÇÃO: Salvar no AWS Secrets Manager antes de ir para produção!
+                    </p>
+                  </AlertDescription>
+                </Alert>
+
                 <div className="rounded-lg bg-orange-50 p-4 dark:bg-orange-950/20">
                   <p className="text-sm font-semibold text-orange-900 dark:text-orange-100">
                     Por que usar Secrets Manager?
@@ -595,15 +698,16 @@ async def create_upload(
                     </div>
                     <div className="flex items-start gap-2">
                       <span className="font-semibold text-slate-900">d)</span>
-                      <span>Adicione os pares chave-valor:</span>
+                      <span>Adicione os pares chave-valor (usar as credenciais reais acima):</span>
                     </div>
                   </div>
                   <div className="relative mt-3">
                     <pre className="overflow-x-auto rounded-lg bg-slate-900 p-4 text-sm text-slate-50">
                       <code>{`{
-  "ENTRA_TENANT_ID": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "ENTRA_CLIENT_ID": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "ENTRA_CLIENT_SECRET": "seu-client-secret-aqui"
+  "ENTRA_TENANT_ID": "5b6f6241-9a57-4be4-8e50-1dfa72e79a57",
+  "ENTRA_CLIENT_ID": "da3aaaad-619f-4bee-a434-51efd11faf7c",
+  "ENTRA_CLIENT_SECRET": "Pnt8Q~0CQeLtKfv2T.jbQqRL.th5uPZwRIHfoaKM",
+  "ENTRA_APP_NAME": "AAD-DEV-A12022"
 }`}</code>
                     </pre>
                   </div>
@@ -878,13 +982,6 @@ def save_entra_user(user_data: dict):
                     <div className="rounded-lg border p-3">
                       <div className="flex items-center justify-between mb-2">
                         <code className="text-sm font-mono">NEXT_PUBLIC_ENTRA_TENANT_ID</code>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard("NEXT_PUBLIC_ENTRA_TENANT_ID", "tenant")}
-                        >
-                          {copiedStates["tenant"] ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </Button>
                       </div>
                       <p className="text-xs text-muted-foreground">Cole o Tenant ID que você recebeu</p>
                     </div>
@@ -892,29 +989,15 @@ def save_entra_user(user_data: dict):
                     <div className="rounded-lg border p-3">
                       <div className="flex items-center justify-between mb-2">
                         <code className="text-sm font-mono">NEXT_PUBLIC_ENTRA_CLIENT_ID</code>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard("NEXT_PUBLIC_ENTRA_CLIENT_ID", "client")}
-                        >
-                          {copiedStates["client"] ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </Button>
                       </div>
                       <p className="text-xs text-muted-foreground">Cole o Client ID que você recebeu</p>
                     </div>
 
                     <div className="rounded-lg border p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <code className="text-sm font-mono">NEXT_PUBLIC_ENTRA_CLIENT_SECRET</code>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard("NEXT_PUBLIC_ENTRA_CLIENT_SECRET", "secret")}
-                        >
-                          {copiedStates["secret"] ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground">Cole o Client Secret que você recebeu</p>
+                      <div className="flex items-center justify-between mb-2">Client Secret</div>
+                      <p className="text-xs text-muted-foreground">
+                        Cole o Client Secret fornecido (apenas no servidor)
+                      </p>
                     </div>
                   </div>
                 </div>
