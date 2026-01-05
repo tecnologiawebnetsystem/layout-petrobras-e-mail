@@ -59,8 +59,8 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85 shadow-sm">
-      <div className="container flex h-16 items-center justify-between px-4 sm:px-6">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+      <div className="container flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink-0">
           <PetrobrasLogo size="sm" showText={false} />
           {subtitle && (
             <>
@@ -72,10 +72,12 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
           )}
         </div>
 
-        <TooltipProvider>
-          <div className="hidden md:flex items-center gap-2">
-            {!isExternalUser && <GlobalSearch />}
+        <div className="hidden md:flex flex-1 justify-center max-w-md mx-auto">
+          {!isExternalUser && <GlobalSearch />}
+        </div>
 
+        <TooltipProvider>
+          <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             {!isExternalUser && user?.userType === "supervisor" && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -83,7 +85,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                     variant="ghost"
                     size="icon"
                     onClick={handleViewWiki}
-                    className="h-11 w-11 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all duration-300 transform hover:scale-110 active:scale-95"
+                    className="h-10 w-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all duration-300"
                     aria-label="Wiki"
                   >
                     <FolderOpen className="h-4 w-4" />
@@ -101,7 +103,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                   variant="ghost"
                   size="icon"
                   onClick={toggleTheme}
-                  className="h-11 w-11 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all duration-300 transform hover:scale-110 active:scale-95"
+                  className="h-10 w-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all duration-300"
                   aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
                 >
                   {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -112,23 +114,25 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
               </TooltipContent>
             </Tooltip>
 
+            <div className="h-8 w-px bg-border mx-1" />
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="gap-2 px-2 h-11 text-foreground hover:bg-accent/10 transition-all duration-300 transform hover:scale-105 active:scale-95 ml-auto"
+                  className="gap-3 px-3 h-12 text-foreground hover:bg-accent/10 transition-all duration-300 rounded-full"
                 >
-                  <Avatar className="h-8 w-8 ring-2 ring-primary/20">
+                  <Avatar className="h-9 w-9 ring-2 ring-primary/20">
                     {user?.photoUrl && <AvatarImage src={user.photoUrl || "/placeholder.svg"} alt={user.name} />}
                     <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                       {user?.name ? getInitials(user.name) : "U"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col items-start min-w-0">
-                    <span className="text-sm font-semibold text-foreground truncate max-w-[150px]">
+                    <span className="text-sm font-semibold text-foreground truncate max-w-[160px]">
                       {user?.name || "Usuário"}
                     </span>
-                    <span className="text-xs text-muted-foreground truncate max-w-[150px]">
+                    <span className="text-xs text-muted-foreground truncate max-w-[160px]">
                       {user?.jobTitle || user?.email || ""}
                     </span>
                   </div>
