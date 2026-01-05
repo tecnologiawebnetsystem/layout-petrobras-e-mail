@@ -65,6 +65,8 @@ export function LoginForm() {
   const { instance } = useMsal()
   const entraIdConfig = checkEntraIdConfig()
 
+  console.log("[v0] Entra ID Config no LoginForm:", entraIdConfig)
+
   const { setAuth } = useAuthStore()
   const router = useRouter()
 
@@ -466,11 +468,6 @@ export function LoginForm() {
             </Button>
           </form>
 
-          {/* Footer */}
-          <div className="text-center text-sm text-muted-foreground pt-8">
-            © 2025 Petrobras. Todos os direitos reservados.
-          </div>
-
           {/* Entra ID Login Button */}
           {entraIdConfig.configured && (
             <div className="space-y-4">
@@ -499,6 +496,11 @@ export function LoginForm() {
               </Button>
             </div>
           )}
+
+          {/* Footer */}
+          <div className="text-center text-sm text-muted-foreground pt-8">
+            © 2025 Petrobras. Todos os direitos reservados.
+          </div>
         </div>
       </div>
 

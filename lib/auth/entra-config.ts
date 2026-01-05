@@ -115,6 +115,22 @@ export function checkEntraIdConfig(): {
 
   const missing = required.filter((key) => !process.env[key])
 
+  console.log("[v0] Verificando configuração Entra ID:")
+  console.log(
+    "[v0] NEXT_PUBLIC_ENTRA_CLIENT_ID:",
+    process.env.NEXT_PUBLIC_ENTRA_CLIENT_ID ? "✓ Definida" : "✗ Faltando",
+  )
+  console.log(
+    "[v0] NEXT_PUBLIC_ENTRA_TENANT_ID:",
+    process.env.NEXT_PUBLIC_ENTRA_TENANT_ID ? "✓ Definida" : "✗ Faltando",
+  )
+  console.log(
+    "[v0] NEXT_PUBLIC_ENTRA_REDIRECT_URI:",
+    process.env.NEXT_PUBLIC_ENTRA_REDIRECT_URI ? "✓ Definida" : "✗ Faltando",
+  )
+  console.log("[v0] Configuração completa:", missing.length === 0 ? "✓ SIM" : "✗ NÃO")
+  console.log("[v0] Variáveis faltando:", missing)
+
   return {
     configured: missing.length === 0,
     missing,
