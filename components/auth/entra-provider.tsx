@@ -158,8 +158,17 @@ export function EntraProvider({ children }: EntraProviderProps) {
       response.idToken,
     )
 
+    console.log("[v0] Iniciando busca de dados do Graph API")
+
     try {
       const [profile, manager, photo] = await Promise.all([getUserProfile(), getUserManager(), getUserPhoto()])
+
+      console.log("[v0] Resultados do Graph API:", {
+        hasProfile: !!profile,
+        hasManager: !!manager,
+        hasPhoto: !!photo,
+        photoUrl: photo,
+      })
 
       // Enriquecer perfil do usuário com dados adicionais
       const enrichedData: any = {}
@@ -170,6 +179,7 @@ export function EntraProvider({ children }: EntraProviderProps) {
         enrichedData.officeLocation = profile.officeLocation
         enrichedData.mobilePhone = profile.mobilePhone
         enrichedData.employeeId = profile.employeeId
+        console.log("[v0] Perfil enriquecido:", profile)
       }
 
       if (manager) {
@@ -180,15 +190,22 @@ export function EntraProvider({ children }: EntraProviderProps) {
           jobTitle: manager.jobTitle,
           department: manager.department,
         }
+        console.log("[v0] Supervisor encontrado:", manager)
+      } else {
+        console.log("[v0] Supervisor não encontrado ou não configurado")
       }
 
       if (photo) {
         enrichedData.photoUrl = photo
+        console.log("[v0] Foto carregada com sucesso")
+      } else {
+        console.log("[v0] Foto não encontrada")
       }
 
       // Atualizar store com dados enriquecidos
       if (Object.keys(enrichedData).length > 0) {
         useAuthStore.getState().enrichUserProfile(enrichedData)
+        console.log("[v0] Dados enriquecidos salvos no store:", enrichedData)
       }
 
       console.log("[Entra ID] Perfil enriquecido com sucesso:", {
@@ -198,6 +215,7 @@ export function EntraProvider({ children }: EntraProviderProps) {
       })
     } catch (error) {
       console.error("[Entra ID] Erro ao enriquecer perfil:", error)
+      console.error("[v0] Detalhes do erro:", error)
       // Não bloqueia o login se falhar ao buscar dados adicionais
     }
 
