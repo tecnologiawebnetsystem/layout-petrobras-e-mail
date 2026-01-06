@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Eye, EyeOff, User, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -49,7 +49,6 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [showExternalVerification, setShowExternalVerification] = useState(false)
-  const [showEntraIdButton, setShowEntraIdButton] = useState(false)
   const [notification, setNotification] = useState<{
     show: boolean
     type: "success" | "error" | "warning" | "info"
@@ -66,10 +65,8 @@ export function LoginForm() {
   const { setAuth } = useAuthStore()
   const router = useRouter()
 
-  useEffect(() => {
-    const config = checkEntraIdConfig()
-    setShowEntraIdButton(config.configured)
-  }, [])
+  const entraConfig = checkEntraIdConfig()
+  const showEntraIdButton = entraConfig.configured
 
   const isInternalUser = email.toLowerCase().includes("@petrobras")
 

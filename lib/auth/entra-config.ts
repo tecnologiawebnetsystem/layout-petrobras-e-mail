@@ -111,9 +111,17 @@ export function checkEntraIdConfig(): {
   configured: boolean
   missing: string[]
 } {
-  const required = ["NEXT_PUBLIC_ENTRA_CLIENT_ID", "NEXT_PUBLIC_ENTRA_TENANT_ID", "NEXT_PUBLIC_ENTRA_REDIRECT_URI"]
+  const config = {
+    clientId: process.env.NEXT_PUBLIC_ENTRA_CLIENT_ID,
+    tenantId: process.env.NEXT_PUBLIC_ENTRA_TENANT_ID,
+    redirectUri: process.env.NEXT_PUBLIC_ENTRA_REDIRECT_URI,
+  }
 
-  const missing = required.filter((key) => !process.env[key])
+  const missing: string[] = []
+
+  if (!config.clientId) missing.push("NEXT_PUBLIC_ENTRA_CLIENT_ID")
+  if (!config.tenantId) missing.push("NEXT_PUBLIC_ENTRA_TENANT_ID")
+  if (!config.redirectUri) missing.push("NEXT_PUBLIC_ENTRA_REDIRECT_URI")
 
   return {
     configured: missing.length === 0,
