@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Eye, EyeOff, User, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -50,6 +49,7 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [showExternalVerification, setShowExternalVerification] = useState(false)
+  const [showEntraIdButton, setShowEntraIdButton] = useState(false)
   const [notification, setNotification] = useState<{
     show: boolean
     type: "success" | "error" | "warning" | "info"
@@ -63,19 +63,19 @@ export function LoginForm() {
   })
 
   const { instance } = useMsal()
-  const entraIdConfig = checkEntraIdConfig()
-
-  console.log("[v0] Entra ID Config no LoginForm:", entraIdConfig)
-
   const { setAuth } = useAuthStore()
   const router = useRouter()
+
+  useEffect(() => {
+    const config = checkEntraIdConfig()
+    setShowEntraIdButton(config.configured)
+  }, [])
 
   const isInternalUser = email.toLowerCase().includes("@petrobras")
 
   const handleQuickLogin = (userType: "internal" | "external" | "supervisor" | "externalEmpty") => {
     const credentials = DEMO_CREDENTIALS[userType]
 
-    // For external users, show verification modal instead of direct login
     if (userType === "external") {
       setShowExternalVerification(true)
       return
@@ -86,7 +86,6 @@ export function LoginForm() {
     setEmail(credentials.email)
     setPassword(credentials.password)
 
-    // Trigger login after setting credentials
     setTimeout(() => {
       setIsLoading(true)
       setAuth(
@@ -163,11 +162,8 @@ export function LoginForm() {
   const handleEntraIdLogin = async () => {
     try {
       const response = await instance.loginPopup(loginRequest)
-
-      // O EntraProvider vai lidar com o resto
     } catch (error: any) {
       if (error.errorCode === "user_cancelled" || error.message?.includes("user_cancelled")) {
-        // Usuário simplesmente fechou a janela - mostrar mensagem amigável
         setNotification({
           show: true,
           type: "info",
@@ -177,7 +173,6 @@ export function LoginForm() {
         return
       }
 
-      // Outros erros devem ser mostrados
       setNotification({
         show: true,
         type: "error",
@@ -318,27 +313,18 @@ export function LoginForm() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Gradient Background */}
       <LoginBackground />
-
-      {/* Right Side - Login Form */}
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md space-y-8">
-          {/* Logo */}
           <div className="flex justify-start">
             <PetrobrasLogo />
           </div>
-
-          {/* Header */}
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-foreground tracking-tight">Acesse sua conta</h1>
             <p className="text-muted-foreground text-base">Faça o upload dos seus arquivos de forma segura.</p>
           </div>
-
-          {/* Demo Credentials Info */}
           <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4 space-y-3">
             <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">Acesso Rápido - Demonstração:</p>
-
             <div className="grid grid-cols-1 gap-2">
               <Button
                 type="button"
@@ -353,7 +339,6 @@ export function LoginForm() {
                   </span>
                 </div>
               </Button>
-
               <Button
                 type="button"
                 variant="outline"
@@ -365,7 +350,6 @@ export function LoginForm() {
                   <span className="text-[10px] text-blue-700 dark:text-blue-300">cliente@empresa.com</span>
                 </div>
               </Button>
-
               <Button
                 type="button"
                 variant="outline"
@@ -379,7 +363,6 @@ export function LoginForm() {
                   <span className="text-[10px] text-blue-700 dark:text-blue-300">demo@exemplo.com.br</span>
                 </div>
               </Button>
-
               <Button
                 type="button"
                 variant="outline"
@@ -393,10 +376,7 @@ export function LoginForm() {
               </Button>
             </div>
           </div>
-
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email/Username Field */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-foreground">
                 E-mail ou Usuário
@@ -422,8 +402,6 @@ export function LoginForm() {
                 </p>
               )}
             </div>
-
-            {/* Password Field */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-sm font-medium text-foreground">
@@ -457,8 +435,6 @@ export function LoginForm() {
                 </button>
               </div>
             </div>
-
-            {/* Submit Button */}
             <Button
               type="submit"
               disabled={isLoading}
@@ -467,9 +443,7 @@ export function LoginForm() {
               {isLoading ? "Entrando..." : "Entrar"}
             </Button>
           </form>
-
-          {/* Entra ID Login Button */}
-          {entraIdConfig.configured && (
+          {showEntraIdButton && (
             <div className="space-y-4">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -479,7 +453,6 @@ export function LoginForm() {
                   <span className="bg-background px-2 text-muted-foreground">Ou continue com</span>
                 </div>
               </div>
-
               <Button
                 type="button"
                 variant="outline"
@@ -496,14 +469,11 @@ export function LoginForm() {
               </Button>
             </div>
           )}
-
-          {/* Footer */}
           <div className="text-center text-sm text-muted-foreground pt-8">
             © 2025 Petrobras. Todos os direitos reservados.
           </div>
         </div>
       </div>
-
       <ForgotPasswordModal open={showForgotPassword} onOpenChange={setShowForgotPassword} />
       <ExternalVerificationModal
         open={showExternalVerification}
