@@ -114,6 +114,8 @@ export function EntraProvider({ children }: EntraProviderProps) {
       return
     }
 
+    alert("[DEBUG] Login bem-sucedido! Iniciando busca de dados...")
+
     // Extrair dados do usuário
     const email = account.username || account.homeAccountId
     const name = account.name || "Usuário"
@@ -159,6 +161,7 @@ export function EntraProvider({ children }: EntraProviderProps) {
     )
 
     console.log("[v0] Iniciando busca de dados do Graph API")
+    alert("[DEBUG] Buscando foto e supervisor do Graph API...")
 
     try {
       const [profile, manager, photo] = await Promise.all([getUserProfile(), getUserManager(), getUserPhoto()])
@@ -169,6 +172,8 @@ export function EntraProvider({ children }: EntraProviderProps) {
         hasPhoto: !!photo,
         photoUrl: photo,
       })
+
+      alert(`[DEBUG] Resultados:\n- Perfil: ${!!profile}\n- Supervisor: ${!!manager}\n- Foto: ${!!photo}`)
 
       // Enriquecer perfil do usuário com dados adicionais
       const enrichedData: any = {}
@@ -206,6 +211,7 @@ export function EntraProvider({ children }: EntraProviderProps) {
       if (Object.keys(enrichedData).length > 0) {
         useAuthStore.getState().enrichUserProfile(enrichedData)
         console.log("[v0] Dados enriquecidos salvos no store:", enrichedData)
+        alert(`[DEBUG] Dados salvos! Chaves: ${Object.keys(enrichedData).join(", ")}`)
       }
 
       console.log("[Entra ID] Perfil enriquecido com sucesso:", {
@@ -216,6 +222,7 @@ export function EntraProvider({ children }: EntraProviderProps) {
     } catch (error) {
       console.error("[Entra ID] Erro ao enriquecer perfil:", error)
       console.error("[v0] Detalhes do erro:", error)
+      alert(`[DEBUG ERRO] ${error instanceof Error ? error.message : "Erro desconhecido"}`)
       // Não bloqueia o login se falhar ao buscar dados adicionais
     }
 
