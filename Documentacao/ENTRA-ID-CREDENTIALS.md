@@ -137,9 +137,3 @@ O sistema automaticamente valida se as credenciais estão configuradas. Verifiqu
 - Adicionar a URL da aplicação no Entra ID:
   - Desenvolvimento: `http://localhost:3000`
   - Produção: `https://compartilhamento.petrobras.com.br`
-
-## Contato
-
-Para renovação de credenciais ou problemas, contatar:
-- Time de Infraestrutura Petrobras
-- Azure AD Administrators

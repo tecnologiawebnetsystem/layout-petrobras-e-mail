@@ -204,30 +204,6 @@ sessionStorage.getItem('msal.token.keys')
 
 ---
 
-## Troubleshooting Rápido
-
-### Problema: Botão não aparece
-**Causa:** Variáveis de ambiente não configuradas
-**Solução:** Confira se as 3 variáveis estão no "Vars" (sidebar)
-
-### Problema: Erro "AADSTS50011"
-**Causa:** URL de redirect não cadastrada no Entra ID
-**Solução:** Peça ao time de infra para adicionar sua URL
-
-### Problema: Erro "invalid_client"
-**Causa:** CLIENT_ID ou CLIENT_SECRET incorretos
-**Solução:** Confira se copiou corretamente do time de infra
-
-### Problema: Login funciona mas redireciona errado
-**Causa:** Lógica de detecção de tipo de usuário
-**Solução:** Verifique seu email em `lib/auth/entra-config.ts` linha 108
-
-### Problema: Sessão expira rápido
-**Causa:** Token de acesso tem validade curta (geralmente 1 hora)
-**Solução:** Isso é normal. Faça login novamente.
-
----
-
 ## Exemplo de Teste Completo (5 minutos)
 
 \`\`\`bash
@@ -280,16 +256,3 @@ sessionStorage.getItem('msal.token.keys')
    - Atualize REDIRECT_URI para URL de produção
 
 ---
-
-## Suporte
-
-Se tiver problemas durante o teste:
-
-1. Confira os logs no console (F12)
-2. Verifique se as 3 variáveis estão corretas
-3. Confirme com time de infra se URL de redirect está cadastrada
-4. Consulte a Wiki: `/wiki-dev/entra-id`
-
-**Tudo pronto para testar!** 🚀
-
-Assim que receber as credenciais do time de infra, é só seguir este guia e em 5 minutos está funcionando.

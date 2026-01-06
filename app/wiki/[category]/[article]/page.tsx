@@ -111,7 +111,7 @@ export default function WikiArticlePage() {
                 antes de serem liberados
               </li>
               <li>
-                <strong>Notificações Automáticas:</strong> E-mails enviados via Resend para remetente, supervisor e
+                <strong>Notificações Automáticas:</strong> E-mails enviados via AWS SES para remetente, supervisor e
                 destinatário
               </li>
               <li>
@@ -125,7 +125,7 @@ export default function WikiArticlePage() {
                 <strong>Histórico e Auditoria:</strong> Rastreabilidade completa de todas as ações no sistema
               </li>
               <li>
-                <strong>Autenticação Corporativa:</strong> Login via ServiceNow ou Microsoft Entra ID (Azure AD)
+                <strong>Autenticação Corporativa:</strong> Login via Microsoft Entra ID (Azure AD) com SSO
               </li>
             </ul>
 
