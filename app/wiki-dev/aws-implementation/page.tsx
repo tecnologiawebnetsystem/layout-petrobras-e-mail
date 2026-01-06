@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Cloud, HelpCircle, CheckCircle2 } from "lucide-react"
+import { ArrowLeft, Cloud, HelpCircle, CheckCircle2, Globe } from "lucide-react"
 import Link from "next/link"
 
 export default function AWSImplementationPage() {
@@ -31,10 +31,11 @@ export default function AWSImplementationPage() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-8">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="services">Serviços Detalhados</TabsTrigger>
             <TabsTrigger value="implementation">Implementação</TabsTrigger>
+            <TabsTrigger value="provisorio">Domínios Provisórios</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-8">
@@ -503,6 +504,479 @@ export default function AWSImplementationPage() {
                     <br />• <strong>Deployment Guide</strong> - Configurações de produção
                   </p>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="provisorio" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-6 w-6" />
+                  Domínios Provisórios AWS para Testes (HML)
+                </CardTitle>
+                <CardDescription>
+                  Como criar URLs temporárias na AWS para testar o sistema antes de usar o domínio oficial da Petrobras
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* O que são domínios provisórios */}
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                  <h4 className="mb-2 font-bold text-blue-900">Por que usar domínio provisório?</h4>
+                  <p className="text-sm text-blue-800">
+                    Antes de colocar o sistema no domínio oficial da Petrobras (ex: <code>files.petrobras.com.br</code>
+                    ), é fundamental testar em um <strong>ambiente de homologação (HML)</strong> com URL temporária.
+                    Assim você valida tudo funciona antes de ir para produção.
+                  </p>
+                </div>
+
+                {/* Opções de domínios temporários */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-slate-900">4 Opções de Domínios Provisórios na AWS</h3>
+
+                  {/* Opção 1: CloudFront URL */}
+                  <Card className="border-green-200 bg-green-50">
+                    <CardHeader>
+                      <CardTitle className="text-lg text-green-900">
+                        ✅ Opção 1: URL do CloudFront (RECOMENDADA)
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="rounded bg-white p-3">
+                        <p className="mb-2 font-semibold text-slate-900">URL Gerada:</p>
+                        <code className="text-sm text-blue-600">https://d1234abcd5678.cloudfront.net</code>
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="font-semibold text-green-900">✅ Vantagens:</p>
+                        <ul className="space-y-1 text-sm text-slate-700">
+                          <li>
+                            • <strong>HTTPS gratuito</strong> - Já vem com certificado SSL da AWS
+                          </li>
+                          <li>
+                            • <strong>CDN global</strong> - Rápido em qualquer lugar do mundo
+                          </li>
+                          <li>
+                            • <strong>Produção-ready</strong> - Mesma infraestrutura que vai usar em PRD
+                          </li>
+                          <li>
+                            • <strong>Fácil de criar</strong> - Automático ao criar distribuição CloudFront
+                          </li>
+                        </ul>
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="font-semibold text-red-900">❌ Desvantagens:</p>
+                        <ul className="space-y-1 text-sm text-slate-700">
+                          <li>• URL feia e difícil de lembrar</li>
+                          <li>• Precisa reconfigurar variáveis de ambiente depois para PRD</li>
+                        </ul>
+                      </div>
+
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <p className="mb-2 font-semibold text-slate-900">Como criar:</p>
+                        <pre className="overflow-x-auto rounded bg-slate-900 p-3 text-sm text-green-400">
+                          {`# 1. Criar distribuição CloudFront
+aws cloudfront create-distribution \\
+  --origin-domain-name petrobras-files-hml.s3.amazonaws.com \\
+  --default-root-object index.html
+
+# 2. Aguardar deploy (~15 minutos)
+aws cloudfront list-distributions
+
+# 3. Copiar a URL gerada
+# Exemplo: https://d1a2b3c4d5e6f7.cloudfront.net`}
+                        </pre>
+                      </div>
+
+                      <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+                        <p className="mb-2 text-sm font-semibold text-blue-900">Configurar no projeto:</p>
+                        <pre className="overflow-x-auto text-xs text-blue-800">
+                          {`# .env.hml
+NEXT_PUBLIC_API_URL=https://d1a2b3c4d5e6f7.cloudfront.net
+NEXT_PUBLIC_ENTRA_REDIRECT_URI=https://d1a2b3c4d5e6f7.cloudfront.net`}
+                        </pre>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Opção 2: S3 Static Website */}
+                  <Card className="border-yellow-200 bg-yellow-50">
+                    <CardHeader>
+                      <CardTitle className="text-lg text-yellow-900">⚠️ Opção 2: S3 Static Website URL</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="rounded bg-white p-3">
+                        <p className="mb-2 font-semibold text-slate-900">URL Gerada:</p>
+                        <code className="text-sm text-blue-600">
+                          http://petrobras-files-hml.s3-website-us-east-1.amazonaws.com
+                        </code>
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="font-semibold text-yellow-900">✅ Vantagens:</p>
+                        <ul className="space-y-1 text-sm text-slate-700">
+                          <li>
+                            • <strong>Muito simples</strong> - 1 comando para criar
+                          </li>
+                          <li>
+                            • <strong>Gratuito</strong> - Sem custos adicionais
+                          </li>
+                          <li>
+                            • <strong>Bom para testes rápidos</strong>
+                          </li>
+                        </ul>
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="font-semibold text-red-900">❌ Desvantagens:</p>
+                        <ul className="space-y-1 text-sm text-slate-700">
+                          <li>
+                            • <strong>SEM HTTPS</strong> - Apenas HTTP (inseguro)
+                          </li>
+                          <li>• Lento - Sem CDN</li>
+                          <li>• Não recomendado para HML oficial</li>
+                        </ul>
+                      </div>
+
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <p className="mb-2 font-semibold text-slate-900">Como criar:</p>
+                        <pre className="overflow-x-auto rounded bg-slate-900 p-3 text-sm text-green-400">
+                          {`# 1. Criar bucket S3
+aws s3 mb s3://petrobras-files-hml
+
+# 2. Configurar como website
+aws s3 website s3://petrobras-files-hml \\
+  --index-document index.html \\
+  --error-document 404.html
+
+# 3. Tornar público
+aws s3api put-bucket-policy \\
+  --bucket petrobras-files-hml \\
+  --policy file://public-policy.json
+
+# URL gerada automaticamente:
+# http://petrobras-files-hml.s3-website-us-east-1.amazonaws.com`}
+                        </pre>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Opção 3: API Gateway Custom Domain */}
+                  <Card className="border-purple-200 bg-purple-50">
+                    <CardHeader>
+                      <CardTitle className="text-lg text-purple-900">💡 Opção 3: API Gateway URL</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="rounded bg-white p-3">
+                        <p className="mb-2 font-semibold text-slate-900">URL Gerada:</p>
+                        <code className="text-sm text-blue-600">
+                          https://abc123xyz.execute-api.us-east-1.amazonaws.com/hml
+                        </code>
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="font-semibold text-purple-900">✅ Vantagens:</p>
+                        <ul className="space-y-1 text-sm text-slate-700">
+                          <li>
+                            • <strong>HTTPS gratuito</strong>
+                          </li>
+                          <li>
+                            • <strong>Bom para API backend</strong>
+                          </li>
+                          <li>• Stages separados (dev/hml/prd)</li>
+                        </ul>
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="font-semibold text-red-900">❌ Desvantagens:</p>
+                        <ul className="space-y-1 text-sm text-slate-700">
+                          <li>• Apenas para backend API (não frontend)</li>
+                          <li>• URL muda se recriar API Gateway</li>
+                        </ul>
+                      </div>
+
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <p className="mb-2 font-semibold text-slate-900">Como criar:</p>
+                        <pre className="overflow-x-auto rounded bg-slate-900 p-3 text-sm text-green-400">
+                          {`# Criar API Gateway
+aws apigateway create-rest-api \\
+  --name petrobras-files-api-hml \\
+  --description "API HML"
+
+# Deploy em stage 'hml'
+aws apigateway create-deployment \\
+  --rest-api-id abc123xyz \\
+  --stage-name hml
+
+# URL gerada:
+# https://abc123xyz.execute-api.us-east-1.amazonaws.com/hml`}
+                        </pre>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Opção 4: Route 53 Subdomínio */}
+                  <Card className="border-blue-200 bg-blue-50">
+                    <CardHeader>
+                      <CardTitle className="text-lg text-blue-900">
+                        🎯 Opção 4: Route 53 com Subdomínio (IDEAL PARA HML)
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="rounded bg-white p-3">
+                        <p className="mb-2 font-semibold text-slate-900">URL Personalizada:</p>
+                        <code className="text-sm text-blue-600">https://files-hml.petrobras.com.br</code>
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="font-semibold text-blue-900">✅ Vantagens:</p>
+                        <ul className="space-y-1 text-sm text-slate-700">
+                          <li>
+                            • <strong>URL profissional</strong> - Parece domínio real
+                          </li>
+                          <li>
+                            • <strong>Fácil de lembrar</strong> - files-hml.petrobras.com.br
+                          </li>
+                          <li>
+                            • <strong>Separação clara</strong> - HML vs PRD
+                          </li>
+                          <li>
+                            • <strong>Certificado SSL</strong> - Via AWS Certificate Manager
+                          </li>
+                        </ul>
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="font-semibold text-red-900">❌ Desvantagens:</p>
+                        <ul className="space-y-1 text-sm text-slate-700">
+                          <li>• Precisa ter acesso ao DNS da Petrobras</li>
+                          <li>• Mais complexo de configurar</li>
+                          <li>• Certificado SSL leva ~30 minutos para emitir</li>
+                        </ul>
+                      </div>
+
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <p className="mb-2 font-semibold text-slate-900">Como criar (Passo a passo):</p>
+
+                        <div className="space-y-4 text-sm">
+                          <div>
+                            <p className="font-semibold text-slate-900">1️⃣ Criar Certificado SSL (ACM):</p>
+                            <pre className="mt-2 overflow-x-auto rounded bg-slate-900 p-3 text-green-400">
+                              {`aws acm request-certificate \\
+  --domain-name files-hml.petrobras.com.br \\
+  --validation-method DNS \\
+  --region us-east-1
+
+# Copiar o CNAME para validação
+aws acm describe-certificate \\
+  --certificate-arn arn:aws:acm:...`}
+                            </pre>
+                          </div>
+
+                          <div>
+                            <p className="font-semibold text-slate-900">2️⃣ Validar Certificado no DNS:</p>
+                            <ul className="ml-4 mt-2 list-disc space-y-1 text-slate-700">
+                              <li>Pedir ao administrador DNS da Petrobras</li>
+                              <li>Adicionar registro CNAME fornecido pela AWS</li>
+                              <li>Aguardar ~5-30 minutos para validação</li>
+                            </ul>
+                          </div>
+
+                          <div>
+                            <p className="font-semibold text-slate-900">
+                              3️⃣ Criar Distribuição CloudFront com domínio custom:
+                            </p>
+                            <pre className="mt-2 overflow-x-auto rounded bg-slate-900 p-3 text-green-400">
+                              {`aws cloudfront create-distribution \\
+  --origin-domain-name petrobras-files-hml.s3.amazonaws.com \\
+  --default-root-object index.html \\
+  --viewer-certificate ACMCertificateArn=arn:aws:acm:...,\\
+SSLSupportMethod=sni-only,\\
+MinimumProtocolVersion=TLSv1.2_2021 \\
+  --aliases files-hml.petrobras.com.br`}
+                            </pre>
+                          </div>
+
+                          <div>
+                            <p className="font-semibold text-slate-900">4️⃣ Criar Record Set no Route 53:</p>
+                            <pre className="mt-2 overflow-x-auto rounded bg-slate-900 p-3 text-green-400">
+                              {`aws route53 change-resource-record-sets \\
+  --hosted-zone-id Z1234567890ABC \\
+  --change-batch '{
+    "Changes": [{
+      "Action": "CREATE",
+      "ResourceRecordSet": {
+        "Name": "files-hml.petrobras.com.br",
+        "Type": "A",
+        "AliasTarget": {
+          "HostedZoneId": "Z2FDTNDATAQYW2",
+          "DNSName": "d1234abcd.cloudfront.net",
+          "EvaluateTargetHealth": false
+        }
+      }
+    }]
+  }'`}
+                            </pre>
+                          </div>
+
+                          <div>
+                            <p className="font-semibold text-slate-900">5️⃣ Testar:</p>
+                            <pre className="mt-2 overflow-x-auto rounded bg-slate-900 p-3 text-green-400">
+                              {`# Aguardar propagação DNS (~15 minutos)
+nslookup files-hml.petrobras.com.br
+
+# Testar HTTPS
+curl -I https://files-hml.petrobras.com.br`}
+                            </pre>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+                        <p className="mb-2 text-sm font-semibold text-green-900">📋 Checklist Final:</p>
+                        <ul className="space-y-1 text-sm text-green-800">
+                          <li>✅ Certificado SSL validado e ativo</li>
+                          <li>✅ CloudFront distribution criada com domínio custom</li>
+                          <li>✅ Record A apontando para CloudFront</li>
+                          <li>✅ HTTPS funcionando (sem aviso de segurança)</li>
+                          <li>✅ Variáveis de ambiente atualizadas no Vercel</li>
+                        </ul>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Comparação das opções */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Comparação: Qual Escolher?</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b-2 border-slate-300 bg-slate-100">
+                            <th className="p-3 text-left">Opção</th>
+                            <th className="p-3 text-left">HTTPS</th>
+                            <th className="p-3 text-left">Facilidade</th>
+                            <th className="p-3 text-left">Custo</th>
+                            <th className="p-3 text-left">Recomendado Para</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-sm">
+                          <tr className="border-b border-slate-200">
+                            <td className="p-3 font-semibold">CloudFront URL</td>
+                            <td className="p-3">✅ Sim</td>
+                            <td className="p-3">⭐⭐⭐⭐⭐</td>
+                            <td className="p-3">~$5/mês</td>
+                            <td className="p-3">Testes rápidos, demos</td>
+                          </tr>
+                          <tr className="border-b border-slate-200">
+                            <td className="p-3 font-semibold">S3 Static Website</td>
+                            <td className="p-3">❌ Não</td>
+                            <td className="p-3">⭐⭐⭐⭐⭐</td>
+                            <td className="p-3">Grátis</td>
+                            <td className="p-3">Dev local apenas</td>
+                          </tr>
+                          <tr className="border-b border-slate-200">
+                            <td className="p-3 font-semibold">API Gateway URL</td>
+                            <td className="p-3">✅ Sim</td>
+                            <td className="p-3">⭐⭐⭐</td>
+                            <td className="p-3">~$3/mês</td>
+                            <td className="p-3">Backend API</td>
+                          </tr>
+                          <tr className="border-b border-slate-200">
+                            <td className="p-3 font-semibold">Route 53 Subdomínio</td>
+                            <td className="p-3">✅ Sim</td>
+                            <td className="p-3">⭐⭐</td>
+                            <td className="p-3">~$10/mês</td>
+                            <td className="p-3">
+                              <strong>HML OFICIAL</strong>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4">
+                      <p className="font-bold text-green-900">💡 Recomendação:</p>
+                      <ul className="mt-2 space-y-1 text-sm text-green-800">
+                        <li>
+                          • <strong>Desenvolvimento/Testes</strong>: Usar CloudFront URL (Opção 1)
+                        </li>
+                        <li>
+                          • <strong>Homologação Oficial</strong>: Usar Route 53 com subdomínio (Opção 4)
+                        </li>
+                        <li>
+                          • <strong>Produção</strong>: Domínio oficial files.petrobras.com.br
+                        </li>
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Migração de HML para PRD */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Migração de HML para Produção</CardTitle>
+                    <CardDescription>O que muda ao sair do domínio provisório para o oficial</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      <h4 className="font-bold text-slate-900">1️⃣ Atualizar Variáveis de Ambiente:</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="rounded border border-yellow-200 bg-yellow-50 p-3">
+                          <p className="mb-2 text-sm font-semibold text-yellow-900">HML (Antes):</p>
+                          <pre className="text-xs text-yellow-800">
+                            {`NEXT_PUBLIC_API_URL=
+https://files-hml.petrobras.com.br
+
+NEXT_PUBLIC_ENTRA_REDIRECT_URI=
+https://files-hml.petrobras.com.br`}
+                          </pre>
+                        </div>
+                        <div className="rounded border border-green-200 bg-green-50 p-3">
+                          <p className="mb-2 text-sm font-semibold text-green-900">PRD (Depois):</p>
+                          <pre className="text-xs text-green-800">
+                            {`NEXT_PUBLIC_API_URL=
+https://files.petrobras.com.br
+
+NEXT_PUBLIC_ENTRA_REDIRECT_URI=
+https://files.petrobras.com.br`}
+                          </pre>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-slate-900">2️⃣ Atualizar Azure AD Redirect URI:</h4>
+                      <p className="text-sm text-slate-700">
+                        No Portal Azure, adicionar o novo redirect URI de produção:
+                      </p>
+                      <code className="block rounded bg-slate-900 p-3 text-sm text-green-400">
+                        https://files.petrobras.com.br
+                      </code>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-slate-900">3️⃣ Criar Nova Distribuição CloudFront para PRD:</h4>
+                      <ul className="ml-4 list-disc space-y-1 text-sm text-slate-700">
+                        <li>Bucket S3 de produção separado</li>
+                        <li>Certificado SSL para files.petrobras.com.br</li>
+                        <li>WAF ativado</li>
+                        <li>Logging habilitado</li>
+                      </ul>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-slate-900">4️⃣ Apontar DNS de Produção:</h4>
+                      <p className="text-sm text-slate-700">
+                        Pedir ao administrador DNS da Petrobras para criar record A apontando para o CloudFront de PRD.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               </CardContent>
             </Card>
           </TabsContent>

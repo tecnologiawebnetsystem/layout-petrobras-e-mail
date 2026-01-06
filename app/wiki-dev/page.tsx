@@ -84,6 +84,22 @@ export default function WikiDevPage() {
       color: "from-orange-600 to-red-600",
       topics: ["5 Scripts SQL", "8 Endpoints API", "4 Services", "40-60h", "Código Pronto"],
     },
+    {
+      title: "Configuração Azure AD",
+      description: "Guia completo de Redirect URI e Permissões Graph API para HML e Produção",
+      icon: Shield,
+      href: "/wiki-dev/azure-config",
+      color: "from-blue-600 to-indigo-700",
+      topics: ["Redirect URI", "Graph API", "HML", "Produção"],
+    },
+    {
+      title: "Deploy AWS com Domínio Provisório",
+      description: "Guia completo para publicar Next.js na AWS com domínio provisório para HML e Produção",
+      icon: Cloud,
+      href: "/wiki-dev/deploy-aws",
+      color: "from-green-500 to-emerald-600",
+      topics: ["Amplify", "S3 + CloudFront", "ECS Fargate", "Domínio Provisório", "Custos"],
+    },
   ]
 
   const filteredCategories = wikiCategories.filter(
