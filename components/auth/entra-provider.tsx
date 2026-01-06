@@ -221,6 +221,10 @@ export function EntraProvider({ children }: EntraProviderProps) {
         },
       },
     })
+
+    if (typeof window !== "undefined") {
+      window.location.href = "/upload"
+    }
   }
 
   const handleLogoutSuccess = () => {

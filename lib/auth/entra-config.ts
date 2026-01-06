@@ -21,15 +21,11 @@ export const msalConfig: Configuration = {
     // Formato: https://login.microsoftonline.com/{TENANT_ID}
     authority: `https://login.microsoftonline.com/${process.env.NEXT_PUBLIC_ENTRA_TENANT_ID}`,
 
-    // URL de redirecionamento após login
-    redirectUri:
-      process.env.NEXT_PUBLIC_ENTRA_REDIRECT_URI || (typeof window !== "undefined" ? window.location.origin : ""),
+    redirectUri: process.env.NEXT_PUBLIC_ENTRA_REDIRECT_URI || "",
 
     // URL de redirecionamento após logout
-    postLogoutRedirectUri:
-      process.env.NEXT_PUBLIC_ENTRA_REDIRECT_URI || (typeof window !== "undefined" ? window.location.origin : ""),
+    postLogoutRedirectUri: process.env.NEXT_PUBLIC_ENTRA_REDIRECT_URI || "",
 
-    // Navegação para cliente (não servidor)
     navigateToLoginRequestUrl: true,
   },
   cache: {
@@ -80,7 +76,7 @@ export const msalInstance = new PublicClientApplication(msalConfig)
  * Tipos de usuário baseados no email
  *
  * @param email Email do usuário autenticado
- * @returns 'internal' se for @petrobras, 'external' caso contrário
+ * @returns 'internal' se for @petrobras, 'supervisor' caso contrário
  */
 export function getUserTypeFromEmail(email: string): "internal" | "supervisor" | "external" {
   const emailLower = email.toLowerCase()
