@@ -61,7 +61,7 @@ export default function EntraIdWikiPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-9 lg:w-auto">
+          <TabsList className="grid w-full grid-cols-10 lg:w-auto">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="solicitacao">Solicitação</TabsTrigger>
             <TabsTrigger value="frontend">Front-end</TabsTrigger>
@@ -69,6 +69,7 @@ export default function EntraIdWikiPage() {
             <TabsTrigger value="aws">AWS</TabsTrigger>
             <TabsTrigger value="database">DynamoDB</TabsTrigger>
             <TabsTrigger value="seguranca">Segurança</TabsTrigger>
+            <TabsTrigger value="dados">Dados Disponíveis</TabsTrigger>
             <TabsTrigger value="teste">Como Testar</TabsTrigger>
             <TabsTrigger value="checklist">Checklist</TabsTrigger>
           </TabsList>
@@ -1472,6 +1473,472 @@ def save_entra_user(user_data: dict):
                         <input type="checkbox" className="h-4 w-4" />
                         <span>Teste 5: Logout e novo login</span>
                       </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="dados" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Dados Disponíveis do Microsoft Entra ID</CardTitle>
+                <CardDescription>
+                  Todos os dados que você pode obter através do Microsoft Graph API após autenticação, com exemplos em
+                  React e Python
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                {/* Tabela de Dados Básicos */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Dados Básicos do Usuário (User.Read)</h3>
+                  <div className="rounded-lg border overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted">
+                        <tr>
+                          <th className="px-4 py-3 text-left font-medium">Campo</th>
+                          <th className="px-4 py-3 text-left font-medium">Tipo</th>
+                          <th className="px-4 py-3 text-left font-medium">Descrição</th>
+                          <th className="px-4 py-3 text-left font-medium">Exemplo</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">id</td>
+                          <td className="px-4 py-3">string</td>
+                          <td className="px-4 py-3">ID único do usuário no Azure AD</td>
+                          <td className="px-4 py-3 font-mono text-xs">12345678-abcd-...</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">displayName</td>
+                          <td className="px-4 py-3">string</td>
+                          <td className="px-4 py-3">Nome completo para exibição</td>
+                          <td className="px-4 py-3">Kleber Gonçalves</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">mail</td>
+                          <td className="px-4 py-3">string</td>
+                          <td className="px-4 py-3">Email corporativo</td>
+                          <td className="px-4 py-3">kleber.goncalves@petrobras.com.br</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">userPrincipalName</td>
+                          <td className="px-4 py-3">string</td>
+                          <td className="px-4 py-3">Nome principal do usuário (login)</td>
+                          <td className="px-4 py-3">kleber.goncalves@petrobras.com.br</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">jobTitle</td>
+                          <td className="px-4 py-3">string</td>
+                          <td className="px-4 py-3">Cargo/função do usuário</td>
+                          <td className="px-4 py-3">Desenvolvedor Sênior</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">department</td>
+                          <td className="px-4 py-3">string</td>
+                          <td className="px-4 py-3">Departamento/área</td>
+                          <td className="px-4 py-3">Tecnologia da Informação</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">officeLocation</td>
+                          <td className="px-4 py-3">string</td>
+                          <td className="px-4 py-3">Localização do escritório</td>
+                          <td className="px-4 py-3">Rio de Janeiro - RJ</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">mobilePhone</td>
+                          <td className="px-4 py-3">string</td>
+                          <td className="px-4 py-3">Telefone celular</td>
+                          <td className="px-4 py-3">+55 21 98765-4321</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">businessPhones</td>
+                          <td className="px-4 py-3">string[]</td>
+                          <td className="px-4 py-3">Telefones comerciais</td>
+                          <td className="px-4 py-3 font-mono text-xs">["21 3456-7890"]</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">preferredLanguage</td>
+                          <td className="px-4 py-3">string</td>
+                          <td className="px-4 py-3">Idioma preferido</td>
+                          <td className="px-4 py-3">pt-BR</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">employeeId</td>
+                          <td className="px-4 py-3">string</td>
+                          <td className="px-4 py-3">Matrícula do funcionário</td>
+                          <td className="px-4 py-3">123456</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">companyName</td>
+                          <td className="px-4 py-3">string</td>
+                          <td className="px-4 py-3">Nome da empresa</td>
+                          <td className="px-4 py-3">Petrobras</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Dados do Supervisor */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Dados do Supervisor (User.Read)</h3>
+                  <p className="text-sm text-muted-foreground">Endpoint: GET /me/manager</p>
+                  <div className="rounded-lg border overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted">
+                        <tr>
+                          <th className="px-4 py-3 text-left font-medium">Campo</th>
+                          <th className="px-4 py-3 text-left font-medium">Tipo</th>
+                          <th className="px-4 py-3 text-left font-medium">Descrição</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">id</td>
+                          <td className="px-4 py-3">string</td>
+                          <td className="px-4 py-3">ID do supervisor</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">displayName</td>
+                          <td className="px-4 py-3">string</td>
+                          <td className="px-4 py-3">Nome completo do supervisor</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">mail</td>
+                          <td className="px-4 py-3">string</td>
+                          <td className="px-4 py-3">Email do supervisor</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">jobTitle</td>
+                          <td className="px-4 py-3">string</td>
+                          <td className="px-4 py-3">Cargo do supervisor</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">department</td>
+                          <td className="px-4 py-3">string</td>
+                          <td className="px-4 py-3">Departamento do supervisor</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Foto do Perfil */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Foto do Perfil (User.Read)</h3>
+                  <p className="text-sm text-muted-foreground">Endpoint: GET /me/photo/$value</p>
+                  <p className="text-sm">
+                    Retorna a foto do perfil como blob binário (JPEG/PNG). Converta para URL usando
+                    URL.createObjectURL().
+                  </p>
+                </div>
+
+                {/* Exemplos em React */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Como Usar em React/TypeScript</h3>
+
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">1. Buscar Perfil Completo</h4>
+                    <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-xs">
+                      {`import { getUserProfile } from '@/lib/auth/graph-api'
+
+// Dentro de um componente React
+const [userProfile, setUserProfile] = useState(null)
+
+useEffect(() => {
+  async function loadProfile() {
+    const profile = await getUserProfile()
+    if (profile) {
+      setUserProfile(profile)
+      console.log('Nome:', profile.displayName)
+      console.log('Email:', profile.mail)
+      console.log('Cargo:', profile.jobTitle)
+      console.log('Departamento:', profile.department)
+      console.log('Telefone:', profile.mobilePhone)
+    }
+  }
+  loadProfile()
+}, [])
+
+// Exibir dados
+<div>
+  <p>Nome: {userProfile?.displayName}</p>
+  <p>Cargo: {userProfile?.jobTitle}</p>
+  <p>Departamento: {userProfile?.department}</p>
+</div>`}
+                    </pre>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">2. Buscar Supervisor</h4>
+                    <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-xs">
+                      {`import { getUserManager } from '@/lib/auth/graph-api'
+
+const [manager, setManager] = useState(null)
+
+useEffect(() => {
+  async function loadManager() {
+    const managerData = await getUserManager()
+    if (managerData) {
+      setManager(managerData)
+      console.log('Supervisor:', managerData.displayName)
+      console.log('Email do supervisor:', managerData.mail)
+    } else {
+      console.log('Usuário não possui supervisor configurado')
+    }
+  }
+  loadManager()
+}, [])
+
+// Exibir supervisor
+{manager && (
+  <div>
+    <p>Supervisor: {manager.displayName}</p>
+    <p>Email: {manager.mail}</p>
+  </div>
+)}`}
+                    </pre>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">3. Buscar Foto do Perfil</h4>
+                    <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-xs">
+                      {`import { getUserPhoto } from '@/lib/auth/graph-api'
+
+const [photoUrl, setPhotoUrl] = useState(null)
+
+useEffect(() => {
+  async function loadPhoto() {
+    const photo = await getUserPhoto()
+    if (photo) {
+      setPhotoUrl(photo)
+    }
+  }
+  loadPhoto()
+}, [])
+
+// Exibir foto
+{photoUrl ? (
+  <img src={photoUrl || "/placeholder.svg"} alt="Foto do perfil" className="w-10 h-10 rounded-full" />
+) : (
+  <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+    <UserIcon />
+  </div>
+)}`}
+                    </pre>
+                  </div>
+                </div>
+
+                {/* Exemplos em Python */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Como Usar em Python (Backend/Lambda)</h3>
+
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">1. Validar Token e Buscar Dados do Usuário</h4>
+                    <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-xs">
+                      {`import requests
+import jwt
+from jwt import PyJWKClient
+
+# Configurações do Entra ID
+TENANT_ID = "5b6f6241-9a57-4be4-8e50-1dfa72e79a57"
+CLIENT_ID = "da3aaaad-619f-4bee-a434-51efd11faf7c"
+GRAPH_API_URL = "https://graph.microsoft.com/v1.0"
+
+def validate_token(access_token):
+    """Valida o token JWT do Entra ID"""
+    try:
+        # Buscar chaves públicas do Azure AD
+        jwks_url = f"https://login.microsoftonline.com/{TENANT_ID}/discovery/v2.0/keys"
+        jwks_client = PyJWKClient(jwks_url)
+        signing_key = jwks_client.get_signing_key_from_jwt(access_token)
+        
+        # Decodificar e validar token
+        decoded_token = jwt.decode(
+            access_token,
+            signing_key.key,
+            algorithms=["RS256"],
+            audience=CLIENT_ID,
+            issuer=f"https://login.microsoftonline.com/{TENANT_ID}/v2.0"
+        )
+        return decoded_token
+    except Exception as e:
+        print(f"Erro ao validar token: {e}")
+        return None
+
+def get_user_profile(access_token):
+    """Busca perfil completo do usuário"""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.get(f"{GRAPH_API_URL}/me", headers=headers)
+    
+    if response.status_code == 200:
+        profile = response.json()
+        return {
+            "id": profile.get("id"),
+            "name": profile.get("displayName"),
+            "email": profile.get("mail"),
+            "job_title": profile.get("jobTitle"),
+            "department": profile.get("department"),
+            "office": profile.get("officeLocation"),
+            "mobile": profile.get("mobilePhone"),
+            "employee_id": profile.get("employeeId"),
+            "company": profile.get("companyName")
+        }
+    return None`}
+                    </pre>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">2. Buscar Supervisor</h4>
+                    <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-xs">
+                      {`def get_user_manager(access_token):
+    """Busca informações do supervisor"""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.get(f"{GRAPH_API_URL}/me/manager", headers=headers)
+    
+    if response.status_code == 200:
+        manager = response.json()
+        return {
+            "id": manager.get("id"),
+            "name": manager.get("displayName"),
+            "email": manager.get("mail"),
+            "job_title": manager.get("jobTitle")
+        }
+    elif response.status_code == 404:
+        print("Usuário não possui supervisor configurado")
+        return None
+    return None`}
+                    </pre>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">3. Buscar Foto do Perfil</h4>
+                    <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-xs">
+                      {`import base64
+
+def get_user_photo(access_token):
+    """Busca foto do perfil como base64"""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.get(f"{GRAPH_API_URL}/me/photo/$value", headers=headers)
+    
+    if response.status_code == 200:
+        # Converter para base64 para armazenar ou enviar
+        photo_base64 = base64.b64encode(response.content).decode('utf-8')
+        return f"data:image/jpeg;base64,{photo_base64}"
+    return None`}
+                    </pre>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">4. Exemplo Completo em Lambda AWS</h4>
+                    <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-xs">
+                      {`def lambda_handler(event, context):
+    """Handler principal da Lambda"""
+    try:
+        # Token recebido no header Authorization
+        auth_header = event['headers'].get('Authorization', '')
+        access_token = auth_header.replace('Bearer ', '')
+        
+        # Validar token
+        decoded = validate_token(access_token)
+        if not decoded:
+            return {
+                'statusCode': 401,
+                'body': json.dumps({'error': 'Token inválido'})
+            }
+        
+        # Buscar dados do usuário
+        profile = get_user_profile(access_token)
+        manager = get_user_manager(access_token)
+        photo = get_user_photo(access_token)
+        
+        # Retornar todos os dados
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'user': profile,
+                'manager': manager,
+                'photo': photo
+            })
+        }`}
+                    </pre>
+                  </div>
+                </div>
+
+                {/* Permissões Necessárias */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Permissões Necessárias no Azure AD</h3>
+                  <div className="rounded-lg border overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted">
+                        <tr>
+                          <th className="px-4 py-3 text-left font-medium">Permissão</th>
+                          <th className="px-4 py-3 text-left font-medium">Tipo</th>
+                          <th className="px-4 py-3 text-left font-medium">O que permite</th>
+                          <th className="px-4 py-3 text-left font-medium">Admin Consent?</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">User.Read</td>
+                          <td className="px-4 py-3">Delegated</td>
+                          <td className="px-4 py-3">Ler perfil do próprio usuário, supervisor e foto</td>
+                          <td className="px-4 py-3 text-green-600">Não</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">User.ReadBasic.All</td>
+                          <td className="px-4 py-3">Delegated</td>
+                          <td className="px-4 py-3">Ler perfil básico de outros usuários</td>
+                          <td className="px-4 py-3 text-amber-600">Sim</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-3 font-mono text-xs">User.Read.All</td>
+                          <td className="px-4 py-3">Application</td>
+                          <td className="px-4 py-3">Ler perfil completo de qualquer usuário (backend)</td>
+                          <td className="px-4 py-3 text-amber-600">Sim</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Para esta aplicação, a permissão <strong>User.Read</strong> é suficiente para buscar perfil,
+                    supervisor e foto do usuário logado.
+                  </p>
+                </div>
+
+                {/* Troubleshooting */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Troubleshooting</h3>
+                  <div className="space-y-3">
+                    <div className="rounded-lg border p-4">
+                      <h4 className="font-medium text-sm mb-2">Problema: Todos os campos retornam false/null</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Solução: Verifique se as permissões User.Read, User.ReadBasic.All e User.Read.All foram
+                        adicionadas no Azure AD e se o admin consent foi concedido.
+                      </p>
+                    </div>
+                    <div className="rounded-lg border p-4">
+                      <h4 className="font-medium text-sm mb-2">Problema: Supervisor retorna null</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Solução: O usuário pode não ter um supervisor configurado no Active Directory. Isso é normal e
+                        esperado para alguns usuários.
+                      </p>
+                    </div>
+                    <div className="rounded-lg border p-4">
+                      <h4 className="font-medium text-sm mb-2">Problema: Foto não aparece</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Solução: O usuário pode não ter foto configurada no perfil do Microsoft 365. Sempre forneça um
+                        fallback visual (avatar com iniciais).
+                      </p>
+                    </div>
+                    <div className="rounded-lg border p-4">
+                      <h4 className="font-medium text-sm mb-2">Problema: Erro 401 Unauthorized</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Solução: O token de acesso pode estar expirado. Use acquireTokenSilent() para renovar
+                        automaticamente ou acquireTokenPopup() para forçar novo login.
+                      </p>
                     </div>
                   </div>
                 </div>

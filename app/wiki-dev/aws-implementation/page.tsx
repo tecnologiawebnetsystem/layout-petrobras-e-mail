@@ -31,11 +31,10 @@ export default function AWSImplementationPage() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-8">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="services">Serviços Detalhados</TabsTrigger>
             <TabsTrigger value="implementation">Implementação</TabsTrigger>
-            <TabsTrigger value="provisorio">Domínios Provisórios</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-8">
