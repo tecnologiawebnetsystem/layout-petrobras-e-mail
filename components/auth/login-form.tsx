@@ -6,7 +6,6 @@ import { Eye, EyeOff, User, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { PetrobrasLogo } from "@/components/ui/petrobras-logo"
 import { LoginBackground } from "@/components/ui/login-background"
 import { ForgotPasswordModal } from "@/components/auth/forgot-password-modal"
 import { NotificationModal } from "@/components/shared/notification-modal"
@@ -313,8 +312,8 @@ export function LoginForm() {
       <LoginBackground />
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md space-y-8">
-          <div className="flex justify-start">
-            <PetrobrasLogo />
+          <div className="flex justify-center mb-4">
+            <img src="/images/petrobras-full-logo.png" alt="Petrobras" className="h-16 w-auto" />
           </div>
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-foreground tracking-tight">Acesse sua conta</h1>

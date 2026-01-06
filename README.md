@@ -15,29 +15,41 @@ O sistema permite que usuários internos da Petrobras façam upload de arquivos 
 - Controle de acesso baseado em perfis (Interno/Supervisor)
 - Expiração automática de arquivos (máximo 72 horas)
 - Links temporários com token único por transferência
+- Autenticação Microsoft Entra ID (Azure AD) integrada ao Active Directory da Petrobras
 
 ### Fluxo de Trabalho
-1. **Upload**: Usuário interno faz upload dos arquivos
-2. **Aprovação**: Supervisor revisa e aprova/rejeita
-3. **Notificação**: Destinatário recebe link de download (via e-mail automático)
-4. **Download**: Arquivo disponível por período limitado
-5. **Auditoria**: Todo o processo é registrado
+1. **Autenticação**: Usuário faz login com credenciais corporativas Microsoft
+2. **Upload**: Usuário interno faz upload dos arquivos
+3. **Aprovação Automática**: Supervisor direto do Active Directory recebe notificação
+4. **Aprovação Manual**: Supervisor revisa e aprova/rejeita
+5. **Acesso Externo**: Destinatário externo recebe código OTP por email (válido 3 minutos)
+6. **Download**: Arquivo disponível por período limitado após verificação
+7. **Auditoria**: Todo o processo é registrado
 
 ### Perfis de Usuário
 
 #### Usuário Interno
+- Login SSO com Microsoft (automático se já logado no Windows/Office)
 - Fazer upload de arquivos
 - Definir destinatários e tempo de disponibilidade (até 72h)
 - Acompanhar status das transferências
 - Visualizar histórico de uploads
+- Cancelar compartilhamentos pendentes
 
 #### Supervisor
+- Login SSO com Microsoft
 - Aprovar ou rejeitar transferências pendentes
 - Informar motivo em caso de rejeição
-- Visualizar dashboard com métricas (Pendentes, Aprovados, Rejeitados)
+- Visualizar dashboard com métricas (Pendentes, Aprovados, Rejeitados, Cancelados)
 - Ajustar tempo de disponibilidade antes de aprovar
 - Acessar detalhes completos de cada transferência
-- Receber notificações automáticas por e-mail quando houver novos uploads
+- Dados hierárquicos capturados automaticamente do AD (cargo, departamento, localização)
+
+#### Usuário Externo
+- Recebe email com código OTP de 6 dígitos
+- Acessa página de verificação
+- Insere código (válido por 3 minutos, máximo 3 tentativas)
+- Faz download dos arquivos compartilhados
 
 ## Tecnologias
 
@@ -51,76 +63,80 @@ O sistema permite que usuários internos da Petrobras façam upload de arquivos 
 - **React Hook Form** - Gerenciamento de formulários
 - **Lucide React** - Ícones
 
-### Backend
-- **Next.js API Routes** - Endpoints REST
-- **Server Actions** - Ações do servidor
-- **DynamoDB** - Banco de dados NoSQL (5 tabelas)
-- **Resend** - Envio de e-mails transacionais
+### Autenticação e Segurança
+- **Microsoft Entra ID** - SSO corporativo integrado ao Active Directory
+- **Microsoft Graph API** - Captura de dados hierárquicos (foto, cargo, supervisor)
+- **Rate Limiting** - Proteção contra força bruta (5 tentativas em 15min)
+- **Session Hijacking Protection** - Validação de fingerprint do navegador
+- **CSP Headers** - Content Security Policy completo
+- **Timeout de Sessão** - Logout automático após 30min de inatividade
 
 ### Infraestrutura AWS
 - **S3** - Armazenamento de arquivos
 - **CloudFront** - CDN para distribuição
 - **Lambda** - Processamento serverless
-- **SES** - Envio de emails (alternativa ao Resend)
+- **SES** - Envio de emails (notificações e OTP)
 - **CloudWatch** - Monitoramento e logs
 - **IAM** - Controle de acesso
 - **KMS** - Criptografia de dados
 
 ## Estrutura do Projeto
 
-\`\`\`
+```
 ├── app/                          # Páginas e rotas Next.js
 │   ├── page.tsx                 # Página de login
 │   ├── upload/                  # Upload de arquivos (usuário interno)
+│   ├── compartilhamentos/       # Meus compartilhamentos (usuário interno)
 │   ├── supervisor/              # Dashboard do supervisor
 │   │   └── detalhes/[id]/      # Detalhes e aprovação
 │   ├── download/                # Download de arquivos (destinatário)
-│   ├── historico/               # Histórico de transferências
+│   ├── external-verify/         # Verificação OTP usuário externo
 │   ├── configuracoes/           # Configurações do usuário
 │   ├── wiki-dev/                # Wiki interna de desenvolvimento
+│   │   ├── entra-id/           # Guia Microsoft Entra ID
+│   │   ├── sincronizacao-backend/ # Guia sincronização back-end
+│   │   ├── implementacoes-jan-2026/ # Implementações 04/01/2026
 │   │   ├── aws-implementation/ # Guia AWS
 │   │   ├── data-models/        # Modelos de dados
-│   │   ├── quick-start/        # Início rápido
 │   │   ├── sql-readme/         # Documentação SQL
-│   │   └── deployment/         # Guia de deploy
-│   └── api/                     # API Routes
-│       ├── upload/             # Endpoints de upload
-│       ├── files/              # Gerenciamento de arquivos
-│       └── notifications/      # Sistema de notificações
+│   │   └── servicenow/         # Integração ServiceNow
+│   └── api/                     # API Routes (removidos send-email e send-otp)
 │
 ├── components/                  # Componentes React
 │   ├── auth/                   # Autenticação
+│   │   ├── login-form.tsx     # Form de login com botão Microsoft
+│   │   └── protected-route.tsx # Proteção de rotas
 │   ├── dashboard/              # Componentes do dashboard
 │   ├── shared/                 # Componentes compartilhados
+│   │   └── app-header.tsx     # Header com perfil enriquecido
 │   └── ui/                     # Componentes de UI (shadcn)
 │
 ├── lib/                        # Bibliotecas e utilitários
+│   ├── auth/                  # Autenticação
+│   │   ├── entra-config.ts   # Configuração Entra ID
+│   │   └── otp-service.ts    # Serviço de OTP
 │   ├── stores/                # Stores Zustand
-│   │   ├── auth-store.ts     # Autenticação
-│   │   ├── workflow-store.ts # Fluxo de aprovação
+│   │   ├── auth-store.ts     # Autenticação com Graph API
+│   │   ├── workflow-store.ts # Fluxo de aprovação e cancelamento
 │   │   ├── notification-store.ts # Notificações
 │   │   └── audit-log-store.ts # Auditoria
+│   ├── security/              # Segurança
+│   │   ├── rate-limiter.ts   # Rate limiting
+│   │   ├── session-guard.ts  # Session hijacking protection
+│   │   └── timeout-manager.ts # Timeout de sessão
 │   ├── utils/                 # Utilitários
 │   │   ├── zip-validator.ts  # Validação de arquivos
 │   │   └── file-security.ts  # Segurança de arquivos
-│   └── aws/                   # Integrações AWS
+│   └── email/                 # Email templates
+│       └── templates/
+│           └── otp-email.ts  # Template email OTP
 │
-├── Documentacao/               # Documentação técnica
-│   ├── AWS-IMPLEMENTATION-GUIDE.md
-│   ├── DATA-MODELS.md
-│   ├── DEPLOYMENT-GUIDE.md
-│   ├── QUICK-START.md
-│   ├── SQL-README.md
-│   └── CHANGELOG.md
 │
-└── sql/                        # Scripts SQL/DynamoDB
-    ├── 001_create_users_table.sql
-    ├── 002_create_files_table.sql
-    ├── 003_create_sessions_table.sql
-    ├── 004_create_audit_logs_table.sql
-    ├── 005_create_notifications_table.sql
-    └── seed_demo_data.sql
-\`\`\`
+├── back-end/                   # Back-end Python (futuro)
+│   └── python/
+│
+└── proxy.ts                    # Middleware (Next.js 16) com CSP headers
+```
 
 ## Início Rápido
 
@@ -128,10 +144,11 @@ O sistema permite que usuários internos da Petrobras façam upload de arquivos 
 - Node.js 18+
 - Conta AWS configurada
 - Credenciais AWS (Access Key e Secret Key)
+- Registro de aplicação no Microsoft Entra ID (Azure AD)
 
 ### Instalação
 
-\`\`\`bash
+```bash
 # Clone o repositório
 git clone https://github.com/petrobras/sistema-transferencia-arquivos.git
 
@@ -143,38 +160,56 @@ npm install
 
 # Configure as variáveis de ambiente
 cp .env.example .env.local
-# Edite o .env.local com suas credenciais AWS
-\`\`\`
+# Edite o .env.local com suas credenciais
+```
+
+### Configuração Microsoft Entra ID
+
+1. **Portal Azure** → **Azure Active Directory** → **App registrations**
+2. Crie um novo registro com:
+   - Nome: `Sistema Compartilhamento Petrobras`
+   - Redirect URI: `http://localhost:3000` (dev) e `https://seu-dominio.com` (prod)
+3. Copie: **Tenant ID**, **Client ID**
+4. Crie um **Client Secret** e copie o valor
+5. Em **API Permissions**, adicione:
+   - `User.Read` - Ler perfil do usuário
+   - `User.ReadBasic.All` - Ler informações de outros usuários
+6. Solicite **Admin Consent** do TI da Petrobras
 
 ### Configuração AWS
 
 1. **S3 Bucket**
-   \`\`\`bash
+   ```bash
    aws s3 mb s3://petrobras-file-transfer-prod
-   \`\`\`
+   ```
 
 2. **DynamoDB Tables**
-   \`\`\`bash
+   ```bash
    # Execute os scripts SQL na ordem
    npm run db:setup
-   \`\`\`
+   ```
 
-3. **CloudFront Distribution**
+3. **SES Email Verification**
+   ```bash
+   aws ses verify-email-identity --email-address noreply@petrobras.com.br
+   ```
+
+4. **CloudFront Distribution**
    - Configure no console AWS ou via CLI
    - Adicione o domain no .env.local
 
 ### Executar Localmente
 
-\`\`\`bash
+```bash
 # Modo desenvolvimento
 npm run dev
 
 # Acesse http://localhost:3000
-\`\`\`
+```
 
 ### Build e Deploy
 
-\`\`\`bash
+```bash
 # Build de produção
 npm run build
 
@@ -183,11 +218,17 @@ vercel --prod
 
 # Ou deploy para AWS
 npm run deploy:aws
-\`\`\`
+```
 
 ## Variáveis de Ambiente
 
-\`\`\`env
+```env
+# Microsoft Entra ID (Azure AD)
+NEXT_PUBLIC_ENTRA_TENANT_ID=5b6f6241-9a57-4be4-8e50-1dfa72e79a57
+NEXT_PUBLIC_ENTRA_CLIENT_ID=da3aaaad-619f-4bee-a434-51efd11faf7c
+NEXT_PUBLIC_ENTRA_REDIRECT_URI=http://localhost:3000
+ENTRA_CLIENT_SECRET=seu_client_secret_aqui
+
 # AWS
 AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=your_access_key
@@ -202,10 +243,7 @@ DYNAMODB_SESSIONS_TABLE=petrobras-sessions
 DYNAMODB_AUDIT_TABLE=petrobras-audit-logs
 DYNAMODB_NOTIFICATIONS_TABLE=petrobras-notifications
 
-# Email - Resend (Recomendado)
-RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-# Email - AWS SES (Alternativa)
+# Email - AWS SES
 AWS_SES_FROM_EMAIL=noreply@petrobras.com.br
 AWS_SES_REPLY_TO=suporte@petrobras.com.br
 
@@ -213,75 +251,44 @@ AWS_SES_REPLY_TO=suporte@petrobras.com.br
 NEXT_PUBLIC_APP_URL=https://transfer.petrobras.com.br
 NEXT_PUBLIC_MAX_FILE_SIZE=524288000
 NEXT_PUBLIC_MAX_AVAILABILITY_HOURS=72
-\`\`\`
+```
 
-## Configuração de E-mail
+## Sistema de Email
 
-O sistema envia e-mails automáticos para o supervisor quando há novos uploads pendentes de aprovação. 
+### AWS SES (Simple Email Service)
 
-### Opção 1: Resend (Recomendado)
+O sistema utiliza AWS SES para envio de emails:
 
-**Vantagens:**
-- Setup rápido e simples
-- Plano gratuito: 3.000 e-mails/mês
-- Interface moderna e API fácil
-- Templates HTML prontos
+**Configuração:**
+```bash
+# 1. Verificar domínio no SES
+aws ses verify-domain-identity --domain petrobras.com.br
 
-**Como configurar:**
-
-1. Acesse [resend.com](https://resend.com) e crie uma conta gratuita
-2. No dashboard, vá em **API Keys**
-3. Clique em **Create API Key**
-4. Copie a chave gerada (começa com `re_`)
-5. Adicione no arquivo `.env.local`:
-   \`\`\`env
-   RESEND_API_KEY=re_sua_chave_aqui
-   NEXT_PUBLIC_APP_URL=http://localhost:3000
-   \`\`\`
-
-6. No v0 (Vercel), adicione as variáveis:
-   - Clique em **Vars** na sidebar esquerda
-   - Adicione `RESEND_API_KEY` com sua chave
-   - Adicione `NEXT_PUBLIC_APP_URL` com sua URL
-
-**E-mail configurado:** kleber.goncalves.prestserv@petrobras.com.br
-
-### Opção 2: AWS SES
-
-Se preferir usar AWS SES:
-
-\`\`\`bash
-# Configure via AWS CLI
+# 2. Ou verificar email individual (sandbox)
 aws ses verify-email-identity --email-address noreply@petrobras.com.br
 
-# Adicione no .env.local
+# 3. Configurar variáveis no .env.local
 AWS_SES_FROM_EMAIL=noreply@petrobras.com.br
 AWS_SES_REPLY_TO=suporte@petrobras.com.br
-\`\`\`
+```
 
-## Usuários de Demonstração
-
-### Usuário Interno
-- **Email**: joao.silva@petrobras.com.br
-- **Senha**: demo123
-- **Perfil**: Usuário interno que faz upload de arquivos
-
-### Supervisor
-- **Nome**: Wagner Gaspar Brazil
-- **Email**: wagner.brazil@petrobras.com.br
-- **Senha**: supervisor123
-- **Perfil**: Supervisor que aprova/rejeita transferências
-- **Notificações**: kleber.goncalves.prestserv@petrobras.com.br
+**Tipos de Email Enviados:**
+- **Notificação ao Supervisor**: Quando upload é realizado
+- **Confirmação ao Remetente**: Upload confirmado
+- **Código OTP para Externo**: Verificação de acesso
+- **Aprovação/Rejeição**: Status final do compartilhamento
 
 ## Wiki de Desenvolvimento
 
 O sistema possui uma wiki interna completa acessível em `/wiki-dev` com:
 
-- **Implementação AWS**: Guia detalhado de todos os serviços AWS utilizados, com justificativas técnicas e exemplos
-- **Modelos de Dados**: Estrutura completa das 5 tabelas DynamoDB com campos, tipos e onde são usados
-- **Quick Start**: Guia passo a passo para deploy rápido em 1 dia
+- **Microsoft Entra ID**: Guia completo de autenticação SSO com Azure AD
+- **Sincronização Back-end**: Guia passo a passo para implementar back-end Python
+- **Implementações 04/01/2026**: Documentação de todas as 14 funcionalidades implementadas
+- **Implementação AWS**: Guia detalhado de todos os serviços AWS utilizados
+- **Modelos de Dados**: Estrutura completa das 5 tabelas DynamoDB
 - **SQL & DynamoDB**: Documentação completa do banco de dados
-- **Deployment**: Guia completo de produção com segurança, monitoramento e CI/CD
+- **ServiceNow**: Integração com sistema de tickets
 
 ## Banco de Dados
 
@@ -290,12 +297,13 @@ O sistema utiliza 5 tabelas DynamoDB:
 ### 1. Users
 Armazena dados dos usuários (internos e supervisores)
 - Partition Key: `userId` (String)
-- Campos: email, name, userType, createdAt
+- Campos: email, name, userType, jobTitle, department, manager, photoUrl, createdAt
 
 ### 2. Files
 Metadados dos arquivos transferidos
 - Partition Key: `fileId` (String)
-- GSI: `uploaderUserId`, `recipientEmail`
+- GSI: `uploaderUserId`, `recipientEmail`, `status`
+- Novos campos: `cancelled_by`, `cancellation_date`, `cancellation_reason`
 - 8 índices secundários globais para queries otimizadas
 
 ### 3. Sessions
@@ -303,18 +311,29 @@ Sessões de autenticação dos usuários
 - Partition Key: `sessionId` (String)
 - GSI: `userId`
 - TTL automático após expiração
+- Campos de segurança: `fingerprint`, `userAgent`, `lastActivity`
 
 ### 4. Audit Logs
 Registro completo de todas as operações
 - Partition Key: `logId` (String)
 - GSI: `userId`, `action`, `timestamp`
+- Novos eventos: `SHARE_CANCELLED`, `LOGIN_SSO`, `OTP_SENT`, `OTP_VERIFIED`
 
-### 5. Notifications
-Notificações enviadas aos usuários
-- Partition Key: `notificationId` (String)
-- GSI: `recipientEmail`, `sentAt`
+### 5. OTP Codes (Nova)
+Códigos de verificação para usuários externos
+- Partition Key: `otpId` (String)
+- GSI: `email`
+- Campos: `code`, `expiresAt`, `attempts`, `used`
+- TTL automático após 3 minutos
 
 ## Segurança
+
+### Autenticação
+- **SSO Microsoft**: Login único integrado ao Office 365
+- **Graph API**: Captura automática de hierarquia organizacional
+- **Rate Limiting**: Máximo 5 tentativas de login em 15 minutos
+- **Session Hijacking**: Validação de fingerprint (User-Agent, screen, timezone)
+- **Timeout**: Logout automático após 30 minutos de inatividade
 
 ### Validação de Arquivos
 Extensões bloqueadas automaticamente:
@@ -324,48 +343,61 @@ Extensões bloqueadas automaticamente:
 
 ### Controle de Acesso
 - Autenticação obrigatória para todas as operações
-- Perfis separados (Interno/Supervisor)
+- Perfis separados (Interno/Supervisor/Externo)
 - Validação de permissões em cada endpoint
 - Tokens únicos e temporários para downloads
+- OTP com validade de 3 minutos
+
+### Headers de Segurança (CSP)
+- `Content-Security-Policy`: Bloqueia scripts inline e XSS
+- `X-Frame-Options`: Previne clickjacking
+- `X-Content-Type-Options`: Previne MIME sniffing
+- `Referrer-Policy`: Controla informações de referência
+- `Permissions-Policy`: Restringe APIs do navegador
 
 ### Auditoria
 Todos os eventos são registrados:
-- Login/Logout
+- Login/Logout (SSO e tradicional)
 - Upload de arquivos
-- Aprovação/Rejeição
+- Aprovação/Rejeição/Cancelamento
+- Envio e verificação de OTP
 - Downloads
+- Tentativas de acesso bloqueadas
 - Alterações de configuração
 
 ## Monitoramento
 
 ### Métricas Disponíveis
-- Total de transferências
-- Taxa de aprovação/rejeição
+- Total de transferências por status
+- Taxa de aprovação/rejeição/cancelamento
 - Tempo médio de aprovação
 - Volume de dados transferidos
 - Erros e exceções
+- Tentativas de login bloqueadas
+- Códigos OTP enviados vs verificados
 
 ### Logs
 - CloudWatch Logs para todos os serviços
 - Logs estruturados em JSON
 - Retenção configurável (90 dias padrão)
+- Alertas automáticos para anomalias
 
 ## Testes
 
-\`\`\`bash
+```bash
 # Testes unitários
 npm run test
 
 # Testes E2E
-npm run test:e2e
+npm run test:e2E
 
 # Cobertura
 npm run test:coverage
-\`\`\`
+```
 
 ## Scripts Úteis
 
-\`\`\`bash
+```bash
 # Desenvolvimento
 npm run dev              # Inicia servidor de desenvolvimento
 npm run build           # Build de produção
@@ -381,34 +413,4 @@ npm run db:reset        # Apaga e recria tudo
 # Deploy
 npm run deploy:staging  # Deploy para staging
 npm run deploy:prod     # Deploy para produção
-\`\`\`
-
-## Documentação
-
-Para documentação técnica detalhada, consulte:
-
-- [Guia de Implementação AWS](Documentacao/AWS-IMPLEMENTATION-GUIDE.md)
-- [Modelos de Dados](Documentacao/DATA-MODELS.md)
-- [Guia de Deployment](Documentacao/DEPLOYMENT-GUIDE.md)
-- [Quick Start](Documentacao/QUICK-START.md)
-- [SQL README](Documentacao/SQL-README.md)
-
-## Suporte
-
-Para suporte técnico ou dúvidas:
-- Email: suporte-dev@petrobras.com.br
-- Wiki Interna: `/wiki-dev`
-- Documentação: `/Documentacao`
-
-## Licença
-
-Copyright © 2025 Petrobras. Todos os direitos reservados.
-
-Sistema de uso interno corporativo.
-
----
-
-**Versão**: 1.0.0  
-**Última Atualização**: Janeiro 2025  
-**Next.js**: 16.0.10  
-**React**: 19.2
+```
