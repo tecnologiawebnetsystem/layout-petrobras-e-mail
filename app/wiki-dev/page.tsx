@@ -5,21 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Database, Cloud, Server, FileCode, Shield, Home, CheckCircle2 } from "lucide-react"
+import { Search, BookOpen, Database, Cloud, Server, FileCode, Shield, Home } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
   const [searchQuery, setSearchQuery] = useState("")
 
   const wikiCategories = [
-    {
-      title: "Implementações 04/01/2026",
-      description: "Resumo completo de todas as 14 funcionalidades implementadas hoje - 146-199 horas de trabalho",
-      icon: CheckCircle2,
-      href: "/wiki-dev/implementacoes-jan-2026",
-      color: "from-green-600 to-emerald-600",
-      topics: ["14 Funcionalidades", "SSO Entra ID", "Segurança Avançada", "OTP Externo", "146-199h"],
-    },
     {
       title: "Implementação AWS",
       description: "Guia completo de todos os serviços AWS necessários para o sistema",
