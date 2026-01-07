@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware"
 import { useNotificationStore } from "./notification-store"
 import { useAuditLogStore } from "./audit-log-store"
 import { otpService } from "@/lib/auth/otp-service"
+import { showAlert } from "./alert-store"
 
 export interface ExpirationLog {
   timestamp: string
@@ -183,11 +184,14 @@ export const useWorkflowStore = create<WorkflowState>()(
           .then((res) => res.json())
           .then((data) => {
             if (data.error) {
-              alert(`ERRO ao enviar e-mail para supervisor: ${data.error}`)
+              showAlert.error(
+                "Erro ao Enviar E-mail",
+                `Não foi possível enviar e-mail para o supervisor: ${data.error}`,
+              )
             }
           })
           .catch((error) => {
-            alert(`ERRO CRÍTICO ao enviar e-mail para supervisor: ${error.message}`)
+            showAlert.error("Erro Crítico", `Erro crítico ao enviar e-mail para o supervisor: ${error.message}`)
           })
 
         // E-mail de confirmação para remetente
@@ -212,11 +216,11 @@ export const useWorkflowStore = create<WorkflowState>()(
           .then((res) => res.json())
           .then((data) => {
             if (data.error) {
-              alert(`ERRO ao enviar e-mail de confirmação: ${data.error}`)
+              showAlert.error("Erro ao Enviar E-mail", `Não foi possível enviar e-mail de confirmação: ${data.error}`)
             }
           })
           .catch((error) => {
-            alert(`ERRO CRÍTICO ao enviar e-mail de confirmação: ${error.message}`)
+            showAlert.error("Erro Crítico", `Erro crítico ao enviar e-mail de confirmação: ${error.message}`)
           })
       },
 
@@ -343,17 +347,23 @@ export const useWorkflowStore = create<WorkflowState>()(
         if (!upload) return
 
         if (upload.status === "approved") {
-          alert("Não é possível cancelar. Este compartilhamento já foi aprovado pelo supervisor.")
+          showAlert.warning(
+            "Não é Possível Cancelar",
+            "Este compartilhamento já foi aprovado pelo supervisor e não pode ser cancelado.",
+          )
           return
         }
 
         if (upload.status === "rejected") {
-          alert("Não é possível cancelar. Este compartilhamento já foi rejeitado pelo supervisor.")
+          showAlert.warning(
+            "Não é Possível Cancelar",
+            "Este compartilhamento já foi rejeitado pelo supervisor e não pode ser cancelado.",
+          )
           return
         }
 
         if (upload.status === "cancelled") {
-          alert("Este compartilhamento já foi cancelado anteriormente.")
+          showAlert.info("Já Cancelado", "Este compartilhamento já foi cancelado anteriormente.")
           return
         }
 

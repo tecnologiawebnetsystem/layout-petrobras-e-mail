@@ -114,8 +114,6 @@ export function EntraProvider({ children }: EntraProviderProps) {
       return
     }
 
-    alert("[DEBUG] Login bem-sucedido! Iniciando busca de dados...")
-
     // Extrair dados do usuário
     const email = account.username || account.homeAccountId
     const name = account.name || "Usuário"
@@ -161,7 +159,6 @@ export function EntraProvider({ children }: EntraProviderProps) {
     )
 
     console.log("[Entra ID] Iniciando busca de dados do Graph API")
-    alert("[DEBUG] Buscando foto e supervisor do Graph API...")
 
     let employeeId: string | undefined
 
@@ -174,8 +171,6 @@ export function EntraProvider({ children }: EntraProviderProps) {
         hasPhoto: !!photo,
         photoUrl: photo,
       })
-
-      alert(`[DEBUG] Resultados:\n- Perfil: ${!!profile}\n- Supervisor: ${!!manager}\n- Foto: ${!!photo}`)
 
       // Enriquecer perfil do usuário com dados adicionais
       const enrichedData: any = {}
@@ -224,7 +219,6 @@ export function EntraProvider({ children }: EntraProviderProps) {
     } catch (error) {
       console.error("[Entra ID] Erro ao enriquecer perfil:", error)
       console.error("[v0] Detalhes do erro:", error)
-      alert(`[DEBUG ERRO] ${error instanceof Error ? error.message : "Erro desconhecido"}`)
       // Não bloqueia o login se falhar ao buscar dados adicionais
     }
 

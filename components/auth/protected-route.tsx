@@ -8,6 +8,7 @@ import { useMsal } from "@azure/msal-react"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { getUserTypeFromEmail } from "@/lib/auth/entra-config"
 import { validateSessionContext, initializeSessionBinding } from "@/lib/auth/session-binding"
+import { showAlert } from "@/lib/stores/alert-store"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -27,7 +28,10 @@ export function ProtectedRoute({ children, allowedUserTypes }: ProtectedRoutePro
       const sessionValidation = validateSessionContext()
       if (!sessionValidation.valid) {
         console.error("[ProtectedRoute] Session hijacking detectado:", sessionValidation.reason)
-        alert("Sua sessão foi invalidada por motivos de segurança.")
+        showAlert.error(
+          "Sessão Invalidada",
+          "Sua sessão foi invalidada por motivos de segurança. Por favor, faça login novamente.",
+        )
         router.push("/")
         return
       }

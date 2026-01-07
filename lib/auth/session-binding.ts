@@ -116,6 +116,8 @@ export function clearSessionContext(): void {
   }
 }
 
+import { showAlert } from "@/lib/stores/alert-store"
+
 /**
  * Inicializar proteção de session hijacking
  */
@@ -126,17 +128,20 @@ export function initializeSessionBinding(): void {
   const context = captureSessionContext()
   saveSessionContext(context)
 
-  // Validar periodicamente (a cada 30 segundos)
   setInterval(() => {
     const validation = validateSessionContext()
 
     if (!validation.valid) {
       console.error("[Session Binding]", validation.reason)
 
-      // Forçar logout
       if (typeof window !== "undefined") {
-        alert("Sua sessão foi invalidada por motivos de segurança.")
-        window.location.href = "/"
+        showAlert.error(
+          "Sessão Invalidada",
+          "Sua sessão foi invalidada por motivos de segurança. Você será redirecionado para a página inicial.",
+        )
+        setTimeout(() => {
+          window.location.href = "/"
+        }, 2000)
       }
     }
   }, 30 * 1000)

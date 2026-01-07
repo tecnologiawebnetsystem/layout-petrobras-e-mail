@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ExpirationMonitor } from "@/components/shared/expiration-monitor"
 import { EntraProvider } from "@/components/auth/entra-provider"
+import { GlobalAlertProvider } from "@/components/shared/global-alert-provider"
 import "./globals.css"
 
 const inter = Inter({
@@ -51,6 +52,7 @@ export default function RootLayout({
           <ThemeProvider>
             {children}
             <ExpirationMonitor />
+            <GlobalAlertProvider />
           </ThemeProvider>
         </EntraProvider>
         <Analytics />

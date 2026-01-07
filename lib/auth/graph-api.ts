@@ -40,7 +40,6 @@ export async function getUserProfile(): Promise<UserProfile | null> {
     const account = msalInstance.getAllAccounts()[0]
     if (!account) {
       console.error("[Graph API] Nenhuma conta logada")
-      alert("[DEBUG] Erro: Nenhuma conta logada")
       return null
     }
 
@@ -62,7 +61,6 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 
     if (!profileResponse.ok) {
       console.error("[Graph API] Erro ao buscar perfil:", profileResponse.statusText)
-      alert(`[DEBUG] Erro ao buscar perfil: ${profileResponse.statusText}`)
       return null
     }
 
@@ -71,7 +69,6 @@ export async function getUserProfile(): Promise<UserProfile | null> {
     return profile
   } catch (error) {
     console.error("[Graph API] Erro ao buscar perfil do usuário:", error)
-    alert(`[DEBUG] Exceção ao buscar perfil: ${error instanceof Error ? error.message : "Erro desconhecido"}`)
     return null
   }
 }
