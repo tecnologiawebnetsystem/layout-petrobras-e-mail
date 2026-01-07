@@ -152,7 +152,10 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground">{user?.name || "Usuário"}</p>
-                      <p className="text-xs text-muted-foreground truncate">{user?.email || ""}</p>
+                      {user?.manager && (
+                        <p className="text-xs text-muted-foreground mt-0.5">Supervisor: {user.manager.name}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">{user?.email || ""}</p>
                       {user?.jobTitle && (
                         <div className="flex items-center gap-1 mt-1">
                           <Building2 className="h-3 w-3 text-muted-foreground" />
@@ -260,6 +263,9 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                     </Avatar>
                     <div className="text-left flex-1 min-w-0">
                       <SheetTitle className="text-foreground text-base">{user?.name || "Usuário"}</SheetTitle>
+                      {user?.manager && (
+                        <p className="text-xs text-muted-foreground mt-0.5">Supervisor: {user.manager.name}</p>
+                      )}
                       <SheetDescription className="text-muted-foreground text-sm truncate">
                         {user?.email || ""}
                       </SheetDescription>
