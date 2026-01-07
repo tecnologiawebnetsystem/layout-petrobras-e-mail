@@ -10,7 +10,7 @@
 import { type ReactNode, useEffect } from "react"
 import { MsalProvider } from "@azure/msal-react"
 import { EventType, type EventMessage, type AuthenticationResult } from "@azure/msal-browser"
-import { msalInstance } from "@/lib/auth/entra-config"
+import { msalInstance, loginRequest } from "@/lib/auth/entra-config"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { getUserTypeFromEmail } from "@/lib/auth/entra-config"
 import {
@@ -21,7 +21,6 @@ import {
 } from "@/lib/auth/entra-security"
 import { useAuditLogStore } from "@/lib/stores/audit-log-store"
 import { getUserProfile, getUserManager, getUserPhoto } from "@/lib/auth/graph-api"
-import { loginRequest } from "@/lib/auth/entra-config" // Assuming loginRequest is defined somewhere
 
 interface EntraProviderProps {
   children: ReactNode
@@ -43,6 +42,7 @@ export function EntraProvider({ children }: EntraProviderProps) {
 
       if (accounts.length > 0 && !useAuthStore.getState().user) {
         console.log("[v0] Conta encontrada mas usuário não autenticado, enriquecendo perfil")
+        console.log("[v0] Tentando adquirir token silencioso com scopes:", loginRequest.scopes)
         // Buscar token silenciosamente e enriquecer perfil
         msalInstance
           .acquireTokenSilent({
@@ -55,6 +55,7 @@ export function EntraProvider({ children }: EntraProviderProps) {
           })
           .catch((error) => {
             console.error("[v0] Erro ao adquirir token silencioso:", error)
+            console.error("[v0] Detalhes do erro:", error.errorCode, error.errorMessage)
           })
       }
 
