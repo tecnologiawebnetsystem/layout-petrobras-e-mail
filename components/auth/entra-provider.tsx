@@ -160,13 +160,15 @@ export function EntraProvider({ children }: EntraProviderProps) {
       response.idToken,
     )
 
-    console.log("[v0] Iniciando busca de dados do Graph API")
+    console.log("[Entra ID] Iniciando busca de dados do Graph API")
     alert("[DEBUG] Buscando foto e supervisor do Graph API...")
+
+    let employeeId: string | undefined
 
     try {
       const [profile, manager, photo] = await Promise.all([getUserProfile(), getUserManager(), getUserPhoto()])
 
-      console.log("[v0] Resultados do Graph API:", {
+      console.log("[Entra ID] Resultados do Graph API:", {
         hasProfile: !!profile,
         hasManager: !!manager,
         hasPhoto: !!photo,
@@ -184,7 +186,8 @@ export function EntraProvider({ children }: EntraProviderProps) {
         enrichedData.officeLocation = profile.officeLocation
         enrichedData.mobilePhone = profile.mobilePhone
         enrichedData.employeeId = profile.employeeId
-        console.log("[v0] Perfil enriquecido:", profile)
+        employeeId = profile.employeeId
+        console.log("[Entra ID] Perfil enriquecido com dados:", profile)
       }
 
       if (manager) {
@@ -195,23 +198,22 @@ export function EntraProvider({ children }: EntraProviderProps) {
           jobTitle: manager.jobTitle,
           department: manager.department,
         }
-        console.log("[v0] Supervisor encontrado:", manager)
+        console.log("[Entra ID] Supervisor encontrado:", manager.displayName)
       } else {
-        console.log("[v0] Supervisor não encontrado ou não configurado")
+        console.log("[Entra ID] Supervisor não encontrado ou não configurado")
       }
 
       if (photo) {
         enrichedData.photoUrl = photo
-        console.log("[v0] Foto carregada com sucesso")
+        console.log("[Entra ID] Foto do perfil carregada")
       } else {
-        console.log("[v0] Foto não encontrada")
+        console.log("[Entra ID] Foto do perfil não disponível")
       }
 
       // Atualizar store com dados enriquecidos
       if (Object.keys(enrichedData).length > 0) {
         useAuthStore.getState().enrichUserProfile(enrichedData)
-        console.log("[v0] Dados enriquecidos salvos no store:", enrichedData)
-        alert(`[DEBUG] Dados salvos! Chaves: ${Object.keys(enrichedData).join(", ")}`)
+        console.log("[Entra ID] Dados adicionais salvos no store")
       }
 
       console.log("[Entra ID] Perfil enriquecido com sucesso:", {
@@ -228,7 +230,6 @@ export function EntraProvider({ children }: EntraProviderProps) {
 
     sessionMonitor.start()
 
-    // Registrar no audit log
     addLog({
       action: "login",
       level: "success",
@@ -237,12 +238,14 @@ export function EntraProvider({ children }: EntraProviderProps) {
         name,
         email,
         type: userType,
+        employeeId, // Incluindo employeeId capturado do Graph API
       },
       details: {
         description: "Login realizado com sucesso via Microsoft Entra ID",
         metadata: {
           authMethod: "entra-id",
           tenantId: account.tenantId,
+          employeeId, // Também em metadata para facilitar análise
         },
       },
     })

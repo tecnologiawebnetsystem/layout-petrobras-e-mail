@@ -26,6 +26,7 @@ export interface AuditLog {
     name: string
     email: string
     type: "internal" | "external" | "supervisor"
+    employeeId?: string // Adicionando employeeId para rastreabilidade completa
   }
   details: {
     targetId?: string
@@ -62,6 +63,7 @@ export const useAuditLogStore = create<AuditLogState>()(
             name: "Kleber Gonçalves",
             email: "kleber.goncalves.prestserv@petrobras.com.br",
             type: "internal",
+            employeeId: "emp-1",
           },
           details: {
             description: "Login realizado com sucesso",
@@ -78,6 +80,7 @@ export const useAuditLogStore = create<AuditLogState>()(
             name: "Kleber Gonçalves",
             email: "kleber.goncalves.prestserv@petrobras.com.br",
             type: "internal",
+            employeeId: "emp-1",
           },
           details: {
             targetId: "upload-1",
@@ -100,6 +103,7 @@ export const useAuditLogStore = create<AuditLogState>()(
             name: "Wagner Gaspar Brazil",
             email: "wagner.brazil@petrobras.com.br",
             type: "supervisor",
+            employeeId: "emp-2",
           },
           details: {
             targetId: "upload-1",

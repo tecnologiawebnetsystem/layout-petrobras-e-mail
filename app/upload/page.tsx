@@ -240,16 +240,17 @@ export default function UploadPage() {
               )}
 
               {!user?.manager && (
-                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-5 space-y-2">
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-5 space-y-2">
                   <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-yellow-600 font-bold text-sm">!</span>
+                    <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-blue-600 font-bold text-sm">i</span>
                     </div>
                     <div className="space-y-1">
-                      <p className="font-medium text-yellow-800 dark:text-yellow-500">Supervisor não identificado</p>
-                      <p className="text-sm text-yellow-700 dark:text-yellow-600 leading-relaxed">
-                        Não foi possível identificar seu supervisor no Active Directory. Entre em contato com o RH ou TI
-                        para atualizar seu cadastro hierárquico antes de realizar compartilhamentos.
+                      <p className="font-medium text-blue-800 dark:text-blue-500">Supervisor não identificado</p>
+                      <p className="text-sm text-blue-700 dark:text-blue-600 leading-relaxed">
+                        Não foi possível identificar seu supervisor no Active Directory. Você pode continuar com o
+                        compartilhamento, mas recomendamos entrar em contato com o RH ou TI para atualizar seu cadastro
+                        hierárquico.
                       </p>
                     </div>
                   </div>
@@ -317,7 +318,7 @@ export default function UploadPage() {
               <div className="flex justify-end pt-6">
                 <Button
                   type="submit"
-                  disabled={isLoading || showSuccess || !user?.manager}
+                  disabled={isLoading || showSuccess}
                   size="lg"
                   className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:from-[#008A81] hover:to-[#003A99] text-white font-semibold px-10 text-base shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >

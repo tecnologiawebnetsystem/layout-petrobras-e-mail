@@ -206,7 +206,7 @@ export default function AzureConfigPage() {
                   <CardTitle>Ambiente de Produção</CardTitle>
                   <Badge className="bg-red-600">PRODUÇÃO</Badge>
                 </div>
-                <CardDescription>Configuração para ambiente de produção (a ser definida)</CardDescription>
+                <CardDescription>Configuração para ambiente de produção (a ser definido)</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <Alert className="border-amber-200 bg-amber-50">
@@ -335,6 +335,23 @@ export default function AzureConfigPage() {
                       </p>
                       <p className="mt-1 text-xs text-amber-700">⚠️ REQUER admin consent</p>
                     </div>
+
+                    <div className="rounded-lg border border-purple-200 bg-purple-50 p-4">
+                      <div className="mb-2 flex items-center justify-between">
+                        <h4 className="font-semibold text-purple-900">Mail.Send</h4>
+                        <Badge variant="outline" className="border-purple-600 text-purple-600">
+                          Delegated
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-purple-800">
+                        Permite: Enviar emails como o usuário logado através do Microsoft 365
+                      </p>
+                      <p className="mt-1 text-xs text-purple-700">✓ Não requer admin consent</p>
+                      <div className="mt-2 rounded bg-purple-100 p-2 text-xs text-purple-900">
+                        💡 <strong>Benefício:</strong> Substitui AWS SES, sem custo adicional usando caixa de email
+                        corporativa
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -376,7 +393,7 @@ export default function AzureConfigPage() {
                         5
                       </span>
                       <span>
-                        Marque as 3 permissões acima e clique em <strong>Add permissions</strong>
+                        Marque as 4 permissões acima e clique em <strong>Add permissions</strong>
                       </span>
                     </li>
                     <li className="flex gap-3">

@@ -13,8 +13,21 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { Cloud, DollarSign, Zap, Shield, Clock, Server, Globe, CheckCircle2, AlertTriangle, Copy } from "lucide-react"
+import {
+  Cloud,
+  DollarSign,
+  Zap,
+  Shield,
+  Clock,
+  Server,
+  Globe,
+  CheckCircle2,
+  AlertTriangle,
+  Copy,
+  Home,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default function DeployAWSPage() {
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
@@ -27,6 +40,15 @@ export default function DeployAWSPage() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
+      <div className="mb-6">
+        <Link href="/wiki-dev">
+          <Button variant="ghost" size="sm" className="gap-2">
+            <Home className="h-4 w-4" />
+            Voltar para Wiki-Dev
+          </Button>
+        </Link>
+      </div>
+
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
