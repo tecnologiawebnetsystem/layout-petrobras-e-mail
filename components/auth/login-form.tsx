@@ -157,8 +157,23 @@ export function LoginForm() {
 
   const handleEntraIdLogin = async () => {
     try {
+      console.log("[v0] Iniciando login com Entra ID via popup")
       const response = await instance.loginPopup(loginRequest)
+      console.log("[v0] Response do loginPopup recebido:", {
+        hasAccount: !!response?.account,
+        hasAccessToken: !!response?.accessToken,
+      })
+
+      // O entra-provider só escuta eventos de redirect ou eventos de callback
+      // Precisamos redirecionar para que o provider pegue a conta
+      if (response && response.account) {
+        console.log("[v0] Login bem-sucedido, redirecionando para /upload")
+        // A conta já está salva no MSAL, agora redirecionar para que o provider pegue
+        window.location.href = "/upload"
+      }
     } catch (error: any) {
+      console.error("[v0] Erro no loginPopup:", error)
+
       if (error.errorCode === "user_cancelled" || error.message?.includes("user_cancelled")) {
         setNotification({
           show: true,

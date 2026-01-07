@@ -21,6 +21,7 @@ import {
 } from "@/lib/auth/entra-security"
 import { useAuditLogStore } from "@/lib/stores/audit-log-store"
 import { getUserProfile, getUserManager, getUserPhoto } from "@/lib/auth/graph-api"
+import { loginRequest } from "@/lib/auth/entra-config" // Assuming loginRequest is defined somewhere
 
 interface EntraProviderProps {
   children: ReactNode
@@ -35,11 +36,35 @@ export function EntraProvider({ children }: EntraProviderProps) {
 
     // Inicializar MSAL
     msalInstance.initialize().then(() => {
+      console.log("[v0] MSAL inicializado")
+
+      const accounts = msalInstance.getAllAccounts()
+      console.log("[v0] Contas encontradas no MSAL:", accounts.length)
+
+      if (accounts.length > 0 && !useAuthStore.getState().user) {
+        console.log("[v0] Conta encontrada mas usuário não autenticado, enriquecendo perfil")
+        // Buscar token silenciosamente e enriquecer perfil
+        msalInstance
+          .acquireTokenSilent({
+            ...loginRequest,
+            account: accounts[0],
+          })
+          .then((response) => {
+            console.log("[v0] Token silencioso adquirido com sucesso")
+            handleLoginSuccess(response)
+          })
+          .catch((error) => {
+            console.error("[v0] Erro ao adquirir token silencioso:", error)
+          })
+      }
+
       // Lidar com redirecionamento após login
       msalInstance
         .handleRedirectPromise()
         .then((response: AuthenticationResult | null) => {
+          console.log("[v0] handleRedirectPromise concluído:", !!response)
           if (response !== null) {
+            console.log("[v0] Response de redirect encontrado, processando")
             handleLoginSuccess(response)
           }
         })
