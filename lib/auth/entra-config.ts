@@ -59,6 +59,8 @@ export const msalConfig: Configuration = {
 export const loginRequest = {
   scopes: [
     "User.Read", // Ler perfil básico (nome, email)
+    "User.ReadBasic.All", // Ler perfil completo (cargo, departamento, telefone, employeeId)
+    "User.Read.All", // Ler informações de outros usuários (supervisor/manager)
     "email", // Obter email
     "profile", // Obter informações de perfil
     "openid", // OpenID Connect

@@ -43,9 +43,8 @@ export async function getUserProfile(): Promise<UserProfile | null> {
       return null
     }
 
-    // Solicitar token com escopo User.Read
     const response = await msalInstance.acquireTokenSilent({
-      scopes: ["User.Read"],
+      scopes: ["User.Read", "User.ReadBasic.All"],
       account,
     })
     console.log("[v0 Graph] Token obtido com sucesso")
@@ -61,6 +60,8 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 
     if (!profileResponse.ok) {
       console.error("[Graph API] Erro ao buscar perfil:", profileResponse.statusText)
+      const errorText = await profileResponse.text()
+      console.error("[Graph API] Resposta de erro:", errorText)
       return null
     }
 
@@ -85,9 +86,8 @@ export async function getUserManager(): Promise<ManagerInfo | null> {
       return null
     }
 
-    // Solicitar token com escopo User.Read
     const response = await msalInstance.acquireTokenSilent({
-      scopes: ["User.Read"],
+      scopes: ["User.Read", "User.Read.All"],
       account,
     })
 
@@ -107,6 +107,8 @@ export async function getUserManager(): Promise<ManagerInfo | null> {
         return null
       }
       console.error("[Graph API] Erro ao buscar gerente:", managerResponse.statusText)
+      const errorText = await managerResponse.text()
+      console.error("[Graph API] Resposta de erro:", errorText)
       return null
     }
 
