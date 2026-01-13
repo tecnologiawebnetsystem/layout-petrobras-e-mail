@@ -28,6 +28,11 @@ export interface FileUpload {
     email: string
     role: string
     avatar: string | null
+    manager?: {
+      name: string
+      email: string
+    }
+    employeeId: string
   }
   name: string
   recipient: string
@@ -132,6 +137,9 @@ export const useWorkflowStore = create<WorkflowState>()(
           uploads: [newUpload, ...state.uploads],
         }))
 
+        const supervisorEmail = upload.sender.manager?.email || "supervisor@petrobras.com.br"
+        const supervisorName = upload.sender.manager?.name || "Supervisor"
+
         useAuditLogStore.getState().addLog({
           action: "upload",
           level: "info",
@@ -140,6 +148,7 @@ export const useWorkflowStore = create<WorkflowState>()(
             name: upload.sender.name,
             email: upload.sender.email,
             type: "internal",
+            employeeId: upload.sender.employeeId, // Adicionado employeeId
           },
           details: {
             targetId: newUpload.id,
@@ -149,6 +158,8 @@ export const useWorkflowStore = create<WorkflowState>()(
               recipient: upload.recipient,
               fileCount: upload.files.length,
               expirationHours: upload.expirationHours,
+              supervisorEmail,
+              supervisorName,
             },
           },
         })
@@ -162,13 +173,10 @@ export const useWorkflowStore = create<WorkflowState>()(
           actionUrl: "/supervisor",
         })
 
-        // E-mail para supervisor
         fetch("/api/send-email", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            to: "kleber.goncalves.prestserv@petrobras.com.br",
-            subject: `Novo Upload para Aprovacao - ${upload.name}`,
             type: "supervisor",
             uploadData: {
               name: upload.name,
@@ -178,6 +186,9 @@ export const useWorkflowStore = create<WorkflowState>()(
               files: upload.files,
               expirationHours: upload.expirationHours,
               uploadDate: new Date().toLocaleString("pt-BR"),
+              supervisorEmail,
+              supervisorName,
+              uploadId: newUpload.id,
             },
           }),
         })
@@ -188,19 +199,18 @@ export const useWorkflowStore = create<WorkflowState>()(
                 "Erro ao Enviar E-mail",
                 `Não foi possível enviar e-mail para o supervisor: ${data.error}`,
               )
+            } else {
+              console.log("[v0] Email para supervisor enviado com sucesso")
             }
           })
           .catch((error) => {
             showAlert.error("Erro Crítico", `Erro crítico ao enviar e-mail para o supervisor: ${error.message}`)
           })
 
-        // E-mail de confirmação para remetente
         fetch("/api/send-email", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            to: upload.sender.email,
-            subject: `Confirmacao de Envio - ${upload.name}`,
             type: "sender",
             uploadData: {
               name: upload.name,
@@ -217,6 +227,8 @@ export const useWorkflowStore = create<WorkflowState>()(
           .then((data) => {
             if (data.error) {
               showAlert.error("Erro ao Enviar E-mail", `Não foi possível enviar e-mail de confirmação: ${data.error}`)
+            } else {
+              console.log("[v0] Email de confirmação enviado com sucesso")
             }
           })
           .catch((error) => {
@@ -256,9 +268,25 @@ export const useWorkflowStore = create<WorkflowState>()(
             shareInfo: {
               senderName: upload.sender.name,
               fileName: upload.name,
+              expirationHours: upload.expirationHours,
             },
           }),
-        }).catch((err) => console.error("Erro ao enviar email OTP:", err))
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.error) {
+              showAlert.error(
+                "Erro ao Enviar OTP",
+                `Não foi possível enviar código de acesso para o destinatário: ${data.error}`,
+              )
+            } else {
+              console.log("[v0] Email OTP enviado com sucesso para destinatário")
+            }
+          })
+          .catch((err) => {
+            console.error("Erro ao enviar email OTP:", err)
+            showAlert.error("Erro Crítico", "Erro crítico ao enviar código de acesso para o destinatário")
+          })
 
         useAuditLogStore.getState().addLog({
           action: "approve",

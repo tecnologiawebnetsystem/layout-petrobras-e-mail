@@ -5,85 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Database, Cloud, Server, FileCode, Shield, Home } from "lucide-react"
+import { Search, BookOpen, Cloud, Server, Shield, Home } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
   const [searchQuery, setSearchQuery] = useState("")
 
   const wikiCategories = [
-    {
-      title: "Implementação AWS",
-      description: "Guia completo de todos os serviços AWS necessários para o sistema",
-      icon: Cloud,
-      href: "/wiki-dev/aws-implementation",
-      color: "from-orange-500 to-amber-500",
-      topics: ["23 Serviços AWS", "Configurações", "Custos", "Segurança"],
-    },
-    {
-      title: "Modelos de Dados",
-      description: "Estrutura completa das tabelas DynamoDB e relacionamentos",
-      icon: Database,
-      href: "/wiki-dev/data-models",
-      color: "from-blue-500 to-cyan-500",
-      topics: ["5 Tabelas DynamoDB", "Índices", "Campos", "Validações"],
-    },
-    {
-      title: "SQL & DynamoDB",
-      description: "Documentação completa da estrutura de banco de dados",
-      icon: FileCode,
-      href: "/wiki-dev/sql-readme",
-      color: "from-purple-500 to-pink-500",
-      topics: ["Scripts Python", "Tabelas", "Funções", "Migrations"],
-    },
-    {
-      title: "Integração Front-Back",
-      description: "Análise completa de compatibilidade e estratégia de integração",
-      icon: Server,
-      href: "/wiki-dev/integracao",
-      color: "from-violet-500 to-purple-500",
-      topics: ["Conflitos", "Campos Comuns", "Banco de Dados", "AWS", "Estratégia"],
-    },
-    {
-      title: "ServiceNow Integration",
-      description: "Integração completa com ServiceNow para autenticação e gestão de usuários",
-      icon: Shield,
-      href: "/wiki-dev/servicenow",
-      color: "from-teal-500 to-cyan-500",
-      topics: ["API Endpoints", "Autenticação", "Front-end", "Back-end Python", "AWS", "DynamoDB"],
-    },
-    {
-      title: "Microsoft Entra ID",
-      description: "SSO corporativo com Microsoft Entra ID (Azure AD) - Código completo pronto",
-      icon: Shield,
-      href: "/wiki-dev/entra-id",
-      color: "from-blue-600 to-indigo-600",
-      topics: ["SSO", "Azure AD", "Autenticação", "Documento Formal", "Código Pronto"],
-    },
-    {
-      title: "Desenvolvimento Local AWS",
-      description: "Como rodar DynamoDB, S3, SES, Lambda localmente sem custo - Guia completo para iniciantes",
-      icon: Server,
-      href: "/wiki-dev/local-development",
-      color: "from-emerald-500 to-teal-500",
-      topics: ["DynamoDB Local", "LocalStack", "Docker", "Python Config", "Zero Custo"],
-    },
-    {
-      title: "Código Python (Back-end)",
-      description: "Análise completa do código Python atual - O que existe e o que falta",
-      icon: FileCode,
-      href: "/wiki-dev/python-code",
-      color: "from-yellow-500 to-orange-600",
-      topics: ["70 Arquivos", "FastAPI", "Estrutura", "Status", "O que falta"],
-    },
-    {
-      title: "Sincronização Back-end",
-      description: "Guia completo passo a passo: o que fazer no Python para sincronizar com o front-end",
-      icon: Server,
-      href: "/wiki-dev/sincronizacao-backend",
-      color: "from-orange-600 to-red-600",
-      topics: ["5 Scripts SQL", "8 Endpoints API", "4 Services", "40-60h", "Código Pronto"],
-    },
     {
       title: "Configuração Azure AD",
       description: "Guia completo de Redirect URI e Permissões Graph API para HML e Produção",
@@ -99,6 +27,22 @@ export default function WikiDevPage() {
       href: "/wiki-dev/deploy-aws",
       color: "from-green-500 to-emerald-600",
       topics: ["Amplify", "S3 + CloudFront", "ECS Fargate", "Domínio Provisório", "Custos"],
+    },
+    {
+      title: "Desenvolvimento Local AWS",
+      description: "Como rodar DynamoDB, S3, SES, Lambda localmente sem custo - Guia completo para iniciantes",
+      icon: Server,
+      href: "/wiki-dev/local-development",
+      color: "from-emerald-500 to-teal-500",
+      topics: ["DynamoDB Local", "LocalStack", "Docker", "Python Config", "Zero Custo"],
+    },
+    {
+      title: "Microsoft Entra ID",
+      description: "SSO corporativo com Microsoft Entra ID (Azure AD) - Código completo pronto",
+      icon: Shield,
+      href: "/wiki-dev/entra-id",
+      color: "from-blue-600 to-indigo-600",
+      topics: ["SSO", "Azure AD", "Autenticação", "Documento Formal", "Código Pronto"],
     },
   ]
 
@@ -127,7 +71,7 @@ export default function WikiDevPage() {
             <BookOpen className="h-8 w-8 text-white" />
           </div>
           <h1 className="mb-3 text-4xl font-bold tracking-tight text-slate-900">Wiki de Desenvolvimento</h1>
-          <p className="text-lg text-slate-600">Documentação técnica completa para implementação do sistema na AWS</p>
+          <p className="text-lg text-slate-600">Documentação técnica essencial para configuração e deploy do sistema</p>
         </div>
 
         {/* Search */}
@@ -145,7 +89,7 @@ export default function WikiDevPage() {
         </div>
 
         {/* Categories Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2">
           {filteredCategories.map((category) => {
             const Icon = category.icon
             return (
@@ -193,11 +137,10 @@ export default function WikiDevPage() {
               <Shield className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h3 className="mb-1 font-semibold text-slate-900">Documentação Atualizada</h3>
+              <h3 className="mb-1 font-semibold text-slate-900">Documentação Essencial</h3>
               <p className="text-sm leading-relaxed text-slate-600">
-                Esta Wiki contém toda a documentação técnica necessária para implementar, configurar e fazer deploy do
-                sistema de transferência de arquivos na AWS. Todas as informações estão sincronizadas com a versão atual
-                do código.
+                Esta Wiki contém a documentação técnica essencial para configurar autenticação, fazer deploy na AWS e
+                desenvolver localmente. Todas as informações estão sincronizadas com a versão atual do código.
               </p>
             </div>
           </div>

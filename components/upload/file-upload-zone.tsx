@@ -1,8 +1,7 @@
 "use client"
 
-import type React from "react"
-
 import { useCallback, useState } from "react"
+import type { DragEvent, ChangeEvent } from "react"
 import { Upload, FileUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -14,18 +13,18 @@ interface FileUploadZoneProps {
 export function FileUploadZone({ onFilesSelected }: FileUploadZoneProps) {
   const [isDragging, setIsDragging] = useState(false)
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: DragEvent) => {
     e.preventDefault()
     setIsDragging(true)
   }, [])
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = useCallback((e: DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
   }, [])
 
   const handleDrop = useCallback(
-    (e: React.DragEvent) => {
+    (e: DragEvent) => {
       e.preventDefault()
       setIsDragging(false)
 
@@ -37,7 +36,7 @@ export function FileUploadZone({ onFilesSelected }: FileUploadZoneProps) {
     [onFilesSelected],
   )
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInput = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (files.length > 0) {
       onFilesSelected(files)

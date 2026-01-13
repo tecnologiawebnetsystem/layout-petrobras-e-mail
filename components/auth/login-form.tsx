@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import type { FormEvent } from "react"
 import { useState } from "react"
 import { Eye, EyeOff, User, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -162,14 +162,18 @@ export function LoginForm() {
       console.log("[v0] Response do loginPopup recebido:", {
         hasAccount: !!response?.account,
         hasAccessToken: !!response?.accessToken,
+        accountEmail: response?.account?.username,
       })
 
-      // O entra-provider só escuta eventos de redirect ou eventos de callback
-      // Precisamos redirecionar para que o provider pegue a conta
+      // Disparar evento manualmente para o provider processar
       if (response && response.account) {
-        console.log("[v0] Login bem-sucedido, redirecionando para /upload")
-        // A conta já está salva no MSAL, agora redirecionar para que o provider pegue
-        window.location.href = "/upload"
+        console.log("[v0] Login bem-sucedido, conta salva no MSAL")
+        console.log("[v0] Forçando evento de login para o provider processar")
+
+        const event = new CustomEvent("msal-login-success", {
+          detail: { response },
+        })
+        window.dispatchEvent(event)
       }
     } catch (error: any) {
       console.error("[v0] Erro no loginPopup:", error)
@@ -193,7 +197,7 @@ export function LoginForm() {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 

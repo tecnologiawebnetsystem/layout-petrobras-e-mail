@@ -13,6 +13,8 @@ interface UploadSuccessModalProps {
     files: Array<{ name: string; size: string; type: string }>
     expirationHours: number
     senderEmail: string
+    supervisorName?: string
+    supervisorEmail?: string
   }
 }
 
@@ -99,9 +101,11 @@ export function UploadSuccessModal({ open, onOpenChange, uploadData }: UploadSuc
                 </div>
                 <div className="flex-1">
                   <p className="text-xs font-medium text-amber-900 dark:text-amber-100">Notificação para supervisor:</p>
-                  <p className="font-semibold text-amber-800 dark:text-amber-200">Wagner Gaspar Brazil</p>
+                  <p className="font-semibold text-amber-800 dark:text-amber-200">
+                    {uploadData.supervisorName || "Supervisor"}
+                  </p>
                   <p className="text-xs text-amber-700 dark:text-amber-300">
-                    kleber.goncalves.prestserv@petrobras.com.br
+                    {uploadData.supervisorEmail || "supervisor@petrobras.com.br"}
                   </p>
                 </div>
               </div>

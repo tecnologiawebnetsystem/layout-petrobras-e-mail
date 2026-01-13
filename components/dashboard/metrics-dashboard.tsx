@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import type React from "react"
+import type { ReactNode } from "react"
 
 import { Card } from "@/components/ui/card"
 import { TrendingUp, TrendingDown, FileText, Clock, CheckCircle, XCircle } from "lucide-react"
@@ -14,7 +14,7 @@ interface MetricCardProps {
     value: number
     isPositive: boolean
   }
-  icon: React.ReactNode
+  icon: ReactNode
   gradient: string
   onClick?: () => void
 }
