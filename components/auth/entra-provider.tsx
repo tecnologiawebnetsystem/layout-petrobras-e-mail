@@ -181,6 +181,10 @@ export function EntraProvider({ children }: EntraProviderProps) {
   }, [setAuth, addLog, clearAuth])
 
   const handleLoginSuccess = async (response: AuthenticationResult) => {
+    console.log("[v0] ===== handleLoginSuccess CHAMADO =====")
+    console.log("[v0] Response recebido:", !!response)
+    console.log("[v0] Account no response:", !!response?.account)
+
     const account = response.account
     if (!account) {
       console.error("[Entra ID] Conta não encontrada no response")
