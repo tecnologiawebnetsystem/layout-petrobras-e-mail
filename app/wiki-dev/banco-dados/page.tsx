@@ -1,18 +1,7 @@
-import { AlertDescription } from "@/components/ui/alert"
-import { AlertTitle } from "@/components/ui/alert"
-import { Home, Database, Info, Terminal, Mouse, Code, GitBranch, Save, CheckCircle, TestTube } from "your-icon-library"
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  Alert,
-} from "your-ui-library"
+import { Home, Database, Info, Terminal, Mouse, Code, GitBranch, Save, CheckCircle, TestTube } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Alert } from "@/components/ui/alert"
 import Link from "next/link"
 
 export default function BancoDadosPage() {
@@ -57,8 +46,8 @@ export default function BancoDadosPage() {
               <CardContent className="space-y-6">
                 <Alert>
                   <Info className="h-4 w-4" />
-                  <AlertTitle>Banco de Dados PostgreSQL</AlertTitle>
-                  <AlertDescription>O sistema usa PostgreSQL hospedado no AWS RDS ou Neon</AlertDescription>
+                  Banco de Dados PostgreSQL
+                  <p className="text-sm mt-1">O sistema usa PostgreSQL hospedado no AWS RDS ou Neon</p>
                 </Alert>
 
                 <div className="space-y-4">
@@ -256,11 +245,10 @@ LIMIT 5;`}
               </CardHeader>
               <CardContent className="space-y-6">
                 <Alert>
-                  <Info className="h-4 w-4" />
-                  <AlertTitle>O que são Migrations?</AlertTitle>
-                  <AlertDescription>
+                  <Info className="h-4 w-4" />O que são Migrations?
+                  <p className="text-sm mt-1">
                     São scripts SQL que alteram a estrutura do banco (criar tabelas, adicionar colunas, etc)
-                  </AlertDescription>
+                  </p>
                 </Alert>
 
                 <div className="space-y-4">
@@ -305,12 +293,12 @@ python -m alembic downgrade -1`}
 
                   <Alert variant="destructive">
                     <GitBranch className="h-4 w-4" />
-                    <AlertTitle>CUIDADO em Produção!</AlertTitle>
-                    <AlertDescription>
+                    CUIDADO em Produção!
+                    <p className="text-sm mt-1">
                       SEMPRE teste migrations em DEV antes de rodar em PRD
                       <br />
                       Migrations podem apagar dados se mal escritas
-                    </AlertDescription>
+                    </p>
                   </Alert>
                 </div>
               </CardContent>
@@ -366,13 +354,13 @@ psql "$DATABASE_URL" < backup_users.sql`}
 
                   <Alert>
                     <CheckCircle className="h-4 w-4" />
-                    <AlertTitle>Boas Práticas de Backup</AlertTitle>
-                    <AlertDescription>
+                    Boas Práticas de Backup
+                    <p className="text-sm mt-1">
                       • Faça backup ANTES de rodar migrations
                       <br />• Faça backup ANTES de deploy em PRD
                       <br />• Teste restauração mensalmente
                       <br />• Guarde backups em local seguro (S3)
-                    </AlertDescription>
+                    </p>
                   </Alert>
                 </div>
               </CardContent>
@@ -391,7 +379,7 @@ psql "$DATABASE_URL" < backup_users.sql`}
               <CardContent className="space-y-6">
                 <Alert>
                   <Info className="h-4 w-4" />
-                  <AlertDescription>Use dados de teste APENAS em DEV, NUNCA em PRD!</AlertDescription>
+                  Use dados de teste APENAS em DEV, NUNCA em PRD!
                 </Alert>
 
                 <div className="space-y-4">
@@ -442,12 +430,12 @@ TRUNCATE TABLE areas CASCADE;`}
 
                   <Alert variant="destructive">
                     <TestTube className="h-4 w-4" />
-                    <AlertTitle>ATENÇÃO!</AlertTitle>
-                    <AlertDescription>
+                    ATENÇÃO!
+                    <p className="text-sm mt-1">
                       Comandos TRUNCATE apagam dados permanentemente.
                       <br />
                       Use APENAS em ambiente DEV local!
-                    </AlertDescription>
+                    </p>
                   </Alert>
                 </div>
               </CardContent>

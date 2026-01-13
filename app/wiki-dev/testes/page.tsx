@@ -1,18 +1,7 @@
-import {
-  Home,
-  Users,
-  Shield,
-  CheckCircle,
-  Mail,
-  Upload,
-  CheckSquare,
-  Info,
-  Download,
-  Terminal,
-} from "your-icon-library" // Replace 'your-icon-library' with the actual library you are using
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "your-tabs-library" // Replace 'your-tabs-library' with the actual library you are using
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "your-card-library" // Replace 'your-card-library' with the actual library you are using
-import { Alert, AlertDescription, AlertTitle } from "your-alert-library" // Replace 'your-alert-library' with the actual library you are using
+import { Home, Users, Shield, CheckCircle, Mail, Upload, CheckSquare, Info, Download, Terminal } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from "next/link"
 
 export default function TestesPage() {

@@ -1,10 +1,8 @@
-import { AlertDescription } from "@/components/ui/alert"
-import { AlertTitle } from "@/components/ui/alert"
 import Link from "next/link"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "ui-components"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "ui-components"
-import { Home, Layers, Code, TestTube, Rocket, AlertTriangle, Info, CheckCircle } from "icons"
-import { Alert } from "ui-components"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Home, Layers, Code, TestTube, Rocket, AlertTriangle, Info, CheckCircle } from "lucide-react"
+import { Alert } from "@/components/ui/alert"
 
 export default function DeployAmbientesPage() {
   return (
@@ -91,10 +89,10 @@ export default function DeployAmbientesPage() {
 
                 <Alert>
                   <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Regra de Ouro</AlertTitle>
-                  <AlertDescription>
+                  Regra de Ouro
+                  <p className="text-sm text-muted-foreground">
                     NUNCA faça deploy direto em produção! Sempre siga o fluxo: DEV → HML → PRD
-                  </AlertDescription>
+                  </p>
                 </Alert>
               </CardContent>
             </Card>
@@ -133,13 +131,13 @@ git push origin main`}
                       </p>
                       <Alert>
                         <Info className="h-4 w-4" />
-                        <AlertDescription>
+                        <p className="text-sm text-muted-foreground">
                           Branch <code className="bg-muted px-1 rounded">main</code> → Deploy em PRD
                           <br />
                           Branch <code className="bg-muted px-1 rounded">develop</code> → Deploy em DEV
                           <br />
                           Branch <code className="bg-muted px-1 rounded">homolog</code> → Deploy em HML
-                        </AlertDescription>
+                        </p>
                       </Alert>
                     </div>
                   </div>
@@ -242,13 +240,13 @@ git push origin main`}
               <CardContent className="space-y-4">
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Quando fazer rollback?</AlertTitle>
-                  <AlertDescription>
-                    - Sistema está fora do ar
+                  <p className="text-sm text-muted-foreground">
+                    Quando fazer rollback?
+                    <br />- Sistema está fora do ar
                     <br />- Erro crítico que afeta usuários
                     <br />- Login não funciona
                     <br />- Perda de dados
-                  </AlertDescription>
+                  </p>
                 </Alert>
 
                 <div className="space-y-3">
@@ -276,8 +274,9 @@ git push origin main`}
 
                   <Alert>
                     <Info className="h-4 w-4" />
-                    <AlertTitle>Após o Rollback</AlertTitle>
-                    <AlertDescription>
+                    <p className="text-sm text-muted-foreground">
+                      Após o Rollback
+                      <br />
                       1. Teste se o sistema voltou a funcionar
                       <br />
                       2. Avise a equipe
@@ -285,7 +284,7 @@ git push origin main`}
                       3. Investigue o que deu errado
                       <br />
                       4. Corrija em DEV antes de tentar PRD novamente
-                    </AlertDescription>
+                    </p>
                   </Alert>
                 </div>
               </CardContent>
