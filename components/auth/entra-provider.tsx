@@ -30,156 +30,6 @@ export function EntraProvider({ children }: EntraProviderProps) {
   const { setAuth, clearAuth } = useAuthStore()
   const { addLog } = useAuditLogStore()
 
-  useEffect(() => {
-    setupCrossTabLogout()
-
-    const initializeMsal = async () => {
-      try {
-        await msalInstance.initialize()
-        console.log("[v0] MSAL inicializado")
-
-        // Aguardar um momento para garantir que está completamente pronto
-        await new Promise((resolve) => setTimeout(resolve, 200))
-
-        const accounts = msalInstance.getAllAccounts()
-        console.log("[v0] Contas encontradas no MSAL após inicialização:", accounts.length)
-
-        const currentUser = useAuthStore.getState().user
-        console.log(
-          "[v0] Usuário atual no store:",
-          currentUser
-            ? {
-                email: currentUser.email,
-                name: currentUser.name,
-                hasManager: !!currentUser.manager,
-                hasPhoto: !!currentUser.photoUrl,
-                hasEmployeeId: !!currentUser.employeeId,
-              }
-            : null,
-        )
-
-        if (accounts.length > 0 && !currentUser) {
-          console.log("[v0] Conta MSAL encontrada sem usuário no store, enriquecendo perfil")
-          console.log("[v0] Email da conta:", accounts[0].username)
-          console.log("[v0] Nome da conta:", accounts[0].name)
-          console.log("[v0] Tentando adquirir token silencioso com scopes:", loginRequest.scopes)
-
-          try {
-            const response = await msalInstance.acquireTokenSilent({
-              ...loginRequest,
-              account: accounts[0],
-            })
-            console.log("[v0] Token silencioso adquirido com sucesso")
-            await handleLoginSuccess(response)
-          } catch (error) {
-            console.error("[v0] Erro ao adquirir token silencioso:", error)
-            if (error && typeof error === "object") {
-              const errorObj = error as any
-              console.error("[v0] Detalhes do erro:", {
-                errorCode: errorObj.errorCode || "unknown",
-                errorMessage: errorObj.errorMessage || errorObj.message || "No details",
-              })
-            }
-
-            console.log("[v0] Tentando login popup interativo")
-            try {
-              const popupResponse = await msalInstance.loginPopup(loginRequest)
-              console.log("[v0] Login popup bem-sucedido")
-              await handleLoginSuccess(popupResponse)
-            } catch (popupError) {
-              console.error("[v0] Erro no login popup:", popupError)
-            }
-          }
-        }
-
-        // Lidar com redirecionamento após login
-        try {
-          const response = await msalInstance.handleRedirectPromise()
-          console.log("[v0] handleRedirectPromise concluído:", !!response)
-          if (response !== null) {
-            console.log("[v0] Response de redirect encontrado, processando")
-            await handleLoginSuccess(response)
-          }
-        } catch (error: any) {
-          if (error.message?.includes("user_cancelled")) {
-            return
-          }
-          console.error("[Entra ID] Erro ao lidar com redirecionamento:", error)
-        }
-
-        const handleCustomLoginEvent = async (event: Event) => {
-          const customEvent = event as CustomEvent
-          console.log("[v0] Evento customizado de login recebido")
-          if (customEvent.detail?.response) {
-            await handleLoginSuccess(customEvent.detail.response)
-          }
-        }
-
-        window.addEventListener("msal-login-success", handleCustomLoginEvent)
-
-        // Adicionar listener para eventos de autenticação
-        const callbackId = msalInstance.addEventCallback((event: EventMessage) => {
-          // Login bem-sucedido
-          if (event.eventType === EventType.LOGIN_SUCCESS && event.payload) {
-            const payload = event.payload as AuthenticationResult
-            handleLoginSuccess(payload)
-          }
-
-          // Logout bem-sucedido
-          if (event.eventType === EventType.LOGOUT_SUCCESS) {
-            handleLogoutSuccess()
-          }
-
-          // Erro de login
-          if (event.eventType === EventType.LOGIN_FAILURE) {
-            const error = event.error
-
-            if (error?.errorCode === "user_cancelled" || error?.message?.includes("user_cancelled")) {
-              return
-            }
-
-            // Log apenas para erros reais
-            console.error("[Entra ID] Erro de login:", error)
-            addLog({
-              action: "login",
-              level: "error",
-              user: {
-                id: "unknown",
-                name: "Desconhecido",
-                email: "unknown",
-                type: "external",
-              },
-              details: {
-                description: "Erro ao fazer login com Entra ID",
-                metadata: {
-                  error: error?.message || "Erro desconhecido",
-                  errorCode: error?.errorCode,
-                },
-              },
-            })
-          }
-        })
-
-        const account = msalInstance.getAllAccounts()[0]
-        if (account) {
-          sessionMonitor.start()
-        }
-
-        return () => {
-          sessionMonitor.stop()
-          window.removeEventListener("msal-login-success", handleCustomLoginEvent)
-          if (callbackId) {
-            msalInstance.removeEventCallback(callbackId)
-          }
-        }
-      } catch (error) {
-        console.error("[v0] Erro ao inicializar MSAL:", error)
-      }
-    }
-
-    initializeMsal()
-  }, [setAuth, addLog, clearAuth])
-
   const handleLoginSuccess = async (response: AuthenticationResult) => {
     console.log("[v0] ===== handleLoginSuccess CHAMADO =====")
     console.log("[v0] Response recebido:", !!response)
@@ -355,28 +205,177 @@ export function EntraProvider({ children }: EntraProviderProps) {
         name,
         email,
         type: userType,
-        employeeId, // Incluindo employeeId capturado do Graph API
+        employeeId,
       },
       details: {
         description: "Login realizado com sucesso via Microsoft Entra ID",
         metadata: {
           authMethod: "entra-id",
           tenantId: account.tenantId,
-          employeeId, // Também em metadata para facilitar análise
+          employeeId,
         },
       },
     })
 
-    if (typeof window !== "undefined") {
-      window.location.href = "/upload"
-    }
+    console.log("[v0] Login processado com sucesso, usuário autenticado")
   }
 
   const handleLogoutSuccess = () => {
     sessionMonitor.stop()
-
     triggerCrossTabLogout()
   }
+
+  useEffect(() => {
+    setupCrossTabLogout()
+
+    const handleCustomLoginEvent = async (event: Event) => {
+      const customEvent = event as CustomEvent
+      console.log("[v0] Evento customizado de login recebido no provider")
+      if (customEvent.detail?.response) {
+        console.log("[v0] Processando login do Entra ID, substituindo usuário atual se houver")
+        await handleLoginSuccess(customEvent.detail.response)
+      }
+    }
+
+    window.addEventListener("msal-login-success", handleCustomLoginEvent)
+    console.log("[v0] Listener de evento msal-login-success registrado")
+
+    const initializeMsal = async () => {
+      try {
+        await msalInstance.initialize()
+        console.log("[v0] MSAL inicializado")
+
+        const accounts = msalInstance.getAllAccounts()
+        console.log("[v0] Contas encontradas no MSAL após inicialização:", accounts.length)
+
+        const currentUser = useAuthStore.getState().user
+        console.log(
+          "[v0] Usuário atual no store:",
+          currentUser
+            ? {
+                email: currentUser.email,
+                name: currentUser.name,
+                hasManager: !!currentUser.manager,
+                hasPhoto: !!currentUser.photoUrl,
+                hasEmployeeId: !!currentUser.employeeId,
+              }
+            : null,
+        )
+
+        if (accounts.length > 0) {
+          console.log("[v0] Conta MSAL encontrada, enriquecendo perfil")
+          console.log("[v0] Email da conta:", accounts[0].username)
+          console.log("[v0] Nome da conta:", accounts[0].name)
+          console.log("[v0] Tentando adquirir token silencioso com scopes:", loginRequest.scopes)
+
+          try {
+            const response = await msalInstance.acquireTokenSilent({
+              ...loginRequest,
+              account: accounts[0],
+            })
+            console.log("[v0] Token silencioso adquirido com sucesso")
+            await handleLoginSuccess(response)
+          } catch (error) {
+            console.error("[v0] Erro ao adquirir token silencioso:", error)
+            if (error && typeof error === "object") {
+              const errorObj = error as any
+              console.error("[v0] Detalhes do erro:", {
+                errorCode: errorObj.errorCode || "unknown",
+                errorMessage: errorObj.errorMessage || errorObj.message || "No details",
+              })
+            }
+
+            console.log("[v0] Tentando login popup interativo")
+            try {
+              const popupResponse = await msalInstance.loginPopup(loginRequest)
+              console.log("[v0] Login popup bem-sucedido")
+              await handleLoginSuccess(popupResponse)
+            } catch (popupError) {
+              console.error("[v0] Erro no login popup:", popupError)
+            }
+          }
+        }
+
+        // Lidar com redirecionamento após login
+        try {
+          const response = await msalInstance.handleRedirectPromise()
+          console.log("[v0] handleRedirectPromise concluído:", !!response)
+          if (response !== null) {
+            console.log("[v0] Response de redirect encontrado, processando")
+            await handleLoginSuccess(response)
+          }
+        } catch (error: any) {
+          if (error.message?.includes("user_cancelled")) {
+            return
+          }
+          console.error("[Entra ID] Erro ao lidar com redirecionamento:", error)
+        }
+
+        // Adicionar listener para eventos de autenticação do MSAL
+        const callbackId = msalInstance.addEventCallback((event: EventMessage) => {
+          // Login bem-sucedido
+          if (event.eventType === EventType.LOGIN_SUCCESS && event.payload) {
+            const payload = event.payload as AuthenticationResult
+            handleLoginSuccess(payload)
+          }
+
+          // Logout bem-sucedido
+          if (event.eventType === EventType.LOGOUT_SUCCESS) {
+            handleLogoutSuccess()
+          }
+
+          // Erro de login
+          if (event.eventType === EventType.LOGIN_FAILURE) {
+            const error = event.error
+
+            if (error?.errorCode === "user_cancelled" || error?.message?.includes("user_cancelled")) {
+              return
+            }
+
+            // Log apenas para erros reais
+            console.error("[Entra ID] Erro de login:", error)
+            addLog({
+              action: "login",
+              level: "error",
+              user: {
+                id: "unknown",
+                name: "Desconhecido",
+                email: "unknown",
+                type: "external",
+              },
+              details: {
+                description: "Erro ao fazer login com Entra ID",
+                metadata: {
+                  error: error?.message || "Erro desconhecido",
+                  errorCode: error?.errorCode,
+                },
+              },
+            })
+          }
+        })
+
+        const account = msalInstance.getAllAccounts()[0]
+        if (account) {
+          sessionMonitor.start()
+        }
+
+        return () => {
+          sessionMonitor.stop()
+          if (callbackId) {
+            msalInstance.removeEventCallback(callbackId)
+          }
+        }
+      } catch (error) {
+        console.error("[v0] Erro ao inicializar MSAL:", error)
+      }
+    }
+
+    initializeMsal()
+
+    return () => {
+      window.removeEventListener("msal-login-success", handleCustomLoginEvent)
+    }
+  }, [setAuth, addLog, clearAuth])
 
   return <MsalProvider instance={msalInstance}>{children}</MsalProvider>
 }
