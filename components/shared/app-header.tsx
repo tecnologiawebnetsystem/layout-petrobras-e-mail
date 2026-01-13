@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { GlobalSearch } from "@/components/search/global-search"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { useState } from "react"
+import { useMsal } from "@azure/msal-react"
 
 interface AppHeaderProps {
   subtitle?: string
@@ -29,13 +30,31 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
   const { isDark, toggleTheme } = useThemeStore()
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { instance } = useMsal()
 
   const isExternalUser = user?.userType === "external"
 
-  const handleLogout = () => {
-    clearAuth()
-    router.push("/")
-    setMobileMenuOpen(false)
+  const handleLogout = async () => {
+    try {
+      console.log("[v0] Fazendo logout do sistema")
+      clearAuth()
+
+      const accounts = instance.getAllAccounts()
+      if (accounts.length > 0) {
+        console.log("[v0] Fazendo logout do Entra ID/MSAL")
+        await instance.logoutPopup({
+          account: accounts[0],
+          postLogoutRedirectUri: window.location.origin,
+        })
+      }
+
+      router.push("/")
+      setMobileMenuOpen(false)
+    } catch (error) {
+      console.error("[v0] Erro ao fazer logout:", error)
+      router.push("/")
+      setMobileMenuOpen(false)
+    }
   }
 
   const handleViewCompartilhamentos = () => {

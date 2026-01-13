@@ -344,19 +344,6 @@ export function LoginForm() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => handleQuickLogin("internal")}
-                className="justify-start h-auto py-2 px-3 bg-white dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 border-blue-200 dark:border-blue-800 text-left"
-              >
-                <div className="flex flex-col items-start w-full">
-                  <span className="text-xs font-semibold text-blue-900 dark:text-blue-100">Usuário Interno</span>
-                  <span className="text-[10px] text-blue-700 dark:text-blue-300">
-                    kleber.goncalves.prestserv@petrobras.com.br
-                  </span>
-                </div>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
                 onClick={() => handleQuickLogin("external")}
                 className="justify-start h-auto py-2 px-3 bg-white dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 border-blue-200 dark:border-blue-800 text-left"
               >
