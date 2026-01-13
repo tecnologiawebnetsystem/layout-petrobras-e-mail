@@ -82,7 +82,7 @@ O sistema permite que usuários internos da Petrobras façam upload de arquivos 
 
 ## Estrutura do Projeto
 
-```
+\`\`\`
 ├── app/                          # Páginas e rotas Next.js
 │   ├── page.tsx                 # Página de login
 │   ├── upload/                  # Upload de arquivos (usuário interno)
@@ -136,7 +136,7 @@ O sistema permite que usuários internos da Petrobras façam upload de arquivos 
 │   └── python/
 │
 └── proxy.ts                    # Middleware (Next.js 16) com CSP headers
-```
+\`\`\`
 
 ## Início Rápido
 
@@ -148,7 +148,7 @@ O sistema permite que usuários internos da Petrobras façam upload de arquivos 
 
 ### Instalação
 
-```bash
+\`\`\`bash
 # Clone o repositório
 git clone https://github.com/petrobras/sistema-transferencia-arquivos.git
 
@@ -161,7 +161,7 @@ npm install
 # Configure as variáveis de ambiente
 cp .env.example .env.local
 # Edite o .env.local com suas credenciais
-```
+\`\`\`
 
 ### Configuração Microsoft Entra ID
 
@@ -179,20 +179,20 @@ cp .env.example .env.local
 ### Configuração AWS
 
 1. **S3 Bucket**
-   ```bash
+   \`\`\`bash
    aws s3 mb s3://petrobras-file-transfer-prod
-   ```
+   \`\`\`
 
 2. **DynamoDB Tables**
-   ```bash
+   \`\`\`bash
    # Execute os scripts SQL na ordem
    npm run db:setup
-   ```
+   \`\`\`
 
 3. **SES Email Verification**
-   ```bash
+   \`\`\`bash
    aws ses verify-email-identity --email-address noreply@petrobras.com.br
-   ```
+   \`\`\`
 
 4. **CloudFront Distribution**
    - Configure no console AWS ou via CLI
@@ -200,16 +200,16 @@ cp .env.example .env.local
 
 ### Executar Localmente
 
-```bash
+\`\`\`bash
 # Modo desenvolvimento
 npm run dev
 
 # Acesse http://localhost:3000
-```
+\`\`\`
 
 ### Build e Deploy
 
-```bash
+\`\`\`bash
 # Build de produção
 npm run build
 
@@ -218,11 +218,11 @@ vercel --prod
 
 # Ou deploy para AWS
 npm run deploy:aws
-```
+\`\`\`
 
 ## Variáveis de Ambiente
 
-```env
+\`\`\`env
 # Microsoft Entra ID (Azure AD)
 NEXT_PUBLIC_ENTRA_TENANT_ID=5b6f6241-9a57-4be4-8e50-1dfa72e79a57
 NEXT_PUBLIC_ENTRA_CLIENT_ID=da3aaaad-619f-4bee-a434-51efd11faf7c
@@ -251,7 +251,7 @@ AWS_SES_REPLY_TO=suporte@petrobras.com.br
 NEXT_PUBLIC_APP_URL=https://transfer.petrobras.com.br
 NEXT_PUBLIC_MAX_FILE_SIZE=524288000
 NEXT_PUBLIC_MAX_AVAILABILITY_HOURS=72
-```
+\`\`\`
 
 ## Sistema de Email
 
@@ -260,7 +260,7 @@ NEXT_PUBLIC_MAX_AVAILABILITY_HOURS=72
 O sistema utiliza AWS SES para envio de emails:
 
 **Configuração:**
-```bash
+\`\`\`bash
 # 1. Verificar domínio no SES
 aws ses verify-domain-identity --domain petrobras.com.br
 
@@ -270,7 +270,7 @@ aws ses verify-email-identity --email-address noreply@petrobras.com.br
 # 3. Configurar variáveis no .env.local
 AWS_SES_FROM_EMAIL=noreply@petrobras.com.br
 AWS_SES_REPLY_TO=suporte@petrobras.com.br
-```
+\`\`\`
 
 **Tipos de Email Enviados:**
 - **Notificação ao Supervisor**: Quando upload é realizado
@@ -384,7 +384,7 @@ Todos os eventos são registrados:
 
 ## Testes
 
-```bash
+\`\`\`bash
 # Testes unitários
 npm run test
 
@@ -393,11 +393,11 @@ npm run test:e2E
 
 # Cobertura
 npm run test:coverage
-```
+\`\`\`
 
 ## Scripts Úteis
 
-```bash
+\`\`\`bash
 # Desenvolvimento
 npm run dev              # Inicia servidor de desenvolvimento
 npm run build           # Build de produção
@@ -413,4 +413,4 @@ npm run db:reset        # Apaga e recria tudo
 # Deploy
 npm run deploy:staging  # Deploy para staging
 npm run deploy:prod     # Deploy para produção
-```
+\`\`\`

@@ -22,7 +22,7 @@ Este guia mostra como publicar a aplicação Next.js na AWS usando:
 
 #### 1. Criar App no Amplify
 
-```bash
+\`\`\`bash
 # Instalar AWS CLI (se ainda não tiver)
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
@@ -34,7 +34,7 @@ aws configure
 # AWS Secret Access Key: [SEU_SECRET]
 # Default region: us-east-1
 # Default output format: json
-```
+\`\`\`
 
 #### 2. Conectar Repositório GitHub
 
@@ -48,7 +48,7 @@ aws configure
 
 #### 3. Configurar Build
 
-```yaml
+\`\`\`yaml
 # amplify.yml (criar na raiz do projeto)
 version: 1
 frontend:
@@ -66,7 +66,7 @@ frontend:
   cache:
     paths:
       - node_modules/**/*
-```
+\`\`\`
 
 #### 4. Adicionar Variáveis de Ambiente
 
@@ -74,7 +74,7 @@ No console Amplify:
 1. Clique em "Environment variables"
 2. Adicione todas as variáveis:
 
-```
+\`\`\`
 NEXT_PUBLIC_ENTRA_CLIENT_ID=da3aaaad-619f-4bee-a434-51efd11faf7c
 NEXT_PUBLIC_ENTRA_TENANT_ID=5b6f6241-9a57-4be4-8e50-1dfa72e79a57
 NEXT_PUBLIC_ENTRA_REDIRECT_URI=https://main.d3abc123.amplifyapp.com
@@ -82,16 +82,16 @@ DATABASE_URL=postgresql://...
 AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=...
 AWS_SECRET_ACCESS_KEY=...
-```
+\`\`\`
 
 #### 5. Deploy Automático
 
 Amplify faz deploy automaticamente em cada push:
-```bash
+\`\`\`bash
 git add .
 git commit -m "Deploy para AWS Amplify"
 git push origin main
-```
+\`\`\`
 
 #### 6. Seu Domínio Provisório
 
@@ -113,15 +113,15 @@ Após deploy (3-5 minutos):
 
 #### 1. Build da Aplicação
 
-```bash
+\`\`\`bash
 # No seu computador local
 npm run build
 npm run export  # Gera pasta /out com arquivos estáticos
-```
+\`\`\`
 
 #### 2. Criar Bucket S3
 
-```bash
+\`\`\`bash
 # Nome único global
 BUCKET_NAME="petrobras-compartilhamento-hml"
 
@@ -132,11 +132,11 @@ aws s3 mb s3://$BUCKET_NAME --region us-east-1
 aws s3 website s3://$BUCKET_NAME \
   --index-document index.html \
   --error-document 404.html
-```
+\`\`\`
 
 #### 3. Upload dos Arquivos
 
-```bash
+\`\`\`bash
 # Fazer upload de tudo
 aws s3 sync ./out s3://$BUCKET_NAME \
   --delete \
@@ -150,16 +150,16 @@ aws s3 sync ./out s3://$BUCKET_NAME \
   --include "*.html" \
   --cache-control "public, max-age=0, must-revalidate" \
   --acl public-read
-```
+\`\`\`
 
 #### 4. Criar Distribuição CloudFront
 
-```bash
+\`\`\`bash
 # Criar distribuição
 aws cloudfront create-distribution \
   --origin-domain-name $BUCKET_NAME.s3.amazonaws.com \
   --default-root-object index.html
-```
+\`\`\`
 
 **Via Console (mais fácil):**
 1. Acesse: https://console.aws.amazon.com/cloudfront
@@ -198,7 +198,7 @@ Isso permite SPA routing funcionar corretamente.
 
 #### 1. Criar Dockerfile
 
-```dockerfile
+\`\`\`dockerfile
 # Dockerfile (na raiz do projeto)
 FROM node:18-alpine AS base
 
@@ -237,11 +237,11 @@ ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
 CMD ["node", "server.js"]
-```
+\`\`\`
 
 #### 2. Configurar next.config.js
 
-```javascript
+\`\`\`javascript
 // next.config.mjs
 const nextConfig = {
   output: 'standalone', // Importante para Docker
@@ -249,11 +249,11 @@ const nextConfig = {
 }
 
 export default nextConfig
-```
+\`\`\`
 
 #### 3. Build e Push para ECR
 
-```bash
+\`\`\`bash
 # Criar repositório ECR
 aws ecr create-repository --repository-name petrobras-compartilhamento --region us-east-1
 
@@ -271,18 +271,18 @@ docker tag petrobras-compartilhamento:latest \
 
 # Push
 docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/petrobras-compartilhamento:latest
-```
+\`\`\`
 
 #### 4. Criar Cluster ECS
 
-```bash
+\`\`\`bash
 # Criar cluster
 aws ecs create-cluster --cluster-name petrobras-cluster --region us-east-1
 
 # Criar task definition (task-definition.json)
-```
+\`\`\`
 
-```json
+\`\`\`json
 {
   "family": "petrobras-compartilhamento",
   "networkMode": "awsvpc",
@@ -316,26 +316,26 @@ aws ecs create-cluster --cluster-name petrobras-cluster --region us-east-1
     }
   ]
 }
-```
+\`\`\`
 
-```bash
+\`\`\`bash
 # Registrar task
 aws ecs register-task-definition --cli-input-json file://task-definition.json
-```
+\`\`\`
 
 #### 5. Criar Application Load Balancer
 
-```bash
+\`\`\`bash
 # Via Console AWS (mais fácil)
 # 1. EC2 → Load Balancers → Create Load Balancer
 # 2. Application Load Balancer
 # 3. Internet-facing
 # 4. Criar Target Group (porta 3000)
-```
+\`\`\`
 
 #### 6. Criar Service
 
-```bash
+\`\`\`bash
 aws ecs create-service \
   --cluster petrobras-cluster \
   --service-name petrobras-service \
@@ -344,7 +344,7 @@ aws ecs create-service \
   --launch-type FARGATE \
   --network-configuration "awsvpcConfiguration={subnets=[subnet-xxx],securityGroups=[sg-xxx],assignPublicIp=ENABLED}" \
   --load-balancers "targetGroupArn=arn:aws:elasticloadbalancing:...,containerName=nextjs-app,containerPort=3000"
-```
+\`\`\`
 
 #### 7. Seu Domínio Provisório
 
@@ -378,9 +378,9 @@ aws ecs create-service \
 Após obter seu domínio provisório (ex: `https://main.d3abc123.amplifyapp.com`):
 
 1. Atualizar variável de ambiente:
-```bash
+\`\`\`bash
 NEXT_PUBLIC_ENTRA_REDIRECT_URI=https://main.d3abc123.amplifyapp.com
-```
+\`\`\`
 
 2. Solicitar ao admin do Azure AD adicionar essa URL nas Redirect URIs
 
@@ -389,23 +389,23 @@ NEXT_PUBLIC_ENTRA_REDIRECT_URI=https://main.d3abc123.amplifyapp.com
 ## Troubleshooting
 
 ### Erro: "Cannot find module 'next'"
-```bash
+\`\`\`bash
 # No Dockerfile, usar npm ci --production=false
-```
+\`\`\`
 
 ### CloudFront não atualiza
-```bash
+\`\`\`bash
 # Invalidar cache
 aws cloudfront create-invalidation \
   --distribution-id EXAMPLEID \
   --paths "/*"
-```
+\`\`\`
 
 ### ECS Task falha ao iniciar
-```bash
+\`\`\`bash
 # Ver logs
 aws logs tail /ecs/petrobras-compartilhamento --follow
-```
+\`\`\`
 
 ---
 
@@ -413,7 +413,7 @@ aws logs tail /ecs/petrobras-compartilhamento --follow
 
 ### Script de Deploy S3 + CloudFront
 
-```bash
+\`\`\`bash
 #!/bin/bash
 # deploy-s3.sh
 
@@ -432,11 +432,11 @@ aws cloudfront create-invalidation \
   --paths "/*"
 
 echo "✅ Deploy concluído!"
-```
+\`\`\`
 
 ### Script de Deploy Amplify
 
-```bash
+\`\`\`bash
 #!/bin/bash
 # deploy-amplify.sh
 
@@ -446,7 +446,7 @@ git push origin main
 
 echo "✅ Deploy iniciado! Acompanhe em:"
 echo "https://console.aws.amazon.com/amplify"
-```
+\`\`\`
 
 ---
 

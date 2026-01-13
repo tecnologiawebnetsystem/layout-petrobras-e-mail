@@ -18,7 +18,7 @@ Este documento descreve **TUDO** que precisa ser implementado no back-end Python
 
 ### 1.1 Criar Nova Tabela: `otp_codes`
 
-```sql
+\`\`\`sql
 -- scripts/006_create_otp_table.sql
 CREATE TABLE IF NOT EXISTS otp_codes (
     id SERIAL PRIMARY KEY,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS otp_codes (
     INDEX idx_otp_code (code),
     INDEX idx_otp_expires (expires_at)
 );
-```
+\`\`\`
 
 **Por quê?** Sistema de autenticação OTP para usuários externos precisa armazenar códigos com validade de 3 minutos.
 
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS otp_codes (
 
 ### 1.2 Criar Nova Tabela: `rate_limit_attempts`
 
-```sql
+\`\`\`sql
 -- scripts/007_create_rate_limit_table.sql
 CREATE TABLE IF NOT EXISTS rate_limit_attempts (
     id SERIAL PRIMARY KEY,
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS rate_limit_attempts (
     INDEX idx_rate_limit_email (email),
     INDEX idx_rate_limit_blocked (blocked_until)
 );
-```
+\`\`\`
 
 **Por quê?** Rate Limiting implementado no front-end precisa persistir tentativas falhadas.
 
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS rate_limit_attempts (
 
 ### 1.3 Criar Nova Tabela: `session_contexts`
 
-```sql
+\`\`\`sql
 -- scripts/008_create_session_contexts_table.sql
 CREATE TABLE IF NOT EXISTS session_contexts (
     id SERIAL PRIMARY KEY,
@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS session_contexts (
     INDEX idx_session_user (user_id),
     INDEX idx_session_valid (is_valid)
 );
-```
+\`\`\`
 
 **Por quê?** Session Hijacking Protection precisa validar contexto do navegador.
 
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS session_contexts (
 
 ### 1.4 Adicionar Campos na Tabela `shared_areas`
 
-```sql
+\`\`\`sql
 -- scripts/009_add_fields_shared_areas.sql
 ALTER TABLE shared_areas 
 ADD COLUMN IF NOT EXISTS cancelled_by VARCHAR(255) NULL,
@@ -109,7 +109,7 @@ ADD COLUMN IF NOT EXISTS supervisor_name VARCHAR(255) NULL,
 ADD COLUMN IF NOT EXISTS supervisor_email VARCHAR(255) NULL,
 ADD COLUMN IF NOT EXISTS otp_sent BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS otp_sent_at TIMESTAMP NULL;
-```
+\`\`\`
 
 **Por quê?** Funcionalidades de cancelamento e captura de supervisor do AD.
 
@@ -117,7 +117,7 @@ ADD COLUMN IF NOT EXISTS otp_sent_at TIMESTAMP NULL;
 
 ### 1.5 Expandir Tabela `audit_logs`
 
-```sql
+\`\`\`sql
 -- scripts/010_expand_audit_logs.sql
 ALTER TABLE audit_logs 
 ADD COLUMN IF NOT EXISTS action_type VARCHAR(100) NULL, -- 'login', 'logout', 'upload', 'approve', 'reject', 'cancel', 'download', 'otp_request', 'otp_verify'
@@ -126,7 +126,7 @@ ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45) NULL,
 ADD COLUMN IF NOT EXISTS session_id VARCHAR(500) NULL,
 ADD COLUMN IF NOT EXISTS metadata JSONB NULL, -- Para dados extras como supervisor, rate limit info, etc
 ADD COLUMN IF NOT EXISTS security_level VARCHAR(20) DEFAULT 'info'; -- 'info', 'warning', 'critical'
-```
+\`\`\`
 
 **Por quê?** Logs de auditoria detalhados com informações de segurança.
 
@@ -136,7 +136,7 @@ ADD COLUMN IF NOT EXISTS security_level VARCHAR(20) DEFAULT 'info'; -- 'info', '
 
 ### 2.1 Criar Modelo: `OTPCode`
 
-```python
+\`\`\`python
 # back-end/python/app/models/otp_code.py
 from sqlmodel import Field, SQLModel
 from datetime import datetime
@@ -155,13 +155,13 @@ class OTPCode(SQLModel, table=True):
     verified: bool = Field(default=False)
     verified_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
-```
+\`\`\`
 
 ---
 
 ### 2.2 Criar Modelo: `RateLimitAttempt`
 
-```python
+\`\`\`python
 # back-end/python/app/models/rate_limit.py
 from sqlmodel import Field, SQLModel
 from datetime import datetime
@@ -178,13 +178,13 @@ class RateLimitAttempt(SQLModel, table=True):
     first_attempt_at: datetime = Field(default_factory=datetime.utcnow)
     last_attempt_at: datetime = Field(default_factory=datetime.utcnow)
     blocked_until: Optional[datetime] = None
-```
+\`\`\`
 
 ---
 
 ### 2.3 Criar Modelo: `SessionContext`
 
-```python
+\`\`\`python
 # back-end/python/app/models/session_context.py
 from sqlmodel import Field, SQLModel
 from datetime import datetime
@@ -207,7 +207,7 @@ class SessionContext(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_validated_at: datetime = Field(default_factory=datetime.utcnow)
     expires_at: datetime
-```
+\`\`\`
 
 ---
 
@@ -215,7 +215,7 @@ class SessionContext(SQLModel, table=True):
 
 ### 3.1 OTP Endpoints
 
-```python
+\`\`\`python
 # back-end/python/app/api/v1/routes_otp.py
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlmodel import Session, select
@@ -347,13 +347,13 @@ async def verify_otp(
         "access_token": f"otp-verified-{share_id}-{email}",  # Gerar token JWT real aqui
         "share_id": share_id
     }
-```
+\`\`\`
 
 ---
 
 ### 3.2 Rate Limit Endpoints
 
-```python
+\`\`\`python
 # back-end/python/app/api/v1/routes_rate_limit.py
 from fastapi import APIRouter, Depends, Request
 from sqlmodel import Session
@@ -377,13 +377,13 @@ async def get_rate_limit_status(
         "is_blocked": not check_rate_limit(session, ip, email, "login"),
         "attempt_info": get_attempt_info(session, ip, email)
     }
-```
+\`\`\`
 
 ---
 
 ### 3.3 Session Context Endpoints
 
-```python
+\`\`\`python
 # back-end/python/app/api/v1/routes_session.py
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlmodel import Session, select
@@ -446,13 +446,13 @@ async def validate_session(
     session.commit()
     
     return {"valid": True, "message": "Sessão válida."}
-```
+\`\`\`
 
 ---
 
 ### 3.4 Microsoft Graph API Proxy
 
-```python
+\`\`\`python
 # back-end/python/app/api/v1/routes_graph.py
 from fastapi import APIRouter, Depends, HTTPException
 from app.services.graph_service import get_user_profile, get_user_manager
@@ -483,7 +483,7 @@ async def get_manager(email: str):
         return manager
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-```
+\`\`\`
 
 ---
 
@@ -491,7 +491,7 @@ async def get_manager(email: str):
 
 ### 4.1 Email Service (Resend)
 
-```python
+\`\`\`python
 # back-end/python/app/services/email_service.py
 import resend
 import os
@@ -568,13 +568,13 @@ async def send_otp_email(to_email: str, code: str, share_name: str):
     except Exception as e:
         print(f"Erro ao enviar email: {e}")
         raise
-```
+\`\`\`
 
 ---
 
 ### 4.2 Rate Limit Service
 
-```python
+\`\`\`python
 # back-end/python/app/services/rate_limit_service.py
 from sqlmodel import Session, select
 from app.models.rate_limit import RateLimitAttempt
@@ -647,13 +647,13 @@ def record_attempt(session: Session, ip: str, email: str, attempt_type: str, suc
     
     session.add(attempt)
     session.commit()
-```
+\`\`\`
 
 ---
 
 ### 4.3 Session Service
 
-```python
+\`\`\`python
 # back-end/python/app/services/session_service.py
 from app.models.session_context import SessionContext
 
@@ -679,13 +679,13 @@ def validate_session_context(
     # Isso é mais tolerante
     
     return True
-```
+\`\`\`
 
 ---
 
 ### 4.4 Microsoft Graph Service
 
-```python
+\`\`\`python
 # back-end/python/app/services/graph_service.py
 import httpx
 import os
@@ -786,7 +786,7 @@ async def get_user_manager(email: str) -> Dict[str, Any]:
             "jobTitle": manager_data.get("jobTitle"),
             "department": manager_data.get("department")
         }
-```
+\`\`\`
 
 ---
 
@@ -794,20 +794,20 @@ async def get_user_manager(email: str) -> Dict[str, Any]:
 
 ### 5.1 Adicionar Variáveis de Ambiente
 
-```env
+\`\`\`env
 # .env
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxxx
 ENTRA_TENANT_ID=5b6f6241-9a57-4be4-8e50-1dfa72e79a57
 ENTRA_CLIENT_ID=da3aaaad-619f-4bee-a434-51efd11faf7c
 ENTRA_CLIENT_SECRET=Pnt8Q~0CQeLtKfv2T.jbQqRL.th5uPZwRIHfoaKM
 FRONTEND_URL=https://layout-petro-e-mail.vercel.app
-```
+\`\`\`
 
 ---
 
 ### 5.2 Atualizar `requirements.txt`
 
-```txt
+\`\`\`txt
 # back-end/python/requirements.txt
 fastapi==0.104.1
 sqlmodel==0.0.14
@@ -817,7 +817,7 @@ httpx==0.25.2
 python-dotenv==1.0.0
 uvicorn[standard]==0.24.0
 pydantic==2.5.0
-```
+\`\`\`
 
 ---
 
@@ -825,7 +825,7 @@ pydantic==2.5.0
 
 ### 6.1 Testar OTP Flow
 
-```bash
+\`\`\`bash
 # 1. Criar compartilhamento (usuário interno)
 curl -X POST http://localhost:8000/api/v1/shares \
   -H "Content-Type: application/json" \
@@ -854,7 +854,7 @@ curl -X POST http://localhost:8000/api/v1/otp/verify \
     "code": "123456",
     "share_id": 1
   }'
-```
+\`\`\`
 
 ---
 

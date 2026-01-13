@@ -116,9 +116,9 @@ Estas permissões são seguras e seguem as melhores práticas:
 
 Alternativamente, o administrador pode usar este link direto:
 
-```
+\`\`\`
 https://login.microsoftonline.com/5b6f6241-9a57-4be4-8e50-1dfa72e79a57/adminconsent?client_id=da3aaaad-619f-4bee-a434-51efd11faf7c
-```
+\`\`\`
 
 Isso abrirá diretamente a tela de consentimento de administrador.
 

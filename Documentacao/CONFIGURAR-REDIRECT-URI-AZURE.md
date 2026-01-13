@@ -5,9 +5,9 @@
 O aplicativo de Compartilhamento de Arquivos da Petrobras está configurado corretamente no código, mas precisa de uma configuração adicional no Portal Azure para permitir autenticação.
 
 **Erro atual:**
-```
+\`\`\`
 AADSTS50011: The redirect URI 'https://layout-petro-e-mail.vercel.app' specified in the request does not match the redirect URIs configured for the application 'da3aaaad-619f-4bee-a434-51efd11faf7c'.
-```
+\`\`\`
 
 ---
 
@@ -41,10 +41,10 @@ AADSTS50011: The redirect URI 'https://layout-petro-e-mail.vercel.app' specified
 3. Selecione **Single-page application (SPA)**
 4. Adicione as seguintes Redirect URIs:
 
-```
+\`\`\`
 https://layout-petro-e-mail.vercel.app
 https://layout-petro-e-mail.vercel.app/
-```
+\`\`\`
 
 > ⚠️ **Importante:** Adicione AMBAS as URLs (com e sem barra final) para garantir compatibilidade
 
@@ -55,9 +55,9 @@ https://layout-petro-e-mail.vercel.app/
 1. Ainda na seção **Authentication**
 2. Em **Front-channel logout URL**, adicione:
 
-```
+\`\`\`
 https://layout-petro-e-mail.vercel.app
-```
+\`\`\`
 
 ### 5. Salvar as Configurações
 
@@ -70,10 +70,10 @@ https://layout-petro-e-mail.vercel.app
 
 Se precisar testar localmente, adicione também:
 
-```
+\`\`\`
 http://localhost:3000
 http://localhost:3000/
-```
+\`\`\`
 
 ---
 
@@ -100,6 +100,6 @@ Após configurar, teste o login:
 ### Se aparecer erro de consentimento de administrador:
 
 Use o link de admin consent (já fornecido anteriormente):
-```
+\`\`\`
 https://login.microsoftonline.com/5b6f6241-9a57-4be4-8e50-1dfa72e79a57/adminconsent?client_id=da3aaaad-619f-4bee-a434-51efd11faf7c
-```
+\`\`\`

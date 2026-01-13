@@ -10,23 +10,23 @@ As credenciais do Microsoft Entra ID foram fornecidas pelo time de infraestrutur
 
 ### Credenciais
 
-```
+\`\`\`
 Tenant ID: 5b6f6241-9a57-4be4-8e50-1dfa72e79a57
 Client ID: da3aaaad-619f-4bee-a434-51efd11faf7c
 Client Secret: Pnt8Q~0CQeLtKfv2T.jbQqRL.th5uPZwRIHfoaKM
-```
+\`\`\`
 
 ## ⚠️ IMPORTANTE: Segurança
 
 ### Desenvolvimento Local
 As credenciais podem ser usadas em `.env.local` para desenvolvimento:
 
-```env
+\`\`\`env
 NEXT_PUBLIC_ENTRA_TENANT_ID=5b6f6241-9a57-4be4-8e50-1dfa72e79a57
 NEXT_PUBLIC_ENTRA_CLIENT_ID=da3aaaad-619f-4bee-a434-51efd11faf7c
 NEXT_PUBLIC_ENTRA_CLIENT_SECRET=Pnt8Q~0CQeLtKfv2T.jbQqRL.th5uPZwRIHfoaKM
 NEXT_PUBLIC_REDIRECT_URI=http://localhost:3000
-```
+\`\`\`
 
 ### Produção
 **NUNCA coloque essas credenciais em código ou repositório Git!**
@@ -35,7 +35,7 @@ As credenciais DEVEM ser armazenadas no AWS Secrets Manager:
 
 #### 1. Criar Secret no AWS Console
 
-```bash
+\`\`\`bash
 aws secretsmanager create-secret \
   --name petrobras/entra-id-credentials \
   --description "Credenciais Microsoft Entra ID para aplicação AAD-DEV-A12022" \
@@ -46,11 +46,11 @@ aws secretsmanager create-secret \
     "ENTRA_APP_NAME": "AAD-DEV-A12022"
   }' \
   --region us-east-1
-```
+\`\`\`
 
 #### 2. Buscar Credenciais no Back-end Python
 
-```python
+\`\`\`python
 import boto3
 import json
 import os
@@ -85,13 +85,13 @@ def load_entra_credentials():
 
 # Chamar no início da aplicação
 load_entra_credentials()
-```
+\`\`\`
 
 #### 3. Configurar IAM Policy
 
 A aplicação precisa de permissão para ler o secret:
 
-```json
+\`\`\`json
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -105,7 +105,7 @@ A aplicação precisa de permissão para ler o secret:
     }
   ]
 }
-```
+\`\`\`
 
 ## Como Testar
 
@@ -113,9 +113,9 @@ A aplicação precisa de permissão para ler o secret:
 
 Adicione as credenciais no `.env.local` e execute:
 
-```bash
+\`\`\`bash
 npm run dev
-```
+\`\`\`
 
 Acesse `http://localhost:3000` e clique em "Entrar com Microsoft".
 
