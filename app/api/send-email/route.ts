@@ -4,13 +4,16 @@ import { microsoftGraphMailService } from "@/lib/services/microsoft-graph-mail"
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { type, uploadData } = body
+    const { type, uploadData, accessToken } = body
+
+    if (!accessToken) {
+      return NextResponse.json({ error: "Token de acesso não fornecido" }, { status: 401 })
+    }
 
     let result
 
     switch (type) {
       case "sender":
-        // Email de confirmação para remetente
         result = await microsoftGraphMailService.sendEmail(
           microsoftGraphMailService.createUploadConfirmationEmail({
             senderName: uploadData.sender.name,
@@ -20,11 +23,11 @@ export async function POST(request: Request) {
             expirationHours: uploadData.expirationHours,
             uploadDate: uploadData.uploadDate,
           }),
+          accessToken,
         )
         break
 
       case "supervisor":
-        // Email de notificação para supervisor
         result = await microsoftGraphMailService.sendEmail(
           microsoftGraphMailService.createSupervisorNotificationEmail({
             supervisorName: uploadData.supervisorName || "Supervisor",
@@ -37,30 +40,33 @@ export async function POST(request: Request) {
             uploadDate: uploadData.uploadDate,
             uploadId: uploadData.uploadId,
           }),
+          accessToken,
         )
         break
 
       case "cancellation":
-        // Email de cancelamento para supervisor
-        result = await microsoftGraphMailService.sendEmail({
-          subject: `❌ Compartilhamento Cancelado - ${uploadData.name}`,
-          body: {
-            contentType: "HTML",
-            content: `
+        result = await microsoftGraphMailService.sendEmail(
+          {
+            subject: `❌ Compartilhamento Cancelado - ${uploadData.name}`,
+            body: {
+              contentType: "HTML",
+              content: `
               <p>O compartilhamento <strong>${uploadData.name}</strong> foi cancelado por <strong>${uploadData.sender.name}</strong>.</p>
               <p><strong>Motivo:</strong> ${uploadData.cancellationReason || "Não informado"}</p>
               <p><strong>Data do cancelamento:</strong> ${uploadData.cancellationDate}</p>
             `,
-          },
-          toRecipients: [
-            {
-              emailAddress: {
-                address: uploadData.supervisorEmail,
-              },
             },
-          ],
-          importance: "Normal",
-        })
+            toRecipients: [
+              {
+                emailAddress: {
+                  address: uploadData.supervisorEmail,
+                },
+              },
+            ],
+            importance: "Normal",
+          },
+          accessToken,
+        )
         break
 
       default:
