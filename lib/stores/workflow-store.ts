@@ -4,6 +4,7 @@ import { useNotificationStore } from "./notification-store"
 import { useAuditLogStore } from "./audit-log-store"
 import { otpService } from "@/lib/auth/otp-service"
 import { showAlert } from "./alert-store"
+import { getAccessToken } from "@/lib/auth/get-access-token"
 
 export interface ExpirationLog {
   timestamp: string
@@ -173,67 +174,78 @@ export const useWorkflowStore = create<WorkflowState>()(
           actionUrl: "/supervisor",
         })
 
-        fetch("/api/send-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: "supervisor",
-            uploadData: {
-              name: upload.name,
-              sender: upload.sender,
-              recipient: upload.recipient,
-              description: upload.description,
-              files: upload.files,
-              expirationHours: upload.expirationHours,
-              uploadDate: new Date().toLocaleString("pt-BR"),
-              supervisorEmail,
-              supervisorName,
-              uploadId: newUpload.id,
-            },
-          }),
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.error) {
-              showAlert.error(
-                "Erro ao Enviar E-mail",
-                `Não foi possível enviar e-mail para o supervisor: ${data.error}`,
-              )
-            } else {
-              console.log("[v0] Email para supervisor enviado com sucesso")
-            }
-          })
-          .catch((error) => {
-            showAlert.error("Erro Crítico", `Erro crítico ao enviar e-mail para o supervisor: ${error.message}`)
-          })
+        getAccessToken().then((accessToken) => {
+          if (!accessToken) {
+            showAlert.error("Erro de Autenticação", "Não foi possível obter token de acesso. Faça login novamente.")
+            return
+          }
 
-        fetch("/api/send-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: "sender",
-            uploadData: {
-              name: upload.name,
-              sender: upload.sender,
-              recipient: upload.recipient,
-              description: upload.description,
-              files: upload.files,
-              expirationHours: upload.expirationHours,
-              uploadDate: new Date().toLocaleString("pt-BR"),
-            },
-          }),
+          // Email para supervisor
+          fetch("/api/send-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "supervisor",
+              accessToken, // Adicionado token de acesso
+              uploadData: {
+                name: upload.name,
+                sender: upload.sender,
+                recipient: upload.recipient,
+                description: upload.description,
+                files: upload.files,
+                expirationHours: upload.expirationHours,
+                uploadDate: new Date().toLocaleString("pt-BR"),
+                supervisorEmail,
+                supervisorName,
+                uploadId: newUpload.id,
+              },
+            }),
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.error) {
+                showAlert.error(
+                  "Erro ao Enviar E-mail",
+                  `Não foi possível enviar e-mail para o supervisor: ${data.error}`,
+                )
+              } else {
+                console.log("[v0] Email para supervisor enviado com sucesso")
+              }
+            })
+            .catch((error) => {
+              showAlert.error("Erro Crítico", `Erro crítico ao enviar e-mail para o supervisor: ${error.message}`)
+            })
+
+          // Email de confirmação para remetente
+          fetch("/api/send-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "sender",
+              accessToken, // Adicionado token de acesso
+              uploadData: {
+                name: upload.name,
+                sender: upload.sender,
+                recipient: upload.recipient,
+                description: upload.description,
+                files: upload.files,
+                expirationHours: upload.expirationHours,
+                uploadDate: new Date().toLocaleString("pt-BR"),
+              },
+            }),
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.error) {
+                showAlert.error("Erro ao Enviar E-mail", `Não foi possível enviar e-mail de confirmação: ${data.error}`)
+              } else {
+                console.log("[v0] Email de confirmação enviado com sucesso")
+              }
+            })
+            .catch((error) => {
+              showAlert.error("Erro Crítico", `Erro crítico ao enviar e-mail de confirmação: ${error.message}`)
+            })
         })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.error) {
-              showAlert.error("Erro ao Enviar E-mail", `Não foi possível enviar e-mail de confirmação: ${data.error}`)
-            } else {
-              console.log("[v0] Email de confirmação enviado com sucesso")
-            }
-          })
-          .catch((error) => {
-            showAlert.error("Erro Crítico", `Erro crítico ao enviar e-mail de confirmação: ${error.message}`)
-          })
       },
 
       approveUpload: (id, approvedBy) => {
