@@ -45,9 +45,23 @@ export function EntraProvider({ children }: EntraProviderProps) {
         console.log("[v0] Contas encontradas no MSAL após inicialização:", accounts.length)
 
         const currentUser = useAuthStore.getState().user
+        console.log(
+          "[v0] Usuário atual no store:",
+          currentUser
+            ? {
+                email: currentUser.email,
+                name: currentUser.name,
+                hasManager: !!currentUser.manager,
+                hasPhoto: !!currentUser.photoUrl,
+                hasEmployeeId: !!currentUser.employeeId,
+              }
+            : null,
+        )
+
         if (accounts.length > 0 && !currentUser) {
           console.log("[v0] Conta MSAL encontrada sem usuário no store, enriquecendo perfil")
           console.log("[v0] Email da conta:", accounts[0].username)
+          console.log("[v0] Nome da conta:", accounts[0].name)
           console.log("[v0] Tentando adquirir token silencioso com scopes:", loginRequest.scopes)
 
           try {
@@ -173,6 +187,13 @@ export function EntraProvider({ children }: EntraProviderProps) {
       return
     }
 
+    console.log("[v0] ===== DADOS RECEBIDOS DO ENTRA ID TOKEN =====")
+    console.log("[v0] Account ID:", account.localAccountId)
+    console.log("[v0] Email:", account.username)
+    console.log("[v0] Nome:", account.name)
+    console.log("[v0] Tenant ID:", account.tenantId)
+    console.log("[v0] Home Account ID:", account.homeAccountId)
+
     // Extrair dados do usuário
     const email = account.username || account.homeAccountId
     const name = account.name || "Usuário"
@@ -222,14 +243,38 @@ export function EntraProvider({ children }: EntraProviderProps) {
     let employeeId: string | undefined
 
     try {
+      console.log("[v0] Buscando perfil completo do usuário via Graph API...")
       const [profile, manager, photo] = await Promise.all([getUserProfile(), getUserManager(), getUserPhoto()])
 
-      console.log("[Entra ID] Resultados do Graph API:", {
-        hasProfile: !!profile,
-        hasManager: !!manager,
-        hasPhoto: !!photo,
-        photoUrl: photo,
-      })
+      console.log("[v0] ===== DADOS RECEBIDOS DO GRAPH API =====")
+      console.log(
+        "[v0] Perfil completo:",
+        profile
+          ? {
+              jobTitle: profile.jobTitle,
+              department: profile.department,
+              employeeId: profile.employeeId,
+              officeLocation: profile.officeLocation,
+              mobilePhone: profile.mobilePhone,
+            }
+          : "NÃO RECEBIDO",
+      )
+
+      console.log(
+        "[v0] Supervisor:",
+        manager
+          ? {
+              id: manager.id,
+              name: manager.displayName,
+              email: manager.mail,
+              jobTitle: manager.jobTitle,
+              department: manager.department,
+            }
+          : "NÃO RECEBIDO",
+      )
+
+      console.log("[v0] Foto do perfil:", photo ? "RECEBIDA (URL blob)" : "NÃO RECEBIDA")
+      console.log("[v0] ==========================================")
 
       interface EnrichedData {
         jobTitle?: string
