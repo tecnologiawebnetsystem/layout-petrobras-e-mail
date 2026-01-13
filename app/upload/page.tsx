@@ -209,7 +209,7 @@ export default function UploadPage() {
                 <div className="bg-muted/30 border border-border/50 rounded-xl p-5 space-y-3">
                   <Label className="text-base font-medium flex items-center gap-2">
                     <Lock className="h-4 w-4 text-[#0047BB]" />
-                    Aprovador Automático (Active Directory)
+                    Aprovador Automático
                   </Label>
                   <div className="bg-background/50 rounded-lg p-4 space-y-2">
                     <div className="flex items-start justify-between">
@@ -233,8 +233,7 @@ export default function UploadPage() {
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Este compartilhamento será enviado automaticamente para aprovação do seu supervisor direto
-                    cadastrado no Active Directory da Petrobras.
+                    Este compartilhamento será enviado automaticamente para aprovação do seu supervisor direto.
                   </p>
                 </div>
               )}
