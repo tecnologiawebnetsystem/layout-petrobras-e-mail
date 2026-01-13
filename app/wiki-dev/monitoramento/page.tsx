@@ -1,18 +1,7 @@
 import Link from "next/link"
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  Alert,
-  AlertTitle,
-  AlertDescription,
-} from "your-ui-library"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import {
   Home,
   FileText,
@@ -28,7 +17,7 @@ import {
   Code,
   Network,
   Terminal,
-} from "your-icon-library"
+} from "lucide-react"
 
 export default function MonitoramentoPage() {
   return (
