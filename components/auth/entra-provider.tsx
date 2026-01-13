@@ -8,6 +8,7 @@
  */
 
 import { type ReactNode, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { MsalProvider } from "@azure/msal-react"
 import { EventType, type EventMessage, type AuthenticationResult } from "@azure/msal-browser"
 import { msalInstance, loginRequest } from "@/lib/auth/entra-config"
@@ -29,6 +30,7 @@ interface EntraProviderProps {
 export function EntraProvider({ children }: EntraProviderProps) {
   const { setAuth, clearAuth } = useAuthStore()
   const { addLog } = useAuditLogStore()
+  const router = useRouter()
 
   const handleLoginSuccess = async (response: AuthenticationResult) => {
     console.log("[v0] ===== handleLoginSuccess CHAMADO =====")
@@ -218,6 +220,9 @@ export function EntraProvider({ children }: EntraProviderProps) {
     })
 
     console.log("[v0] Login processado com sucesso, usuário autenticado")
+
+    console.log("[v0] Redirecionando para /upload")
+    router.push("/upload")
   }
 
   const handleLogoutSuccess = () => {
