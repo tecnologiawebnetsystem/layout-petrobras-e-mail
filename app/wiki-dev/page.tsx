@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Cloud, Server, Shield, Home } from "lucide-react"
+import { Search, BookOpen, Cloud, Server, Shield, Home, Database } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
@@ -43,6 +43,54 @@ export default function WikiDevPage() {
       href: "/wiki-dev/entra-id",
       color: "from-blue-600 to-indigo-600",
       topics: ["SSO", "Azure AD", "Autenticação", "Documento Formal", "Código Pronto"],
+    },
+    {
+      title: "Endpoints API - Referência Completa",
+      description: "Documentação detalhada de todos os 30+ endpoints do back-end Python com exemplos de JSON",
+      icon: Database,
+      href: "/wiki-dev/endpoints-api",
+      color: "from-green-600 to-emerald-700",
+      topics: ["REST API", "JSON", "Request/Response", "Autenticação", "Back-end Python"],
+    },
+    {
+      title: "Variáveis de Ambiente",
+      description: "Todas as variáveis necessárias para Front-End, Back-End e Local - Pronto para copiar",
+      icon: Server,
+      href: "/wiki-dev/variaveis-ambiente",
+      color: "from-blue-500 to-cyan-600",
+      topics: ["Env Vars", "Vercel", "Python", "Configuração"],
+    },
+    {
+      title: "Problemas Comuns e Soluções",
+      description: "Guia prático para resolver erros de login, upload, banco de dados e emails",
+      icon: Shield,
+      href: "/wiki-dev/troubleshooting",
+      color: "from-red-500 to-orange-600",
+      topics: ["Debug", "Erros", "Troubleshooting", "Soluções"],
+    },
+    {
+      title: "Fluxo de Dados End-to-End",
+      description: "Como os dados trafegam: Upload → S3 → Banco → Aprovação → Email → Download",
+      icon: Database,
+      href: "/wiki-dev/fluxo-dados",
+      color: "from-purple-500 to-pink-600",
+      topics: ["Fluxo", "Upload", "Download", "Aprovação"],
+    },
+    {
+      title: "Segurança e Boas Práticas",
+      description: "Autenticação, autorização, tokens, CORS, XSS, CSRF - Tudo explicado de forma simples",
+      icon: Shield,
+      href: "/wiki-dev/seguranca",
+      color: "from-red-600 to-rose-700",
+      topics: ["Segurança", "JWT", "RLS", "CORS"],
+    },
+    {
+      title: "Arquitetura do Sistema",
+      description: "Estrutura de pastas, padrões de código e como adicionar novas features",
+      icon: BookOpen,
+      href: "/wiki-dev/arquitetura",
+      color: "from-indigo-600 to-purple-700",
+      topics: ["Arquitetura", "Padrões", "Estrutura", "Código"],
     },
   ]
 
