@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Cloud, Server, Shield, Home, Database } from "lucide-react"
+import { Search, BookOpen, Cloud, Server, Shield, Home, Database, Layers, TestTube, FileText } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
@@ -27,6 +27,14 @@ export default function WikiDevPage() {
       href: "/wiki-dev/deploy-aws",
       color: "from-green-500 to-emerald-600",
       topics: ["Amplify", "S3 + CloudFront", "ECS Fargate", "Domínio Provisório", "Custos"],
+    },
+    {
+      title: "Deploy e Ambientes",
+      description: "Como fazer deploy em DEV, HML e Produção com checklist e rollback",
+      icon: Layers,
+      href: "/wiki-dev/deploy-ambientes",
+      color: "from-green-600 to-emerald-600",
+      topics: ["DEV", "HML", "PRD", "Rollback", "Checklist"],
     },
     {
       title: "Desenvolvimento Local AWS",
@@ -59,6 +67,30 @@ export default function WikiDevPage() {
       href: "/wiki-dev/variaveis-ambiente",
       color: "from-blue-500 to-cyan-600",
       topics: ["Env Vars", "Vercel", "Python", "Configuração"],
+    },
+    {
+      title: "Como Testar o Sistema",
+      description: "Guia prático para testar login, upload, aprovação, download e scripts automáticos",
+      icon: TestTube,
+      href: "/wiki-dev/testes",
+      color: "from-purple-600 to-pink-600",
+      topics: ["Testes", "Login", "Upload", "Download", "Scripts"],
+    },
+    {
+      title: "Banco de Dados - Guia Prático",
+      description: "Como conectar, consultar SQL, fazer migrations, backup e popular dados de teste",
+      icon: Database,
+      href: "/wiki-dev/banco-dados",
+      color: "from-indigo-600 to-purple-600",
+      topics: ["PostgreSQL", "SQL", "Migrations", "Backup", "Dados Teste"],
+    },
+    {
+      title: "Monitoramento e Logs",
+      description: "Onde ver logs, métricas importantes, alertas e como ativar modo debug",
+      icon: FileText,
+      href: "/wiki-dev/monitoramento",
+      color: "from-red-600 to-orange-600",
+      topics: ["Logs", "Métricas", "Alertas", "Debug", "CloudWatch"],
     },
     {
       title: "Problemas Comuns e Soluções",
