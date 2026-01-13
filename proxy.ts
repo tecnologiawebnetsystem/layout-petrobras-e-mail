@@ -16,7 +16,7 @@ export function proxy(request: NextRequest) {
     form-action 'self';
     frame-ancestors 'none';
     upgrade-insecure-requests;
-    connect-src 'self' https://vercel.live https://login.microsoftonline.com https://*.msauth.net https://*.msauthimages.net;
+    connect-src 'self' https://vercel.live https://login.microsoftonline.com https://*.msauth.net https://*.msauthimages.net https://graph.microsoft.com;
   `
     .replace(/\s{2,}/g, " ")
     .trim()
