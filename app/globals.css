@@ -1,7 +1,7 @@
 @import "tailwindcss";
-@import "tw-animate-css";
+/* Removido @import "tw-animate-css" que estava causando erro de parsing CSS */
 
-@custom-variant dark (&:is(.dark *));
+/* Removido @custom-variant que estava causando erro de parsing */
 
 :root {
   /* Cores institucionais oficiais da Petrobras */
