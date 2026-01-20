@@ -80,23 +80,13 @@ export function EntraProvider({ children }: EntraProviderProps) {
       return
     }
 
-    const userType = getUserTypeFromEmail(email)
-
-    // Salvar no auth store (dados básicos primeiro)
-    setAuth(
-      {
-        id: account.localAccountId,
-        email,
-        name,
-        userType,
-      },
-      response.accessToken,
-      response.idToken,
-    )
-
     console.log("[Entra ID] Iniciando busca de dados do Graph API")
 
     let employeeId: string | undefined
+    let jobTitle: string | undefined
+    let department: string | undefined
+    let managerData: { id: string; name: string; email: string; jobTitle?: string; department?: string } | undefined
+    let photoUrl: string | undefined
 
     try {
       console.log("[v0] Buscando perfil completo do usuário via Graph API...")
@@ -132,36 +122,15 @@ export function EntraProvider({ children }: EntraProviderProps) {
       console.log("[v0] Foto do perfil:", photo ? "RECEBIDA (URL blob)" : "NÃO RECEBIDA")
       console.log("[v0] ==========================================")
 
-      interface EnrichedData {
-        jobTitle?: string
-        department?: string
-        officeLocation?: string
-        mobilePhone?: string
-        employeeId?: string
-        manager?: {
-          id: string
-          name: string
-          email: string
-          jobTitle?: string
-          department?: string
-        }
-        photoUrl?: string
-      }
-
-      const enrichedData: EnrichedData = {}
-
       if (profile) {
-        enrichedData.jobTitle = profile.jobTitle
-        enrichedData.department = profile.department
-        enrichedData.officeLocation = profile.officeLocation
-        enrichedData.mobilePhone = profile.mobilePhone
-        enrichedData.employeeId = profile.employeeId
+        jobTitle = profile.jobTitle
+        department = profile.department
         employeeId = profile.employeeId
         console.log("[Entra ID] Perfil enriquecido com dados:", profile)
       }
 
       if (manager) {
-        enrichedData.manager = {
+        managerData = {
           id: manager.id,
           name: manager.displayName,
           email: manager.mail,
@@ -174,28 +143,38 @@ export function EntraProvider({ children }: EntraProviderProps) {
       }
 
       if (photo) {
-        enrichedData.photoUrl = photo
+        photoUrl = photo
         console.log("[Entra ID] Foto do perfil carregada")
       } else {
         console.log("[Entra ID] Foto do perfil não disponível")
       }
-
-      // Atualizar store com dados enriquecidos
-      if (Object.keys(enrichedData).length > 0) {
-        useAuthStore.getState().enrichUserProfile(enrichedData)
-        console.log("[Entra ID] Dados adicionais salvos no store")
-      }
-
-      console.log("[Entra ID] Perfil enriquecido com sucesso:", {
-        hasProfile: !!profile,
-        hasManager: !!manager,
-        hasPhoto: !!photo,
-      })
     } catch (error) {
-      console.error("[Entra ID] Erro ao enriquecer perfil:", error)
-      console.error("[v0] Detalhes do erro:", error)
+      console.error("[Entra ID] Erro ao buscar dados do Graph API:", error)
       // Não bloqueia o login se falhar ao buscar dados adicionais
     }
+
+    // Determinar userType APÓS buscar dados do Graph API (com jobTitle)
+    const userType = getUserTypeFromEmail(email, jobTitle)
+    console.log("[v0] UserType determinado:", userType, "- Email:", email, "- JobTitle:", jobTitle)
+
+    // Salvar no auth store com todos os dados
+    setAuth(
+      {
+        id: account.localAccountId,
+        email,
+        name,
+        userType,
+        jobTitle,
+        department,
+        employeeId,
+        manager: managerData,
+        photoUrl,
+      },
+      response.accessToken,
+      response.idToken,
+    )
+
+    console.log("[Entra ID] Dados salvos no store com sucesso")
 
     sessionMonitor.start()
 
@@ -215,14 +194,17 @@ export function EntraProvider({ children }: EntraProviderProps) {
           authMethod: "entra-id",
           tenantId: account.tenantId,
           employeeId,
+          jobTitle,
         },
       },
     })
 
     console.log("[v0] Login processado com sucesso, usuário autenticado")
 
-    console.log("[v0] Redirecionando para /upload")
-    router.push("/upload")
+    // Redirecionar baseado no tipo de usuário
+    const redirectPath = userType === "supervisor" ? "/supervisor" : userType === "internal" ? "/upload" : "/download"
+    console.log("[v0] Redirecionando para", redirectPath, "- userType:", userType)
+    router.push(redirectPath)
   }
 
   const handleLogoutSuccess = () => {

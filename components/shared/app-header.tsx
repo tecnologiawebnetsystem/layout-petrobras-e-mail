@@ -209,7 +209,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
 
                 <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
 
-                {!isExternalUser && user?.userType === "internal" && (
+                {!isExternalUser && (user?.userType === "internal" || user?.userType === "supervisor") && (
                   <>
                     <DropdownMenuItem
                       onClick={handleViewCompartilhamentos}
@@ -301,7 +301,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                 </SheetHeader>
 
                 <div className="flex flex-col gap-2 p-4">
-                  {!isExternalUser && user?.userType === "internal" && (
+                  {!isExternalUser && (user?.userType === "internal" || user?.userType === "supervisor") && (
                     <Button
                       variant="ghost"
                       className="justify-start h-12 text-base hover:bg-accent transition-colors min-h-[44px]"

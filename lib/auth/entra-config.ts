@@ -78,14 +78,21 @@ export const msalInstance = new PublicClientApplication(msalConfig)
  * Tipos de usuário baseados no email
  *
  * @param email Email do usuário autenticado
- * @returns 'internal' se for @petrobras, 'supervisor' caso contrário
+ * @param jobTitle Cargo do usuário (opcional) - usado para identificar supervisores
+ * @returns 'internal' se for @petrobras, 'supervisor' se tiver cargo de gerente, 'external' caso contrário
  */
-export function getUserTypeFromEmail(email: string): "internal" | "supervisor" | "external" {
+export function getUserTypeFromEmail(email: string, jobTitle?: string): "internal" | "supervisor" | "external" {
   const emailLower = email.toLowerCase()
 
-  // Supervisores: lista específica de emails
+  // Usuários externos (não Petrobras)
+  if (!emailLower.includes("@petrobras")) {
+    return "external"
+  }
+
+  // Supervisores: lista específica de emails OU cargo de gerente/coordenador
   const supervisorEmails = [
     "wagner.brazil@petrobras.com.br",
+    "sabrina.araujo@petrobras.com.br",
     // Adicionar outros supervisores aqui
   ]
 
@@ -93,13 +100,18 @@ export function getUserTypeFromEmail(email: string): "internal" | "supervisor" |
     return "supervisor"
   }
 
-  // Usuários internos: domínio @petrobras
-  if (emailLower.includes("@petrobras")) {
-    return "internal"
+  // Identificar supervisor pelo cargo (se disponível)
+  if (jobTitle) {
+    const jobTitleLower = jobTitle.toLowerCase()
+    const supervisorTitles = ["gerente", "coordenador", "diretor", "superintendente", "chefe", "líder", "supervisor"]
+    
+    if (supervisorTitles.some(title => jobTitleLower.includes(title))) {
+      return "supervisor"
+    }
   }
 
-  // Demais: externos
-  return "external"
+  // Usuários internos: domínio @petrobras sem cargo de gerência
+  return "internal"
 }
 
 /**
