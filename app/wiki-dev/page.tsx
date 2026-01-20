@@ -53,12 +53,12 @@ export default function WikiDevPage() {
       topics: ["SSO", "Azure AD", "Autenticação", "Documento Formal", "Código Pronto"],
     },
     {
-      title: "Endpoints API - Referência Completa",
-      description: "Documentação detalhada de todos os 30+ endpoints do back-end Python com exemplos de JSON",
+      title: "Contratos Front-End / Back-End",
+      description: "Todos os endpoints que o front-end precisa: o que enviar e o que receber do back-end",
       icon: Database,
-      href: "/wiki-dev/endpoints-api",
+      href: "/wiki-dev/contratos-api",
       color: "from-green-600 to-emerald-700",
-      topics: ["REST API", "JSON", "Request/Response", "Autenticação", "Back-end Python"],
+      topics: ["REST API", "Request", "Response", "JSON", "Integração"],
     },
     {
       title: "Variáveis de Ambiente",
