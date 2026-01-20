@@ -8,6 +8,22 @@
 import { type Configuration, PublicClientApplication } from "@azure/msal-browser"
 
 /**
+ * Obter redirect URI dinamicamente
+ * Usa a variável de ambiente se configurada, senão usa window.location.origin
+ */
+function getRedirectUri(): string {
+  if (process.env.NEXT_PUBLIC_ENTRA_REDIRECT_URI) {
+    return process.env.NEXT_PUBLIC_ENTRA_REDIRECT_URI
+  }
+  // Em ambiente de browser, usar a origem atual (funciona em localhost e produção)
+  if (typeof window !== "undefined") {
+    return window.location.origin
+  }
+  // Fallback para SSR
+  return ""
+}
+
+/**
  * Configuração do MSAL (Microsoft Authentication Library)
  *
  * IMPORTANTE: As variáveis de ambiente devem ser fornecidas pelo time de infra
@@ -21,10 +37,11 @@ export const msalConfig: Configuration = {
     // Formato: https://login.microsoftonline.com/{TENANT_ID}
     authority: `https://login.microsoftonline.com/${process.env.NEXT_PUBLIC_ENTRA_TENANT_ID}`,
 
-    redirectUri: process.env.NEXT_PUBLIC_ENTRA_REDIRECT_URI || "",
+    // Redirect URI dinâmico - funciona em localhost e produção
+    redirectUri: getRedirectUri(),
 
     // URL de redirecionamento após logout
-    postLogoutRedirectUri: process.env.NEXT_PUBLIC_ENTRA_REDIRECT_URI || "",
+    postLogoutRedirectUri: getRedirectUri(),
 
     navigateToLoginRequestUrl: true,
   },
@@ -116,6 +133,9 @@ export function getUserTypeFromEmail(email: string, jobTitle?: string): "interna
 
 /**
  * Verificar se as variáveis de ambiente estão configuradas
+ * 
+ * Nota: O redirect URI pode estar vazio em localhost, pois usamos
+ * window.location.origin dinamicamente. Apenas clientId e tenantId são obrigatórios.
  */
 export function checkEntraIdConfig(): {
   configured: boolean
@@ -129,9 +149,10 @@ export function checkEntraIdConfig(): {
 
   const missing: string[] = []
 
+  // Apenas clientId e tenantId são obrigatórios
+  // redirectUri pode ser gerado dinamicamente com window.location.origin
   if (!config.clientId) missing.push("NEXT_PUBLIC_ENTRA_CLIENT_ID")
   if (!config.tenantId) missing.push("NEXT_PUBLIC_ENTRA_TENANT_ID")
-  if (!config.redirectUri) missing.push("NEXT_PUBLIC_ENTRA_REDIRECT_URI")
 
   return {
     configured: missing.length === 0,
