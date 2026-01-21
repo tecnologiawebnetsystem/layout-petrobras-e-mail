@@ -5,124 +5,201 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Cloud, Server, Shield, Home, Database, Layers, TestTube, FileText } from "lucide-react"
+import { Search, BookOpen, Cloud, Server, Shield, Home, Database, Layers, TestTube, FileText, Code, Monitor, Workflow, Component, Archive, AlertTriangle, CheckSquare, Lock, Users } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
   const [searchQuery, setSearchQuery] = useState("")
 
   const wikiCategories = [
+    // =============================================
+    // DESENVOLVEDOR FRONT-END
+    // =============================================
     {
-      title: "Configuração Azure AD",
-      description: "Guia completo de Redirect URI e Permissões Graph API para HML e Produção",
-      icon: Shield,
-      href: "/wiki-dev/azure-config",
-      color: "from-blue-600 to-indigo-700",
-      topics: ["Redirect URI", "Graph API", "HML", "Produção"],
+      title: "Front-End - Endpoints Necessarios",
+      description: "Todos os endpoints que o front-end precisa do back-end: campos, JSON, exemplos e detalhes completos",
+      icon: Monitor,
+      href: "/wiki-dev/frontend-endpoints",
+      color: "from-blue-600 to-cyan-600",
+      topics: ["React", "Next.js", "Fetch API", "JSON", "Request/Response"],
+      category: "front-end",
     },
     {
-      title: "Deploy AWS com Domínio Provisório",
-      description: "Guia completo para publicar Next.js na AWS com domínio provisório para HML e Produção",
+      title: "Guia de Componentes React",
+      description: "Todos os componentes do sistema: como usar, props disponiveis, exemplos de codigo e boas praticas",
+      icon: Component,
+      href: "/wiki-dev/componentes-react",
+      color: "from-cyan-500 to-blue-600",
+      topics: ["React", "Componentes", "Props", "Hooks", "Exemplos"],
+      category: "front-end",
+    },
+    {
+      title: "Stores Zustand - Como Usar",
+      description: "Todas as stores do sistema: metodos, estados, como integrar com API e persistencia",
+      icon: Archive,
+      href: "/wiki-dev/stores-zustand",
+      color: "from-indigo-500 to-purple-600",
+      topics: ["Zustand", "State", "Persistencia", "Hooks", "Integracao"],
+      category: "front-end",
+    },
+    // =============================================
+    // DESENVOLVEDOR BACK-END
+    // =============================================
+    {
+      title: "Back-End - Endpoints Implementados",
+      description: "Todos os endpoints ja criados no back-end Python: rotas, regras, validacoes e exemplos",
+      icon: Server,
+      href: "/wiki-dev/backend-endpoints",
+      color: "from-green-600 to-emerald-600",
+      topics: ["FastAPI", "Python", "DynamoDB", "AWS", "Rotas"],
+      category: "back-end",
+    },
+    {
+      title: "Regras de Negocio",
+      description: "Todas as regras do sistema: aprovacao, expiracao, OTP, permissoes, limites e fluxos",
+      icon: Users,
+      href: "/wiki-dev/regras-negocio",
+      color: "from-emerald-500 to-teal-600",
+      topics: ["Regras", "Aprovacao", "Expiracao", "Permissoes", "Fluxos"],
+      category: "back-end",
+    },
+    {
+      title: "Validacoes e Erros",
+      description: "Codigos de erro HTTP, validacoes de entrada, tratamento de excecoes e mensagens padrao",
+      icon: AlertTriangle,
+      href: "/wiki-dev/validacoes-erros",
+      color: "from-amber-500 to-orange-600",
+      topics: ["Erros", "HTTP Status", "Validacao", "Excecoes", "Mensagens"],
+      category: "back-end",
+    },
+    // =============================================
+    // DESENVOLVEDOR AWS / INFRAESTRUTURA
+    // =============================================
+    {
+      title: "Infraestrutura AWS - Passo a Passo",
+      description: "Como criar TUDO na AWS do zero: IAM, S3, DynamoDB, SES, CloudWatch, Lambda - Guia completo",
       icon: Cloud,
+      href: "/wiki-dev/infra-aws",
+      color: "from-orange-500 to-red-600",
+      topics: ["AWS", "IAM", "S3", "DynamoDB", "SES", "CloudWatch"],
+      category: "aws",
+    },
+    {
+      title: "Seguranca AWS",
+      description: "Politicas IAM, KMS para criptografia, VPC, Security Groups e boas praticas de seguranca",
+      icon: Lock,
+      href: "/wiki-dev/seguranca-aws",
+      color: "from-red-500 to-rose-600",
+      topics: ["IAM", "KMS", "VPC", "Security Groups", "Policies"],
+      category: "aws",
+    },
+    {
+      title: "Deploy AWS com Dominio Provisorio",
+      description: "Guia completo para publicar Next.js na AWS com dominio provisorio para HML e Producao",
+      icon: Layers,
       href: "/wiki-dev/deploy-aws",
       color: "from-green-500 to-emerald-600",
-      topics: ["Amplify", "S3 + CloudFront", "ECS Fargate", "Domínio Provisório", "Custos"],
-    },
-    {
-      title: "Deploy e Ambientes",
-      description: "Como fazer deploy em DEV, HML e Produção com checklist e rollback",
-      icon: Layers,
-      href: "/wiki-dev/deploy-ambientes",
-      color: "from-green-600 to-emerald-600",
-      topics: ["DEV", "HML", "PRD", "Rollback", "Checklist"],
+      topics: ["Amplify", "S3 + CloudFront", "ECS Fargate", "Dominio", "Custos"],
+      category: "aws",
     },
     {
       title: "Desenvolvimento Local AWS",
-      description: "Como rodar DynamoDB, S3, SES, Lambda localmente sem custo - Guia completo para iniciantes",
+      description: "Como rodar DynamoDB, S3, SES localmente sem custo - Docker e LocalStack",
       icon: Server,
       href: "/wiki-dev/local-development",
       color: "from-emerald-500 to-teal-500",
-      topics: ["DynamoDB Local", "LocalStack", "Docker", "Python Config", "Zero Custo"],
+      topics: ["DynamoDB Local", "LocalStack", "Docker", "Zero Custo"],
+      category: "aws",
+    },
+    // =============================================
+    // INTEGRACAO E CONTRATOS
+    // =============================================
+    {
+      title: "Contratos Front-End / Back-End",
+      description: "Mapeamento completo: o que o front envia e o que o back retorna em cada endpoint",
+      icon: Code,
+      href: "/wiki-dev/contratos-api",
+      color: "from-purple-600 to-indigo-600",
+      topics: ["REST API", "Request", "Response", "JSON", "Integracao"],
+      category: "integracao",
     },
     {
+      title: "Banco de Dados - Guia Completo",
+      description: "DynamoDB: todas as tabelas, campos, indices e como criar tudo na AWS passo a passo",
+      icon: Database,
+      href: "/wiki-dev/banco-dados",
+      color: "from-orange-500 to-amber-600",
+      topics: ["DynamoDB", "Tabelas", "Campos", "AWS Console", "Indices"],
+      category: "integracao",
+    },
+    {
+      title: "ServiceNow - Integracao",
+      description: "Guia completo dos endpoints ServiceNow: como usar, autenticacao, exemplos praticos",
+      icon: Workflow,
+      href: "/wiki-dev/servicenow",
+      color: "from-teal-500 to-cyan-600",
+      topics: ["ServiceNow", "ITSM", "Tickets", "API REST", "Integracao"],
+      category: "integracao",
+    },
+    // =============================================
+    // SEGURANCA E QUALIDADE
+    // =============================================
+    {
+      title: "Checklist de Seguranca",
+      description: "Tudo que deve ser verificado antes de ir para producao: front-end, back-end e AWS",
+      icon: CheckSquare,
+      href: "/wiki-dev/checklist-seguranca",
+      color: "from-red-600 to-rose-700",
+      topics: ["Seguranca", "Checklist", "Producao", "Auditoria", "LGPD"],
+      category: "seguranca",
+    },
+    {
+      title: "Monitoramento e Logs",
+      description: "CloudWatch, metricas, alertas, dashboards e como debugar em producao",
+      icon: FileText,
+      href: "/wiki-dev/monitoramento",
+      color: "from-red-600 to-orange-600",
+      topics: ["CloudWatch", "Logs", "Metricas", "Alertas", "Dashboard"],
+      category: "seguranca",
+    },
+    // =============================================
+    // AUTENTICACAO E TESTES
+    // =============================================
+    {
       title: "Microsoft Entra ID",
-      description: "SSO corporativo com Microsoft Entra ID (Azure AD) - Código completo pronto",
+      description: "SSO corporativo com Microsoft Entra ID (Azure AD) - Codigo completo pronto",
       icon: Shield,
       href: "/wiki-dev/entra-id",
       color: "from-blue-600 to-indigo-600",
-      topics: ["SSO", "Azure AD", "Autenticação", "Documento Formal", "Código Pronto"],
-    },
-    {
-      title: "Contratos Front-End / Back-End",
-      description: "Todos os endpoints que o front-end precisa: o que enviar e o que receber do back-end",
-      icon: Database,
-      href: "/wiki-dev/contratos-api",
-      color: "from-green-600 to-emerald-700",
-      topics: ["REST API", "Request", "Response", "JSON", "Integração"],
-    },
-    {
-      title: "Variáveis de Ambiente",
-      description: "Todas as variáveis necessárias para Front-End, Back-End e Local - Pronto para copiar",
-      icon: Server,
-      href: "/wiki-dev/variaveis-ambiente",
-      color: "from-blue-500 to-cyan-600",
-      topics: ["Env Vars", "Vercel", "Python", "Configuração"],
+      topics: ["SSO", "Azure AD", "Autenticacao", "Documento Formal"],
+      category: "autenticacao",
     },
     {
       title: "Como Testar o Sistema",
-      description: "Guia prático para testar login, upload, aprovação, download e scripts automáticos",
+      description: "Guia pratico para testar login, upload, aprovacao, download e scripts automaticos",
       icon: TestTube,
       href: "/wiki-dev/testes",
       color: "from-purple-600 to-pink-600",
       topics: ["Testes", "Login", "Upload", "Download", "Scripts"],
+      category: "testes",
     },
     {
-      title: "Banco de Dados - Guia Prático",
-      description: "Como conectar, consultar SQL, fazer migrations, backup e popular dados de teste",
-      icon: Database,
-      href: "/wiki-dev/banco-dados",
-      color: "from-indigo-600 to-purple-600",
-      topics: ["PostgreSQL", "SQL", "Migrations", "Backup", "Dados Teste"],
-    },
-    {
-      title: "Monitoramento e Logs",
-      description: "Onde ver logs, métricas importantes, alertas e como ativar modo debug",
-      icon: FileText,
-      href: "/wiki-dev/monitoramento",
-      color: "from-red-600 to-orange-600",
-      topics: ["Logs", "Métricas", "Alertas", "Debug", "CloudWatch"],
-    },
-    {
-      title: "Problemas Comuns e Soluções",
-      description: "Guia prático para resolver erros de login, upload, banco de dados e emails",
-      icon: Shield,
-      href: "/wiki-dev/troubleshooting",
-      color: "from-red-500 to-orange-600",
-      topics: ["Debug", "Erros", "Troubleshooting", "Soluções"],
+      title: "Deploy e Ambientes",
+      description: "Como fazer deploy em DEV, HML e Producao com checklist e rollback",
+      icon: Layers,
+      href: "/wiki-dev/deploy-ambientes",
+      color: "from-green-600 to-emerald-600",
+      topics: ["DEV", "HML", "PRD", "Rollback", "Checklist"],
+      category: "deploy",
     },
     {
       title: "Fluxo de Dados End-to-End",
-      description: "Como os dados trafegam: Upload → S3 → Banco → Aprovação → Email → Download",
+      description: "Como os dados trafegam: Upload -> S3 -> Banco -> Aprovacao -> Email -> Download",
       icon: Database,
       href: "/wiki-dev/fluxo-dados",
       color: "from-purple-500 to-pink-600",
-      topics: ["Fluxo", "Upload", "Download", "Aprovação"],
-    },
-    {
-      title: "Segurança e Boas Práticas",
-      description: "Autenticação, autorização, tokens, CORS, XSS, CSRF - Tudo explicado de forma simples",
-      icon: Shield,
-      href: "/wiki-dev/seguranca",
-      color: "from-red-600 to-rose-700",
-      topics: ["Segurança", "JWT", "RLS", "CORS"],
-    },
-    {
-      title: "Arquitetura do Sistema",
-      description: "Estrutura de pastas, padrões de código e como adicionar novas features",
-      icon: BookOpen,
-      href: "/wiki-dev/arquitetura",
-      color: "from-indigo-600 to-purple-700",
-      topics: ["Arquitetura", "Padrões", "Estrutura", "Código"],
+      topics: ["Fluxo", "Upload", "Download", "Aprovacao"],
+      category: "fluxo",
     },
   ]
 

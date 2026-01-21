@@ -365,11 +365,119 @@ export default function SwaggerDocsPage() {
 
           {/* Main Content */}
           <main className="lg:col-span-3 space-y-8">
-            {/* Description */}
+            {/* Description - Visao Geral */}
             <div className="border rounded-xl p-6 bg-card">
-              <h2 className="text-2xl font-bold mb-4">Visão Geral</h2>
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                <p className="whitespace-pre-line text-muted-foreground">{spec.info.description}</p>
+              <h2 className="text-2xl font-bold mb-6">Visao Geral</h2>
+              
+              <p className="text-muted-foreground mb-6">
+                API RESTful para o sistema de transferencia segura de arquivos da Petrobras.
+              </p>
+              
+              {/* Perfis de Usuario */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-4">Esta API permite:</h3>
+                <div className="grid gap-3">
+                  <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-blue-600 font-bold text-sm">U</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-blue-700 dark:text-blue-400">Usuarios Internos</p>
+                      <p className="text-sm text-muted-foreground">Criar compartilhamentos de arquivos para destinatarios externos</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <div className="h-8 w-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-amber-600 font-bold text-sm">S</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-amber-700 dark:text-amber-400">Supervisores</p>
+                      <p className="text-sm text-muted-foreground">Aprovar/rejeitar compartilhamentos e gerenciar equipe</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <div className="h-8 w-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-green-600 font-bold text-sm">E</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-green-700 dark:text-green-400">Usuarios Externos</p>
+                      <p className="text-sm text-muted-foreground">Acessar arquivos compartilhados via autenticacao OTP</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Autenticacao */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-4">Autenticacao</h3>
+                <p className="text-sm text-muted-foreground mb-4">A API suporta dois metodos de autenticacao:</p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-lg border bg-muted/30">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Lock className="h-4 w-4 text-primary" />
+                      <p className="font-medium">Microsoft Entra ID</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">Para usuarios internos e supervisores</p>
+                    <code className="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded">Authorization: Bearer {'{token}'}</code>
+                  </div>
+                  <div className="p-4 rounded-lg border bg-muted/30">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Lock className="h-4 w-4 text-primary" />
+                      <p className="font-medium">OTP por Email</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">Para usuarios externos</p>
+                    <code className="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded">Codigo de 6 digitos - 3 min</code>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fluxo Principal */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-4">Fluxo Principal</h3>
+                <div className="flex items-center justify-center gap-2 p-4 rounded-lg bg-muted/30 border overflow-x-auto">
+                  <span className="px-3 py-1.5 rounded-md bg-blue-500/20 text-blue-600 text-sm font-medium whitespace-nowrap">Usuario Interno</span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="px-3 py-1.5 rounded-md bg-slate-500/20 text-slate-600 dark:text-slate-400 text-sm font-medium whitespace-nowrap">Cria Share</span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="px-3 py-1.5 rounded-md bg-amber-500/20 text-amber-600 text-sm font-medium whitespace-nowrap">Supervisor Aprova</span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="px-3 py-1.5 rounded-md bg-green-500/20 text-green-600 text-sm font-medium whitespace-nowrap">Usuario Externo Baixa</span>
+                </div>
+              </div>
+
+              {/* Ambientes */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Ambientes</h3>
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-medium">Ambiente</th>
+                        <th className="px-4 py-3 text-left font-medium">URL Base</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-t">
+                        <td className="px-4 py-3">
+                          <span className="px-2 py-1 rounded bg-green-500/20 text-green-600 text-xs font-medium">Producao</span>
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs">https://api.transfer.petrobras.com.br/api/v1</td>
+                      </tr>
+                      <tr className="border-t">
+                        <td className="px-4 py-3">
+                          <span className="px-2 py-1 rounded bg-amber-500/20 text-amber-600 text-xs font-medium">Homologacao</span>
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs">https://api-hml.transfer.petrobras.com.br/api/v1</td>
+                      </tr>
+                      <tr className="border-t">
+                        <td className="px-4 py-3">
+                          <span className="px-2 py-1 rounded bg-blue-500/20 text-blue-600 text-xs font-medium">Desenvolvimento</span>
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs">http://localhost:8000/api/v1</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
@@ -419,11 +527,8 @@ export default function SwaggerDocsPage() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t mt-16 py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>Petrobras File Transfer API Documentation</p>
-          <p className="mt-1">Versão {spec.info.version} • Última atualização: Janeiro 2026</p>
-        </div>
+      <footer className="border-t mt-16 py-6">
+        <div className="container mx-auto px-4" />
       </footer>
     </div>
   )
