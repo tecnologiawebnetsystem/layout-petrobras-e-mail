@@ -14,6 +14,17 @@ from app.api.v1 import (
     routes_shares
 )
 
+# Novas rotas para integração completa com front-end
+from app.api.v1 import (
+    routes_emails,
+    routes_otp,
+    routes_auth_entra,
+    routes_supervisor_full,
+    routes_external_download,
+    routes_upload,
+    routes_audit_full
+)
+
 app = FastAPI(
     title="Sistema de Compartilhamento Seguro de Arquivos - Petrobras",
     description="""
@@ -117,6 +128,31 @@ app.include_router(routes_external_auth.router, prefix=prefix_v1, tags=["Auth / 
 # Rotas de Login
 # auth local e interno protegido (apenas enquanto AUTH_MODE=local)
 app.include_router(routes_internal_auth.router, prefix=prefix_v1)
+
+# ============================================
+# NOVAS ROTAS - Integração completa com Front-end
+# ============================================
+
+# Emails - Envio de notificações, OTP, confirmações
+app.include_router(routes_emails.router, prefix=prefix_v1, tags=["Emails"])
+
+# OTP - Geração e verificação de códigos para usuários externos
+app.include_router(routes_otp.router, prefix=prefix_v1, tags=["OTP"])
+
+# Autenticação Entra ID - Validação de tokens Microsoft
+app.include_router(routes_auth_entra.router, prefix=prefix_v1, tags=["Auth - Entra ID"])
+
+# Supervisor - Aprovações, rejeições, estatísticas
+app.include_router(routes_supervisor_full.router, prefix=prefix_v1, tags=["Supervisor"])
+
+# Download Externo - Acesso de usuários externos aos arquivos
+app.include_router(routes_external_download.router, prefix=prefix_v1, tags=["External Download"])
+
+# Upload/Shares - Criação e gerenciamento de compartilhamentos
+app.include_router(routes_upload.router, prefix=prefix_v1, tags=["Upload/Shares"])
+
+# Auditoria - Logs, métricas e relatórios
+app.include_router(routes_audit_full.router, prefix=prefix_v1, tags=["Audit"])
 
 # Rotas MOCK (sem AWS): integradas com core/aws_utils.py
 @app.get("/mock/upload/{key}")

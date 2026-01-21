@@ -980,6 +980,182 @@ Para dúvidas sobre implementação:
 
 ---
 
-**Última atualização:** 05/01/2026
-**Versão:** 1.0
+## 🆕 PARTE 7: ENDPOINTS IMPLEMENTADOS (20/01/2026)
+
+Os seguintes arquivos de rotas foram criados e estão prontos para uso:
+
+### 7.1 Rotas de Email (`routes_emails.py`)
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/api/v1/emails/send` | Envia email genérico |
+| POST | `/api/v1/emails/send-otp` | Envia email com código OTP |
+| POST | `/api/v1/emails/send-supervisor-notification` | Notifica supervisor sobre nova aprovação |
+| POST | `/api/v1/emails/send-confirmation` | Envia confirmação ao remetente |
+| GET | `/api/v1/emails/{message_id}/status` | Status de um email enviado |
+| GET | `/api/v1/emails/history` | Histórico de emails |
+
+### 7.2 Rotas de OTP (`routes_otp.py`)
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/api/v1/otp/generate` | Gera código OTP (6 dígitos, 3 min) |
+| POST | `/api/v1/otp/verify` | Verifica código OTP |
+| POST | `/api/v1/otp/resend` | Reenvia novo código |
+| GET | `/api/v1/otp/status/{email}` | Verifica se há código ativo |
+
+### 7.3 Rotas de Autenticação Entra ID (`routes_auth_entra.py`)
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/api/v1/auth/entra/validate-token` | Valida token do Microsoft Entra |
+| POST | `/api/v1/auth/entra/sync-user` | Sincroniza dados do usuário |
+| POST | `/api/v1/auth/entra/create-session` | Cria sessão para usuário |
+| POST | `/api/v1/auth/entra/validate-session` | Valida sessão ativa |
+| POST | `/api/v1/auth/entra/logout` | Encerra sessão |
+| GET | `/api/v1/auth/entra/user-type/{email}` | Determina tipo de usuário |
+
+### 7.4 Rotas de Supervisor (`routes_supervisor_full.py`)
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/v1/supervisor/pending` | Lista compartilhamentos pendentes |
+| GET | `/api/v1/supervisor/all` | Lista todos com filtros |
+| GET | `/api/v1/supervisor/{share_id}` | Detalhes de um compartilhamento |
+| POST | `/api/v1/supervisor/{share_id}/approve` | Aprova compartilhamento |
+| POST | `/api/v1/supervisor/{share_id}/reject` | Rejeita compartilhamento |
+| PUT | `/api/v1/supervisor/{share_id}/extend` | Altera tempo de expiração |
+| GET | `/api/v1/supervisor/statistics/summary` | Estatísticas gerais |
+| POST | `/api/v1/supervisor/shares/create` | Cria share como supervisor |
+
+### 7.5 Rotas de Download Externo (`routes_external_download.py`)
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/api/v1/external/verify` | Verifica se email tem shares |
+| POST | `/api/v1/external/authenticate` | Autentica com OTP |
+| GET | `/api/v1/external/shares` | Lista shares disponíveis |
+| GET | `/api/v1/external/shares/{share_id}` | Detalhes de um share |
+| POST | `/api/v1/external/shares/{share_id}/accept-terms` | Aceita termos de uso |
+| GET | `/api/v1/external/files/{file_id}/download` | Gera URL de download |
+| GET | `/api/v1/external/files/{file_id}/preview` | Gera URL de preview |
+| POST | `/api/v1/external/logout` | Encerra sessão externa |
+
+### 7.6 Rotas de Upload/Shares (`routes_upload.py`)
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/api/v1/shares/create` | Cria novo compartilhamento |
+| POST | `/api/v1/shares/upload-files` | Upload de arquivos |
+| GET | `/api/v1/shares/my-shares` | Lista shares do usuário |
+| GET | `/api/v1/shares/{share_id}` | Detalhes de um share |
+| PATCH | `/api/v1/shares/{share_id}/cancel` | Cancela share pendente |
+| PUT | `/api/v1/shares/{share_id}` | Atualiza share pendente |
+| DELETE | `/api/v1/shares/{share_id}` | Remove share cancelado |
+| GET | `/api/v1/shares/{share_id}/history` | Histórico de ações |
+
+### 7.7 Rotas de Auditoria (`routes_audit_full.py`)
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/v1/audit/logs` | Lista logs com filtros |
+| POST | `/api/v1/audit/logs` | Cria log de auditoria |
+| GET | `/api/v1/audit/metrics` | Métricas gerais |
+| GET | `/api/v1/audit/metrics/by-user` | Métricas por usuário |
+| GET | `/api/v1/audit/metrics/by-day` | Métricas diárias |
+| GET | `/api/v1/audit/logs/{log_id}` | Detalhes de um log |
+| GET | `/api/v1/audit/export` | Exporta logs (JSON/CSV) |
+| GET | `/api/v1/audit/security-alerts` | Alertas de segurança |
+| POST | `/api/v1/audit/security-alerts/{alert_id}/acknowledge` | Reconhece alerta |
+
+---
+
+## 📋 RESUMO DE ARQUIVOS CRIADOS
+
+\`\`\`
+back-end/python/app/api/v1/
+├── routes_emails.py          # 381 linhas - Envio de emails
+├── routes_otp.py             # 378 linhas - Autenticação OTP
+├── routes_auth_entra.py      # 372 linhas - Integração Entra ID
+├── routes_supervisor_full.py # 558 linhas - Gestão de aprovações
+├── routes_external_download.py # 505 linhas - Download externo
+├── routes_upload.py          # 576 linhas - Upload e shares
+└── routes_audit_full.py      # 531 linhas - Auditoria e métricas
+\`\`\`
+
+**Total:** 7 novos arquivos, ~3300 linhas de código
+
+---
+
+## 🔗 CORRESPONDÊNCIA FRONT-END → BACK-END
+
+| Componente Front-End | Endpoint Back-End |
+|---------------------|-------------------|
+| `workflow-store.ts` (addUpload) | POST `/api/v1/shares/create` |
+| `workflow-store.ts` (approveUpload) | POST `/api/v1/supervisor/{id}/approve` |
+| `workflow-store.ts` (rejectUpload) | POST `/api/v1/supervisor/{id}/reject` |
+| `workflow-store.ts` (cancelUpload) | PATCH `/api/v1/shares/{id}/cancel` |
+| `workflow-store.ts` (updateExpiration) | PUT `/api/v1/supervisor/{id}/extend` |
+| `/api/send-email` (Route Handler) | POST `/api/v1/emails/send-supervisor-notification` |
+| `/api/send-otp-email` (Route Handler) | POST `/api/v1/emails/send-otp` |
+| `otp-service.ts` | POST `/api/v1/otp/generate`, POST `/api/v1/otp/verify` |
+| `entra-config.ts` | POST `/api/v1/auth/entra/validate-token` |
+| Página `/supervisor` | GET `/api/v1/supervisor/pending`, `/all` |
+| Página `/external-verify` | POST `/api/v1/external/verify`, `/authenticate` |
+| Página `/external-download` | GET `/api/v1/external/shares`, `/files/{id}/download` |
+| `audit-log-store.ts` | POST `/api/v1/audit/logs`, GET `/api/v1/audit/logs` |
+
+---
+
+## ⚡ COMO RODAR O BACKEND
+
+\`\`\`bash
+# 1. Navegar para pasta do backend
+cd back-end/python
+
+# 2. Criar ambiente virtual
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# ou: venv\\Scripts\\activate  # Windows
+
+# 3. Instalar dependências
+pip install -r requirements.txt
+
+# 4. Configurar variáveis de ambiente
+cp .env.example .env
+# Editar .env com suas credenciais
+
+# 5. Rodar servidor
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# 6. Acessar documentação
+# Swagger: http://localhost:8000/docs
+# ReDoc: http://localhost:8000/redoc
+\`\`\`
+
+---
+
+## 🔧 PRÓXIMOS PASSOS
+
+1. **Substituir in-memory stores por banco de dados**
+   - Os arquivos usam dicionários para desenvolvimento
+   - Em produção: integrar com PostgreSQL/DynamoDB
+
+2. **Implementar autenticação JWT real**
+   - Atualmente aceita tokens mock
+   - Integrar validação JWKS do Entra ID
+
+3. **Integrar com AWS**
+   - S3 para upload de arquivos
+   - SES para envio de emails
+   - DynamoDB ou RDS para persistência
+
+4. **Conectar front-end ao back-end**
+   - Atualizar `api-client.ts` para usar `NEXT_PUBLIC_API_URL`
+   - Substituir stores Zustand por chamadas à API
+
+---
+
+**Última atualização:** 20/01/2026
+**Versão:** 2.0
 **Autor:** Sistema v0 AI
