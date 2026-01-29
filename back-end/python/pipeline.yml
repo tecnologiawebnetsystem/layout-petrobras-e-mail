@@ -1,24 +1,18 @@
-# Para mais informações sobre a configuração do arquivo pipeline.yml,
-# acesse https://rigs.petrobras.com.br/docs/default/component/d9i3-templates/pipeline-yml
-###########################################################################################
 env:
-  SkipSonarOnSnapshot: false
-  SkipSastOnSnapshot: false
-  SkipScaOnSnapshot: false
-  SkipCsScannerOnSnapshot: false
+  Repository: frontend
+  Name: csa-frontend
 
 build:
-  python:
-    Name: "A12022-backend"
-    PythonVersion: "3.10"
-    PythonSourcePath: "."
-    DependenciesManager: "pip"
-    TargetPath: "build"
-    CopySourceToTarget: true
-    CopyExclusions: "docs;Dockerfile;docker-compose.yml;README.md"
+  node:
+    Name: "a12022-frontend"
+    NodeVersion: "20"
+    NodeSourcePath: "."
+    PackageManager: "npm"
     SkipTests: true
-upload:
 
-deploy:
-  #SnapshotEnvs: DSV,TST
-  #StartReleaseEnvs: HMG
+  docker:
+    RegistryName: ecr
+    Dockerfile: ./Dockerfile
+
+upload:
+  docker:

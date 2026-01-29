@@ -1,0 +1,18 @@
+# Para mais informações sobre a configuração do arquivo deploy-config.yml,
+# acesse https://github.com/petrobrasbr/d9i3-templates/blob/main/docs/deploy-config-yml/index.md
+################################################################################################
+serverType: ' '
+artifacts:
+  a12022-frontend:
+    CodigoAplicacao: a12022
+envs:
+  DSV:
+    a12022-frontend: {}
+  TST:
+    a12022-frontend: {}
+  HMG:
+    a12022-frontend: {}
+  PRD:
+    a12022-frontend:
+      reviewers: a12022_maintain_team
+
