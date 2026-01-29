@@ -1035,40 +1035,40 @@ export default function RoadmapPage() {
         {/* Tabs de Visualizacao */}
         <Tabs defaultValue="timeline" className="space-y-6">
           <div className="flex justify-center print:hidden">
-            <TabsList className="bg-white border-2 border-slate-200 shadow-lg p-1.5 rounded-xl">
+            <TabsList className="bg-gradient-to-r from-slate-50 to-slate-100 border-2 border-slate-200 shadow-xl p-2 rounded-2xl gap-2 h-auto">
               <TabsTrigger 
                 value="timeline" 
-                className="gap-2 px-5 py-2.5 text-sm font-semibold data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg transition-all"
+                className="gap-3 px-8 py-4 text-base font-bold rounded-xl transition-all duration-200 hover:bg-blue-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105"
               >
-                <Calendar className="h-4 w-4" />
+                <Calendar className="h-5 w-5" />
                 Timeline
               </TabsTrigger>
               <TabsTrigger 
                 value="gantt" 
-                className="gap-2 px-5 py-2.5 text-sm font-semibold data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg transition-all"
+                className="gap-3 px-8 py-4 text-base font-bold rounded-xl transition-all duration-200 hover:bg-emerald-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105"
               >
-                <GanttChart className="h-4 w-4" />
+                <GanttChart className="h-5 w-5" />
                 Gantt
               </TabsTrigger>
               <TabsTrigger 
                 value="burndown" 
-                className="gap-2 px-5 py-2.5 text-sm font-semibold data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg transition-all"
+                className="gap-3 px-8 py-4 text-base font-bold rounded-xl transition-all duration-200 hover:bg-amber-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-amber-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105"
               >
-                <BarChart3 className="h-4 w-4" />
+                <BarChart3 className="h-5 w-5" />
                 Burndown
               </TabsTrigger>
               <TabsTrigger 
                 value="kanban" 
-                className="gap-2 px-5 py-2.5 text-sm font-semibold data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg transition-all"
+                className="gap-3 px-8 py-4 text-base font-bold rounded-xl transition-all duration-200 hover:bg-purple-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105"
               >
-                <FileText className="h-4 w-4" />
+                <FileText className="h-5 w-5" />
                 Por Fase
               </TabsTrigger>
               <TabsTrigger 
                 value="equipe" 
-                className="gap-2 px-5 py-2.5 text-sm font-semibold data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg transition-all"
+                className="gap-3 px-8 py-4 text-base font-bold rounded-xl transition-all duration-200 hover:bg-rose-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-rose-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105"
               >
-                <Users className="h-4 w-4" />
+                <Users className="h-5 w-5" />
                 Por Equipe
               </TabsTrigger>
             </TabsList>
