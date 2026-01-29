@@ -74,7 +74,7 @@ export default function S3AWSPage() {
           <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 shadow-lg">
             <Cloud className="h-8 w-8 text-white" />
           </div>
-          <h1 className="mb-3 text-4xl font-bold text-slate-900">Amazon S3 - Guia Completo para Leigos</h1>
+          <h1 className="mb-3 text-4xl font-bold text-slate-900">S3 - Como Configurar (Passo a Passo para Leigos)</h1>
           <p className="text-lg text-slate-600">
             Como configurar o Amazon S3 para armazenar os arquivos do sistema de transferencia
           </p>

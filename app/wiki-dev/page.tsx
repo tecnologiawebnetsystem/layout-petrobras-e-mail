@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Cloud, Server, Shield, Home, Database, Layers, TestTube, FileText, Workflow, CheckSquare, Lock, Container, HardDrive, FolderOpen } from "lucide-react"
+import { Search, BookOpen, Cloud, Server, Shield, Home, Layers, Workflow, Lock, Container, HardDrive, FolderOpen } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
@@ -71,8 +71,8 @@ export default function WikiDevPage() {
       category: "aws",
     },
     {
-      title: "S3 na AWS - Guia Completo",
-      description: "Como criar e configurar S3 na AWS: buckets, permissoes, CORS, versionamento e boas praticas",
+      title: "S3 - Como Configurar",
+      description: "Passo a passo completo para configurar S3 na AWS: criar buckets, permissoes, CORS e upload/download",
       icon: FolderOpen,
       href: "/wiki-dev/s3-aws",
       color: "from-green-500 to-teal-600",
@@ -92,28 +92,7 @@ export default function WikiDevPage() {
       category: "integracao",
     },
     // =============================================
-    // SEGURANCA E QUALIDADE
-    // =============================================
-    {
-      title: "Checklist de Seguranca",
-      description: "Tudo que deve ser verificado antes de ir para producao: front-end, back-end e AWS",
-      icon: CheckSquare,
-      href: "/wiki-dev/checklist-seguranca",
-      color: "from-red-600 to-rose-700",
-      topics: ["Seguranca", "Checklist", "Producao", "Auditoria", "LGPD"],
-      category: "seguranca",
-    },
-    {
-      title: "Monitoramento e Logs",
-      description: "CloudWatch, metricas, alertas, dashboards e como debugar em producao",
-      icon: FileText,
-      href: "/wiki-dev/monitoramento",
-      color: "from-red-600 to-orange-600",
-      topics: ["CloudWatch", "Logs", "Metricas", "Alertas", "Dashboard"],
-      category: "seguranca",
-    },
-    // =============================================
-    // AUTENTICACAO E TESTES
+    // AUTENTICACAO
     // =============================================
     {
       title: "Microsoft Entra ID",
@@ -125,15 +104,6 @@ export default function WikiDevPage() {
       category: "autenticacao",
     },
     {
-      title: "Como Testar o Sistema",
-      description: "Guia pratico para testar login, upload, aprovacao, download e scripts automaticos",
-      icon: TestTube,
-      href: "/wiki-dev/testes",
-      color: "from-purple-600 to-pink-600",
-      topics: ["Testes", "Login", "Upload", "Download", "Scripts"],
-      category: "testes",
-    },
-    {
       title: "Deploy e Ambientes",
       description: "Como fazer deploy em DEV, HML e Producao com checklist e rollback",
       icon: Layers,
@@ -141,15 +111,6 @@ export default function WikiDevPage() {
       color: "from-green-600 to-emerald-600",
       topics: ["DEV", "HML", "PRD", "Rollback", "Checklist"],
       category: "deploy",
-    },
-    {
-      title: "Fluxo de Dados End-to-End",
-      description: "Como os dados trafegam: Upload -> S3 -> Banco -> Aprovacao -> Email -> Download",
-      icon: Database,
-      href: "/wiki-dev/fluxo-dados",
-      color: "from-purple-500 to-pink-600",
-      topics: ["Fluxo", "Upload", "Download", "Aprovacao"],
-      category: "fluxo",
     },
   ]
 
