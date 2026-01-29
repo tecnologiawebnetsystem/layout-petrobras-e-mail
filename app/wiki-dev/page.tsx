@@ -5,13 +5,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Cloud, Server, Shield, Home, Layers, Workflow, Lock, Container, HardDrive, FolderOpen, Code } from "lucide-react"
+import { Search, BookOpen, Cloud, Server, Shield, Home, Layers, Workflow, Lock, Container, HardDrive, FolderOpen, Code, Package, Target } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
   const [searchQuery, setSearchQuery] = useState("")
 
   const wikiCategories = [
+    // =============================================
+    // GESTAO DO PROJETO
+    // =============================================
+    {
+      title: "Roadmap do Projeto",
+      description: "Plano visual com todas as fases, entregas, prazos e progresso do projeto - Timeline interativa",
+      icon: Target,
+      href: "/wiki-dev/roadmap",
+      color: "from-indigo-500 to-purple-600",
+      topics: ["Fases", "Entregas", "Prazos", "Progresso", "Milestones"],
+      category: "gestao",
+    },
     // =============================================
     // AWS / INFRAESTRUTURA
     // =============================================
@@ -77,6 +89,18 @@ export default function WikiDevPage() {
       color: "from-green-500 to-teal-600",
       topics: ["S3", "AWS", "Buckets", "CORS", "IAM", "Upload/Download"],
       category: "aws",
+    },
+    // =============================================
+    // REPOSITORIOS E DEPENDENCIAS
+    // =============================================
+    {
+      title: "Nexus Repository Manager",
+      description: "Guia completo para configurar o Nexus: npm, pip, Docker e integracao com AWS (CodeBuild, ECS)",
+      icon: Package,
+      href: "/wiki-dev/nexus-repository",
+      color: "from-orange-500 to-red-600",
+      topics: ["Nexus", "npm", "pip", "Docker Registry", "AWS", "CI/CD"],
+      category: "repositorios",
     },
     // =============================================
     // BACK-END / API
