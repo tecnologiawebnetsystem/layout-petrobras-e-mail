@@ -348,11 +348,26 @@ function StatusIcon({ status }: { status: string }) {
 function StatusBadge({ status }: { status: string }) {
   switch (status) {
     case "concluido":
-      return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Concluido</Badge>
+      return (
+        <Badge className="bg-green-500 text-white hover:bg-green-600 px-4 py-1.5 text-sm font-bold shadow-md border-2 border-green-600">
+          <CheckCircle2 className="h-4 w-4 mr-1.5" />
+          Concluido
+        </Badge>
+      )
     case "em_progresso":
-      return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">Em Progresso</Badge>
+      return (
+        <Badge className="bg-amber-500 text-white hover:bg-amber-600 px-4 py-1.5 text-sm font-bold shadow-md border-2 border-amber-600">
+          <Clock className="h-4 w-4 mr-1.5" />
+          Em Progresso
+        </Badge>
+      )
     case "pendente":
-      return <Badge className="bg-slate-100 text-slate-500 hover:bg-slate-100">Pendente</Badge>
+      return (
+        <Badge className="bg-slate-400 text-white hover:bg-slate-500 px-4 py-1.5 text-sm font-bold shadow-md border-2 border-slate-500">
+          <Circle className="h-4 w-4 mr-1.5" />
+          Pendente
+        </Badge>
+      )
     default:
       return <Badge variant="outline">-</Badge>
   }
@@ -438,18 +453,31 @@ function DependenciasIndicador({ dependencias, fases }: { dependencias?: number[
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className={`flex items-center gap-1 text-xs ${todasConcluidas ? "text-green-600" : "text-amber-600"}`}>
-            <Link2 className="h-3 w-3" />
-            {dependencias.length} dep.
-          </div>
+          <Badge 
+            className={`px-3 py-1.5 text-sm font-bold shadow-md cursor-help ${
+              todasConcluidas 
+                ? "bg-green-100 text-green-700 border-2 border-green-400" 
+                : "bg-orange-100 text-orange-700 border-2 border-orange-400"
+            }`}
+          >
+            <Link2 className="h-4 w-4 mr-1.5" />
+            {dependencias.length} {dependencias.length === 1 ? "Dependencia" : "Dependencias"}
+            {todasConcluidas ? (
+              <CheckCircle2 className="h-4 w-4 ml-1.5 text-green-600" />
+            ) : (
+              <AlertTriangle className="h-4 w-4 ml-1.5 text-orange-600" />
+            )}
+          </Badge>
         </TooltipTrigger>
-        <TooltipContent>
-          <p className="font-medium mb-1">Depende de:</p>
-          <ul className="text-xs space-y-1">
+        <TooltipContent className="p-3">
+          <p className="font-bold mb-2 text-base">Depende de:</p>
+          <ul className="space-y-2">
             {fasesDepende.map(f => (
-              <li key={f.id} className="flex items-center gap-1">
+              <li key={f.id} className="flex items-center gap-2 text-sm">
                 <StatusIcon status={f.status} />
-                {f.nome.split(" - ")[0]}
+                <span className={f.status === "concluido" ? "text-green-600 font-medium" : "text-amber-600 font-medium"}>
+                  {f.nome.split(" - ")[0]}
+                </span>
               </li>
             ))}
           </ul>
@@ -1101,16 +1129,20 @@ export default function RoadmapPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                       <DependenciasIndicador dependencias={fase.dependeDe} fases={fases} />
                       <StatusBadge status={fase.status} />
                       <Button 
-                        variant="ghost" 
-                        size="sm"
+                        variant={faseAtiva === fase.id ? "default" : "outline"}
+                        size="default"
                         onClick={() => setFaseAtiva(faseAtiva === fase.id ? null : fase.id)}
-                        className="print:hidden"
+                        className={`print:hidden font-bold px-5 py-2 shadow-md transition-all ${
+                          faseAtiva === fase.id 
+                            ? "bg-indigo-600 hover:bg-indigo-700 text-white" 
+                            : "bg-cyan-500 hover:bg-cyan-600 text-white border-cyan-600"
+                        }`}
                       >
-                        {faseAtiva === fase.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        {faseAtiva === fase.id ? "Recolher" : "Expandir"}
                       </Button>
                     </div>
                   </div>
