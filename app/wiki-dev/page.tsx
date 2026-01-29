@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Cloud, Server, Shield, Home, Database, Layers, TestTube, FileText, Code, Monitor, Workflow, Component, Archive, AlertTriangle, CheckSquare, Lock, Users } from "lucide-react"
+import { Search, BookOpen, Cloud, Server, Shield, Home, Layers, Workflow, Lock, Container, HardDrive, FolderOpen, Code } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
@@ -13,77 +13,8 @@ export default function WikiDevPage() {
 
   const wikiCategories = [
     // =============================================
-    // DESENVOLVEDOR FRONT-END
+    // AWS / INFRAESTRUTURA
     // =============================================
-    {
-      title: "Front-End - Endpoints Necessarios",
-      description: "Todos os endpoints que o front-end precisa do back-end: campos, JSON, exemplos e detalhes completos",
-      icon: Monitor,
-      href: "/wiki-dev/frontend-endpoints",
-      color: "from-blue-600 to-cyan-600",
-      topics: ["React", "Next.js", "Fetch API", "JSON", "Request/Response"],
-      category: "front-end",
-    },
-    {
-      title: "Guia de Componentes React",
-      description: "Todos os componentes do sistema: como usar, props disponiveis, exemplos de codigo e boas praticas",
-      icon: Component,
-      href: "/wiki-dev/componentes-react",
-      color: "from-cyan-500 to-blue-600",
-      topics: ["React", "Componentes", "Props", "Hooks", "Exemplos"],
-      category: "front-end",
-    },
-    {
-      title: "Stores Zustand - Como Usar",
-      description: "Todas as stores do sistema: metodos, estados, como integrar com API e persistencia",
-      icon: Archive,
-      href: "/wiki-dev/stores-zustand",
-      color: "from-indigo-500 to-purple-600",
-      topics: ["Zustand", "State", "Persistencia", "Hooks", "Integracao"],
-      category: "front-end",
-    },
-    // =============================================
-    // DESENVOLVEDOR BACK-END
-    // =============================================
-    {
-      title: "Back-End - Endpoints Implementados",
-      description: "Todos os endpoints ja criados no back-end Python: rotas, regras, validacoes e exemplos",
-      icon: Server,
-      href: "/wiki-dev/backend-endpoints",
-      color: "from-green-600 to-emerald-600",
-      topics: ["FastAPI", "Python", "DynamoDB", "AWS", "Rotas"],
-      category: "back-end",
-    },
-    {
-      title: "Regras de Negocio",
-      description: "Todas as regras do sistema: aprovacao, expiracao, OTP, permissoes, limites e fluxos",
-      icon: Users,
-      href: "/wiki-dev/regras-negocio",
-      color: "from-emerald-500 to-teal-600",
-      topics: ["Regras", "Aprovacao", "Expiracao", "Permissoes", "Fluxos"],
-      category: "back-end",
-    },
-    {
-      title: "Validacoes e Erros",
-      description: "Codigos de erro HTTP, validacoes de entrada, tratamento de excecoes e mensagens padrao",
-      icon: AlertTriangle,
-      href: "/wiki-dev/validacoes-erros",
-      color: "from-amber-500 to-orange-600",
-      topics: ["Erros", "HTTP Status", "Validacao", "Excecoes", "Mensagens"],
-      category: "back-end",
-    },
-    // =============================================
-    // DESENVOLVEDOR AWS / INFRAESTRUTURA
-    // =============================================
-    {
-      title: "Infraestrutura AWS - Passo a Passo",
-      description: "Como criar TUDO na AWS do zero: IAM, S3, DynamoDB, SES, CloudWatch, Lambda - Guia completo",
-      icon: Cloud,
-      href: "/wiki-dev/infra-aws",
-      color: "from-orange-500 to-red-600",
-      topics: ["AWS", "IAM", "S3", "DynamoDB", "SES", "CloudWatch"],
-      category: "aws",
-    },
     {
       title: "Seguranca AWS",
       description: "Politicas IAM, KMS para criptografia, VPC, Security Groups e boas praticas de seguranca",
@@ -111,27 +42,57 @@ export default function WikiDevPage() {
       topics: ["DynamoDB Local", "LocalStack", "Docker", "Zero Custo"],
       category: "aws",
     },
+    {
+      title: "Docker Local - Front e Back",
+      description: "Guia completo passo a passo para configurar Docker na maquina local: Front-End React e Back-End Python",
+      icon: Container,
+      href: "/wiki-dev/docker-local",
+      color: "from-blue-500 to-indigo-600",
+      topics: ["Docker", "React", "Python", "docker-compose", "Localhost"],
+      category: "aws",
+    },
+    {
+      title: "Docker na AWS - ECS/Fargate",
+      description: "Guia completo passo a passo para configurar Docker na AWS com ECS e Fargate para Front e Back",
+      icon: Cloud,
+      href: "/wiki-dev/docker-aws",
+      color: "from-orange-600 to-red-600",
+      topics: ["AWS", "ECS", "Fargate", "ECR", "Load Balancer", "Docker"],
+      category: "aws",
+    },
+    {
+      title: "DynamoDB na AWS - Guia Completo",
+      description: "Como criar e configurar DynamoDB na AWS: tabelas, indices, permissoes, acesso e boas praticas",
+      icon: HardDrive,
+      href: "/wiki-dev/dynamodb-aws",
+      color: "from-amber-500 to-orange-600",
+      topics: ["DynamoDB", "AWS", "Tabelas", "Indices", "IAM", "Permissoes"],
+      category: "aws",
+    },
+    {
+      title: "S3 - Como Configurar",
+      description: "Passo a passo completo para configurar S3 na AWS: criar buckets, permissoes, CORS e upload/download",
+      icon: FolderOpen,
+      href: "/wiki-dev/s3-aws",
+      color: "from-green-500 to-teal-600",
+      topics: ["S3", "AWS", "Buckets", "CORS", "IAM", "Upload/Download"],
+      category: "aws",
+    },
     // =============================================
-    // INTEGRACAO E CONTRATOS
+    // BACK-END / API
     // =============================================
     {
-      title: "Contratos Front-End / Back-End",
-      description: "Mapeamento completo: o que o front envia e o que o back retorna em cada endpoint",
+      title: "API Endpoints - Documentacao Back-End",
+      description: "Documentacao completa de todos os endpoints que o Back-End Python precisa implementar para integrar com o Front-End",
       icon: Code,
-      href: "/wiki-dev/contratos-api",
-      color: "from-purple-600 to-indigo-600",
-      topics: ["REST API", "Request", "Response", "JSON", "Integracao"],
-      category: "integracao",
+      href: "/wiki-dev/api-endpoints",
+      color: "from-violet-500 to-purple-600",
+      topics: ["REST API", "Endpoints", "Request/Response", "Autenticacao", "Erros"],
+      category: "backend",
     },
-    {
-      title: "Banco de Dados - Guia Completo",
-      description: "DynamoDB: todas as tabelas, campos, indices e como criar tudo na AWS passo a passo",
-      icon: Database,
-      href: "/wiki-dev/banco-dados",
-      color: "from-orange-500 to-amber-600",
-      topics: ["DynamoDB", "Tabelas", "Campos", "AWS Console", "Indices"],
-      category: "integracao",
-    },
+    // =============================================
+    // INTEGRACAO
+    // =============================================
     {
       title: "ServiceNow - Integracao",
       description: "Guia completo dos endpoints ServiceNow: como usar, autenticacao, exemplos praticos",
@@ -142,28 +103,7 @@ export default function WikiDevPage() {
       category: "integracao",
     },
     // =============================================
-    // SEGURANCA E QUALIDADE
-    // =============================================
-    {
-      title: "Checklist de Seguranca",
-      description: "Tudo que deve ser verificado antes de ir para producao: front-end, back-end e AWS",
-      icon: CheckSquare,
-      href: "/wiki-dev/checklist-seguranca",
-      color: "from-red-600 to-rose-700",
-      topics: ["Seguranca", "Checklist", "Producao", "Auditoria", "LGPD"],
-      category: "seguranca",
-    },
-    {
-      title: "Monitoramento e Logs",
-      description: "CloudWatch, metricas, alertas, dashboards e como debugar em producao",
-      icon: FileText,
-      href: "/wiki-dev/monitoramento",
-      color: "from-red-600 to-orange-600",
-      topics: ["CloudWatch", "Logs", "Metricas", "Alertas", "Dashboard"],
-      category: "seguranca",
-    },
-    // =============================================
-    // AUTENTICACAO E TESTES
+    // AUTENTICACAO
     // =============================================
     {
       title: "Microsoft Entra ID",
@@ -175,15 +115,6 @@ export default function WikiDevPage() {
       category: "autenticacao",
     },
     {
-      title: "Como Testar o Sistema",
-      description: "Guia pratico para testar login, upload, aprovacao, download e scripts automaticos",
-      icon: TestTube,
-      href: "/wiki-dev/testes",
-      color: "from-purple-600 to-pink-600",
-      topics: ["Testes", "Login", "Upload", "Download", "Scripts"],
-      category: "testes",
-    },
-    {
       title: "Deploy e Ambientes",
       description: "Como fazer deploy em DEV, HML e Producao com checklist e rollback",
       icon: Layers,
@@ -191,15 +122,6 @@ export default function WikiDevPage() {
       color: "from-green-600 to-emerald-600",
       topics: ["DEV", "HML", "PRD", "Rollback", "Checklist"],
       category: "deploy",
-    },
-    {
-      title: "Fluxo de Dados End-to-End",
-      description: "Como os dados trafegam: Upload -> S3 -> Banco -> Aprovacao -> Email -> Download",
-      icon: Database,
-      href: "/wiki-dev/fluxo-dados",
-      color: "from-purple-500 to-pink-600",
-      topics: ["Fluxo", "Upload", "Download", "Aprovacao"],
-      category: "fluxo",
     },
   ]
 
