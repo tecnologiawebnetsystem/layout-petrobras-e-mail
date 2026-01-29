@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Cloud, Server, Shield, Home, Layers, Workflow, Lock, Container, HardDrive, FolderOpen, Code } from "lucide-react"
+import { Search, BookOpen, Cloud, Server, Shield, Home, Layers, Workflow, Lock, Container, HardDrive, FolderOpen, Code, Package } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
@@ -77,6 +77,18 @@ export default function WikiDevPage() {
       color: "from-green-500 to-teal-600",
       topics: ["S3", "AWS", "Buckets", "CORS", "IAM", "Upload/Download"],
       category: "aws",
+    },
+    // =============================================
+    // REPOSITORIOS E DEPENDENCIAS
+    // =============================================
+    {
+      title: "Nexus Repository Manager",
+      description: "Guia completo para configurar o Nexus: npm, pip, Docker e integracao com AWS (CodeBuild, ECS)",
+      icon: Package,
+      href: "/wiki-dev/nexus-repository",
+      color: "from-orange-500 to-red-600",
+      topics: ["Nexus", "npm", "pip", "Docker Registry", "AWS", "CI/CD"],
+      category: "repositorios",
     },
     // =============================================
     // BACK-END / API
