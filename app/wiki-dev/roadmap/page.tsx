@@ -337,7 +337,7 @@ function StatusIcon({ status }: { status: string }) {
     case "concluido":
       return <CheckCircle2 className="h-5 w-5 text-green-500" />
     case "em_progresso":
-      return <Clock className="h-5 w-5 text-amber-500 animate-pulse" />
+      return <Clock className="h-5 w-5 text-amber-500" />
     case "pendente":
       return <Circle className="h-5 w-5 text-slate-300" />
     default:
@@ -1034,28 +1034,45 @@ export default function RoadmapPage() {
 
         {/* Tabs de Visualizacao */}
         <Tabs defaultValue="timeline" className="space-y-6">
-          <TabsList className="bg-white border print:hidden">
-            <TabsTrigger value="timeline" className="gap-2">
-              <Calendar className="h-4 w-4" />
-              Timeline
-            </TabsTrigger>
-            <TabsTrigger value="gantt" className="gap-2">
-              <GanttChart className="h-4 w-4" />
-              Gantt
-            </TabsTrigger>
-            <TabsTrigger value="burndown" className="gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Burndown
-            </TabsTrigger>
-            <TabsTrigger value="kanban" className="gap-2">
-              <FileText className="h-4 w-4" />
-              Por Fase
-            </TabsTrigger>
-            <TabsTrigger value="equipe" className="gap-2">
-              <Users className="h-4 w-4" />
-              Por Equipe
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex justify-center print:hidden">
+            <TabsList className="bg-white border-2 border-slate-200 shadow-lg p-1.5 rounded-xl">
+              <TabsTrigger 
+                value="timeline" 
+                className="gap-2 px-5 py-2.5 text-sm font-semibold data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg transition-all"
+              >
+                <Calendar className="h-4 w-4" />
+                Timeline
+              </TabsTrigger>
+              <TabsTrigger 
+                value="gantt" 
+                className="gap-2 px-5 py-2.5 text-sm font-semibold data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg transition-all"
+              >
+                <GanttChart className="h-4 w-4" />
+                Gantt
+              </TabsTrigger>
+              <TabsTrigger 
+                value="burndown" 
+                className="gap-2 px-5 py-2.5 text-sm font-semibold data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg transition-all"
+              >
+                <BarChart3 className="h-4 w-4" />
+                Burndown
+              </TabsTrigger>
+              <TabsTrigger 
+                value="kanban" 
+                className="gap-2 px-5 py-2.5 text-sm font-semibold data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg transition-all"
+              >
+                <FileText className="h-4 w-4" />
+                Por Fase
+              </TabsTrigger>
+              <TabsTrigger 
+                value="equipe" 
+                className="gap-2 px-5 py-2.5 text-sm font-semibold data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg transition-all"
+              >
+                <Users className="h-4 w-4" />
+                Por Equipe
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Timeline View */}
           <TabsContent value="timeline" className="space-y-6">
