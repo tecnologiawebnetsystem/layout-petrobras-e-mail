@@ -5,13 +5,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Cloud, Server, Shield, Home, Layers, Workflow, Lock, Container, HardDrive, FolderOpen, Code, Package } from "lucide-react"
+import { Search, BookOpen, Cloud, Server, Shield, Home, Layers, Workflow, Lock, Container, HardDrive, FolderOpen, Code, Package, Target } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
   const [searchQuery, setSearchQuery] = useState("")
 
   const wikiCategories = [
+    // =============================================
+    // GESTAO DO PROJETO
+    // =============================================
+    {
+      title: "Roadmap do Projeto",
+      description: "Plano visual com todas as fases, entregas, prazos e progresso do projeto - Timeline interativa",
+      icon: Target,
+      href: "/wiki-dev/roadmap",
+      color: "from-indigo-500 to-purple-600",
+      topics: ["Fases", "Entregas", "Prazos", "Progresso", "Milestones"],
+      category: "gestao",
+    },
     // =============================================
     // AWS / INFRAESTRUTURA
     // =============================================
