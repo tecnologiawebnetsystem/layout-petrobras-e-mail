@@ -9,11 +9,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  experimental: {
-    turbo: {
-      root: ".",
-    },
-  },
   async headers() {
     return [
       {
