@@ -207,7 +207,12 @@ const metricas = {
   entregasPendentes: fases.reduce((acc, fase) => acc + fase.entregas.filter(e => e.status === "pendente").length, 0),
 }
 
-const progressoGeral = Math.round((metricas.entregasConcluidas / metricas.totalEntregas) * 100)
+// =============================================
+// PROGRESSO GERAL DO PROJETO - EDITE AQUI
+// O calculo automatico considera apenas entregas, mas o progresso real
+// considera tambem esforco/complexidade de cada fase
+// =============================================
+const progressoGeral = 75 // Progresso real do projeto (Front + Back finalizados = ~75%)
 
 // =============================================
 // COMPONENTES AUXILIARES
