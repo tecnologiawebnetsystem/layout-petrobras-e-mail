@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Cloud, Server, Shield, Home, Database, Layers, TestTube, FileText, Monitor, Workflow, CheckSquare, Lock, Container, HardDrive, FolderOpen } from "lucide-react"
+import { Search, BookOpen, Cloud, Server, Shield, Home, Database, Layers, TestTube, FileText, Workflow, CheckSquare, Lock, Container, HardDrive, FolderOpen } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
@@ -14,29 +14,8 @@ export default function WikiDevPage() {
 
   const wikiCategories = [
     // =============================================
-    // DESENVOLVEDOR FRONT-END
-    // =============================================
-    {
-      title: "Front-End - Endpoints Necessarios",
-      description: "Todos os endpoints que o front-end precisa do back-end: campos, JSON, exemplos e detalhes completos",
-      icon: Monitor,
-      href: "/wiki-dev/frontend-endpoints",
-      color: "from-blue-600 to-cyan-600",
-      topics: ["React", "Next.js", "Fetch API", "JSON", "Request/Response"],
-      category: "front-end",
-    },
-    // =============================================
     // AWS / INFRAESTRUTURA
     // =============================================
-    {
-      title: "Infraestrutura AWS - Passo a Passo",
-      description: "Como criar TUDO na AWS do zero: IAM, S3, DynamoDB, SES, CloudWatch, Lambda - Guia completo",
-      icon: Cloud,
-      href: "/wiki-dev/infra-aws",
-      color: "from-orange-500 to-red-600",
-      topics: ["AWS", "IAM", "S3", "DynamoDB", "SES", "CloudWatch"],
-      category: "aws",
-    },
     {
       title: "Seguranca AWS",
       description: "Politicas IAM, KMS para criptografia, VPC, Security Groups e boas praticas de seguranca",
