@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Cloud, Server, Shield, Home, Database, Layers, TestTube, FileText, Code, Monitor, Workflow, Component, Archive, AlertTriangle, CheckSquare, Lock, Users } from "lucide-react"
+import { Search, BookOpen, Cloud, Server, Shield, Home, Database, Layers, TestTube, FileText, Code, Monitor, Workflow, Component, Archive, AlertTriangle, CheckSquare, Lock, Users, Container, HardDrive, FolderOpen } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
@@ -109,6 +109,42 @@ export default function WikiDevPage() {
       href: "/wiki-dev/local-development",
       color: "from-emerald-500 to-teal-500",
       topics: ["DynamoDB Local", "LocalStack", "Docker", "Zero Custo"],
+      category: "aws",
+    },
+    {
+      title: "Docker Local - Front e Back",
+      description: "Guia completo passo a passo para configurar Docker na maquina local: Front-End React e Back-End Python",
+      icon: Container,
+      href: "/wiki-dev/docker-local",
+      color: "from-blue-500 to-indigo-600",
+      topics: ["Docker", "React", "Python", "docker-compose", "Localhost"],
+      category: "aws",
+    },
+    {
+      title: "Docker na AWS - ECS/Fargate",
+      description: "Guia completo passo a passo para configurar Docker na AWS com ECS e Fargate para Front e Back",
+      icon: Cloud,
+      href: "/wiki-dev/docker-aws",
+      color: "from-orange-600 to-red-600",
+      topics: ["AWS", "ECS", "Fargate", "ECR", "Load Balancer", "Docker"],
+      category: "aws",
+    },
+    {
+      title: "DynamoDB na AWS - Guia Completo",
+      description: "Como criar e configurar DynamoDB na AWS: tabelas, indices, permissoes, acesso e boas praticas",
+      icon: HardDrive,
+      href: "/wiki-dev/dynamodb-aws",
+      color: "from-amber-500 to-orange-600",
+      topics: ["DynamoDB", "AWS", "Tabelas", "Indices", "IAM", "Permissoes"],
+      category: "aws",
+    },
+    {
+      title: "S3 na AWS - Guia Completo",
+      description: "Como criar e configurar S3 na AWS: buckets, permissoes, CORS, versionamento e boas praticas",
+      icon: FolderOpen,
+      href: "/wiki-dev/s3-aws",
+      color: "from-green-500 to-teal-600",
+      topics: ["S3", "AWS", "Buckets", "CORS", "IAM", "Upload/Download"],
       category: "aws",
     },
     // =============================================
