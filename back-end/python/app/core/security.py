@@ -1,1 +1,0 @@
-# autenticação (JWT / Cognito)

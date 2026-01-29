@@ -1,6 +1,0 @@
-issueTracker:
-  Tool: snow
-  Projects: Scac-frontend
-env:
-  SkipSonar: false
-  QualityGate: false
