@@ -1,0 +1,14 @@
+
+{% extends "email/base.html" %}
+{% block content %}
+<h2>Arquivos disponíveis para download</h2>
+<p>Olá,</p>
+<p>{{ applicant_name }} compartilhou arquivos com você.</p>
+<ul>
+  <li><b>Quantidade de arquivos:</b> {{ files_quantity }}</li>
+  <li><b>Disponível até:</b> {{ expires_at }}</li>
+</ul>
+<p>Para acessar, entre no portal e informe seu e-mail. Você receberá um código de 6 dígitos:</p>
+<p>{{ portal_url }}Acessar portal</a></p>
+{% endblock %}
+``

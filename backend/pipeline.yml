@@ -1,0 +1,19 @@
+env:
+  Repository: backend
+  Name: csa-backend
+
+build:
+  python:
+    Name: "a12022-backend"
+    PythonVersion: "3.12"
+    PythonSourcePath: "."
+    DependenciesManager: "pip"
+    TestingTool: "pytest"
+    SkipTests: false
+
+  docker:
+    RegistryName: ecr
+    Dockerfile: ./Dockerfile
+
+upload:
+  docker:

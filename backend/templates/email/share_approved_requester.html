@@ -1,0 +1,9 @@
+
+{% extends "email/base.html" %}
+{% block content %}
+<h2>Compartilhamento aprovado</h2>
+<p>Olá {{ applicant_name }},</p>
+<p>Seu compartilhamento para <b>{{ external_email }}</b> foi aprovado.</p>
+<p>Você pode acompanhar o status (baixados/pendentes) aqui:</p>
+<p>{{ details_url }}Ver compartilhamento</a></p>
+{% endblock %}
