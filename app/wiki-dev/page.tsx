@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+// Wiki Dev - Documentacao Tecnica do Projeto
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
