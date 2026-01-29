@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Cloud, Server, Shield, Home, Layers, Workflow, Lock, Container, HardDrive, FolderOpen } from "lucide-react"
+import { Search, BookOpen, Cloud, Server, Shield, Home, Layers, Workflow, Lock, Container, HardDrive, FolderOpen, Code } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
@@ -78,6 +78,18 @@ export default function WikiDevPage() {
       color: "from-green-500 to-teal-600",
       topics: ["S3", "AWS", "Buckets", "CORS", "IAM", "Upload/Download"],
       category: "aws",
+    },
+    // =============================================
+    // BACK-END / API
+    // =============================================
+    {
+      title: "API Endpoints - Documentacao Back-End",
+      description: "Documentacao completa de todos os endpoints que o Back-End Python precisa implementar para integrar com o Front-End",
+      icon: Code,
+      href: "/wiki-dev/api-endpoints",
+      color: "from-violet-500 to-purple-600",
+      topics: ["REST API", "Endpoints", "Request/Response", "Autenticacao", "Erros"],
+      category: "backend",
     },
     // =============================================
     // INTEGRACAO
