@@ -4,18 +4,20 @@ Scripts e templates para criacao e gerenciamento das tabelas DynamoDB do sistema
 
 ## Estrutura de Tabelas
 
-O sistema utiliza 8 tabelas DynamoDB com o prefixo `pft_`:
+O sistema utiliza 10 tabelas DynamoDB com o prefixo `pft_`:
 
 | Tabela | Descricao | Partition Key | Sort Key |
 |--------|-----------|---------------|----------|
 | `pft_users` | Usuarios do sistema | `USER#<id>` | `PROFILE` ou `AREA#<area_id>` |
 | `pft_shares` | Compartilhamentos | `SHARE#<id>` | `METADATA` ou `FILE#<file_id>` |
 | `pft_files` | Arquivos enviados | `FILE#<id>` | `METADATA` |
+| `pft_share_files` | Relacao share-arquivo | `SHARE#<share_id>` | `FILE#<file_id>` |
 | `pft_areas` | Areas/departamentos | `AREA#<id>` | `METADATA` ou `SUPERVISOR#<user_id>` |
 | `pft_tokens` | Tokens de acesso | `TOKEN#<hash>` | `METADATA` |
 | `pft_audit` | Logs de auditoria | `AUDIT#<yyyy-mm>` | `<timestamp>#<id>` |
 | `pft_notifications` | Notificacoes | `USER#<user_id>` | `NOTIFICATION#<timestamp>#<id>` |
 | `pft_credentials` | Credenciais locais | `CRED#<email>` | `LOCAL` ou `ENTRA` |
+| `pft_email_logs` | Logs de emails enviados | `EMAIL#<message_id>` | `METADATA` |
 
 ## Pre-requisitos
 
@@ -179,6 +181,17 @@ python seed_data.py --local
 - `user-action-index`: Busca por usuario
 - `action-index`: Busca por tipo de acao
 - `level-index`: Busca por nivel (info, warning, error)
+
+### pft_email_logs
+- `recipient-index`: Busca por email destinatario
+- `type-index`: Busca por tipo de email
+- `status-index`: Busca por status de entrega
+- `user-index`: Busca por usuario que enviou
+- `share-index`: Busca por compartilhamento relacionado
+
+### pft_share_files
+- `file-index`: Busca por arquivo
+- `downloaded-index`: Busca por status de download
 
 ## TTL (Time To Live)
 

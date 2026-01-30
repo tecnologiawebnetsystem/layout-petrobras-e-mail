@@ -509,6 +509,144 @@ def seed_audit(dynamodb, env: str):
     print("  Logs de auditoria inseridos com sucesso!")
 
 
+def seed_email_logs(dynamodb, env_suffix: str = ""):
+    """Popula tabela de logs de email."""
+    table_name = f"pft_email_logs_{env_suffix}" if env_suffix else "pft_email_logs"
+    table = dynamodb.Table(table_name)
+    
+    now = datetime.now(UTC)
+    
+    email_logs = [
+        {
+            "pk": "EMAIL#msg-001-share-notification",
+            "sk": "METADATA",
+            "message_id": "msg-001-share-notification",
+            "email_type": "file_share",
+            "from_email": "noreply@petrobras.com.br",
+            "to_email": "auditor@kpmg.com.br",
+            "subject": "Arquivos compartilhados com voce",
+            "body_preview": "Voce recebeu arquivos compartilhados...",
+            "status": "delivered",
+            "user_id": "2",
+            "share_id": "1",
+            "sent_at": (now - timedelta(hours=3)).isoformat(),
+            "delivered_at": (now - timedelta(hours=3, minutes=-1)).isoformat(),
+            "created_at": (now - timedelta(hours=3)).isoformat(),
+        },
+        {
+            "pk": "EMAIL#msg-002-otp",
+            "sk": "METADATA",
+            "message_id": "msg-002-otp",
+            "email_type": "otp",
+            "from_email": "noreply@petrobras.com.br",
+            "to_email": "auditor@kpmg.com.br",
+            "subject": "Seu codigo de acesso",
+            "body_preview": "Seu codigo de acesso e: 123456...",
+            "status": "delivered",
+            "user_id": "4",
+            "sent_at": (now - timedelta(hours=2)).isoformat(),
+            "delivered_at": (now - timedelta(hours=2, minutes=-1)).isoformat(),
+            "opened_at": (now - timedelta(hours=2, minutes=-5)).isoformat(),
+            "created_at": (now - timedelta(hours=2)).isoformat(),
+        },
+        {
+            "pk": "EMAIL#msg-003-approval",
+            "sk": "METADATA",
+            "message_id": "msg-003-approval",
+            "email_type": "approval_request",
+            "from_email": "noreply@petrobras.com.br",
+            "to_email": "admin@petrobras.com.br",
+            "subject": "Solicitacao de aprovacao de compartilhamento",
+            "body_preview": "Um novo compartilhamento aguarda sua aprovacao...",
+            "status": "opened",
+            "user_id": "1",
+            "share_id": "2",
+            "sent_at": (now - timedelta(hours=4)).isoformat(),
+            "delivered_at": (now - timedelta(hours=4, minutes=-1)).isoformat(),
+            "opened_at": (now - timedelta(hours=3, minutes=30)).isoformat(),
+            "created_at": (now - timedelta(hours=4)).isoformat(),
+        },
+        {
+            "pk": "EMAIL#msg-004-bounce",
+            "sk": "METADATA",
+            "message_id": "msg-004-bounce",
+            "email_type": "file_share",
+            "from_email": "noreply@petrobras.com.br",
+            "to_email": "email-invalido@teste.com",
+            "subject": "Arquivos compartilhados com voce",
+            "body_preview": "Voce recebeu arquivos compartilhados...",
+            "status": "bounced",
+            "user_id": "2",
+            "share_id": "4",
+            "sent_at": (now - timedelta(days=1)).isoformat(),
+            "bounced_at": (now - timedelta(days=1, minutes=-5)).isoformat(),
+            "error_message": "Recipient address rejected: User unknown",
+            "error_code": "550",
+            "created_at": (now - timedelta(days=1)).isoformat(),
+        },
+    ]
+    
+    print(f"Inserindo {len(email_logs)} logs de email em {table_name}...")
+    with table.batch_writer() as batch:
+        for log in email_logs:
+            batch.put_item(Item=log)
+    print("  Logs de email inseridos com sucesso!")
+
+
+def seed_share_files(dynamodb, env_suffix: str = ""):
+    """Popula tabela de relacao share-arquivo."""
+    table_name = f"pft_share_files_{env_suffix}" if env_suffix else "pft_share_files"
+    table = dynamodb.Table(table_name)
+    
+    now = datetime.now(UTC)
+    
+    share_files = [
+        # Share 1 - Arquivos para auditoria
+        {
+            "pk": "SHARE#1",
+            "sk": "FILE#1",
+            "share_id": "1",
+            "file_id": "1",
+            "downloaded": "true",
+            "downloaded_at": (now - timedelta(hours=1)).isoformat(),
+            "download_count": 1,
+        },
+        {
+            "pk": "SHARE#1",
+            "sk": "FILE#2",
+            "share_id": "1",
+            "file_id": "2",
+            "downloaded": "false",
+            "download_count": 0,
+        },
+        # Share 2 - Contrato PDF
+        {
+            "pk": "SHARE#2",
+            "sk": "FILE#3",
+            "share_id": "2",
+            "file_id": "3",
+            "downloaded": "true",
+            "downloaded_at": (now - timedelta(days=1)).isoformat(),
+            "download_count": 2,
+        },
+        # Share 3 - Apresentacao
+        {
+            "pk": "SHARE#3",
+            "sk": "FILE#4",
+            "share_id": "3",
+            "file_id": "4",
+            "downloaded": "false",
+            "download_count": 0,
+        },
+    ]
+    
+    print(f"Inserindo {len(share_files)} relacoes share-arquivo em {table_name}...")
+    with table.batch_writer() as batch:
+        for sf in share_files:
+            batch.put_item(Item=sf)
+    print("  Relacoes share-arquivo inseridas com sucesso!")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Popula tabelas DynamoDB com dados de teste")
     parser.add_argument("--local", action="store_true", help="Usa DynamoDB Local")
@@ -534,8 +672,10 @@ def main():
         seed_areas(dynamodb, args.env)
         seed_files(dynamodb, args.env)
         seed_shares(dynamodb, args.env)
+        seed_share_files(dynamodb, args.env)
         seed_notifications(dynamodb, args.env)
         seed_audit(dynamodb, args.env)
+        seed_email_logs(dynamodb, args.env)
         
         print("\n" + "="*60)
         print("Dados de teste inseridos com sucesso!")

@@ -634,6 +634,180 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
 
+  # ============================================================
+  # Tabela: Email Logs
+  # ============================================================
+  EmailLogsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'pft_email_logs_${Environment}'
+      BillingMode: !Ref BillingMode
+      ProvisionedThroughput:
+        !If
+          - IsProvisioned
+          - ReadCapacityUnits: !Ref DefaultReadCapacity
+            WriteCapacityUnits: 10
+          - !Ref AWS::NoValue
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: to_email
+          AttributeType: S
+        - AttributeName: email_type
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+        - AttributeName: user_id
+          AttributeType: S
+        - AttributeName: share_id
+          AttributeType: S
+        - AttributeName: created_at
+          AttributeType: S
+      GlobalSecondaryIndexes:
+        - IndexName: recipient-index
+          KeySchema:
+            - AttributeName: to_email
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: type-index
+          KeySchema:
+            - AttributeName: email_type
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: status-index
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: KEYS_ONLY
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: user-index
+          KeySchema:
+            - AttributeName: user_id
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: share-index
+          KeySchema:
+            - AttributeName: share_id
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+      Tags:
+        - Key: Project
+          Value: PetrobrasFileTransfer
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ============================================================
+  # Tabela: Share Files (relacionamento share-arquivo)
+  # ============================================================
+  ShareFilesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'pft_share_files_${Environment}'
+      BillingMode: !Ref BillingMode
+      ProvisionedThroughput:
+        !If
+          - IsProvisioned
+          - ReadCapacityUnits: !Ref DefaultReadCapacity
+            WriteCapacityUnits: 10
+          - !Ref AWS::NoValue
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: file_id
+          AttributeType: S
+        - AttributeName: downloaded
+          AttributeType: S
+      GlobalSecondaryIndexes:
+        - IndexName: file-index
+          KeySchema:
+            - AttributeName: file_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: downloaded-index
+          KeySchema:
+            - AttributeName: downloaded
+              KeyType: HASH
+            - AttributeName: pk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: KEYS_ONLY
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+      Tags:
+        - Key: Project
+          Value: PetrobrasFileTransfer
+        - Key: Environment
+          Value: !Ref Environment
+
 Outputs:
   UsersTableName:
     Description: Nome da tabela de usuarios
@@ -730,3 +904,27 @@ Outputs:
     Value: !GetAtt CredentialsTable.Arn
     Export:
       Name: !Sub '${AWS::StackName}-CredentialsTableArn'
+
+  EmailLogsTableName:
+    Description: Nome da tabela de logs de email
+    Value: !Ref EmailLogsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-EmailLogsTable'
+
+  EmailLogsTableArn:
+    Description: ARN da tabela de logs de email
+    Value: !GetAtt EmailLogsTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-EmailLogsTableArn'
+
+  ShareFilesTableName:
+    Description: Nome da tabela de arquivos por compartilhamento
+    Value: !Ref ShareFilesTable
+    Export:
+      Name: !Sub '${AWS::StackName}-ShareFilesTable'
+
+  ShareFilesTableArn:
+    Description: ARN da tabela de arquivos por compartilhamento
+    Value: !GetAtt ShareFilesTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ShareFilesTableArn'

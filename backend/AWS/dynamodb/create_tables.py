@@ -431,6 +431,114 @@ TABLES = {
             {"Key": "Project", "Value": "PetrobrasFileTransfer"},
             {"Key": "Environment", "Value": "production"}
         ]
+    },
+    
+    "pft_email_logs": {
+        "TableName": "pft_email_logs",
+        "KeySchema": [
+            {"AttributeName": "pk", "KeyType": "HASH"},  # EMAIL#<message_id>
+            {"AttributeName": "sk", "KeyType": "RANGE"}  # METADATA
+        ],
+        "AttributeDefinitions": [
+            {"AttributeName": "pk", "AttributeType": "S"},
+            {"AttributeName": "sk", "AttributeType": "S"},
+            {"AttributeName": "to_email", "AttributeType": "S"},
+            {"AttributeName": "email_type", "AttributeType": "S"},
+            {"AttributeName": "status", "AttributeType": "S"},
+            {"AttributeName": "user_id", "AttributeType": "S"},
+            {"AttributeName": "share_id", "AttributeType": "S"},
+            {"AttributeName": "created_at", "AttributeType": "S"},
+        ],
+        "GlobalSecondaryIndexes": [
+            {
+                "IndexName": "recipient-index",
+                "KeySchema": [
+                    {"AttributeName": "to_email", "KeyType": "HASH"},
+                    {"AttributeName": "created_at", "KeyType": "RANGE"}
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+                "ProvisionedThroughput": {"ReadCapacityUnits": 5, "WriteCapacityUnits": 5}
+            },
+            {
+                "IndexName": "type-index",
+                "KeySchema": [
+                    {"AttributeName": "email_type", "KeyType": "HASH"},
+                    {"AttributeName": "created_at", "KeyType": "RANGE"}
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+                "ProvisionedThroughput": {"ReadCapacityUnits": 5, "WriteCapacityUnits": 5}
+            },
+            {
+                "IndexName": "status-index",
+                "KeySchema": [
+                    {"AttributeName": "status", "KeyType": "HASH"},
+                    {"AttributeName": "created_at", "KeyType": "RANGE"}
+                ],
+                "Projection": {"ProjectionType": "KEYS_ONLY"},
+                "ProvisionedThroughput": {"ReadCapacityUnits": 5, "WriteCapacityUnits": 5}
+            },
+            {
+                "IndexName": "user-index",
+                "KeySchema": [
+                    {"AttributeName": "user_id", "KeyType": "HASH"},
+                    {"AttributeName": "created_at", "KeyType": "RANGE"}
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+                "ProvisionedThroughput": {"ReadCapacityUnits": 5, "WriteCapacityUnits": 5}
+            },
+            {
+                "IndexName": "share-index",
+                "KeySchema": [
+                    {"AttributeName": "share_id", "KeyType": "HASH"},
+                    {"AttributeName": "created_at", "KeyType": "RANGE"}
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+                "ProvisionedThroughput": {"ReadCapacityUnits": 5, "WriteCapacityUnits": 5}
+            }
+        ],
+        "ProvisionedThroughput": {"ReadCapacityUnits": 10, "WriteCapacityUnits": 10},
+        "Tags": [
+            {"Key": "Project", "Value": "PetrobrasFileTransfer"},
+            {"Key": "Environment", "Value": "production"}
+        ]
+    },
+    
+    "pft_share_files": {
+        "TableName": "pft_share_files",
+        "KeySchema": [
+            {"AttributeName": "pk", "KeyType": "HASH"},  # SHARE#<share_id>
+            {"AttributeName": "sk", "KeyType": "RANGE"}  # FILE#<file_id>
+        ],
+        "AttributeDefinitions": [
+            {"AttributeName": "pk", "AttributeType": "S"},
+            {"AttributeName": "sk", "AttributeType": "S"},
+            {"AttributeName": "file_id", "AttributeType": "S"},
+            {"AttributeName": "downloaded", "AttributeType": "S"},
+        ],
+        "GlobalSecondaryIndexes": [
+            {
+                "IndexName": "file-index",
+                "KeySchema": [
+                    {"AttributeName": "file_id", "KeyType": "HASH"}
+                ],
+                "Projection": {"ProjectionType": "ALL"},
+                "ProvisionedThroughput": {"ReadCapacityUnits": 5, "WriteCapacityUnits": 5}
+            },
+            {
+                "IndexName": "downloaded-index",
+                "KeySchema": [
+                    {"AttributeName": "downloaded", "KeyType": "HASH"},
+                    {"AttributeName": "pk", "KeyType": "RANGE"}
+                ],
+                "Projection": {"ProjectionType": "KEYS_ONLY"},
+                "ProvisionedThroughput": {"ReadCapacityUnits": 5, "WriteCapacityUnits": 5}
+            }
+        ],
+        "ProvisionedThroughput": {"ReadCapacityUnits": 10, "WriteCapacityUnits": 10},
+        "Tags": [
+            {"Key": "Project", "Value": "PetrobrasFileTransfer"},
+            {"Key": "Environment", "Value": "production"}
+        ]
     }
 }
 
