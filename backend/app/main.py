@@ -23,8 +23,59 @@ from app.api.v1 import (
 
 app = FastAPI(
     title="Petrobras File Transfer API",
-    description="API RESTful para o sistema de transferencia segura de arquivos da Petrobras",
+    description="""
+## Sistema de Transferencia Segura de Arquivos
+
+API RESTful para compartilhamento seguro de arquivos da Petrobras com usuarios externos.
+
+### Funcionalidades Principais
+
+- **Autenticacao**: Login via Entra ID (Microsoft) ou credenciais locais
+- **Upload de Arquivos**: Upload seguro com armazenamento no S3
+- **Compartilhamento**: Envio de arquivos para usuarios externos com aprovacao
+- **OTP**: Verificacao por codigo unico enviado por email
+- **Auditoria**: Log completo de todas as acoes do sistema
+
+### Fluxo de Compartilhamento
+
+1. Usuario interno faz upload dos arquivos
+2. Cria um compartilhamento com email do destinatario externo
+3. Supervisor aprova ou rejeita a solicitacao
+4. Destinatario recebe email com link e codigo OTP
+5. Destinatario acessa o portal, valida OTP e baixa os arquivos
+
+### Autenticacao
+
+- **Bearer Token (JWT)**: Para usuarios internos autenticados
+- **Cookie de Sessao**: Alternativa ao Bearer token para aplicacoes web
+- **Sessao Externa**: Para usuarios externos apos validacao do OTP
+    """,
     version="2.0.0",
+    contact={
+        "name": "Suporte Petrobras",
+        "email": "suporte@petrobras.com.br",
+    },
+    license_info={
+        "name": "Proprietary",
+    },
+    openapi_tags=[
+        {"name": "Auth", "description": "Autenticacao unificada (login, logout, refresh, reset password)"},
+        {"name": "Auth Internal", "description": "Autenticacao para usuarios internos (Entra ID / Local)"},
+        {"name": "Auth / External", "description": "Autenticacao para usuarios externos (OTP)"},
+        {"name": "Users", "description": "Gerenciamento de usuarios e perfil"},
+        {"name": "Files", "description": "Upload e gerenciamento de arquivos"},
+        {"name": "Shares", "description": "Compartilhamentos de arquivos"},
+        {"name": "Supervisor", "description": "Aprovacao e gestao de compartilhamentos"},
+        {"name": "Notifications", "description": "Notificacoes do sistema"},
+        {"name": "Audit", "description": "Logs de auditoria e metricas"},
+        {"name": "Emails", "description": "Envio e historico de emails"},
+        {"name": "Download", "description": "Portal de download para usuarios externos"},
+        {"name": "Areas", "description": "Gerenciamento de areas/departamentos"},
+        {"name": "External", "description": "Endpoints para acesso externo"},
+    ],
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
     lifespan=None
 )
 
