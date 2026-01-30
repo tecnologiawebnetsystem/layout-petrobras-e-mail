@@ -97,7 +97,17 @@ docker-compose up -d
 
 ## Endpoints da API
 
-### Autenticacao
+### Autenticacao (`/api/v1/auth`)
+
+| Metodo | Endpoint | Descricao |
+|--------|----------|-----------|
+| POST | `/api/v1/auth/login` | Login com email/senha |
+| POST | `/api/v1/auth/logout` | Logout (invalida sessao) |
+| POST | `/api/v1/auth/refresh` | Renova token JWT |
+| POST | `/api/v1/auth/forgot-password` | Solicita reset de senha |
+| POST | `/api/v1/auth/reset-password` | Reseta senha com token |
+
+### Autenticacao Interna (Legado)
 
 | Metodo | Endpoint | Descricao |
 |--------|----------|-----------|
@@ -105,6 +115,11 @@ docker-compose up -d
 | POST | `/api/v1/auth/internal/signup` | Cadastro usuario interno (dev) |
 | POST | `/api/v1/auth/internal/logout` | Logout |
 | GET | `/api/v1/auth/internal/callback` | Callback Entra ID |
+
+### Autenticacao Externa (OTP)
+
+| Metodo | Endpoint | Descricao |
+|--------|----------|-----------|
 | POST | `/api/v1/auth/external/request-code` | Solicitar OTP externo |
 | POST | `/api/v1/auth/external/verify-code` | Verificar OTP externo |
 
@@ -181,6 +196,15 @@ docker-compose up -d
 | GET | `/api/v1/external/list-files` | Listar arquivos (via token) |
 | POST | `/api/v1/external/ack` | Confirmar download |
 | POST | `/api/v1/external/logout` | Encerrar sessao externa |
+
+### Emails (`/api/v1/emails`)
+
+| Metodo | Endpoint | Descricao |
+|--------|----------|-----------|
+| POST | `/api/v1/emails/send` | Envia email customizado |
+| GET | `/api/v1/emails/history` | Historico de emails enviados |
+| GET | `/api/v1/emails/{messageId}/status` | Status de um email |
+| POST | `/api/v1/emails/otp` | Envia email com OTP |
 
 ### Health Check
 
