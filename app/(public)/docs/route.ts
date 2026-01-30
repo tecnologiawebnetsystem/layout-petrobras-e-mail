@@ -1,6 +1,20 @@
 import { NextResponse } from 'next/server'
+import fs from 'fs'
+import path from 'path'
+import yaml from 'js-yaml'
 
 export async function GET() {
+  let specJson = '{}'
+  
+  try {
+    const yamlPath = path.join(process.cwd(), 'public', 'openapi.yaml')
+    const yamlContent = fs.readFileSync(yamlPath, 'utf8')
+    const spec = yaml.load(yamlContent)
+    specJson = JSON.stringify(spec)
+  } catch (error) {
+    console.error('Error loading OpenAPI spec:', error)
+  }
+
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8,7 +22,6 @@ export async function GET() {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>API Documentation - Petrobras File Transfer</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.css">
   <style>
     body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
     #redoc-container { min-height: 100vh; }
@@ -34,11 +47,6 @@ export async function GET() {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    .error {
-      color: #dc2626;
-      padding: 20px;
-      text-align: center;
-    }
   </style>
 </head>
 <body>
@@ -50,38 +58,26 @@ export async function GET() {
   </div>
   <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
   <script>
-    (function() {
-      fetch('/api/openapi')
-        .then(function(response) {
-          if (!response.ok) throw new Error('Failed to load spec');
-          return response.json();
-        })
-        .then(function(spec) {
-          Redoc.init(spec, {
-            theme: {
-              colors: {
-                primary: { main: '#0066b3' }
-              },
-              typography: {
-                fontFamily: 'Inter, sans-serif',
-                headings: { fontFamily: 'Inter, sans-serif' },
-                code: { fontFamily: 'JetBrains Mono, monospace' }
-              },
-              sidebar: {
-                backgroundColor: '#1a1a2e',
-                textColor: '#ffffff'
-              }
-            },
-            scrollYOffset: 0,
-            hideDownloadButton: false,
-            expandResponses: '200,201'
-          }, document.getElementById('redoc-container'));
-        })
-        .catch(function(error) {
-          document.getElementById('redoc-container').innerHTML = 
-            '<div class="error"><h2>Erro ao carregar documentacao</h2><p>' + error.message + '</p></div>';
-        });
-    })();
+    var spec = ${specJson};
+    Redoc.init(spec, {
+      theme: {
+        colors: {
+          primary: { main: '#0066b3' }
+        },
+        typography: {
+          fontFamily: 'Inter, sans-serif',
+          headings: { fontFamily: 'Inter, sans-serif' },
+          code: { fontFamily: 'JetBrains Mono, monospace' }
+        },
+        sidebar: {
+          backgroundColor: '#1a1a2e',
+          textColor: '#ffffff'
+        }
+      },
+      scrollYOffset: 0,
+      hideDownloadButton: false,
+      expandResponses: '200,201'
+    }, document.getElementById('redoc-container'));
   </script>
 </body>
 </html>`
