@@ -21,36 +21,34 @@ export async function GET() {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>API Documentation - Petrobras File Transfer</title>
-  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #fafafa; }
-    .swagger-ui .topbar { display: none; }
-    .swagger-ui .info { margin: 30px 0; }
-    .swagger-ui .info .title { color: #1a1a1a; }
-    .swagger-ui .scheme-container { background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    body { margin: 0; padding: 0; }
   </style>
 </head>
 <body>
-  <div id="swagger-ui"></div>
-  <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
-  <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js"></script>
+  <div id="redoc-container"></div>
+  <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
   <script>
-    window.onload = function() {
-      window.ui = SwaggerUIBundle({
-        spec: ${specJson},
-        dom_id: '#swagger-ui',
-        deepLinking: true,
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIStandalonePreset
-        ],
-        plugins: [
-          SwaggerUIBundle.plugins.DownloadUrl
-        ],
-        layout: "StandaloneLayout"
-      });
-    };
+    Redoc.init(${specJson}, {
+      theme: {
+        colors: {
+          primary: { main: '#0066b3' }
+        },
+        typography: {
+          fontFamily: 'Inter, sans-serif',
+          headings: { fontFamily: 'Inter, sans-serif' },
+          code: { fontFamily: 'JetBrains Mono, monospace' }
+        },
+        sidebar: {
+          backgroundColor: '#1a1a2e',
+          textColor: '#ffffff'
+        }
+      },
+      scrollYOffset: 0,
+      hideDownloadButton: false,
+      expandResponses: '200,201'
+    }, document.getElementById('redoc-container'));
   </script>
 </body>
 </html>`
