@@ -2,11 +2,12 @@
 
 import type { FormEvent } from "react"
 import { useState } from "react"
-import { Eye, EyeOff, User, Lock } from "lucide-react"
+import { Eye, EyeOff, User, Lock, ChevronDown, TestTube2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LoginBackground } from "@/components/ui/login-background"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { ForgotPasswordModal } from "@/components/auth/forgot-password-modal"
 import { NotificationModal } from "@/components/shared/notification-modal"
 import { ExternalVerificationModal } from "@/components/auth/external-verification-modal"
@@ -48,6 +49,7 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [showExternalVerification, setShowExternalVerification] = useState(false)
+  const [isDemoOpen, setIsDemoOpen] = useState(false)
   const [notification, setNotification] = useState<{
     show: boolean
     type: "success" | "error" | "warning" | "info"
@@ -327,58 +329,33 @@ export function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <main className="min-h-screen flex" role="main" aria-label="Pagina de login">
       <LoginBackground />
-      <div className="flex-1 flex items-center justify-center p-8 bg-background">
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-8 lg:p-12 bg-background">
         <div className="w-full max-w-md space-y-8">
-          <div className="flex justify-center mb-4">
-            <img src="/images/petrobras-full-logo.png" alt="Petrobras" className="h-16 w-auto" />
+          {/* Logo */}
+          <div className="flex justify-center">
+            <img
+              src="/images/petrobras-full-logo.png"
+              alt="Petrobras - Logo oficial"
+              className="h-14 sm:h-16 w-auto"
+              width={200}
+              height={64}
+            />
           </div>
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">Acesse sua conta</h1>
-            <p className="text-muted-foreground text-base">Faça o upload dos seus arquivos de forma segura.</p>
-          </div>
-          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4 space-y-3">
-            <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">Acesso Rápido - Demonstração:</p>
-            <div className="grid grid-cols-1 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleQuickLogin("external")}
-                className="justify-start h-auto py-2 px-3 bg-white dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 border-blue-200 dark:border-blue-800 text-left"
-              >
-                <div className="flex flex-col items-start w-full">
-                  <span className="text-xs font-semibold text-blue-900 dark:text-blue-100">Usuário Externo</span>
-                  <span className="text-[10px] text-blue-700 dark:text-blue-300">cliente@empresa.com</span>
-                </div>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleQuickLogin("externalEmpty")}
-                className="justify-start h-auto py-2 px-3 bg-white dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 border-blue-200 dark:border-blue-800 text-left"
-              >
-                <div className="flex flex-col items-start w-full">
-                  <span className="text-xs font-semibold text-blue-900 dark:text-blue-100">
-                    Usuário Externo (Vazio)
-                  </span>
-                  <span className="text-[10px] text-blue-700 dark:text-blue-300">demo@exemplo.com.br</span>
-                </div>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleQuickLogin("supervisor")}
-                className="justify-start h-auto py-2 px-3 bg-white dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 border-blue-200 dark:border-blue-800 text-left"
-              >
-                <div className="flex flex-col items-start w-full">
-                  <span className="text-xs font-semibold text-blue-900 dark:text-blue-100">Supervisor</span>
-                  <span className="text-[10px] text-blue-700 dark:text-blue-300">wagner.brazil@petrobras.com.br</span>
-                </div>
-              </Button>
-            </div>
-          </div>
-          <form onSubmit={handleSubmit} className="space-y-6">
+
+          {/* Header */}
+          <header className="space-y-3 text-center sm:text-left">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight text-balance">
+              Acesse sua conta
+            </h1>
+            <p className="text-muted-foreground text-sm sm:text-base leading-relaxed text-pretty">
+              Sistema de transferencia segura de arquivos para destinatarios externos.
+            </p>
+          </header>
+
+          {/* Formulario principal */}
+          <form onSubmit={handleSubmit} className="space-y-5" aria-label="Formulario de login">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-foreground">
                 E-mail ou Usuário
@@ -440,7 +417,7 @@ export function LoginForm() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 text-base font-medium bg-[#0047BB] hover:bg-[#003A99] text-white"
+              className="w-full h-12 text-base font-semibold bg-[#00A859] hover:bg-[#008a48] text-white transition-all duration-200 shadow-sm hover:shadow-md"
             >
               {isLoading ? "Entrando..." : "Entrar"}
             </Button>
@@ -471,9 +448,58 @@ export function LoginForm() {
               </Button>
             </div>
           )}
-          <div className="text-center text-sm text-muted-foreground pt-8">
-            © 2025 Petrobras. Todos os direitos reservados.
-          </div>
+          {/* Demo Section - Collapsible e Sutil */}
+          <Collapsible open={isDemoOpen} onOpenChange={setIsDemoOpen}>
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                className="w-full flex items-center justify-center gap-2 py-2 text-xs text-muted-foreground/70 hover:text-muted-foreground transition-colors group"
+                aria-expanded={isDemoOpen}
+                aria-controls="demo-content"
+              >
+                <TestTube2 className="h-3.5 w-3.5" />
+                <span>Ambiente de demonstracao</span>
+                <ChevronDown
+                  className={`h-3.5 w-3.5 transition-transform duration-200 ${isDemoOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent id="demo-content" className="overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+              <div className="mt-3 p-3 rounded-lg bg-muted/30 border border-border/50 space-y-2">
+                <div className="grid grid-cols-1 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin("external")}
+                    className="flex items-center justify-between px-3 py-2 text-left text-xs rounded-md bg-background hover:bg-muted/50 border border-transparent hover:border-border/50 transition-all"
+                  >
+                    <span className="font-medium text-foreground/80">Usuario Externo</span>
+                    <span className="text-muted-foreground text-[10px]">cliente@empresa.com</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin("externalEmpty")}
+                    className="flex items-center justify-between px-3 py-2 text-left text-xs rounded-md bg-background hover:bg-muted/50 border border-transparent hover:border-border/50 transition-all"
+                  >
+                    <span className="font-medium text-foreground/80">Usuario Externo (Vazio)</span>
+                    <span className="text-muted-foreground text-[10px]">demo@exemplo.com.br</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin("supervisor")}
+                    className="flex items-center justify-between px-3 py-2 text-left text-xs rounded-md bg-background hover:bg-muted/50 border border-transparent hover:border-border/50 transition-all"
+                  >
+                    <span className="font-medium text-foreground/80">Supervisor</span>
+                    <span className="text-muted-foreground text-[10px]">wagner.brazil@petrobras.com.br</span>
+                  </button>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Footer */}
+          <footer className="text-center text-xs text-muted-foreground/60 pt-4">
+            <p>2025 Petrobras. Todos os direitos reservados.</p>
+          </footer>
         </div>
       </div>
       <ForgotPasswordModal open={showForgotPassword} onOpenChange={setShowForgotPassword} />
@@ -489,6 +515,6 @@ export function LoginForm() {
         title={notification.title}
         message={notification.message}
       />
-    </div>
+    </main>
   )
 }
