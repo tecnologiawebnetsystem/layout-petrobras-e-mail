@@ -69,6 +69,8 @@ python setup_s3.py create --env prod
 ```bash
 cd dynamodb
 python create_tables.py create --env prod
+# 10 tabelas: users, credentials, areas, files, shares, share_files,
+#             tokens, audit, notifications, email_logs
 # Opcional: popular com dados de teste
 python seed_data.py --env dev
 ```

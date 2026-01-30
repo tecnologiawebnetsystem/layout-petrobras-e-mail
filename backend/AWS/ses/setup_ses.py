@@ -456,6 +456,190 @@ Motivo: {{rejection_reason}}
 
 Se tiver duvidas, entre em contato com seu supervisor.
 """
+        },
+        "password_reset": {
+            "TemplateName": "petrobras_password_reset",
+            "SubjectPart": "Redefinicao de senha - {{company_name}}",
+            "HtmlPart": """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #00853F; color: white; padding: 20px; text-align: center; }
+        .content { padding: 30px; background: #f9f9f9; }
+        .button { display: inline-block; background: #00853F; color: white; 
+                  padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .warning { background: #fff3cd; border: 1px solid #ffc107; color: #856404;
+                   padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{company_name}}</h1>
+        </div>
+        <div class="content">
+            <p>Ola {{user_name}},</p>
+            <p>Recebemos uma solicitacao para redefinir sua senha.</p>
+            <p style="text-align: center;">
+                <a href="{{reset_url}}" class="button">Redefinir Senha</a>
+            </p>
+            <div class="warning">
+                <strong>Este link expira em {{expires_minutes}} minutos.</strong>
+            </div>
+            <p>Se voce nao solicitou a redefinicao de senha, ignore este email ou entre em contato com o suporte.</p>
+        </div>
+        <div class="footer">
+            <p>{{company_name}} - Sistema de Transferencia Segura de Arquivos</p>
+            <p>Este e um email automatico, nao responda.</p>
+        </div>
+    </div>
+</body>
+</html>
+""",
+            "TextPart": """
+{{company_name}}
+
+Ola {{user_name}},
+
+Recebemos uma solicitacao para redefinir sua senha.
+
+Acesse o link abaixo para redefinir sua senha:
+{{reset_url}}
+
+Este link expira em {{expires_minutes}} minutos.
+
+Se voce nao solicitou a redefinicao de senha, ignore este email.
+"""
+        },
+        "file_expiring": {
+            "TemplateName": "petrobras_file_expiring",
+            "SubjectPart": "Arquivos expirando em breve - {{company_name}}",
+            "HtmlPart": """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #00853F; color: white; padding: 20px; text-align: center; }
+        .content { padding: 30px; background: #f9f9f9; }
+        .warning { background: #fff3cd; border: 1px solid #ffc107; color: #856404;
+                   padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .button { display: inline-block; background: #00853F; color: white; 
+                  padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{company_name}}</h1>
+        </div>
+        <div class="content">
+            <p>Ola,</p>
+            <div class="warning">
+                <strong>Voce tem arquivos que expiram em breve!</strong>
+            </div>
+            <p>Os seguintes arquivos compartilhados com voce expirarao em <strong>{{hours_remaining}} horas</strong>:</p>
+            <ul>
+                {{#files}}
+                <li>{{name}} ({{size}})</li>
+                {{/files}}
+            </ul>
+            <p style="text-align: center;">
+                <a href="{{portal_url}}" class="button">Baixar Agora</a>
+            </p>
+        </div>
+        <div class="footer">
+            <p>{{company_name}} - Sistema de Transferencia Segura de Arquivos</p>
+        </div>
+    </div>
+</body>
+</html>
+""",
+            "TextPart": """
+{{company_name}}
+
+Ola,
+
+Voce tem arquivos que expiram em {{hours_remaining}} horas!
+
+Arquivos:
+{{#files}}
+- {{name}} ({{size}})
+{{/files}}
+
+Acesse: {{portal_url}}
+"""
+        },
+        "approval_request": {
+            "TemplateName": "petrobras_approval_request",
+            "SubjectPart": "Solicitacao de aprovacao pendente - {{company_name}}",
+            "HtmlPart": """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #00853F; color: white; padding: 20px; text-align: center; }
+        .content { padding: 30px; background: #f9f9f9; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460;
+                padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .button { display: inline-block; background: #00853F; color: white; 
+                  padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 5px; }
+        .button-danger { background: #dc3545; }
+        .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{company_name}}</h1>
+        </div>
+        <div class="content">
+            <p>Ola {{supervisor_name}},</p>
+            <div class="info">
+                <strong>Nova solicitacao de compartilhamento aguardando aprovacao</strong>
+            </div>
+            <p><strong>Solicitante:</strong> {{requester_name}} ({{requester_email}})</p>
+            <p><strong>Destinatario:</strong> {{recipient_email}}</p>
+            <p><strong>Arquivos:</strong> {{files_count}} arquivo(s)</p>
+            <p><strong>Expiracao solicitada:</strong> {{expiration_hours}} horas</p>
+            <p style="text-align: center;">
+                <a href="{{approve_url}}" class="button">Aprovar</a>
+                <a href="{{reject_url}}" class="button button-danger">Rejeitar</a>
+            </p>
+            <p><a href="{{details_url}}">Ver detalhes completos</a></p>
+        </div>
+        <div class="footer">
+            <p>{{company_name}} - Sistema de Transferencia Segura de Arquivos</p>
+        </div>
+    </div>
+</body>
+</html>
+""",
+            "TextPart": """
+{{company_name}}
+
+Ola {{supervisor_name}},
+
+Nova solicitacao de compartilhamento aguardando aprovacao.
+
+Solicitante: {{requester_name}} ({{requester_email}})
+Destinatario: {{recipient_email}}
+Arquivos: {{files_count}} arquivo(s)
+Expiracao solicitada: {{expiration_hours}} horas
+
+Ver detalhes: {{details_url}}
+"""
         }
     }
     

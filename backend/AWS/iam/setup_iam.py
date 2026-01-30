@@ -189,11 +189,11 @@ def create_dynamodb_policy(env: str):
     
     policy_name = f"{PROJECT_PREFIX}-dynamodb-policy-{env}"
     
-    # Tabelas do projeto
+    # Tabelas do projeto (sincronizado com DynamoDB)
     tables = [
         "users", "credentials", "areas", "area_supervisors",
         "files", "shares", "share_files", "tokens",
-        "audits", "notifications"
+        "audits", "notifications", "email_logs"
     ]
     
     table_arns = [

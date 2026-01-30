@@ -76,6 +76,16 @@ def create_log_groups(env: str, region: str = DEFAULT_REGION):
             "name": f"/petrobras-file-transfer/{env}/errors",
             "retention": 90,
             "description": "Logs de erros"
+        },
+        {
+            "name": f"/petrobras-file-transfer/{env}/emails",
+            "retention": 90,
+            "description": "Logs de envio de emails"
+        },
+        {
+            "name": f"/petrobras-file-transfer/{env}/downloads",
+            "retention": 90,
+            "description": "Logs de downloads externos"
         }
     ]
     
@@ -144,6 +154,27 @@ def create_metric_filters(env: str, region: str = DEFAULT_REGION):
             "name": f"{PROJECT_PREFIX}-{env}-file-uploads",
             "pattern": '{ $.action = "UPLOAD_*" }',
             "metric_name": "FileUploads",
+            "metric_value": "1"
+        },
+        {
+            "log_group": f"/petrobras-file-transfer/{env}/emails",
+            "name": f"{PROJECT_PREFIX}-{env}-email-sent",
+            "pattern": '{ $.status = "sent" }',
+            "metric_name": "EmailsSent",
+            "metric_value": "1"
+        },
+        {
+            "log_group": f"/petrobras-file-transfer/{env}/emails",
+            "name": f"{PROJECT_PREFIX}-{env}-email-bounced",
+            "pattern": '{ $.status = "bounced" }',
+            "metric_name": "EmailsBounced",
+            "metric_value": "1"
+        },
+        {
+            "log_group": f"/petrobras-file-transfer/{env}/downloads",
+            "name": f"{PROJECT_PREFIX}-{env}-external-downloads",
+            "pattern": '{ $.action = "EXTERNAL_DOWNLOAD" }',
+            "metric_name": "ExternalDownloads",
             "metric_value": "1"
         },
         {

@@ -115,6 +115,43 @@ def create_key(env: str, region: str = DEFAULT_REGION):
                         "kms:EncryptionContext:aws:logs:arn": f"arn:aws:logs:{region}:{account_id}:log-group:/petrobras-file-transfer/*"
                     }
                 }
+            },
+            {
+                "Sid": "Allow SES Service",
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": "ses.amazonaws.com"
+                },
+                "Action": [
+                    "kms:Decrypt",
+                    "kms:GenerateDataKey*"
+                ],
+                "Resource": "*",
+                "Condition": {
+                    "StringEquals": {
+                        "kms:CallerAccount": account_id
+                    }
+                }
+            },
+            {
+                "Sid": "Allow DynamoDB Service",
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": "dynamodb.amazonaws.com"
+                },
+                "Action": [
+                    "kms:Encrypt",
+                    "kms:Decrypt",
+                    "kms:ReEncrypt*",
+                    "kms:GenerateDataKey*",
+                    "kms:DescribeKey"
+                ],
+                "Resource": "*",
+                "Condition": {
+                    "StringEquals": {
+                        "kms:CallerAccount": account_id
+                    }
+                }
             }
         ]
     }

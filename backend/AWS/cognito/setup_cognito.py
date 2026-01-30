@@ -101,6 +101,18 @@ def create_user_pool(env: str, region: str = DEFAULT_REGION):
                     "AttributeDataType": "String",
                     "Required": False,
                     "Mutable": True
+                },
+                {
+                    "Name": "area_id",
+                    "AttributeDataType": "String",
+                    "Required": False,
+                    "Mutable": True
+                },
+                {
+                    "Name": "is_supervisor",
+                    "AttributeDataType": "String",
+                    "Required": False,
+                    "Mutable": True
                 }
             ],
             UsernameConfiguration={
