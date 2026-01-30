@@ -629,7 +629,7 @@ function GanttChartView({ fases }: { fases: Fase[] }) {
 // COMPONENTE DE BURNDOWN CHART
 // =============================================
 
-function BurndownChart() {
+function BurndownChart({ dados }: { dados: typeof dadosBurndown }) {
   return (
     <Card>
       <CardHeader>
@@ -641,7 +641,7 @@ function BurndownChart() {
       <CardContent>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={dadosBurndown} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <AreaChart data={dados} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorPlanejado" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
@@ -703,6 +703,9 @@ function BurndownChart() {
 // COMPONENTE PRINCIPAL
 // =============================================
 
+// Fetcher para SWR
+const fetcher = (url: string) => fetch(url).then(res => res.json())
+
 export default function RoadmapPage() {
   const [faseAtiva, setFaseAtiva] = useState<number | null>(null)
   const [filtroStatus, setFiltroStatus] = useState<string[]>(["concluido", "em_progresso", "pendente"])
@@ -710,27 +713,48 @@ export default function RoadmapPage() {
   const [notasEntrega, setNotasEntrega] = useState<Record<string, string>>({})
   const contentRef = useRef<HTMLDivElement>(null)
   
+  // Buscar dados do banco via API
+  const { data: fasesDB, isLoading: loadingFases } = useSWR<Fase[]>('/api/roadmap/fases', fetcher, {
+    fallbackData: fases,
+    revalidateOnFocus: false
+  })
+  const { data: marcosDB, isLoading: loadingMarcos } = useSWR('/api/roadmap/marcos', fetcher, {
+    fallbackData: marcos,
+    revalidateOnFocus: false
+  })
+  const { data: burndownDB, isLoading: loadingBurndown } = useSWR('/api/roadmap/burndown', fetcher, {
+    fallbackData: dadosBurndown,
+    revalidateOnFocus: false
+  })
+  
+  // Usar dados do banco ou fallback para dados estaticos
+  const fasesData = fasesDB || fases
+  const marcosData = marcosDB || marcos
+  const burndownData = burndownDB || dadosBurndown
+  
+  const isLoading = loadingFases || loadingMarcos || loadingBurndown
+  
   // Todos os tipos disponiveis
   const todosTipos = useMemo(() => {
     const tipos = new Set<string>()
-    fases.forEach(fase => {
+    fasesData.forEach((fase: Fase) => {
       fase.entregas.forEach(entrega => {
         tipos.add(entrega.tipo)
       })
     })
     return Array.from(tipos).sort()
-  }, [])
+  }, [fasesData])
   
   // Metricas calculadas
   const metricas = useMemo(() => {
-    const totalEntregas = fases.reduce((acc, fase) => acc + fase.entregas.length, 0)
-    const entregasConcluidas = fases.reduce((acc, fase) => acc + fase.entregas.filter(e => e.status === "concluido").length, 0)
-    const entregasEmProgresso = fases.reduce((acc, fase) => acc + fase.entregas.filter(e => e.status === "em_progresso").length, 0)
-    const entregasPendentes = fases.reduce((acc, fase) => acc + fase.entregas.filter(e => e.status === "pendente").length, 0)
+    const totalEntregas = fasesData.reduce((acc: number, fase: Fase) => acc + fase.entregas.length, 0)
+    const entregasConcluidas = fasesData.reduce((acc: number, fase: Fase) => acc + fase.entregas.filter(e => e.status === "concluido").length, 0)
+    const entregasEmProgresso = fasesData.reduce((acc: number, fase: Fase) => acc + fase.entregas.filter(e => e.status === "em_progresso").length, 0)
+    const entregasPendentes = fasesData.reduce((acc: number, fase: Fase) => acc + fase.entregas.filter(e => e.status === "pendente").length, 0)
     
     // Entregas em atraso
     const hoje = new Date()
-    const entregasAtrasadas = fases.reduce((acc, fase) => {
+    const entregasAtrasadas = fasesData.reduce((acc: number, fase: Fase) => {
       return acc + fase.entregas.filter(e => {
         if (e.status === "concluido" || !e.dataPrevista) return false
         return new Date(e.dataPrevista) < hoje
@@ -738,7 +762,7 @@ export default function RoadmapPage() {
     }, 0)
     
     // Fases de alto risco
-    const fasesAltoRisco = fases.filter(f => f.risco === "alto" && f.status !== "concluido").length
+    const fasesAltoRisco = fasesData.filter((f: Fase) => f.risco === "alto" && f.status !== "concluido").length
     
     return {
       totalEntregas,
@@ -748,22 +772,22 @@ export default function RoadmapPage() {
       entregasAtrasadas,
       fasesAltoRisco,
     }
-  }, [])
+  }, [fasesData])
   
   // Fases filtradas
   const fasesFiltradas = useMemo(() => {
-    return fases.map(fase => {
+    return fasesData.map((fase: Fase) => {
       const entregasFiltradas = fase.entregas.filter(entrega => {
         const statusMatch = filtroStatus.includes(entrega.status)
         const tipoMatch = filtroTipo.length === 0 || filtroTipo.includes(entrega.tipo)
         return statusMatch && tipoMatch
       })
       return { ...fase, entregas: entregasFiltradas }
-    }).filter(fase => {
+    }).filter((fase: Fase) => {
       // Mostrar fase se tem entregas filtradas OU se o status da fase corresponde ao filtro
       return fase.entregas.length > 0 || filtroStatus.includes(fase.status)
     })
-  }, [filtroStatus, filtroTipo])
+  }, [fasesData, filtroStatus, filtroTipo])
   
   // Funcao de exportar PDF
   const exportarPDF = () => {
@@ -773,7 +797,7 @@ export default function RoadmapPage() {
   // Funcao de exportar CSV
   const exportarCSV = () => {
     const headers = ["Fase", "Entrega", "Status", "Tipo", "Data Prevista", "Data Conclusao", "Notas"]
-    const rows = fases.flatMap(fase =>
+    const rows = fasesData.flatMap((fase: Fase) =>
       fase.entregas.map(entrega => [
         fase.nome,
         entrega.nome,
@@ -816,12 +840,23 @@ export default function RoadmapPage() {
                   <Target className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-slate-900">Roadmap do Projeto</h1>
+                  <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    Roadmap do Projeto
+                    {isLoading && <Loader2 className="h-4 w-4 animate-spin text-indigo-500" />}
+                  </h1>
                   <p className="text-sm text-slate-500">Sistema de Transferencia de Arquivos - Petrobras</p>
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-3 print:hidden">
+              {/* Link Admin */}
+              <Link href="/wiki-dev/roadmap/admin">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Settings className="h-4 w-4" />
+                  Admin
+                </Button>
+              </Link>
+              
               {/* Filtros */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -1029,9 +1064,9 @@ export default function RoadmapPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              {marcos.map((marco, index) => (
+              {marcosData.map((marco: typeof marcos[0], index: number) => (
                 <div key={index} className="flex items-center gap-4 flex-1">
-                  <div className={`flex flex-col items-center ${index < marcos.length - 1 ? "flex-1" : ""}`}>
+                  <div className={`flex flex-col items-center ${index < marcosData.length - 1 ? "flex-1" : ""}`}>
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                       marco.status === "concluido" 
                         ? "bg-green-100 text-green-600" 
@@ -1052,7 +1087,7 @@ export default function RoadmapPage() {
                       </p>
                     </div>
                   </div>
-                  {index < marcos.length - 1 && (
+                  {index < marcosData.length - 1 && (
                     <div className={`hidden md:block flex-1 h-1 rounded ${
                       marco.status === "concluido" ? "bg-green-300" : "bg-slate-200"
                     }`} />
@@ -1133,7 +1168,7 @@ export default function RoadmapPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <DependenciasIndicador dependencias={fase.dependeDe} fases={fases} />
+                      <DependenciasIndicador dependencias={fase.dependeDe} fases={fasesData} />
                       <StatusBadge status={fase.status} />
                       <Button 
                         variant={faseAtiva === fase.id ? "default" : "outline"}
@@ -1280,12 +1315,12 @@ export default function RoadmapPage() {
           
           {/* Gantt View */}
           <TabsContent value="gantt">
-            <GanttChartView fases={fases} />
+            <GanttChartView fases={fasesData} />
           </TabsContent>
           
           {/* Burndown View */}
           <TabsContent value="burndown">
-            <BurndownChart />
+            <BurndownChart dados={burndownData} />
           </TabsContent>
 
           {/* Kanban View */}
