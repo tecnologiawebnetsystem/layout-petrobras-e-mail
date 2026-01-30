@@ -5,7 +5,7 @@ import yaml from 'js-yaml'
 
 // Forcar Node.js runtime (nao Edge)
 export const runtime = 'nodejs'
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   let specJson = '{}'
@@ -13,15 +13,12 @@ export async function GET() {
   
   try {
     const yamlPath = path.join(process.cwd(), 'public', 'openapi.yaml')
-    console.log('[v0] Trying to read:', yamlPath)
     const yamlContent = fs.readFileSync(yamlPath, 'utf8')
-    console.log('[v0] YAML content length:', yamlContent.length)
     const spec = yaml.load(yamlContent)
-    specJson = JSON.stringify(spec)
-    console.log('[v0] JSON spec length:', specJson.length)
+    specJson = JSON.stringify(spec).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')
   } catch (error) {
     console.error('[v0] Error loading OpenAPI spec:', error)
-    errorMsg = error instanceof Error ? error.message : 'Unknown error'
+    errorMsg = error instanceof Error ? error.message.replace(/"/g, '\\"') : 'Unknown error'
   }
 
   const html = `<!DOCTYPE html>
@@ -32,7 +29,7 @@ export async function GET() {
   <title>API Documentation - Petrobras File Transfer</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
   <style>
-    body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+    body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background: #fafafa; }
     #redoc-container { min-height: 100vh; }
     .loading { 
       display: flex; 
@@ -56,43 +53,70 @@ export async function GET() {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+    .error-container {
+      padding: 40px;
+      text-align: center;
+      max-width: 600px;
+      margin: 100px auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .error-container h1 { color: #c00; margin-bottom: 16px; }
+    .error-container p { color: #666; }
   </style>
 </head>
 <body>
   <div id="redoc-container">
-    <div class="loading">
+    <div class="loading" id="loading-indicator">
       <div class="spinner"></div>
       <span>Carregando documentacao da API...</span>
     </div>
   </div>
-  <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
   <script>
     var spec = ${specJson};
     var errorMsg = "${errorMsg}";
+    var container = document.getElementById('redoc-container');
+    
+    function showError(msg) {
+      container.innerHTML = '<div class="error-container"><h1>Erro ao carregar documentacao</h1><p>' + msg + '</p></div>';
+    }
     
     if (errorMsg) {
-      document.getElementById('redoc-container').innerHTML = 
-        '<div style="padding: 40px; text-align: center;"><h1 style="color: #c00;">Erro ao carregar documentacao</h1><p>' + errorMsg + '</p></div>';
+      showError(errorMsg);
     } else {
-      Redoc.init(spec, {
-      theme: {
-        colors: {
-          primary: { main: '#0066b3' }
-        },
-        typography: {
-          fontFamily: 'Inter, sans-serif',
-          headings: { fontFamily: 'Inter, sans-serif' },
-          code: { fontFamily: 'JetBrains Mono, monospace' }
-        },
-        sidebar: {
-          backgroundColor: '#1a1a2e',
-          textColor: '#ffffff'
+      // Load ReDoc dynamically
+      var script = document.createElement('script');
+      script.src = 'https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js';
+      script.onload = function() {
+        try {
+          Redoc.init(spec, {
+            theme: {
+              colors: {
+                primary: { main: '#0066b3' }
+              },
+              typography: {
+                fontFamily: 'Inter, sans-serif',
+                headings: { fontFamily: 'Inter, sans-serif' },
+                code: { fontFamily: 'JetBrains Mono, monospace' }
+              },
+              sidebar: {
+                backgroundColor: '#1a1a2e',
+                textColor: '#ffffff'
+              }
+            },
+            scrollYOffset: 0,
+            hideDownloadButton: false,
+            expandResponses: '200,201'
+          }, container);
+        } catch(e) {
+          showError('Erro ao inicializar ReDoc: ' + e.message);
         }
-      },
-      scrollYOffset: 0,
-      hideDownloadButton: false,
-      expandResponses: '200,201'
-    }, document.getElementById('redoc-container'));
+      };
+      script.onerror = function() {
+        showError('Nao foi possivel carregar a biblioteca ReDoc. Verifique sua conexao com a internet.');
+      };
+      document.body.appendChild(script);
     }
   </script>
 </body>
@@ -101,6 +125,7 @@ export async function GET() {
   return new NextResponse(html, {
     headers: {
       'Content-Type': 'text/html',
+      'Cache-Control': 'public, max-age=3600',
     },
   })
 }
