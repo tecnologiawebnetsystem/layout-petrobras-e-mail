@@ -3,16 +3,25 @@ import fs from 'fs'
 import path from 'path'
 import yaml from 'js-yaml'
 
+// Forcar Node.js runtime (nao Edge)
+export const runtime = 'nodejs'
+export const dynamic = 'force-static'
+
 export async function GET() {
   let specJson = '{}'
+  let errorMsg = ''
   
   try {
     const yamlPath = path.join(process.cwd(), 'public', 'openapi.yaml')
+    console.log('[v0] Trying to read:', yamlPath)
     const yamlContent = fs.readFileSync(yamlPath, 'utf8')
+    console.log('[v0] YAML content length:', yamlContent.length)
     const spec = yaml.load(yamlContent)
     specJson = JSON.stringify(spec)
+    console.log('[v0] JSON spec length:', specJson.length)
   } catch (error) {
-    console.error('Error loading OpenAPI spec:', error)
+    console.error('[v0] Error loading OpenAPI spec:', error)
+    errorMsg = error instanceof Error ? error.message : 'Unknown error'
   }
 
   const html = `<!DOCTYPE html>
@@ -59,7 +68,13 @@ export async function GET() {
   <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
   <script>
     var spec = ${specJson};
-    Redoc.init(spec, {
+    var errorMsg = "${errorMsg}";
+    
+    if (errorMsg) {
+      document.getElementById('redoc-container').innerHTML = 
+        '<div style="padding: 40px; text-align: center;"><h1 style="color: #c00;">Erro ao carregar documentacao</h1><p>' + errorMsg + '</p></div>';
+    } else {
+      Redoc.init(spec, {
       theme: {
         colors: {
           primary: { main: '#0066b3' }
@@ -78,6 +93,7 @@ export async function GET() {
       hideDownloadButton: false,
       expandResponses: '200,201'
     }, document.getElementById('redoc-container'));
+    }
   </script>
 </body>
 </html>`
