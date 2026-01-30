@@ -1,45 +1,88 @@
-import { redirect } from "next/navigation"
-import { AlertCircle } from "lucide-react"
+"use client"
 
-export default function DocsPage() {
-  const backendDocsUrl = process.env.BACKEND_DOCS_URL
+import dynamic from "next/dynamic"
+import { useEffect, useState } from "react"
 
-  if (backendDocsUrl) {
-    redirect(backendDocsUrl)
-  }
-
-  // Fallback UI quando a variável de ambiente não está configurada
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="max-w-md w-full mx-4">
-        <div className="rounded-lg border bg-card p-8 text-center space-y-6">
-          <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center">
-            <AlertCircle className="h-8 w-8 text-amber-500" />
-          </div>
-          
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-foreground">
-              Documentação da API
-            </h1>
-            <p className="text-muted-foreground">
-              A URL da documentação do backend ainda não foi configurada.
-            </p>
-          </div>
-
-          <div className="rounded-lg bg-muted/50 p-4 text-left">
-            <p className="text-sm font-medium text-foreground mb-2">
-              Para configurar, adicione a variável de ambiente:
-            </p>
-            <code className="text-sm bg-slate-900 text-green-400 px-3 py-2 rounded block">
-              BACKEND_DOCS_URL=https://seu-backend.com/docs
-            </code>
-          </div>
-
-          <div className="pt-2 text-sm text-muted-foreground">
-            <p>Após configurar, esta página redirecionará automaticamente para a documentação Swagger do backend.</p>
-          </div>
-        </div>
+const SwaggerUI = dynamic(() => import("swagger-ui-react"), { 
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center min-h-screen bg-white">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Carregando documentacao...</p>
       </div>
     </div>
+  )
+})
+
+export default function DocsPage() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando documentacao...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <style jsx global>{`
+        .swagger-ui {
+          font-family: system-ui, -apple-system, sans-serif;
+        }
+        .swagger-ui .topbar {
+          display: none;
+        }
+        .swagger-ui .info {
+          margin: 30px 0;
+        }
+        .swagger-ui .info .title {
+          color: #006633;
+        }
+        .swagger-ui .info .title small.version-stamp {
+          background-color: #006633;
+        }
+        .swagger-ui .opblock.opblock-get .opblock-summary-method {
+          background: #3b82f6;
+        }
+        .swagger-ui .opblock.opblock-post .opblock-summary-method {
+          background: #22c55e;
+        }
+        .swagger-ui .opblock.opblock-put .opblock-summary-method {
+          background: #f59e0b;
+        }
+        .swagger-ui .opblock.opblock-patch .opblock-summary-method {
+          background: #a855f7;
+        }
+        .swagger-ui .opblock.opblock-delete .opblock-summary-method {
+          background: #ef4444;
+        }
+        .swagger-ui .btn.execute {
+          background-color: #006633;
+          border-color: #006633;
+        }
+        .swagger-ui .btn.execute:hover {
+          background-color: #004d26;
+        }
+        .swagger-ui section.models {
+          border-color: #e5e7eb;
+        }
+        .swagger-ui section.models h4 {
+          color: #374151;
+        }
+      `}</style>
+      <div className="min-h-screen bg-white">
+        <SwaggerUI url="/openapi.yaml" />
+      </div>
+    </>
   )
 }
