@@ -20,9 +20,41 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: "Petrobras - Sistema de E-mail",
-  description: "Sistema de envio de e-mails para domínios externos",
-  generator: "Petrobras Email System",
+  title: {
+    default: "Petrobras File Transfer - Transferencia Segura de Arquivos",
+    template: "%s | Petrobras File Transfer",
+  },
+  description:
+    "Sistema corporativo de transferencia segura de arquivos para destinatarios externos. Compartilhe documentos de forma controlada, auditavel e em conformidade com as politicas de seguranca da Petrobras.",
+  keywords: [
+    "Petrobras",
+    "transferencia de arquivos",
+    "compartilhamento seguro",
+    "documentos corporativos",
+    "upload seguro",
+    "download controlado",
+  ],
+  authors: [{ name: "Petrobras", url: "https://petrobras.com.br" }],
+  creator: "Petrobras",
+  publisher: "Petrobras",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    url: "https://transfer.petrobras.com.br",
+    siteName: "Petrobras File Transfer",
+    title: "Petrobras File Transfer - Transferencia Segura de Arquivos",
+    description:
+      "Sistema corporativo de transferencia segura de arquivos para destinatarios externos com aprovacao supervisionada e auditoria completa.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Petrobras File Transfer",
+    description: "Transferencia segura de arquivos para destinatarios externos",
+  },
   icons: {
     icon: [
       {
