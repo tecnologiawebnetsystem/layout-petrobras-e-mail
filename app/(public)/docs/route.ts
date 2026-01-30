@@ -1,16 +1,18 @@
 import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
+import yaml from 'js-yaml'
 
 export async function GET() {
-  // Read the OpenAPI spec
   const specPath = path.join(process.cwd(), 'public', 'openapi.yaml')
-  let spec = ''
+  let specJson = '{}'
   
   try {
-    spec = fs.readFileSync(specPath, 'utf-8')
+    const specYaml = fs.readFileSync(specPath, 'utf-8')
+    const specObj = yaml.load(specYaml)
+    specJson = JSON.stringify(specObj)
   } catch (error) {
-    console.error('Error reading OpenAPI spec:', error)
+    console.error('[v0] Error reading OpenAPI spec:', error)
   }
 
   const html = `<!DOCTYPE html>
@@ -31,15 +33,12 @@ export async function GET() {
 </head>
 <body>
   <div id="swagger-ui"></div>
-  <script src="https://unpkg.com/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
   <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
   <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js"></script>
   <script>
     window.onload = function() {
-      const spec = \`${spec.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
-      
       window.ui = SwaggerUIBundle({
-        spec: jsyaml.load(spec),
+        spec: ${specJson},
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [
