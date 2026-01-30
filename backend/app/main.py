@@ -17,6 +17,8 @@ from app.api.v1 import (
     routes_audit,
     routes_notifications,
     routes_download,
+    routes_auth,
+    routes_emails,
 )
 
 app = FastAPI(
@@ -67,8 +69,13 @@ app.include_router(routes_download.router, prefix=prefix_v1, tags=["Download"])
 app.include_router(routes_external.router, prefix=prefix_v1, tags=["External"])
 app.include_router(routes_external_auth.router, prefix=prefix_v1, tags=["Auth / External"])
 
-# Rotas de Login
-# auth local e interno protegido (apenas enquanto AUTH_MODE=local)
+# Rotas de autenticacao unificadas
+app.include_router(routes_auth.router, prefix=prefix_v1, tags=["Auth"])
+
+# Rotas de emails
+app.include_router(routes_emails.router, prefix=prefix_v1, tags=["Emails"])
+
+# Rotas de Login (legado - auth local e interno)
 app.include_router(routes_internal_auth.router, prefix=prefix_v1)
 
 # Rotas MOCK (sem AWS): integradas com core/aws_utils.py
