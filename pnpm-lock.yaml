@@ -198,6 +198,9 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.0.0
+      '@types/swagger-ui-react':
+        specifier: ^4.18.3
+        version: 4.19.0
       postcss:
         specifier: ^8.5
         version: 8.5.0
@@ -1381,6 +1384,9 @@ packages:
 
   '@types/react@19.0.0':
     resolution: {integrity: sha512-MY3oPudxvMYyesqs/kW1Bh8y9VqSmf+tzqw3ae8a9DZW68pUe3zAdHeI1jc6iAysuRdACnVknHP8AhwD4/dxtg==}
+
+  '@types/swagger-ui-react@4.19.0':
+    resolution: {integrity: sha512-uScp1xkLZJej0bt3/lO4U11ywWEBnI5CFCR0tqp+5Rvxl1Mj1v6VkGED0W70jJwqlBvbD+/a6bDiK8rjepCr8g==}
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
@@ -3917,6 +3923,10 @@ snapshots:
   '@types/react@19.0.0':
     dependencies:
       csstype: 3.2.3
+
+  '@types/swagger-ui-react@4.19.0':
+    dependencies:
+      '@types/react': 19.0.0
 
   '@types/trusted-types@2.0.7':
     optional: true
