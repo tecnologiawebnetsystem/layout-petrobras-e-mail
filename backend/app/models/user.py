@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from app.models.share import Share
     from app.models.token_access import TokenAccess
     from app.models.area import SharedArea
+    from app.models.notification import Notification
 
 class TypeUser(str, Enum):
     EXTERNAL = "externo"
@@ -24,10 +25,17 @@ class User(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     type: TypeUser = Field(index=True)
-    name: str = Field(min_length=2, max_length=255) # Nome completo (em caso de usar o Entra ID)
+    name: str = Field(min_length=2, max_length=255)  # Nome completo (em caso de usar o Entra ID)
     email: EmailStr = Field(index=True, unique=True)
+    phone: Optional[str] = Field(default=None, max_length=20)
+    department: Optional[str] = Field(default=None, max_length=255)
+    job_title: Optional[str] = Field(default=None, max_length=255)
+    employee_id: Optional[str] = Field(default=None, max_length=50)
+    photo_url: Optional[str] = Field(default=None, max_length=500)
+    manager_id: Optional[int] = Field(default=None, foreign_key="user.id")
     status: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    last_login: Optional[datetime] = Field(default=None)
 
     # Relacionamentos
     areas_created: List["SharedArea"] = Relationship(back_populates="applicant")
@@ -35,3 +43,4 @@ class User(SQLModel, table=True):
     shares_created: List["Share"] = Relationship(back_populates="created_by")
     tokens: List["TokenAccess"] = Relationship(back_populates="user")
     supervised_areas: List["AreaSupervisor"] = Relationship(back_populates="supervisor")
+    notifications: List["Notification"] = Relationship(back_populates="user")

@@ -2,6 +2,7 @@ from .area import SharedArea
 from .areasupervisors import AreaSupervisor
 from .audit import Audit
 from .credencial_local import CredentialLocal
+from .notification import Notification
 from .restricted_file import RestrictedFile
 from .share_file import ShareFile
 from .share import Share

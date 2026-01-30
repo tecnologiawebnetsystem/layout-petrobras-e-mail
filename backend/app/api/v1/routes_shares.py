@@ -9,7 +9,7 @@ from app.db.session import get_session
 from app.schemas.share_schema import ShareCreate, ShareRead
 from app.models.share import Share, ShareStatus
 from app.models.share_file import ShareFile
-from app.services.share_service import create_share
+from app.services.share_service import create_share, ShareError
 from app.services.token_service import issue_token_access, TokenError
 from app.schemas.token_schema import TokenRead
 from app.utils.authz import require_internal

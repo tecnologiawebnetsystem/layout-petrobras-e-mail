@@ -40,7 +40,7 @@ def create_metadata(payload: FileCreate, session: Session = Depends(get_session)
         session=session,
         action="CRIAR_METADATA_ARQUIVO",
         user_id=payload.upload_id,
-        file_id=rrestricted_file.id,
+        file_id=rfile.id,
         detail=f"area_id={payload.area_id} nome={payload.name}",
         ip=request.client.host if request else None,
         user_agent=request.headers.get("User-Agent") if request else None
@@ -99,7 +99,7 @@ def upload_local(
         session=session,
         action="UPLOAD_LOCAL",
         user_id=upload_id,
-        file_id=rrestricted_file.id,
+        file_id=rfile.id,
         detail=f"path={dest}",
         ip=request.client.host if request else None,
         user_agent=request.headers.get("User-Agent") if request else None
@@ -113,7 +113,7 @@ def presigned_upload(file_id: int, expires_in: int = 600, session: Session = Dep
     rfile = session.get(RestrictedFile, file_id)
     if not rfile:
         raise HTTPException(status_code=404, detail="Arquivo não encontrado.")
-    url = generate_presigned_upload(rfile.chave_s3, expires_in)
+    url = generate_presigned_upload(rfile.key_s3, expires_in)
 
     log_event(
         session=session,
@@ -132,7 +132,7 @@ def presigned_download(file_id: int, expires_in: int = 300, session: Session = D
     rfile = session.get(RestrictedFile, file_id)
     if not rfile:
         raise HTTPException(status_code=404, detail="Arquivo não encontrado.")
-    url = generate_presigned_download(rfile.chave_s3, expires_in)
+    url = generate_presigned_download(rfile.key_s3, expires_in)
 
     log_event(
         session=session,
