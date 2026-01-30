@@ -1,0 +1,2100 @@
+openapi: 3.0.3
+info:
+  title: Petrobras File Transfer API
+  description: |
+    API RESTful para o sistema de transferencia segura de arquivos da Petrobras.
+    
+    ## Autenticacao
+    
+    A API suporta dois metodos de autenticacao:
+    
+    1. **Bearer Token (JWT)** - Para usuarios internos autenticados via Entra ID ou login local
+    2. **Cookie de Sessao** - Alternativa ao Bearer token para aplicacoes web
+    
+    ## Fluxo de Compartilhamento
+    
+    1. Usuario interno faz upload dos arquivos
+    2. Cria um compartilhamento com email do destinatario externo
+    3. Supervisor aprova ou rejeita a solicitacao
+    4. Destinatario recebe email com link e codigo OTP
+    5. Destinatario acessa o portal, valida OTP e baixa os arquivos
+    
+  version: 2.0.0
+  contact:
+    name: Suporte Petrobras
+    email: suporte@petrobras.com.br
+  license:
+    name: Proprietary
+    url: https://petrobras.com.br
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Servidor de desenvolvimento local
+  - url: https://api.petrobras.com.br/api/v1
+    description: Servidor de producao
+
+tags:
+  - name: Auth
+    description: Autenticacao unificada (login, logout, refresh, reset password)
+  - name: Auth Internal
+    description: Autenticacao para usuarios internos (Entra ID / Local)
+  - name: Auth External
+    description: Autenticacao para usuarios externos (OTP)
+  - name: Users
+    description: Gerenciamento de usuarios e perfil
+  - name: Files
+    description: Upload e gerenciamento de arquivos
+  - name: Shares
+    description: Compartilhamentos de arquivos
+  - name: Supervisor
+    description: Aprovacao e gestao de compartilhamentos (supervisores)
+  - name: Notifications
+    description: Notificacoes do sistema
+  - name: Audit
+    description: Logs de auditoria e metricas
+  - name: Emails
+    description: Envio e historico de emails
+  - name: Download
+    description: Portal de download para usuarios externos
+  - name: Areas
+    description: Gerenciamento de areas/departamentos
+
+paths:
+  # ============================================================
+  # AUTH - Autenticacao Unificada
+  # ============================================================
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login com email e senha
+      description: Autentica usuario interno com email e senha (modo local)
+      operationId: authLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login bem sucedido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: Cookie de sessao (app_session)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '423':
+          description: Conta bloqueada por tentativas excessivas
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout
+      description: Encerra sessao do usuario
+      operationId: authLogout
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Logout bem sucedido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Renovar token JWT
+      description: Gera novo token JWT a partir do token atual valido
+      operationId: authRefresh
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Token renovado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Solicitar reset de senha
+      description: Envia email com link para redefinir senha
+      operationId: authForgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: usuario@petrobras.com.br
+      responses:
+        '200':
+          description: Email enviado (se o usuario existir)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Se o email existir, enviaremos instrucoes de recuperacao
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Redefinir senha
+      description: Redefine senha usando token recebido por email
+      operationId: authResetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Senha alterada com sucesso
+        '400':
+          description: Token invalido ou expirado
+
+  # ============================================================
+  # AUTH INTERNAL - Autenticacao Interna
+  # ============================================================
+  /auth/internal/login:
+    post:
+      tags: [Auth Internal]
+      summary: Login interno (dev mode)
+      description: Login para usuarios internos em modo desenvolvimento
+      operationId: internalLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login bem sucedido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+
+  /auth/internal/signup:
+    post:
+      tags: [Auth Internal]
+      summary: Cadastro interno (dev mode)
+      description: Cadastro de usuarios internos em modo desenvolvimento
+      operationId: internalSignup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '201':
+          description: Usuario criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /auth/internal/callback:
+    get:
+      tags: [Auth Internal]
+      summary: Callback Entra ID
+      description: Endpoint de callback para autenticacao via Microsoft Entra ID
+      operationId: internalCallback
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redireciona para frontend com sessao
+
+  # ============================================================
+  # AUTH EXTERNAL - Autenticacao Externa (OTP)
+  # ============================================================
+  /auth/external/request-code:
+    post:
+      tags: [Auth External]
+      summary: Solicitar codigo OTP
+      description: Envia codigo OTP para email do usuario externo
+      operationId: externalRequestCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, token]
+              properties:
+                email:
+                  type: string
+                  format: email
+                token:
+                  type: string
+                  description: Token de acesso recebido no email
+      responses:
+        '200':
+          description: OTP enviado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  expires_in:
+                    type: integer
+                    description: Segundos ate expiracao
+        '429':
+          description: Muitas tentativas, aguarde cooldown
+
+  /auth/external/verify-code:
+    post:
+      tags: [Auth External]
+      summary: Verificar codigo OTP
+      description: Valida OTP e retorna sessao para acesso aos arquivos
+      operationId: externalVerifyCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, token, code]
+              properties:
+                email:
+                  type: string
+                  format: email
+                token:
+                  type: string
+                code:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+      responses:
+        '200':
+          description: OTP valido, sessao criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalSessionResponse'
+        '401':
+          description: Codigo invalido ou expirado
+
+  # ============================================================
+  # USERS - Usuarios
+  # ============================================================
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Obter perfil do usuario autenticado
+      description: Retorna dados do usuario logado
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dados do usuario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      tags: [Users]
+      summary: Atualizar perfil
+      description: Atualiza dados do perfil do usuario autenticado
+      operationId: updateCurrentUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Perfil atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  /users:
+    get:
+      tags: [Users]
+      summary: Listar usuarios
+      description: Lista todos os usuarios (admin)
+      operationId: listUsers
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de usuarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+    post:
+      tags: [Users]
+      summary: Criar usuario
+      description: Cria novo usuario (admin)
+      operationId: createUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: Usuario criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /users/{userId}:
+    get:
+      tags: [Users]
+      summary: Obter usuario por ID
+      operationId: getUser
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        '200':
+          description: Dados do usuario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Users]
+      summary: Atualizar usuario
+      operationId: updateUser
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: Usuario atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  # ============================================================
+  # FILES - Arquivos
+  # ============================================================
+  /files:
+    get:
+      tags: [Files]
+      summary: Listar arquivos
+      description: Lista arquivos do usuario com paginacao
+      operationId: listFiles
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: area_id
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, deleted]
+      responses:
+        '200':
+          description: Lista de arquivos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileListResponse'
+
+  /files/upload:
+    post:
+      tags: [Files]
+      summary: Upload de arquivo
+      description: Faz upload de arquivo via multipart/form-data
+      operationId: uploadFile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                area_id:
+                  type: integer
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Arquivo enviado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/File'
+        '413':
+          description: Arquivo muito grande
+
+  /files/{fileId}:
+    get:
+      tags: [Files]
+      summary: Obter detalhes do arquivo
+      operationId: getFile
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/fileId'
+      responses:
+        '200':
+          description: Detalhes do arquivo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/File'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Files]
+      summary: Excluir arquivo
+      operationId: deleteFile
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/fileId'
+      responses:
+        '200':
+          description: Arquivo excluido
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /files/{fileId}/presigned-upload:
+    get:
+      tags: [Files]
+      summary: Obter URL pre-assinada para upload
+      description: Gera URL para upload direto ao S3
+      operationId: getPresignedUpload
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/fileId'
+        - name: expires_in
+          in: query
+          schema:
+            type: integer
+            default: 300
+      responses:
+        '200':
+          description: URL pre-assinada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresignedUrlResponse'
+
+  /files/{fileId}/presigned-download:
+    get:
+      tags: [Files]
+      summary: Obter URL pre-assinada para download
+      description: Gera URL para download direto do S3
+      operationId: getPresignedDownload
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/fileId'
+        - name: expires_in
+          in: query
+          schema:
+            type: integer
+            default: 300
+      responses:
+        '200':
+          description: URL pre-assinada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresignedUrlResponse'
+
+  # ============================================================
+  # SHARES - Compartilhamentos
+  # ============================================================
+  /shares:
+    get:
+      tags: [Shares]
+      summary: Listar compartilhamentos
+      description: Lista compartilhamentos do usuario com paginacao
+      operationId: listShares
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pendente, ativo, aprovado, rejeitado, concluido, expirado, cancelado]
+      responses:
+        '200':
+          description: Lista de compartilhamentos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShareListResponse'
+    post:
+      tags: [Shares]
+      summary: Criar compartilhamento
+      description: Cria novo compartilhamento de arquivos
+      operationId: createShare
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateShareRequest'
+      responses:
+        '201':
+          description: Compartilhamento criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Share'
+
+  /shares/{shareId}:
+    get:
+      tags: [Shares]
+      summary: Obter detalhes do compartilhamento
+      operationId: getShare
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/shareId'
+      responses:
+        '200':
+          description: Detalhes do compartilhamento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShareDetails'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Shares]
+      summary: Excluir compartilhamento
+      operationId: deleteShare
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/shareId'
+      responses:
+        '200':
+          description: Compartilhamento excluido
+
+  /shares/{shareId}/cancel:
+    patch:
+      tags: [Shares]
+      summary: Cancelar compartilhamento
+      operationId: cancelShare
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/shareId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Compartilhamento cancelado
+
+  /shares/{shareId}/resend:
+    post:
+      tags: [Shares]
+      summary: Reenviar email do compartilhamento
+      operationId: resendShareEmail
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/shareId'
+      responses:
+        '200':
+          description: Email reenviado
+
+  # ============================================================
+  # SUPERVISOR - Aprovacao
+  # ============================================================
+  /supervisor/pending:
+    get:
+      tags: [Supervisor]
+      summary: Listar compartilhamentos pendentes
+      description: Lista todos os compartilhamentos aguardando aprovacao
+      operationId: listPendingShares
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Lista de pendentes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendingSharesResponse'
+
+  /supervisor/approve/{fileId}:
+    post:
+      tags: [Supervisor]
+      summary: Aprovar compartilhamento
+      operationId: approveShare
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/fileId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Mensagem opcional de aprovacao
+      responses:
+        '200':
+          description: Compartilhamento aprovado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalResponse'
+
+  /supervisor/reject/{fileId}:
+    post:
+      tags: [Supervisor]
+      summary: Rejeitar compartilhamento
+      operationId: rejectShare
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/fileId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  description: Motivo da rejeicao
+      responses:
+        '200':
+          description: Compartilhamento rejeitado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RejectionResponse'
+
+  /supervisor/extend/{fileId}:
+    put:
+      tags: [Supervisor]
+      summary: Estender prazo de expiracao
+      operationId: extendExpiration
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/fileId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [additional_hours, reason]
+              properties:
+                additional_hours:
+                  type: integer
+                  minimum: 1
+                  maximum: 72
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Prazo estendido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtendResponse'
+
+  # ============================================================
+  # NOTIFICATIONS - Notificacoes
+  # ============================================================
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Listar notificacoes
+      operationId: listNotifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: unread_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Lista de notificacoes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+
+  /notifications/unread-count:
+    get:
+      tags: [Notifications]
+      summary: Contar notificacoes nao lidas
+      operationId: getUnreadCount
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Contagem
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+
+  /notifications/{notificationId}/read:
+    patch:
+      tags: [Notifications]
+      summary: Marcar notificacao como lida
+      operationId: markAsRead
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Marcada como lida
+
+  /notifications/read-all:
+    patch:
+      tags: [Notifications]
+      summary: Marcar todas como lidas
+      operationId: markAllAsRead
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Todas marcadas como lidas
+
+  # ============================================================
+  # AUDIT - Auditoria
+  # ============================================================
+  /audit/logs:
+    get:
+      tags: [Audit]
+      summary: Listar logs de auditoria
+      operationId: listAuditLogs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: file_id
+          in: query
+          schema:
+            type: integer
+        - name: level
+          in: query
+          schema:
+            type: string
+            enum: [info, warning, error, critical]
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Lista de logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogResponse'
+    post:
+      tags: [Audit]
+      summary: Criar entrada de log
+      operationId: createAuditLog
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAuditLogRequest'
+      responses:
+        '200':
+          description: Log criado
+
+  /audit/metrics:
+    get:
+      tags: [Audit]
+      summary: Obter metricas do sistema
+      operationId: getMetrics
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [7d, 30d, 90d, all]
+            default: 30d
+      responses:
+        '200':
+          description: Metricas agregadas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
+  # ============================================================
+  # EMAILS - Envio de Emails
+  # ============================================================
+  /emails/send:
+    post:
+      tags: [Emails]
+      summary: Enviar email customizado
+      operationId: sendEmail
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendEmailRequest'
+      responses:
+        '200':
+          description: Email enviado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendEmailResponse'
+
+  /emails/history:
+    get:
+      tags: [Emails]
+      summary: Historico de emails enviados
+      operationId: getEmailHistory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: to_email
+          in: query
+          schema:
+            type: string
+        - name: email_type
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, sent, delivered, opened, bounced, failed]
+      responses:
+        '200':
+          description: Historico de emails
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailHistoryResponse'
+
+  /emails/{messageId}/status:
+    get:
+      tags: [Emails]
+      summary: Status de um email
+      operationId: getEmailStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Status do email
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /emails/otp:
+    post:
+      tags: [Emails]
+      summary: Enviar email com OTP
+      operationId: sendOtpEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, otp_code]
+              properties:
+                email:
+                  type: string
+                  format: email
+                otp_code:
+                  type: string
+                expires_minutes:
+                  type: integer
+                  default: 5
+      responses:
+        '200':
+          description: OTP enviado
+
+  # ============================================================
+  # DOWNLOAD - Portal Externo
+  # ============================================================
+  /download/verify:
+    post:
+      tags: [Download]
+      summary: Verificar token de acesso
+      description: Valida token de acesso enviado por email
+      operationId: verifyDownloadToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Token valido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyTokenResponse'
+        '401':
+          description: Token invalido ou expirado
+
+  /download/authenticate:
+    post:
+      tags: [Download]
+      summary: Autenticar com OTP
+      description: Valida codigo OTP para acesso aos arquivos
+      operationId: authenticateDownload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, otp_code]
+              properties:
+                token:
+                  type: string
+                otp_code:
+                  type: string
+      responses:
+        '200':
+          description: Autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadSessionResponse'
+        '401':
+          description: OTP invalido
+
+  /download/files:
+    get:
+      tags: [Download]
+      summary: Listar arquivos disponiveis
+      description: Lista arquivos do compartilhamento autenticado
+      operationId: listDownloadFiles
+      security:
+        - externalSession: []
+      responses:
+        '200':
+          description: Lista de arquivos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadFilesResponse'
+
+  /download/files/{fileId}/url:
+    get:
+      tags: [Download]
+      summary: Obter URL de download
+      description: Gera URL pre-assinada para download do arquivo
+      operationId: getDownloadUrl
+      security:
+        - externalSession: []
+      parameters:
+        - $ref: '#/components/parameters/fileId'
+      responses:
+        '200':
+          description: URL de download
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadUrlResponse'
+
+  # ============================================================
+  # AREAS - Departamentos
+  # ============================================================
+  /areas:
+    get:
+      tags: [Areas]
+      summary: Listar areas
+      operationId: listAreas
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de areas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Area'
+    post:
+      tags: [Areas]
+      summary: Criar area
+      operationId: createArea
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAreaRequest'
+      responses:
+        '201':
+          description: Area criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Area'
+
+  /areas/{areaId}:
+    get:
+      tags: [Areas]
+      summary: Obter area por ID
+      operationId: getArea
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: areaId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Detalhes da area
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Area'
+
+# ============================================================
+# COMPONENTS
+# ============================================================
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT para usuarios internos
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: app_session
+      description: Cookie de sessao alternativo
+    externalSession:
+      type: apiKey
+      in: cookie
+      name: external_session
+      description: Cookie de sessao para usuarios externos
+
+  parameters:
+    userId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: ID do usuario
+    fileId:
+      name: fileId
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: ID do arquivo
+    shareId:
+      name: shareId
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: ID do compartilhamento
+
+  responses:
+    Unauthorized:
+      description: Nao autenticado
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: Nao autenticado
+    NotFound:
+      description: Recurso nao encontrado
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: Recurso nao encontrado
+
+  schemas:
+    # Auth Schemas
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: usuario@petrobras.com.br
+        password:
+          type: string
+          format: password
+          minLength: 8
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          example: bearer
+        expires_in:
+          type: integer
+          example: 3600
+        user:
+          $ref: '#/components/schemas/User'
+
+    RefreshResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        expires_in:
+          type: integer
+
+    SignupRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          minLength: 2
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+        type:
+          type: string
+          enum: [internal, supervisor]
+          default: internal
+
+    ResetPasswordRequest:
+      type: object
+      required: [token, new_password]
+      properties:
+        token:
+          type: string
+        new_password:
+          type: string
+          format: password
+          minLength: 8
+
+    ExternalSessionResponse:
+      type: object
+      properties:
+        session_token:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        share_id:
+          type: integer
+        files_count:
+          type: integer
+
+    # User Schemas
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        type:
+          type: string
+          enum: [externo, internal, supervisor]
+        status:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        department:
+          type: string
+        job_title:
+          type: string
+        phone:
+          type: string
+        employee_id:
+          type: string
+        photo_url:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        last_login:
+          type: string
+          format: date-time
+        manager:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            email:
+              type: string
+
+    CreateUserRequest:
+      type: object
+      required: [name, email, type]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        type:
+          type: string
+          enum: [externo, internal, supervisor]
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        type:
+          type: string
+        status:
+          type: boolean
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        department:
+          type: string
+        job_title:
+          type: string
+
+    # File Schemas
+    File:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        mime_type:
+          type: string
+        size_bytes:
+          type: integer
+        size_formatted:
+          type: string
+        area_id:
+          type: integer
+        uploaded_by:
+          $ref: '#/components/schemas/User'
+        status:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    FileListResponse:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/File'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    PresignedUrlResponse:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        expires_in:
+          type: integer
+        method:
+          type: string
+          enum: [GET, PUT]
+
+    # Share Schemas
+    Share:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        external_email:
+          type: string
+          format: email
+        status:
+          type: string
+          enum: [pendente, ativo, aprovado, rejeitado, concluido, expirado, cancelado]
+        expiration_hours:
+          type: integer
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        files_count:
+          type: integer
+
+    ShareDetails:
+      allOf:
+        - $ref: '#/components/schemas/Share'
+        - type: object
+          properties:
+            created_by:
+              $ref: '#/components/schemas/User'
+            files:
+              type: array
+              items:
+                $ref: '#/components/schemas/File'
+            approval:
+              type: object
+              nullable: true
+              properties:
+                approved_by:
+                  $ref: '#/components/schemas/User'
+                approved_at:
+                  type: string
+                  format: date-time
+                comments:
+                  type: string
+            rejection:
+              type: object
+              nullable: true
+              properties:
+                rejected_by:
+                  $ref: '#/components/schemas/User'
+                rejected_at:
+                  type: string
+                  format: date-time
+                reason:
+                  type: string
+
+    CreateShareRequest:
+      type: object
+      required: [external_email, file_ids]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        external_email:
+          type: string
+          format: email
+        file_ids:
+          type: array
+          items:
+            type: integer
+          minItems: 1
+        expiration_hours:
+          type: integer
+          default: 72
+          minimum: 1
+          maximum: 168
+        area_id:
+          type: integer
+
+    ShareListResponse:
+      type: object
+      properties:
+        shares:
+          type: array
+          items:
+            $ref: '#/components/schemas/Share'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # Supervisor Schemas
+    PendingSharesResponse:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              recipient_email:
+                type: string
+              description:
+                type: string
+              sender:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  email:
+                    type: string
+                  department:
+                    type: string
+              files:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    size:
+                      type: string
+                    type:
+                      type: string
+              expiration_hours:
+                type: integer
+              created_at:
+                type: string
+                format: date-time
+              workflow:
+                type: object
+                properties:
+                  current_step:
+                    type: integer
+                  total_steps:
+                    type: integer
+                  steps:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        status:
+                          type: string
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    ApprovalResponse:
+      type: object
+      properties:
+        file_id:
+          type: integer
+        status:
+          type: string
+        approved_at:
+          type: string
+          format: date-time
+        approved_by:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        otp_sent:
+          type: boolean
+        recipient_email:
+          type: string
+
+    RejectionResponse:
+      type: object
+      properties:
+        file_id:
+          type: integer
+        status:
+          type: string
+        rejected_at:
+          type: string
+          format: date-time
+        rejected_by:
+          type: string
+        reason:
+          type: string
+
+    ExtendResponse:
+      type: object
+      properties:
+        file_id:
+          type: integer
+        previous_expiration:
+          type: string
+          format: date-time
+        new_expiration:
+          type: string
+          format: date-time
+        additional_hours:
+          type: integer
+        extended_by:
+          type: string
+        reason:
+          type: string
+
+    # Notification Schemas
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [share_pending, share_approved, share_rejected, share_expired, download_completed, system]
+        title:
+          type: string
+        message:
+          type: string
+        read:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+
+    NotificationListResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        unread_count:
+          type: integer
+
+    # Audit Schemas
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        action:
+          type: string
+        level:
+          type: string
+          enum: [info, warning, error, critical]
+        user:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            email:
+              type: string
+        details:
+          type: object
+          properties:
+            target_id:
+              type: integer
+            target_name:
+              type: string
+            description:
+              type: string
+            ip_address:
+              type: string
+
+    AuditLogResponse:
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    CreateAuditLogRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+        level:
+          type: string
+          enum: [info, warning, error, critical]
+          default: info
+        user_id:
+          type: integer
+        share_id:
+          type: integer
+        file_id:
+          type: integer
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+        detail:
+          type: string
+
+    MetricsResponse:
+      type: object
+      properties:
+        total_uploads:
+          type: integer
+        pending_approvals:
+          type: integer
+        approved_files:
+          type: integer
+        rejected_files:
+          type: integer
+        cancelled_files:
+          type: integer
+        expired_files:
+          type: integer
+        total_downloads:
+          type: integer
+        unique_downloaders:
+          type: integer
+        active_users:
+          type: integer
+        total_internal_users:
+          type: integer
+        total_external_users:
+          type: integer
+        storage_used:
+          type: string
+        storage_limit:
+          type: string
+        storage_percentage:
+          type: number
+        uploads_today:
+          type: integer
+        uploads_this_week:
+          type: integer
+        uploads_this_month:
+          type: integer
+        top_senders:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              email:
+                type: string
+              count:
+                type: integer
+        top_recipients:
+          type: array
+          items:
+            type: object
+            properties:
+              email:
+                type: string
+              count:
+                type: integer
+
+    # Email Schemas
+    SendEmailRequest:
+      type: object
+      required: [to_email, subject, body_html]
+      properties:
+        to_email:
+          type: string
+          format: email
+        subject:
+          type: string
+        body_html:
+          type: string
+        share_id:
+          type: integer
+
+    SendEmailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message_id:
+          type: string
+        status:
+          type: string
+
+    EmailStatus:
+      type: object
+      properties:
+        message_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, sent, delivered, opened, bounced, failed]
+        to_email:
+          type: string
+        subject:
+          type: string
+        sent_at:
+          type: string
+          format: date-time
+        delivered_at:
+          type: string
+          format: date-time
+          nullable: true
+        opened_at:
+          type: string
+          format: date-time
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+
+    EmailHistoryResponse:
+      type: object
+      properties:
+        emails:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailStatus'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # Download Schemas
+    VerifyTokenResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        share_id:
+          type: integer
+        recipient_email:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        otp_required:
+          type: boolean
+
+    DownloadSessionResponse:
+      type: object
+      properties:
+        session_token:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        share:
+          type: object
+          properties:
+            id:
+              type: integer
+            sender_name:
+              type: string
+            files_count:
+              type: integer
+
+    DownloadFilesResponse:
+      type: object
+      properties:
+        share:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            sender:
+              type: string
+            expires_at:
+              type: string
+              format: date-time
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              size:
+                type: string
+              mime_type:
+                type: string
+              downloaded:
+                type: boolean
+
+    DownloadUrlResponse:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        expires_in:
+          type: integer
+        filename:
+          type: string
+
+    # Area Schemas
+    Area:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        supervisors:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+
+    CreateAreaRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        supervisor_ids:
+          type: array
+          items:
+            type: integer
+
+    # Common Schemas
+    Pagination:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_items:
+          type: integer
+        items_per_page:
+          type: integer

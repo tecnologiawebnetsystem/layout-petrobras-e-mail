@@ -66,6 +66,20 @@ async def send_email(subject: str, recipients: list[str], body: str):
         await send_email_dev(subject, recipients, body)
 
 
+def send_custom_email(to_email: str, subject: str, body_html: str):
+    """
+    Envia email customizado de forma sincrona.
+    Usado pelo routes_emails.py.
+    """
+    if settings.email_provider == "ses":
+        send_email_ses(subject, [to_email], body_html)
+    else:
+        # Em modo dev, apenas loga o email
+        print(f"[EMAIL DEV] To: {to_email}")
+        print(f"[EMAIL DEV] Subject: {subject}")
+        print(f"[EMAIL DEV] Body: {body_html[:200]}...")
+
+
 # ---- Facades de e-mail de negócios ----
 async def send_otp_email(dest_email: str, code: str, expires_at: datetime):
     html = render_email_template(
