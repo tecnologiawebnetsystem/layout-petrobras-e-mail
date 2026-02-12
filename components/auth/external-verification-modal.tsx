@@ -14,9 +14,10 @@ interface ExternalVerificationModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: (email: string) => void
+  initialEmail?: string
 }
 
-export function ExternalVerificationModal({ open, onOpenChange, onSuccess }: ExternalVerificationModalProps) {
+export function ExternalVerificationModal({ open, onOpenChange, onSuccess, initialEmail }: ExternalVerificationModalProps) {
   const [step, setStep] = useState<"email" | "code">("email")
   const [email, setEmail] = useState("")
   const [code, setCode] = useState(["", "", "", "", "", ""])
@@ -51,13 +52,18 @@ export function ExternalVerificationModal({ open, onOpenChange, onSuccess }: Ext
 
   useEffect(() => {
     if (open) {
-      setStep("email")
-      setEmail("")
+      if (initialEmail) {
+        setEmail(initialEmail)
+        setStep("email")
+      } else {
+        setStep("email")
+        setEmail("")
+      }
       setCode(["", "", "", "", "", ""])
       setCountdown(60)
       setGeneratedCode("")
     }
-  }, [open])
+  }, [open, initialEmail])
 
   const handleSendCode = () => {
     if (!email) {
