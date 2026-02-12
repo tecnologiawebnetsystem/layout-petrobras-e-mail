@@ -50,6 +50,7 @@ export function LoginForm() {
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [showExternalVerification, setShowExternalVerification] = useState(false)
   const [isDemoOpen, setIsDemoOpen] = useState(false)
+  const [demoExternalMode, setDemoExternalMode] = useState(false)
   const [notification, setNotification] = useState<{
     show: boolean
     type: "success" | "error" | "warning" | "info"
@@ -75,12 +76,15 @@ export function LoginForm() {
     const credentials = DEMO_CREDENTIALS[userType]
 
     if (userType === "external") {
-      setShowExternalVerification(true)
+      setEmail(credentials.email)
+      setPassword("")
+      setDemoExternalMode(true)
       return
     }
 
     const actualUserType = userType === "externalEmpty" ? "external" : userType
 
+    setDemoExternalMode(false)
     setEmail(credentials.email)
     setPassword(credentials.password)
 
@@ -201,6 +205,12 @@ export function LoginForm() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+
+    if (demoExternalMode) {
+      setShowExternalVerification(true)
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -367,7 +377,12 @@ export function LoginForm() {
                   type="text"
                   placeholder="Digite seu e-mail ou usuário"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    if (demoExternalMode && e.target.value !== DEMO_CREDENTIALS.external.email) {
+                      setDemoExternalMode(false)
+                    }
+                  }}
                   className="pl-10 h-12 bg-muted/50 border-border"
                   required
                 />
@@ -381,39 +396,41 @@ export function LoginForm() {
                 </p>
               )}
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm font-medium text-foreground">
-                  Senha
-                </Label>
-                <button
-                  type="button"
-                  onClick={() => setShowForgotPassword(true)}
-                  className="text-sm font-medium text-[#0047BB] hover:text-[#003A99] transition-colors cursor-pointer hover:underline"
-                >
-                  Esqueceu a senha?
-                </button>
+            {!demoExternalMode && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-sm font-medium text-foreground">
+                    Senha
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-sm font-medium text-[#0047BB] hover:text-[#003A99] transition-colors cursor-pointer hover:underline"
+                  >
+                    Esqueceu a senha?
+                  </button>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Digite sua senha"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 pr-10 h-12 bg-muted/50 border-border"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
               </div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Digite sua senha"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 h-12 bg-muted/50 border-border"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-            </div>
+            )}
             <Button
               type="submit"
               disabled={isLoading}
@@ -505,8 +522,12 @@ export function LoginForm() {
       <ForgotPasswordModal open={showForgotPassword} onOpenChange={setShowForgotPassword} />
       <ExternalVerificationModal
         open={showExternalVerification}
-        onOpenChange={setShowExternalVerification}
+        onOpenChange={(open) => {
+          setShowExternalVerification(open)
+          if (!open) setDemoExternalMode(false)
+        }}
         onSuccess={handleExternalVerificationSuccess}
+        initialEmail={demoExternalMode ? email : undefined}
       />
       <NotificationModal
         open={notification.show}
