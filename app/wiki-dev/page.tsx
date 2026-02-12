@@ -5,147 +5,48 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Cloud, Server, Shield, Home, Layers, Workflow, Lock, Container, HardDrive, FolderOpen, Code, Package, Target } from "lucide-react"
+import { Search, BookOpen, Home, HardDrive, Target, Database, ArrowLeftRight } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
   const [searchQuery, setSearchQuery] = useState("")
 
   const wikiCategories = [
-    // =============================================
-    // GESTAO DO PROJETO
-    // =============================================
     {
       title: "Roadmap do Projeto",
       description: "Plano visual com todas as fases, entregas, prazos e progresso do projeto - Timeline interativa",
       icon: Target,
       href: "/wiki-dev/roadmap",
-      color: "from-indigo-500 to-purple-600",
+      color: "from-indigo-500 to-blue-600",
       topics: ["Fases", "Entregas", "Prazos", "Progresso", "Milestones"],
       category: "gestao",
     },
-    // =============================================
-    // AWS / INFRAESTRUTURA
-    // =============================================
     {
-      title: "Seguranca AWS",
-      description: "Politicas IAM, KMS para criptografia, VPC, Security Groups e boas praticas de seguranca",
-      icon: Lock,
-      href: "/wiki-dev/seguranca-aws",
-      color: "from-red-500 to-rose-600",
-      topics: ["IAM", "KMS", "VPC", "Security Groups", "Policies"],
-      category: "aws",
+      title: "PostgreSQL (Neon) - Schema Completo",
+      description: "Documentacao de todas as 19 tabelas do banco de dados Neon PostgreSQL - colunas, tipos, FK e relacionamentos",
+      icon: Database,
+      href: "/wiki-dev/postgresql-neon",
+      color: "from-blue-600 to-cyan-500",
+      topics: ["PostgreSQL", "Neon", "19 Tabelas", "Schema", "SQLModel"],
+      category: "banco",
     },
     {
-      title: "Deploy AWS com Dominio Provisorio",
-      description: "Guia completo para publicar Next.js na AWS com dominio provisorio para HML e Producao",
-      icon: Layers,
-      href: "/wiki-dev/deploy-aws",
-      color: "from-green-500 to-emerald-600",
-      topics: ["Amplify", "S3 + CloudFront", "ECS Fargate", "Dominio", "Custos"],
-      category: "aws",
-    },
-    {
-      title: "Desenvolvimento Local AWS",
-      description: "Como rodar DynamoDB, S3, SES localmente sem custo - Docker e LocalStack",
-      icon: Server,
-      href: "/wiki-dev/local-development",
-      color: "from-emerald-500 to-teal-500",
-      topics: ["DynamoDB Local", "LocalStack", "Docker", "Zero Custo"],
-      category: "aws",
-    },
-    {
-      title: "Docker Local - Front e Back",
-      description: "Guia completo passo a passo para configurar Docker na maquina local: Front-End React e Back-End Python",
-      icon: Container,
-      href: "/wiki-dev/docker-local",
-      color: "from-blue-500 to-indigo-600",
-      topics: ["Docker", "React", "Python", "docker-compose", "Localhost"],
-      category: "aws",
-    },
-    {
-      title: "Docker na AWS - ECS/Fargate",
-      description: "Guia completo passo a passo para configurar Docker na AWS com ECS e Fargate para Front e Back",
-      icon: Cloud,
-      href: "/wiki-dev/docker-aws",
-      color: "from-orange-600 to-red-600",
-      topics: ["AWS", "ECS", "Fargate", "ECR", "Load Balancer", "Docker"],
-      category: "aws",
+      title: "Integracoes Front x Back x Banco",
+      description: "Mapa completo de todas as rotas entre Next.js (Frontend), FastAPI Python (Backend) e Neon PostgreSQL (Banco)",
+      icon: ArrowLeftRight,
+      href: "/wiki-dev/integracoes",
+      color: "from-green-500 to-blue-600",
+      topics: ["48 Rotas", "13 Routers", "Audit Logs", "100% Integrado"],
+      category: "integracao",
     },
     {
       title: "DynamoDB na AWS - Guia Completo",
-      description: "Como criar e configurar DynamoDB na AWS: tabelas, indices, permissoes, acesso e boas praticas",
+      description: "Referencia para configuracao de DynamoDB na AWS - Tabelas NoSQL, indices GSI, TTL e boas praticas",
       icon: HardDrive,
       href: "/wiki-dev/dynamodb-aws",
       color: "from-amber-500 to-orange-600",
-      topics: ["DynamoDB", "AWS", "Tabelas", "Indices", "IAM", "Permissoes"],
+      topics: ["DynamoDB", "AWS", "NoSQL", "Referencia"],
       category: "aws",
-    },
-    {
-      title: "S3 - Como Configurar",
-      description: "Passo a passo completo para configurar S3 na AWS: criar buckets, permissoes, CORS e upload/download",
-      icon: FolderOpen,
-      href: "/wiki-dev/s3-aws",
-      color: "from-green-500 to-teal-600",
-      topics: ["S3", "AWS", "Buckets", "CORS", "IAM", "Upload/Download"],
-      category: "aws",
-    },
-    // =============================================
-    // REPOSITORIOS E DEPENDENCIAS
-    // =============================================
-    {
-      title: "Nexus Repository Manager",
-      description: "Guia completo para configurar o Nexus: npm, pip, Docker e integracao com AWS (CodeBuild, ECS)",
-      icon: Package,
-      href: "/wiki-dev/nexus-repository",
-      color: "from-orange-500 to-red-600",
-      topics: ["Nexus", "npm", "pip", "Docker Registry", "AWS", "CI/CD"],
-      category: "repositorios",
-    },
-    // =============================================
-    // BACK-END / API
-    // =============================================
-    {
-      title: "API Endpoints - Documentacao Back-End",
-      description: "Documentacao completa de todos os endpoints que o Back-End Python precisa implementar para integrar com o Front-End",
-      icon: Code,
-      href: "/wiki-dev/api-endpoints",
-      color: "from-violet-500 to-purple-600",
-      topics: ["REST API", "Endpoints", "Request/Response", "Autenticacao", "Erros"],
-      category: "backend",
-    },
-    // =============================================
-    // INTEGRACAO
-    // =============================================
-    {
-      title: "ServiceNow - Integracao",
-      description: "Guia completo dos endpoints ServiceNow: como usar, autenticacao, exemplos praticos",
-      icon: Workflow,
-      href: "/wiki-dev/servicenow",
-      color: "from-teal-500 to-cyan-600",
-      topics: ["ServiceNow", "ITSM", "Tickets", "API REST", "Integracao"],
-      category: "integracao",
-    },
-    // =============================================
-    // AUTENTICACAO
-    // =============================================
-    {
-      title: "Microsoft Entra ID",
-      description: "SSO corporativo com Microsoft Entra ID (Azure AD) - Codigo completo pronto",
-      icon: Shield,
-      href: "/wiki-dev/entra-id",
-      color: "from-blue-600 to-indigo-600",
-      topics: ["SSO", "Azure AD", "Autenticacao", "Documento Formal"],
-      category: "autenticacao",
-    },
-    {
-      title: "Deploy e Ambientes",
-      description: "Como fazer deploy em DEV, HML e Producao com checklist e rollback",
-      icon: Layers,
-      href: "/wiki-dev/deploy-ambientes",
-      color: "from-green-600 to-emerald-600",
-      topics: ["DEV", "HML", "PRD", "Rollback", "Checklist"],
-      category: "deploy",
     },
   ]
 

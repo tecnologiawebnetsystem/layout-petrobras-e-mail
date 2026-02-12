@@ -169,19 +169,29 @@ export default function DynamoDBAWSPage() {
           </Link>
         </div>
 
+        {/* Banner de contexto */}
+        <Alert className="border-blue-300 bg-blue-50 mb-6">
+          <AlertTriangle className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            <strong>Nota:</strong> O sistema atualmente utiliza <strong>PostgreSQL (Neon)</strong> como banco de dados principal (19 tabelas).
+            Esta documentacao do DynamoDB serve como referencia para uma futura migracao AWS ou para projetos que necessitem de NoSQL.
+            Consulte a pagina <Link href="/wiki-dev/postgresql-neon" className="underline font-semibold">PostgreSQL (Neon)</Link> para ver o schema atual.
+          </AlertDescription>
+        </Alert>
+
         <div className="mb-8">
           <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 shadow-lg">
             <Database className="h-8 w-8 text-white" />
           </div>
-          <h1 className="mb-3 text-4xl font-bold text-slate-900">DynamoDB na AWS - Guia Completo para Leigos</h1>
+          <h1 className="mb-3 text-4xl font-bold text-slate-900">DynamoDB na AWS - Guia Completo</h1>
           <p className="text-lg text-slate-600">
-            Como criar e configurar todas as tabelas do sistema no Amazon DynamoDB passo a passo
+            Referencia para configuracao de DynamoDB na AWS - Tabelas NoSQL, indices GSI, TTL e boas praticas
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Badge className="bg-orange-100 text-orange-700">DynamoDB</Badge>
             <Badge className="bg-blue-100 text-blue-700">8 Tabelas</Badge>
             <Badge className="bg-green-100 text-green-700">15+ GSIs</Badge>
-            <Badge className="bg-purple-100 text-purple-700">Passo a Passo</Badge>
+            <Badge className="bg-slate-100 text-slate-700">Referencia AWS</Badge>
           </div>
         </div>
 
