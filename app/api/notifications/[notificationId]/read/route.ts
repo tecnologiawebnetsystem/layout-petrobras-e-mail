@@ -1,49 +1,38 @@
-/**
- * PUT /api/notifications/[notificationId]/read
- * Marcar notificacao individual como lida via Neon PostgreSQL
- */
-
 import { NextRequest, NextResponse } from "next/server"
-import { getSessionByAccessToken, markNotificationAsRead } from "@/lib/db/queries"
 
-function getAuthToken(request: NextRequest): string | null {
-  const authHeader = request.headers.get("authorization")
-  if (!authHeader || !authHeader.startsWith("Bearer ")) return null
-  return authHeader.split(" ")[1]
-}
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
 
-interface RouteParams {
-  params: Promise<{ notificationId: string }>
-}
-
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ notificationId: string }> }
+) {
   try {
-    const token = getAuthToken(request)
     const { notificationId } = await params
+    const authHeader = request.headers.get("authorization") || ""
 
-    if (!token) {
+    const response = await fetch(
+      `${BACKEND_URL}/api/v1/notifications/${notificationId}/read`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: authHeader,
+        },
+      }
+    )
+
+    const data = await response.json()
+
+    if (!response.ok) {
       return NextResponse.json(
-        { success: false, error: { code: "UNAUTHORIZED", message: "Token de autenticacao nao fornecido" } },
-        { status: 401 }
+        { success: false, error: { code: "UPDATE_FAILED", message: data.detail || "Erro ao marcar" } },
+        { status: response.status }
       )
     }
 
-    const session = await getSessionByAccessToken(token)
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: { code: "UNAUTHORIZED", message: "Sessao invalida ou expirada" } },
-        { status: 401 }
-      )
-    }
-
-    await markNotificationAsRead(notificationId)
-
-    return NextResponse.json({
-      success: true,
-      message: "Notificacao marcada como lida",
-    })
+    return NextResponse.json(data)
   } catch (error) {
-    console.error("[API] Mark notification read error:", error)
+    console.error("[API] Notification read proxy error:", error)
     return NextResponse.json(
       { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
       { status: 500 }

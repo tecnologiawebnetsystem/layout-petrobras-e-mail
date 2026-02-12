@@ -1,96 +1,30 @@
-/**
- * GET /api/supervisor/pending
- * Lista arquivos pendentes de aprovacao via Neon PostgreSQL
- */
-
 import { NextRequest, NextResponse } from "next/server"
-import {
-  getSessionByAccessToken,
-  getFileUploadsByStatus,
-  getFileUploadItems,
-  getFileUploadSteps,
-  getUserById,
-} from "@/lib/db/queries"
 
-function getAuthToken(request: NextRequest): string | null {
-  const authHeader = request.headers.get("authorization")
-  if (!authHeader || !authHeader.startsWith("Bearer ")) return null
-  return authHeader.split(" ")[1]
-}
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
 
 export async function GET(request: NextRequest) {
   try {
-    const token = getAuthToken(request)
-    if (!token) {
-      return NextResponse.json(
-        { success: false, error: { code: "UNAUTHORIZED", message: "Token de autenticacao nao fornecido" } },
-        { status: 401 }
-      )
-    }
+    const authHeader = request.headers.get("authorization") || ""
+    const searchParams = request.nextUrl.searchParams.toString()
+    const qs = searchParams ? `?${searchParams}` : ""
 
-    const session = await getSessionByAccessToken(token)
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: { code: "UNAUTHORIZED", message: "Sessao invalida ou expirada" } },
-        { status: 401 }
-      )
-    }
-
-    // Verificar se e supervisor
-    if (session.user_type !== "supervisor") {
-      return NextResponse.json(
-        { success: false, error: { code: "FORBIDDEN", message: "Acesso restrito a supervisores" } },
-        { status: 403 }
-      )
-    }
-
-    const uploads = await getFileUploadsByStatus("pending")
-
-    const enriched = await Promise.all(
-      uploads.map(async (upload) => {
-        const [items, steps, sender] = await Promise.all([
-          getFileUploadItems(upload.id),
-          getFileUploadSteps(upload.id),
-          getUserById(upload.sender_id),
-        ])
-
-        return {
-          id: upload.id,
-          name: upload.name,
-          recipientEmail: upload.recipient_email,
-          description: upload.description,
-          sender: sender
-            ? {
-                id: sender.id,
-                name: sender.name,
-                email: sender.email,
-                department: sender.department,
-                employeeId: sender.employee_id,
-              }
-            : null,
-          files: items.map((f) => ({ name: f.name, size: f.size, type: f.type })),
-          expirationHours: upload.expiration_hours,
-          createdAt: upload.created_at,
-          workflow: {
-            currentStep: upload.current_step,
-            totalSteps: upload.total_steps,
-            steps: steps.map((s) => ({
-              title: s.title,
-              status: s.status,
-              completedDate: s.completed_date,
-              comments: s.comments,
-            })),
-          },
-        }
-      })
-    )
-
-    return NextResponse.json({
-      success: true,
-      data: enriched,
+    const response = await fetch(`${BACKEND_URL}/api/v1/supervisor/pending${qs}`, {
+      method: "GET",
+      headers: { Authorization: authHeader },
     })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { success: false, error: { code: "FETCH_FAILED", message: data.detail || "Erro ao buscar pendentes" } },
+        { status: response.status }
+      )
+    }
+
+    return NextResponse.json(data)
   } catch (error) {
-    console.error("[API] Get pending files error:", error)
+    console.error("[API] Supervisor pending proxy error:", error)
     return NextResponse.json(
       { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
       { status: 500 }

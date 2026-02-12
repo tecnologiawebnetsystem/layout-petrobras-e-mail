@@ -1,74 +1,32 @@
-/**
- * GET /api/emails/history
- * Historico de emails via Neon PostgreSQL
- */
-
 import { NextRequest, NextResponse } from "next/server"
-import { getSessionByAccessToken, getEmailHistory } from "@/lib/db/queries"
 
-function getAuthToken(request: NextRequest): string | null {
-  const authHeader = request.headers.get("authorization")
-  if (!authHeader || !authHeader.startsWith("Bearer ")) return null
-  return authHeader.split(" ")[1]
-}
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
 
 export async function GET(request: NextRequest) {
   try {
-    const token = getAuthToken(request)
-    if (!token) {
+    const authHeader = request.headers.get("authorization") || ""
+    const searchParams = request.nextUrl.searchParams.toString()
+    const qs = searchParams ? `?${searchParams}` : ""
+
+    const response = await fetch(`${BACKEND_URL}/api/v1/emails/history${qs}`, {
+      method: "GET",
+      headers: { Authorization: authHeader },
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
       return NextResponse.json(
-        { success: false, error: { code: "UNAUTHORIZED", message: "Token de autenticacao nao fornecido" } },
-        { status: 401 }
+        { success: false, error: { code: "FETCH_FAILED", message: data.detail || "Erro ao buscar historico" } },
+        { status: response.status }
       )
     }
 
-    const session = await getSessionByAccessToken(token)
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: { code: "UNAUTHORIZED", message: "Sessao invalida ou expirada" } },
-        { status: 401 }
-      )
-    }
-
-    const { searchParams } = new URL(request.url)
-    const status = searchParams.get("status") || undefined
-    const page = parseInt(searchParams.get("page") || "1", 10)
-    const limit = parseInt(searchParams.get("limit") || "20", 10)
-    const offset = (page - 1) * limit
-
-    const { emails, total } = await getEmailHistory({
-      status,
-      limit,
-      offset,
-    })
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        emails: emails.map((e) => ({
-          id: e.id,
-          messageId: e.message_id,
-          toEmail: e.to_email,
-          toName: e.to_name,
-          subject: e.subject,
-          status: e.status,
-          sentAt: e.sent_at,
-          deliveredAt: e.delivered_at,
-          error: e.error,
-          createdAt: e.created_at,
-        })),
-        pagination: {
-          currentPage: page,
-          totalPages: Math.ceil(total / limit),
-          totalItems: total,
-          itemsPerPage: limit,
-        },
-      },
-    })
+    return NextResponse.json({ success: true, data })
   } catch (error) {
-    console.error("[API] Erro ao buscar historico:", error)
+    console.error("[API] Emails history proxy error:", error)
     return NextResponse.json(
-      { success: false, error: { code: "INTERNAL_ERROR", message: "Erro interno do servidor" } },
+      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
       { status: 500 }
     )
   }

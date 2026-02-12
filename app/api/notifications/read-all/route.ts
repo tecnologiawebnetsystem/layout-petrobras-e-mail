@@ -1,43 +1,31 @@
-/**
- * PUT /api/notifications/read-all
- * Marcar todas notificacoes como lidas via Neon PostgreSQL
- */
-
 import { NextRequest, NextResponse } from "next/server"
-import { getSessionByAccessToken, markAllNotificationsAsRead } from "@/lib/db/queries"
 
-function getAuthToken(request: NextRequest): string | null {
-  const authHeader = request.headers.get("authorization")
-  if (!authHeader || !authHeader.startsWith("Bearer ")) return null
-  return authHeader.split(" ")[1]
-}
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
 
-export async function PUT(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const token = getAuthToken(request)
-    if (!token) {
-      return NextResponse.json(
-        { success: false, error: { code: "UNAUTHORIZED", message: "Token de autenticacao nao fornecido" } },
-        { status: 401 }
-      )
-    }
+    const authHeader = request.headers.get("authorization") || ""
 
-    const session = await getSessionByAccessToken(token)
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: { code: "UNAUTHORIZED", message: "Sessao invalida ou expirada" } },
-        { status: 401 }
-      )
-    }
-
-    await markAllNotificationsAsRead(session.user_id)
-
-    return NextResponse.json({
-      success: true,
-      message: "Todas as notificacoes foram marcadas como lidas",
+    const response = await fetch(`${BACKEND_URL}/api/v1/notifications/read-all`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authHeader,
+      },
     })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { success: false, error: { code: "UPDATE_FAILED", message: data.detail || "Erro ao marcar" } },
+        { status: response.status }
+      )
+    }
+
+    return NextResponse.json(data)
   } catch (error) {
-    console.error("[API] Mark all notifications read error:", error)
+    console.error("[API] Notifications read-all proxy error:", error)
     return NextResponse.json(
       { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
       { status: 500 }
