@@ -50,6 +50,7 @@ export function LoginForm() {
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [isDemoOpen, setIsDemoOpen] = useState(false)
   const [demoExternalMode, setDemoExternalMode] = useState(false)
+  const [demoExternalType, setDemoExternalType] = useState<"external" | "externalEmpty">("external")
   const [externalStep, setExternalStep] = useState<"email" | "code">("email")
   const [verificationCode, setVerificationCode] = useState(["", "", "", "", "", ""])
   const [generatedCode, setGeneratedCode] = useState("")
@@ -173,14 +174,14 @@ export function LoginForm() {
   const handleQuickLogin = (userType: "internal" | "external" | "supervisor" | "externalEmpty") => {
     const credentials = DEMO_CREDENTIALS[userType]
 
-    if (userType === "external") {
+    if (userType === "external" || userType === "externalEmpty") {
       setEmail(credentials.email)
       setPassword("")
       setDemoExternalMode(true)
+      setDemoExternalType(userType)
+      setExternalStep("email")
       return
     }
-
-    const actualUserType = userType === "externalEmpty" ? "external" : userType
 
     setDemoExternalMode(false)
     setEmail(credentials.email)
@@ -190,10 +191,10 @@ export function LoginForm() {
       setIsLoading(true)
       setAuth(
         {
-          id: userType === "externalEmpty" ? "demo-empty-user-id" : "demo-user-id",
+          id: "demo-user-id",
           email: credentials.email,
           name: credentials.name,
-          userType: actualUserType,
+          userType: userType,
         },
         "demo-access-token",
         "demo-refresh-token",
@@ -203,10 +204,10 @@ export function LoginForm() {
         action: "login",
         level: "success",
         user: {
-          id: userType === "externalEmpty" ? "demo-empty-user-id" : "demo-user-id",
+          id: "demo-user-id",
           name: credentials.name,
           email: credentials.email,
-          type: actualUserType,
+          type: userType,
         },
         details: {
           description: `Login realizado com sucesso via acesso rápido`,
@@ -229,12 +230,15 @@ export function LoginForm() {
     }, 100)
   }
 
-  const handleExternalVerificationSuccess = (email: string) => {
+  const handleExternalVerificationSuccess = (verifiedEmail: string) => {
+    const credentials = DEMO_CREDENTIALS[demoExternalType]
+    const userId = demoExternalType === "externalEmpty" ? "demo-empty-user-id" : "demo-external-user"
+
     setAuth(
       {
-        id: "demo-external-user",
-        email: email,
-        name: "Maria Santos",
+        id: userId,
+        email: verifiedEmail,
+        name: credentials.name,
         userType: "external",
       },
       "demo-access-token",
@@ -245,9 +249,9 @@ export function LoginForm() {
       action: "login",
       level: "success",
       user: {
-        id: "demo-external-user",
-        name: "Maria Santos",
-        email: email,
+        id: userId,
+        name: credentials.name,
+        email: verifiedEmail,
         type: "external",
       },
       details: {
@@ -552,7 +556,7 @@ export function LoginForm() {
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value)
-                      if (demoExternalMode && e.target.value !== DEMO_CREDENTIALS.external.email) {
+                      if (demoExternalMode && e.target.value !== DEMO_CREDENTIALS[demoExternalType].email) {
                         setDemoExternalMode(false)
                       }
                     }}
