@@ -59,7 +59,8 @@ def close_area(area_id: int, session: Session = Depends(get_session), request: R
     log_event(
         session=session,
         action="ENCERRAR_AREA",
-        detail=f"area_id={area_id}",
+        user_id=area.applicant_id,
+        detail=f"area_id={area_id}, area_name={area.name}",
         ip=request.client.host if request else None,
         user_agent=request.headers.get("User-Agent") if request else None
     )
