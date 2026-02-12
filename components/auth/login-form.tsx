@@ -1,8 +1,9 @@
 "use client"
 
 import type { FormEvent } from "react"
-import { useState } from "react"
-import { Eye, EyeOff, User, Lock, ChevronDown, TestTube2 } from "lucide-react"
+import type React from "react"
+import { useState, useEffect, useRef } from "react"
+import { Eye, EyeOff, User, Lock, ChevronDown, TestTube2, ArrowLeft, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,7 +11,6 @@ import { LoginBackground } from "@/components/ui/login-background"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { ForgotPasswordModal } from "@/components/auth/forgot-password-modal"
 import { NotificationModal } from "@/components/shared/notification-modal"
-import { ExternalVerificationModal } from "@/components/auth/external-verification-modal"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useAuditLogStore } from "@/lib/stores/audit-log-store"
 import { useRouter } from "next/navigation"
@@ -48,9 +48,14 @@ export function LoginForm() {
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
-  const [showExternalVerification, setShowExternalVerification] = useState(false)
   const [isDemoOpen, setIsDemoOpen] = useState(false)
   const [demoExternalMode, setDemoExternalMode] = useState(false)
+  const [externalStep, setExternalStep] = useState<"email" | "code">("email")
+  const [verificationCode, setVerificationCode] = useState(["", "", "", "", "", ""])
+  const [generatedCode, setGeneratedCode] = useState("")
+  const [countdown, setCountdown] = useState(60)
+  const [isResending, setIsResending] = useState(false)
+  const codeInputRefs = useRef<(HTMLInputElement | null)[]>([])
   const [notification, setNotification] = useState<{
     show: boolean
     type: "success" | "error" | "warning" | "info"
@@ -71,6 +76,99 @@ export function LoginForm() {
   const showEntraIdButton = entraConfig.configured
 
   const isInternalUser = email.toLowerCase().includes("@petrobras")
+
+  // Countdown timer for verification code
+  useEffect(() => {
+    if (externalStep === "code" && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [countdown, externalStep])
+
+  const generateRandomCode = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString()
+  }
+
+  const handleSendCode = () => {
+    if (!email) return
+    const newCode = generateRandomCode()
+    setGeneratedCode(newCode)
+    setExternalStep("code")
+    setCountdown(60)
+    setVerificationCode(["", "", "", "", "", ""])
+    setNotification({
+      show: true,
+      type: "success",
+      title: "Codigo enviado!",
+      message: `Um codigo de 6 digitos foi enviado para ${email}`,
+    })
+  }
+
+  const handleCodeChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return
+    const newCode = [...verificationCode]
+    newCode[index] = value
+    setVerificationCode(newCode)
+
+    if (value && index < 5) {
+      codeInputRefs.current[index + 1]?.focus()
+    }
+
+    if (index === 5 && value) {
+      const fullCode = newCode.join("")
+      if (fullCode === generatedCode) {
+        setTimeout(() => {
+          setNotification({
+            show: true,
+            type: "success",
+            title: "Codigo verificado!",
+            message: "Redirecionando para seus documentos...",
+          })
+          setTimeout(() => {
+            handleExternalVerificationSuccess(email)
+          }, 1500)
+        }, 300)
+      } else {
+        setNotification({
+          show: true,
+          type: "error",
+          title: "Codigo invalido",
+          message: "O codigo informado esta incorreto. Tente novamente.",
+        })
+        setVerificationCode(["", "", "", "", "", ""])
+        codeInputRefs.current[0]?.focus()
+      }
+    }
+  }
+
+  const handleCodeKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !verificationCode[index] && index > 0) {
+      codeInputRefs.current[index - 1]?.focus()
+    }
+  }
+
+  const handleResendCode = () => {
+    setIsResending(true)
+    setCountdown(60)
+    setVerificationCode(["", "", "", "", "", ""])
+    const newCode = generateRandomCode()
+    setGeneratedCode(newCode)
+    setTimeout(() => {
+      setIsResending(false)
+      setNotification({
+        show: true,
+        type: "info",
+        title: "Codigo reenviado",
+        message: `Um novo codigo foi enviado para ${email}`,
+      })
+    }, 1000)
+  }
+
+  const handleBackToEmail = () => {
+    setExternalStep("email")
+    setVerificationCode(["", "", "", "", "", ""])
+    setGeneratedCode("")
+  }
 
   const handleQuickLogin = (userType: "internal" | "external" | "supervisor" | "externalEmpty") => {
     const credentials = DEMO_CREDENTIALS[userType]
@@ -207,7 +305,7 @@ export function LoginForm() {
     e.preventDefault()
 
     if (demoExternalMode) {
-      setShowExternalVerification(true)
+      handleSendCode()
       return
     }
 
@@ -364,81 +462,157 @@ export function LoginForm() {
             </p>
           </header>
 
-          {/* Formulario principal */}
-          <form onSubmit={handleSubmit} className="space-y-5" aria-label="Formulario de login">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-foreground">
-                E-mail ou Usuário
-              </Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="text"
-                  placeholder="Digite seu e-mail ou usuário"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value)
-                    if (demoExternalMode && e.target.value !== DEMO_CREDENTIALS.external.email) {
-                      setDemoExternalMode(false)
-                    }
-                  }}
-                  className="pl-10 h-12 bg-muted/50 border-border"
-                  required
-                />
-              </div>
-              {email && (
-                <p className="text-xs text-muted-foreground">
-                  Tipo de usuário:{" "}
-                  <span className={isInternalUser ? "text-[#0047BB] font-semibold" : "text-[#00A99D] font-semibold"}>
-                    {isInternalUser ? "Interno (Upload)" : "Externo (Download)"}
-                  </span>
-                </p>
-              )}
-            </div>
-            {!demoExternalMode && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm font-medium text-foreground">
-                    Senha
-                  </Label>
-                  <button
-                    type="button"
-                    onClick={() => setShowForgotPassword(true)}
-                    className="text-sm font-medium text-[#0047BB] hover:text-[#003A99] transition-colors cursor-pointer hover:underline"
-                  >
-                    Esqueceu a senha?
-                  </button>
+          {/* Formulario principal ou verificacao de codigo */}
+          {demoExternalMode && externalStep === "code" ? (
+            <div className="space-y-6">
+              {/* Inline Code Verification */}
+              <div className="flex flex-col items-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#00A99D] to-[#00857A] flex items-center justify-center">
+                  <CheckCircle2 className="w-8 h-8 text-white" />
                 </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <div className="text-center space-y-2">
+                  <h2 className="text-xl font-bold text-foreground text-balance">Verificacao de Codigo</h2>
+                  <p className="text-sm text-muted-foreground text-pretty">
+                    Digite o codigo de 6 digitos enviado para
+                    <br />
+                    <span className="text-[#00A99D] font-semibold">{email}</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Demo Code Display */}
+              <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-200 dark:border-amber-900/50 rounded-lg p-4">
+                <div className="flex items-center gap-2">
+                  <Lock className="h-5 w-5 text-amber-700 dark:text-amber-300" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">Codigo de demonstracao:</p>
+                    <p className="text-2xl font-mono font-bold text-amber-900 dark:text-amber-100 tracking-wider">
+                      {generatedCode}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Code Input */}
+              <div className="flex justify-center gap-2">
+                {verificationCode.map((digit, index) => (
                   <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Digite sua senha"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10 h-12 bg-muted/50 border-border"
+                    key={index}
+                    ref={(el) => { codeInputRefs.current[index] = el }}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleCodeChange(index, e.target.value)}
+                    onKeyDown={(e) => handleCodeKeyDown(index, e)}
+                    className="w-12 h-14 text-center text-2xl font-bold"
+                    autoFocus={index === 0}
+                  />
+                ))}
+              </div>
+
+              {/* Resend Code */}
+              <div className="text-center">
+                {countdown > 0 ? (
+                  <p className="text-sm text-muted-foreground">Reenviar codigo em {countdown}s</p>
+                ) : (
+                  <Button
+                    variant="link"
+                    onClick={handleResendCode}
+                    disabled={isResending}
+                    className="text-[#00A99D] hover:text-[#00857A]"
+                  >
+                    {isResending ? "Reenviando..." : "Reenviar codigo"}
+                  </Button>
+                )}
+              </div>
+
+              {/* Back Button */}
+              <Button
+                variant="outline"
+                onClick={handleBackToEmail}
+                className="w-full h-12 text-base font-medium"
+              >
+                <ArrowLeft className="mr-2 h-5 w-5" />
+                Voltar
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5" aria-label="Formulario de login">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                  {demoExternalMode ? "E-mail" : "E-mail ou Usuario"}
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="text"
+                    placeholder={demoExternalMode ? "Digite seu e-mail" : "Digite seu e-mail ou usuario"}
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value)
+                      if (demoExternalMode && e.target.value !== DEMO_CREDENTIALS.external.email) {
+                        setDemoExternalMode(false)
+                      }
+                    }}
+                    className="pl-10 h-12 bg-muted/50 border-border"
                     required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
                 </div>
+                {email && (
+                  <p className="text-xs text-muted-foreground">
+                    Tipo de usuario:{" "}
+                    <span className={isInternalUser ? "text-[#0047BB] font-semibold" : "text-[#00A99D] font-semibold"}>
+                      {isInternalUser ? "Interno (Upload)" : "Externo (Download)"}
+                    </span>
+                  </p>
+                )}
               </div>
-            )}
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full h-12 text-base font-semibold bg-[#00A859] hover:bg-[#008a48] text-white transition-all duration-200 shadow-sm hover:shadow-md"
-            >
-              {isLoading ? "Entrando..." : "Entrar"}
-            </Button>
-          </form>
+              {!demoExternalMode && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-sm font-medium text-foreground">
+                      Senha
+                    </Label>
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-sm font-medium text-[#0047BB] hover:text-[#003A99] transition-colors cursor-pointer hover:underline"
+                    >
+                      Esqueceu a senha?
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Digite sua senha"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10 pr-10 h-12 bg-muted/50 border-border"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                </div>
+              )}
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-12 text-base font-semibold bg-[#00A859] hover:bg-[#008a48] text-white transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                {isLoading ? "Entrando..." : demoExternalMode ? "Enviar codigo" : "Entrar"}
+              </Button>
+            </form>
+          )}
           {showEntraIdButton && (
             <div className="space-y-4">
               <div className="relative">
@@ -520,15 +694,6 @@ export function LoginForm() {
         </div>
       </div>
       <ForgotPasswordModal open={showForgotPassword} onOpenChange={setShowForgotPassword} />
-      <ExternalVerificationModal
-        open={showExternalVerification}
-        onOpenChange={(open) => {
-          setShowExternalVerification(open)
-          if (!open) setDemoExternalMode(false)
-        }}
-        onSuccess={handleExternalVerificationSuccess}
-        initialEmail={demoExternalMode ? email : undefined}
-      />
       <NotificationModal
         open={notification.show}
         onOpenChange={(show) => setNotification({ ...notification, show })}
