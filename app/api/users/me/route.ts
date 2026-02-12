@@ -1,123 +1,95 @@
 /**
  * GET /api/users/me - Obter dados do usuario autenticado
  * PUT /api/users/me - Atualizar perfil do usuario
- * 
- * Integracao com backend Python: 
- * - GET /v1/users/me
- * - PUT /v1/users/me
+ * Via Neon PostgreSQL
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import { getSessionByAccessToken, getUserById } from "@/lib/db/queries"
+import { sql } from "@/lib/db/neon"
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
-
-// Helper para extrair token do header
 function getAuthToken(request: NextRequest): string | null {
   const authHeader = request.headers.get("authorization")
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return null
-  }
+  if (!authHeader || !authHeader.startsWith("Bearer ")) return null
   return authHeader.split(" ")[1]
 }
 
-/**
- * GET /api/users/me
- * Retorna os dados do usuario autenticado
- */
 export async function GET(request: NextRequest) {
   try {
     const token = getAuthToken(request)
-
     if (!token) {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "UNAUTHORIZED",
-            message: "Token de autenticacao nao fornecido",
-          },
-        },
+        { success: false, error: { code: "UNAUTHORIZED", message: "Token de autenticacao nao fornecido" } },
         { status: 401 }
       )
     }
 
-    // Chamada para o backend Python
-    const response = await fetch(`${BACKEND_URL}/v1/users/me`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
+    const session = await getSessionByAccessToken(token)
+    if (!session) {
       return NextResponse.json(
-        {
-          success: false,
-          error: data.error || {
-            code: "FETCH_FAILED",
-            message: "Erro ao buscar dados do usuario",
-          },
-        },
-        { status: response.status }
+        { success: false, error: { code: "UNAUTHORIZED", message: "Sessao invalida ou expirada" } },
+        { status: 401 }
       )
+    }
+
+    const user = await getUserById(session.user_id)
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: { code: "USER_NOT_FOUND", message: "Usuario nao encontrado" } },
+        { status: 404 }
+      )
+    }
+
+    // Buscar manager se existir
+    let manager = null
+    if (user.manager_id) {
+      const mgr = await getUserById(user.manager_id)
+      if (mgr) {
+        manager = { id: mgr.id, name: mgr.name, email: mgr.email }
+      }
     }
 
     return NextResponse.json({
       success: true,
       data: {
-        userId: data.id,
-        name: data.name,
-        email: data.email,
-        role: data.role,
-        department: data.department,
-        jobTitle: data.job_title,
-        phone: data.phone,
-        employeeId: data.employee_id,
-        photoUrl: data.photo_url,
-        createdAt: data.created_at,
-        lastLogin: data.last_login,
-        manager: data.manager ? {
-          id: data.manager.id,
-          name: data.manager.name,
-          email: data.manager.email,
-        } : null,
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.user_type,
+        department: user.department,
+        jobTitle: user.job_title,
+        phone: user.mobile_phone,
+        employeeId: user.employee_id,
+        photoUrl: user.photo_url,
+        officeLocation: user.office_location,
+        createdAt: user.created_at,
+        lastLogin: user.last_login_at,
+        manager,
       },
     })
   } catch (error) {
     console.error("[API] Get user error:", error)
     return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: "SERVER_ERROR",
-          message: "Erro interno do servidor",
-        },
-      },
+      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
       { status: 500 }
     )
   }
 }
 
-/**
- * PUT /api/users/me
- * Atualiza dados do perfil do usuario
- */
 export async function PUT(request: NextRequest) {
   try {
     const token = getAuthToken(request)
-
     if (!token) {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "UNAUTHORIZED",
-            message: "Token de autenticacao nao fornecido",
-          },
-        },
+        { success: false, error: { code: "UNAUTHORIZED", message: "Token de autenticacao nao fornecido" } },
+        { status: 401 }
+      )
+    }
+
+    const session = await getSessionByAccessToken(token)
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: { code: "UNAUTHORIZED", message: "Sessao invalida ou expirada" } },
         { status: 401 }
       )
     }
@@ -125,33 +97,22 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const { name, phone, department, jobTitle } = body
 
-    // Chamada para o backend Python
-    const response = await fetch(`${BACKEND_URL}/v1/users/me`, {
-      method: "PUT",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name,
-        phone,
-        department,
-        job_title: jobTitle,
-      }),
-    })
+    const rows = await sql`
+      UPDATE users SET
+        name = COALESCE(${name || null}, name),
+        mobile_phone = COALESCE(${phone || null}, mobile_phone),
+        department = COALESCE(${department || null}, department),
+        job_title = COALESCE(${jobTitle || null}, job_title),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${session.user_id}
+      RETURNING *
+    `
 
-    const data = await response.json()
-
-    if (!response.ok) {
+    const user = rows[0]
+    if (!user) {
       return NextResponse.json(
-        {
-          success: false,
-          error: data.error || {
-            code: "UPDATE_FAILED",
-            message: "Erro ao atualizar perfil",
-          },
-        },
-        { status: response.status }
+        { success: false, error: { code: "UPDATE_FAILED", message: "Erro ao atualizar perfil" } },
+        { status: 500 }
       )
     }
 
@@ -159,24 +120,18 @@ export async function PUT(request: NextRequest) {
       success: true,
       message: "Perfil atualizado com sucesso",
       data: {
-        userId: data.id,
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        department: data.department,
-        jobTitle: data.job_title,
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.mobile_phone,
+        department: user.department,
+        jobTitle: user.job_title,
       },
     })
   } catch (error) {
     console.error("[API] Update user error:", error)
     return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: "SERVER_ERROR",
-          message: "Erro interno do servidor",
-        },
-      },
+      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
       { status: 500 }
     )
   }

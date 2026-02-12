@@ -1,60 +1,41 @@
 /**
  * POST /api/auth/logout
- * 
- * Endpoint para logout de usuarios
- * Invalida o token JWT no backend
- * 
- * Integracao com backend Python: POST /v1/auth/logout
+ * Logout via Neon PostgreSQL - invalida sessao
  */
 
 import { NextRequest, NextResponse } from "next/server"
-
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
+import { deleteSession, getSessionByAccessToken, createAuditLog } from "@/lib/db/queries"
 
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization")
-    
+
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "UNAUTHORIZED",
-            message: "Token de autenticacao nao fornecido",
-          },
-        },
+        { success: false, error: { code: "UNAUTHORIZED", message: "Token de autenticacao nao fornecido" } },
         { status: 401 }
       )
     }
 
     const token = authHeader.split(" ")[1]
-    const body = await request.json().catch(() => ({}))
-    const { sessionId } = body
 
-    // Chamada para o backend Python
-    const response = await fetch(`${BACKEND_URL}/v1/auth/logout`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-      body: JSON.stringify({ session_id: sessionId }),
-    })
-
-    if (!response.ok) {
-      const data = await response.json()
-      return NextResponse.json(
-        {
-          success: false,
-          error: data.error || {
-            code: "LOGOUT_FAILED",
-            message: "Erro ao realizar logout",
-          },
-        },
-        { status: response.status }
-      )
+    // Buscar sessao para log
+    const session = await getSessionByAccessToken(token)
+    if (session) {
+      await createAuditLog({
+        action: "logout",
+        level: "info",
+        user_id: session.user_id,
+        user_name: session.user_name,
+        user_email: session.user_email,
+        user_type: session.user_type,
+        description: "Logout realizado com sucesso",
+        ip_address: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
+      })
     }
+
+    // Deletar sessao
+    await deleteSession(token)
 
     return NextResponse.json({
       success: true,
@@ -63,13 +44,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[API] Logout error:", error)
     return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: "SERVER_ERROR",
-          message: "Erro interno do servidor",
-        },
-      },
+      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
       { status: 500 }
     )
   }

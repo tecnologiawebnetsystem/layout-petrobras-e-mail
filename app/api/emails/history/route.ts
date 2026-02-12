@@ -1,98 +1,74 @@
 /**
  * GET /api/emails/history
- * Endpoint para listar historico de emails enviados
- * Faz proxy para o backend Python
+ * Historico de emails via Neon PostgreSQL
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import { getSessionByAccessToken, getEmailHistory } from "@/lib/db/queries"
 
-// URL do backend Python
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
+function getAuthToken(request: NextRequest): string | null {
+  const authHeader = request.headers.get("authorization")
+  if (!authHeader || !authHeader.startsWith("Bearer ")) return null
+  return authHeader.split(" ")[1]
+}
 
 export async function GET(request: NextRequest) {
   try {
-    // Extrair token do header
-    const authHeader = request.headers.get("authorization")
-    
-    if (!authHeader) {
+    const token = getAuthToken(request)
+    if (!token) {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "UNAUTHORIZED",
-            message: "Token de autenticacao nao fornecido",
-          },
-        },
+        { success: false, error: { code: "UNAUTHORIZED", message: "Token de autenticacao nao fornecido" } },
         { status: 401 }
       )
     }
 
-    // Extrair query params
-    const { searchParams } = new URL(request.url)
-    const page = searchParams.get("page") || "1"
-    const limit = searchParams.get("limit") || "20"
-    const status = searchParams.get("status")
-    const startDate = searchParams.get("startDate")
-    const endDate = searchParams.get("endDate")
-
-    // Construir query string
-    const queryParams = new URLSearchParams({
-      page,
-      limit,
-      ...(status && { status }),
-      ...(startDate && { startDate }),
-      ...(endDate && { endDate }),
-    })
-
-    // Fazer request para o backend Python
-    const backendResponse = await fetch(
-      `${BACKEND_URL}/v1/emails/history?${queryParams.toString()}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: authHeader,
-        },
-      }
-    )
-
-    const data = await backendResponse.json()
-
-    if (!backendResponse.ok) {
+    const session = await getSessionByAccessToken(token)
+    if (!session) {
       return NextResponse.json(
-        {
-          success: false,
-          error: data.error || {
-            code: "HISTORY_FETCH_FAILED",
-            message: "Falha ao buscar historico de emails",
-          },
-        },
-        { status: backendResponse.status }
+        { success: false, error: { code: "UNAUTHORIZED", message: "Sessao invalida ou expirada" } },
+        { status: 401 }
       )
     }
+
+    const { searchParams } = new URL(request.url)
+    const status = searchParams.get("status") || undefined
+    const page = parseInt(searchParams.get("page") || "1", 10)
+    const limit = parseInt(searchParams.get("limit") || "20", 10)
+    const offset = (page - 1) * limit
+
+    const { emails, total } = await getEmailHistory({
+      status,
+      limit,
+      offset,
+    })
 
     return NextResponse.json({
       success: true,
       data: {
-        emails: data.emails || [],
+        emails: emails.map((e) => ({
+          id: e.id,
+          messageId: e.message_id,
+          toEmail: e.to_email,
+          toName: e.to_name,
+          subject: e.subject,
+          status: e.status,
+          sentAt: e.sent_at,
+          deliveredAt: e.delivered_at,
+          error: e.error,
+          createdAt: e.created_at,
+        })),
         pagination: {
-          currentPage: parseInt(page),
-          totalPages: data.totalPages || 1,
-          totalItems: data.totalItems || 0,
-          itemsPerPage: parseInt(limit),
+          currentPage: page,
+          totalPages: Math.ceil(total / limit),
+          totalItems: total,
+          itemsPerPage: limit,
         },
       },
     })
   } catch (error) {
     console.error("[API] Erro ao buscar historico:", error)
     return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "Erro interno do servidor",
-        },
-      },
+      { success: false, error: { code: "INTERNAL_ERROR", message: "Erro interno do servidor" } },
       { status: 500 }
     )
   }

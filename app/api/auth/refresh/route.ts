@@ -1,15 +1,10 @@
 /**
  * POST /api/auth/refresh
- * 
- * Endpoint para renovar tokens JWT
- * Recebe refresh token, retorna novos tokens
- * 
- * Integracao com backend Python: POST /v1/auth/refresh
+ * Renovar tokens de autenticacao via Neon PostgreSQL
  */
 
 import { NextRequest, NextResponse } from "next/server"
-
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
+import { getSessionByRefreshToken, deleteSession, createSession, getUserById } from "@/lib/db/queries"
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,59 +13,53 @@ export async function POST(request: NextRequest) {
 
     if (!refreshToken) {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "MISSING_TOKEN",
-            message: "Refresh token e obrigatorio",
-          },
-        },
+        { success: false, error: { code: "MISSING_TOKEN", message: "Refresh token e obrigatorio" } },
         { status: 400 }
       )
     }
 
-    // Chamada para o backend Python
-    const response = await fetch(`${BACKEND_URL}/v1/auth/refresh`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
+    const session = await getSessionByRefreshToken(refreshToken)
+    if (!session) {
       return NextResponse.json(
-        {
-          success: false,
-          error: data.error || {
-            code: "REFRESH_FAILED",
-            message: "Token expirado ou invalido",
-          },
-        },
-        { status: response.status }
+        { success: false, error: { code: "INVALID_TOKEN", message: "Token expirado ou invalido" } },
+        { status: 401 }
       )
     }
+
+    if (new Date(session.expires_at) < new Date()) {
+      await deleteSession(session.access_token)
+      return NextResponse.json(
+        { success: false, error: { code: "TOKEN_EXPIRED", message: "Sessao expirada. Faca login novamente." } },
+        { status: 401 }
+      )
+    }
+
+    const user = await getUserById(session.user_id)
+    if (!user) {
+      await deleteSession(session.access_token)
+      return NextResponse.json(
+        { success: false, error: { code: "USER_NOT_FOUND", message: "Usuario nao encontrado" } },
+        { status: 401 }
+      )
+    }
+
+    await deleteSession(session.access_token)
+    const ipAddress = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || undefined
+    const userAgent = request.headers.get("user-agent") || undefined
+    const newSession = await createSession(user.id, ipAddress, userAgent)
 
     return NextResponse.json({
       success: true,
       data: {
-        token: data.access_token,
-        refreshToken: data.refresh_token,
-        expiresIn: data.expires_in || 3600,
+        token: newSession.access_token,
+        refreshToken: newSession.refresh_token,
+        expiresIn: 86400,
       },
     })
   } catch (error) {
     console.error("[API] Refresh token error:", error)
     return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: "SERVER_ERROR",
-          message: "Erro interno do servidor",
-        },
-      },
+      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
       { status: 500 }
     )
   }

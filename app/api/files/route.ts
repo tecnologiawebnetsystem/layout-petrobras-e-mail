@@ -1,26 +1,14 @@
 /**
- * GET /api/files - Listar arquivos do usuario
- * 
- * Query params:
- * - status: pending | approved | rejected | cancelled
- * - page: numero da pagina
- * - limit: itens por pagina
- * - sortBy: campo para ordenacao
- * - order: asc | desc
- * 
- * Integracao com backend Python: GET /v1/files
+ * GET /api/files - Listar arquivos enviados pelo usuario
+ * Direto no Neon PostgreSQL
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import { getSessionByAccessToken, getFileUploadsBySender, getFileUploadItems, getFileUploadSteps, getUserById } from "@/lib/db/queries"
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
-
-// Helper para extrair token do header
 function getAuthToken(request: NextRequest): string | null {
   const authHeader = request.headers.get("authorization")
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return null
-  }
+  if (!authHeader || !authHeader.startsWith("Bearer ")) return null
   return authHeader.split(" ")[1]
 }
 
@@ -30,97 +18,73 @@ export async function GET(request: NextRequest) {
 
     if (!token) {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "UNAUTHORIZED",
-            message: "Token de autenticacao nao fornecido",
-          },
-        },
+        { success: false, error: { code: "UNAUTHORIZED", message: "Token de autenticacao nao fornecido" } },
         { status: 401 }
       )
     }
 
-    // Extrair query params
-    const { searchParams } = new URL(request.url)
-    const status = searchParams.get("status")
-    const page = searchParams.get("page") || "1"
-    const limit = searchParams.get("limit") || "10"
-    const sortBy = searchParams.get("sortBy") || "created_at"
-    const order = searchParams.get("order") || "desc"
-
-    // Construir URL com query params
-    const queryParams = new URLSearchParams()
-    if (status) queryParams.append("status", status)
-    queryParams.append("page", page)
-    queryParams.append("limit", limit)
-    queryParams.append("sort_by", sortBy)
-    queryParams.append("order", order)
-
-    // Chamada para o backend Python
-    const response = await fetch(
-      `${BACKEND_URL}/v1/files?${queryParams.toString()}`,
-      {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    )
-
-    const data = await response.json()
-
-    if (!response.ok) {
+    const session = await getSessionByAccessToken(token)
+    if (!session) {
       return NextResponse.json(
-        {
-          success: false,
-          error: data.error || {
-            code: "FETCH_FAILED",
-            message: "Erro ao buscar arquivos",
-          },
-        },
-        { status: response.status }
+        { success: false, error: { code: "UNAUTHORIZED", message: "Sessao invalida ou expirada" } },
+        { status: 401 }
       )
     }
 
+    const uploads = await getFileUploadsBySender(session.user_id)
+    const user = await getUserById(session.user_id)
+
+    const enriched = await Promise.all(
+      uploads.map(async (upload) => {
+        const items = await getFileUploadItems(upload.id)
+        const steps = await getFileUploadSteps(upload.id)
+
+        return {
+          id: upload.id,
+          name: upload.name,
+          description: upload.description,
+          recipientEmail: upload.recipient_email,
+          sender: user ? {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            department: user.department,
+            employeeId: user.employee_id,
+          } : null,
+          files: items.map((item) => ({
+            name: item.name,
+            size: item.size,
+            type: item.type,
+          })),
+          status: upload.status,
+          expirationHours: upload.expiration_hours,
+          expiresAt: upload.expires_at,
+          createdAt: upload.created_at,
+          approvedAt: upload.approval_date,
+          approvedBy: upload.approved_by,
+          rejectionReason: upload.rejection_reason,
+          workflow: {
+            currentStep: upload.current_step,
+            totalSteps: upload.total_steps,
+            steps: steps.map((s) => ({
+              title: s.title,
+              status: s.status,
+              completedDate: s.completed_date,
+              comments: s.comments,
+            })),
+          },
+        }
+      })
+    )
+
     return NextResponse.json({
       success: true,
-      data: data.files.map((file: any) => ({
-        id: file.id,
-        name: file.name,
-        recipientEmail: file.recipient_email,
-        description: file.description,
-        files: file.files.map((f: any) => ({
-          name: f.name,
-          size: f.size,
-          type: f.type,
-        })),
-        status: file.status,
-        expirationHours: file.expiration_hours,
-        expiresAt: file.expires_at,
-        createdAt: file.created_at,
-        approvedAt: file.approved_at,
-        approvedBy: file.approved_by,
-        rejectionReason: file.rejection_reason,
-      })),
-      pagination: {
-        currentPage: data.pagination.current_page,
-        totalPages: data.pagination.total_pages,
-        totalItems: data.pagination.total_items,
-        itemsPerPage: data.pagination.items_per_page,
-      },
+      data: enriched,
     })
   } catch (error) {
-    console.error("[API] Get files error:", error)
+    console.error("[API] List files error:", error)
     return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: "SERVER_ERROR",
-          message: "Erro interno do servidor",
-        },
-      },
+      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
       { status: 500 }
     )
   }

@@ -1,138 +1,107 @@
 /**
  * GET /api/audit/metrics
- * 
- * Retorna metricas gerais do sistema
- * Apenas supervisores/admins podem acessar
- * 
- * Integracao com backend Python: GET /v1/audit/metrics
+ * Metricas do sistema via Neon PostgreSQL
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import { getSessionByAccessToken, getAuditMetrics } from "@/lib/db/queries"
+import { sql } from "@/lib/db/neon"
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
-
-// Helper para extrair token do header
 function getAuthToken(request: NextRequest): string | null {
   const authHeader = request.headers.get("authorization")
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return null
-  }
+  if (!authHeader || !authHeader.startsWith("Bearer ")) return null
   return authHeader.split(" ")[1]
 }
 
 export async function GET(request: NextRequest) {
   try {
     const token = getAuthToken(request)
-
     if (!token) {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "UNAUTHORIZED",
-            message: "Token de autenticacao nao fornecido",
-          },
-        },
+        { success: false, error: { code: "UNAUTHORIZED", message: "Token de autenticacao nao fornecido" } },
         { status: 401 }
       )
     }
 
-    // Extrair query params para periodo
-    const { searchParams } = new URL(request.url)
-    const period = searchParams.get("period") || "30d" // 7d, 30d, 90d, all
-
-    // Chamada para o backend Python
-    const response = await fetch(
-      `${BACKEND_URL}/v1/audit/metrics?period=${period}`,
-      {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    )
-
-    const data = await response.json()
-
-    if (!response.ok) {
+    const session = await getSessionByAccessToken(token)
+    if (!session) {
       return NextResponse.json(
-        {
-          success: false,
-          error: data.error || {
-            code: "FETCH_FAILED",
-            message: "Erro ao buscar metricas",
-          },
-        },
-        { status: response.status }
+        { success: false, error: { code: "UNAUTHORIZED", message: "Sessao invalida ou expirada" } },
+        { status: 401 }
       )
     }
+
+    if (session.user_type !== "supervisor") {
+      return NextResponse.json(
+        { success: false, error: { code: "FORBIDDEN", message: "Acesso restrito a supervisores" } },
+        { status: 403 }
+      )
+    }
+
+    // Buscar metricas de auditoria
+    const auditMetrics = await getAuditMetrics()
+
+    // Metricas de arquivos
+    const uploadCounts = await sql`
+      SELECT status, COUNT(*)::int as count FROM file_uploads GROUP BY status
+    `
+    const statusMap: Record<string, number> = {}
+    for (const row of uploadCounts) {
+      statusMap[row.status as string] = row.count as number
+    }
+
+    const totalUploads = Object.values(statusMap).reduce((a, b) => a + b, 0)
+    const totalDownloads = await sql`SELECT COUNT(*)::int as count FROM download_logs`
+    const uniqueDownloaders = await sql`SELECT COUNT(DISTINCT downloaded_by_email)::int as count FROM download_logs`
+    const activeInternals = await sql`SELECT COUNT(*)::int as count FROM users WHERE user_type IN ('internal','supervisor') AND is_active = true`
+    const activeExternals = await sql`SELECT COUNT(*)::int as count FROM users WHERE user_type = 'external' AND is_active = true`
+    const uploadsToday = await sql`SELECT COUNT(*)::int as count FROM file_uploads WHERE created_at > CURRENT_TIMESTAMP - INTERVAL '24 hours'`
+    const uploadsWeek = await sql`SELECT COUNT(*)::int as count FROM file_uploads WHERE created_at > CURRENT_TIMESTAMP - INTERVAL '7 days'`
+    const uploadsMonth = await sql`SELECT COUNT(*)::int as count FROM file_uploads WHERE created_at > CURRENT_TIMESTAMP - INTERVAL '30 days'`
+
+    // Top senders
+    const topSenders = await sql`
+      SELECT u.name, u.email, COUNT(*)::int as count
+      FROM file_uploads f
+      JOIN users u ON u.id = f.sender_id
+      GROUP BY u.name, u.email
+      ORDER BY count DESC
+      LIMIT 5
+    `
+
+    // Top recipients
+    const topRecipients = await sql`
+      SELECT recipient_email as email, COUNT(*)::int as count
+      FROM file_uploads
+      GROUP BY recipient_email
+      ORDER BY count DESC
+      LIMIT 5
+    `
 
     return NextResponse.json({
       success: true,
       data: {
-        // Metricas de arquivos
-        totalUploads: data.total_uploads,
-        pendingApprovals: data.pending_approvals,
-        approvedFiles: data.approved_files,
-        rejectedFiles: data.rejected_files,
-        cancelledFiles: data.cancelled_files,
-        expiredFiles: data.expired_files,
-        
-        // Metricas de downloads
-        totalDownloads: data.total_downloads,
-        uniqueDownloaders: data.unique_downloaders,
-        
-        // Metricas de usuarios
-        activeUsers: data.active_users,
-        totalInternalUsers: data.total_internal_users,
-        totalExternalUsers: data.total_external_users,
-        
-        // Metricas de armazenamento
-        storageUsed: data.storage_used,
-        storageLimit: data.storage_limit,
-        storagePercentage: data.storage_percentage,
-        
-        // Metricas de tempo
-        averageApprovalTime: data.average_approval_time, // em minutos
-        averageDownloadTime: data.average_download_time, // tempo ate primeiro download
-        
-        // Metricas por periodo
-        uploadsToday: data.uploads_today,
-        uploadsThisWeek: data.uploads_this_week,
-        uploadsThisMonth: data.uploads_this_month,
-        
-        // Tendencias
-        trends: data.trends ? {
-          uploads: data.trends.uploads, // array de valores diarios
-          downloads: data.trends.downloads,
-          approvals: data.trends.approvals,
-        } : null,
-        
-        // Top senders
-        topSenders: data.top_senders ? data.top_senders.map((sender: any) => ({
-          name: sender.name,
-          email: sender.email,
-          count: sender.count,
-        })) : [],
-        
-        // Top recipients
-        topRecipients: data.top_recipients ? data.top_recipients.map((recipient: any) => ({
-          email: recipient.email,
-          count: recipient.count,
-        })) : [],
+        totalUploads,
+        pendingApprovals: statusMap.pending || 0,
+        approvedFiles: statusMap.approved || 0,
+        rejectedFiles: statusMap.rejected || 0,
+        cancelledFiles: statusMap.cancelled || 0,
+        totalDownloads: totalDownloads[0]?.count || 0,
+        uniqueDownloaders: uniqueDownloaders[0]?.count || 0,
+        totalInternalUsers: activeInternals[0]?.count || 0,
+        totalExternalUsers: activeExternals[0]?.count || 0,
+        uploadsToday: uploadsToday[0]?.count || 0,
+        uploadsThisWeek: uploadsWeek[0]?.count || 0,
+        uploadsThisMonth: uploadsMonth[0]?.count || 0,
+        auditMetrics,
+        topSenders: topSenders.map((s) => ({ name: s.name, email: s.email, count: s.count })),
+        topRecipients: topRecipients.map((r) => ({ email: r.email, count: r.count })),
       },
     })
   } catch (error) {
     console.error("[API] Get metrics error:", error)
     return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: "SERVER_ERROR",
-          message: "Erro interno do servidor",
-        },
-      },
+      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
       { status: 500 }
     )
   }

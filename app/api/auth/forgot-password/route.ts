@@ -1,15 +1,10 @@
 /**
  * POST /api/auth/forgot-password
- * 
- * Endpoint para recuperacao de senha
- * Envia email com link para redefinir senha
- * 
- * Integracao com backend Python: POST /v1/auth/forgot-password
+ * Recuperacao de senha via Neon PostgreSQL
  */
 
 import { NextRequest, NextResponse } from "next/server"
-
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
+import { getUserByEmail, createOtpCode, createEmailHistoryEntry, createAuditLog } from "@/lib/db/queries"
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,54 +13,44 @@ export async function POST(request: NextRequest) {
 
     if (!email) {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "Email e obrigatorio",
-          },
-        },
+        { success: false, error: { code: "VALIDATION_ERROR", message: "Email e obrigatorio" } },
         { status: 400 }
       )
     }
 
-    // Validacao de formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "INVALID_EMAIL",
-            message: "Formato de email invalido",
-          },
-        },
+        { success: false, error: { code: "INVALID_EMAIL", message: "Formato de email invalido" } },
         { status: 400 }
       )
     }
 
-    // Chamada para o backend Python
-    const response = await fetch(`${BACKEND_URL}/v1/auth/forgot-password`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email }),
-    })
+    // Verificar se usuario existe (sem revelar ao cliente)
+    const user = await getUserByEmail(email)
+    if (user) {
+      // Gerar codigo OTP para reset
+      const code = await createOtpCode(email)
 
-    const data = await response.json()
+      // Registrar email no historico
+      await createEmailHistoryEntry({
+        to_email: email,
+        to_name: user.name,
+        subject: "Redefinicao de senha - Petrobras",
+        body: `Seu codigo de redefinicao de senha e: ${code}. Este codigo expira em 10 minutos.`,
+        status: "sent",
+      })
 
-    if (!response.ok) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: data.error || {
-            code: "REQUEST_FAILED",
-            message: "Erro ao processar solicitacao",
-          },
-        },
-        { status: response.status }
-      )
+      await createAuditLog({
+        action: "password_reset",
+        level: "info",
+        user_id: user.id,
+        user_name: user.name,
+        user_email: user.email,
+        user_type: user.user_type,
+        description: "Solicitacao de redefinicao de senha",
+        ip_address: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
+      })
     }
 
     // Sempre retornar sucesso por seguranca (nao revelar se email existe)
@@ -76,13 +61,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[API] Forgot password error:", error)
     return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: "SERVER_ERROR",
-          message: "Erro interno do servidor",
-        },
-      },
+      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
       { status: 500 }
     )
   }
