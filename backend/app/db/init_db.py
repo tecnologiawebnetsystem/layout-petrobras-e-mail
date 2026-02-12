@@ -15,6 +15,7 @@ import app.models.notification
 import app.models.email_log
 import app.models.credencial_local
 import app.models.areasupervisors
+import app.models.session_token
 
 
 def init_db():

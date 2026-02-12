@@ -44,6 +44,7 @@ def get_pending_files(
     limit: int = Query(20, ge=1, le=100),
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user),
+    request: Request = None,
 ):
     """
     Lista todos os compartilhamentos pendentes de aprovacao.
@@ -110,6 +111,15 @@ def get_pending_files(
                 ]
             }
         })
+    
+    log_event(
+        session=session,
+        action="VER_PENDENTES",
+        user_id=user.id,
+        detail=f"page={page}, total={total_items}",
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None
+    )
     
     return {
         "files": result,
@@ -322,7 +332,8 @@ def extend_expiration(
 def relatorio_area(
     area_id: int, 
     session: Session = Depends(get_session), 
-    user: User = Depends(require_supervisor)
+    user: User = Depends(require_supervisor),
+    request: Request = None,
 ):
     area = session.get(SharedArea, area_id)
     if not area:
@@ -355,6 +366,15 @@ def relatorio_area(
             "pendentes": pending
         })
 
+    log_event(
+        session=session,
+        action="VER_RELATORIO_AREA",
+        user_id=user.id,
+        detail=f"area_id={area_id}, area_name={area.name}",
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None
+    )
+
     return {"area_id": area_id, "nome_area": area.name, "shares": data}
 
 
@@ -368,6 +388,7 @@ async def approve_share_legacy(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user),
+    request: Request = None,
 ):
     """Endpoint legado - redireciona para novo endpoint."""
     share = session.get(Share, share_id)
@@ -406,6 +427,16 @@ async def approve_share_legacy(
         applicant.name or "Usuario Interno",
         share.external_email,
         share.id
+    )
+
+    log_event(
+        session=session,
+        action="APROVAR_SHARE_LEGACY",
+        user_id=user.id,
+        share_id=share.id,
+        detail=f"approved_by={user.email}",
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None
     )
 
     return {"status": "ok", "share_id": share.id, "status_atual": share.status}

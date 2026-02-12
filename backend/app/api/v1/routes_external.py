@@ -15,12 +15,27 @@ router = APIRouter(prefix="/external", tags=["External"])
 
 
 @router.post("/logout")
-def external_logout(token: str = Form(...), session: Session = Depends(get_session)):
+def external_logout(token: str = Form(...), session: Session = Depends(get_session), request: Request = None):
     token_obj = get_token_access(session, token)
     if not token_obj:
         raise HTTPException(status_code=403, detail="Token inválido.")
+
+    user_id = token_obj.user_id
+    share_id = token_obj.share_id
+
     # marca como usado para encerrar sessão externa
     consume_token(token_obj, session)
+
+    log_event(
+        session=session,
+        action="LOGOUT_EXTERNO",
+        user_id=user_id,
+        share_id=share_id,
+        detail="external_logout",
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None
+    )
+
     return {"message": "Sessão encerrada"}
 
 

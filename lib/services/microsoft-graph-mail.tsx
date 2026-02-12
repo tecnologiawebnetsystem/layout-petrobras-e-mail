@@ -202,6 +202,75 @@ class MicrosoftGraphMailService {
       importance: "High",
     }
   }
+  createExternalUserOTPEmail(data: {
+    recipientEmail: string
+    otpCode: string
+    senderName: string
+    fileName: string
+    expirationHours: number
+  }): EmailData {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://compartilhamento-petrobras.vercel.app"
+
+    return {
+      subject: `Codigo de Acesso - ${data.fileName}`,
+      body: {
+        contentType: "HTML",
+        content: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: #006494; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }
+              .content { background: #f9f9f9; padding: 30px; border: 1px solid #ddd; }
+              .otp-box { background: #006494; color: white; font-size: 32px; letter-spacing: 8px; text-align: center; padding: 20px; border-radius: 8px; margin: 20px 0; font-weight: bold; }
+              .info-box { background: white; border-left: 4px solid #006494; padding: 15px; margin: 20px 0; }
+              .button { display: inline-block; background: #006494; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0; }
+              .footer { text-align: center; color: #666; font-size: 12px; padding: 20px; }
+              .warning { background: #FFF3CD; border: 1px solid #FFC107; padding: 12px; border-radius: 4px; margin: 15px 0; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h2>Transferencia Segura de Arquivos</h2>
+                <p>Petrobras</p>
+              </div>
+              <div class="content">
+                <p>Voce recebeu arquivos compartilhados por <strong>${data.senderName}</strong> da Petrobras.</p>
+                <p>Use o codigo abaixo para acessar os documentos:</p>
+                <div class="otp-box">${data.otpCode}</div>
+                <div class="info-box">
+                  <p><strong>Arquivo:</strong> ${data.fileName}</p>
+                  <p><strong>Enviado por:</strong> ${data.senderName}</p>
+                  <p><strong>Validade do acesso:</strong> ${data.expirationHours} horas</p>
+                </div>
+                <div class="warning">
+                  <strong>Importante:</strong> Este codigo expira em 10 minutos. Nao compartilhe com terceiros.
+                </div>
+                <a href="${appUrl}/download" class="button">Acessar Documentos</a>
+              </div>
+              <div class="footer">
+                <p>Sistema de Transferencia Segura de Arquivos - Petrobras</p>
+                <p>Este e um email automatico, nao responda.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `,
+      },
+      toRecipients: [
+        {
+          emailAddress: {
+            address: data.recipientEmail,
+          },
+        },
+      ],
+      importance: "High",
+    }
+  }
 }
 
 export const microsoftGraphMailService = new MicrosoftGraphMailService()

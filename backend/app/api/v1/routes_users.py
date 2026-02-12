@@ -29,6 +29,7 @@ class UpdateProfileRequest(BaseModel):
 def get_current_user_profile(
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user),
+    request: Request = None,
 ):
     """
     Retorna os dados do usuario autenticado.
@@ -43,6 +44,15 @@ def get_current_user_profile(
                 "name": manager.name,
                 "email": manager.email,
             }
+    
+    log_event(
+        session=session,
+        action="VER_PERFIL",
+        user_id=user.id,
+        detail=f"email={user.email}",
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None
+    )
     
     return {
         "id": user.id,

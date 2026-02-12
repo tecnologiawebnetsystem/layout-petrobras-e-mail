@@ -3,7 +3,7 @@
  * These will connect to the Python backend
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+const API_BASE_URL = "/api"
 
 export interface LoginCredentials {
   email: string
@@ -26,7 +26,7 @@ export interface ApiError {
 }
 
 export async function loginUser(credentials: LoginCredentials): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -43,7 +43,7 @@ export async function loginUser(credentials: LoginCredentials): Promise<LoginRes
 }
 
 export async function logoutUser(token: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
+  const response = await fetch(`${API_BASE_URL}/auth/logout`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -58,7 +58,7 @@ export async function logoutUser(token: string): Promise<void> {
 }
 
 export async function refreshToken(refreshToken: string): Promise<{ access_token: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
+  const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -33,26 +33,16 @@ class ApiClient {
   private token: string | null = null
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/v1"
-
-    // Recuperar token do localStorage se existir
-    if (typeof window !== "undefined") {
-      this.token = localStorage.getItem("auth_token")
-    }
+    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api"
   }
 
   /**
-   * Define o token de autenticação
+   * Define o token de autenticacao.
+   * Nota: o token principal e gerenciado pelo auth-store (Zustand com persist).
+   * Este setter e um fallback para uso direto do apiClient.
    */
   setToken(token: string | null) {
     this.token = token
-    if (typeof window !== "undefined") {
-      if (token) {
-        localStorage.setItem("auth_token", token)
-      } else {
-        localStorage.removeItem("auth_token")
-      }
-    }
   }
 
   /**

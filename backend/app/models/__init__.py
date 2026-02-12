@@ -5,6 +5,7 @@ from .credencial_local import CredentialLocal
 from .email_log import EmailLog
 from .notification import Notification
 from .restricted_file import RestrictedFile
+from .session_token import SessionToken
 from .share_file import ShareFile
 from .share import Share
 from .token_access import TokenAccess
