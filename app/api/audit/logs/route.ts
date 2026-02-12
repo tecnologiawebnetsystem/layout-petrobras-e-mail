@@ -16,13 +16,12 @@ export async function GET(request: NextRequest) {
     const data = await response.json()
 
     if (!response.ok) {
-      return NextResponse.json(
-        { success: false, error: { code: "FETCH_FAILED", message: data.detail || "Erro ao buscar logs" } },
-        { status: response.status }
-      )
+      return NextResponse.json(data, { status: response.status })
     }
 
-    return NextResponse.json({ success: true, data: data.logs, pagination: data.pagination })
+    // Passthrough: retorna o formato exato do backend Python
+    // O audit-log-store espera: { logs: [...], pagination: {...} }
+    return NextResponse.json(data)
   } catch (error) {
     console.error("[API] Audit logs proxy error:", error)
     return NextResponse.json(

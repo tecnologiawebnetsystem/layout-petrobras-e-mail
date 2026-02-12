@@ -20,13 +20,12 @@ export async function POST(request: NextRequest) {
     const data = await response.json()
 
     if (!response.ok) {
-      return NextResponse.json(
-        { success: false, error: { code: "UPLOAD_FAILED", message: data.detail || "Erro ao fazer upload" } },
-        { status: response.status }
-      )
+      return NextResponse.json(data, { status: response.status })
     }
 
-    return NextResponse.json({ success: true, data })
+    // Passthrough: retorna o formato exato do backend Python
+    // O workflow-store espera: { upload_id, name, files, ... }
+    return NextResponse.json(data)
   } catch (error) {
     console.error("[API] Upload proxy error:", error)
     return NextResponse.json(

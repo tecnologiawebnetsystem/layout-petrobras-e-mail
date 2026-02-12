@@ -19,27 +19,12 @@ export async function POST(request: NextRequest) {
     const data = await response.json()
 
     if (!response.ok) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "AUTH_FAILED",
-            message: data.detail || "Credenciais invalidas",
-          },
-        },
-        { status: response.status }
-      )
+      return NextResponse.json(data, { status: response.status })
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        token: data.access_token,
-        refreshToken: data.refresh_token,
-        expiresIn: data.expires_in || 3600,
-        user: data.user,
-      },
-    })
+    // Passthrough: retorna o formato exato do backend Python
+    // O auth-store espera: { access_token, refresh_token, token_type, expires_in, user }
+    return NextResponse.json(data)
   } catch (error) {
     console.error("[API] Login proxy error:", error)
     return NextResponse.json(

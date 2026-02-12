@@ -18,13 +18,11 @@ export async function GET(
     const data = await response.json()
 
     if (!response.ok) {
-      return NextResponse.json(
-        { success: false, error: { code: "NOT_FOUND", message: data.detail || "Email nao encontrado" } },
-        { status: response.status }
-      )
+      return NextResponse.json(data, { status: response.status })
     }
 
-    return NextResponse.json({ success: true, data })
+    // Passthrough: retorna formato exato do backend Python
+    return NextResponse.json(data)
   } catch (error) {
     console.error("[API] Email status proxy error:", error)
     return NextResponse.json(

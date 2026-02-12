@@ -16,13 +16,12 @@ export async function GET(request: NextRequest) {
     const data = await response.json()
 
     if (!response.ok) {
-      return NextResponse.json(
-        { success: false, error: { code: "FETCH_FAILED", message: data.detail || "Erro ao buscar historico" } },
-        { status: response.status }
-      )
+      return NextResponse.json(data, { status: response.status })
     }
 
-    return NextResponse.json({ success: true, data })
+    // Passthrough: retorna o formato exato do backend Python
+    // { emails: [...], total_pages, total_items }
+    return NextResponse.json(data)
   } catch (error) {
     console.error("[API] Emails history proxy error:", error)
     return NextResponse.json(

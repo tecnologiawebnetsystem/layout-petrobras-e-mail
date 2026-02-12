@@ -16,13 +16,12 @@ export async function GET(request: NextRequest) {
     const data = await response.json()
 
     if (!response.ok) {
-      return NextResponse.json(
-        { success: false, error: { code: "FETCH_FAILED", message: data.detail || "Erro ao buscar metricas" } },
-        { status: response.status }
-      )
+      return NextResponse.json(data, { status: response.status })
     }
 
-    return NextResponse.json({ success: true, data })
+    // Passthrough: retorna o formato exato do backend Python
+    // O audit-log-store espera: { total_uploads, pending_approvals, ... } (AuditMetrics direto)
+    return NextResponse.json(data)
   } catch (error) {
     console.error("[API] Audit metrics proxy error:", error)
     return NextResponse.json(

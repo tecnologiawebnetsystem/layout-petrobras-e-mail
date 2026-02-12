@@ -21,13 +21,11 @@ export async function POST(request: NextRequest) {
     const data = await response.json()
 
     if (!response.ok) {
-      return NextResponse.json(
-        { success: false, error: { code: "SEND_FAILED", message: data.detail || "Erro ao enviar email" } },
-        { status: response.status }
-      )
+      return NextResponse.json(data, { status: response.status })
     }
 
-    return NextResponse.json({ success: true, data })
+    // Passthrough: retorna formato exato do backend Python
+    return NextResponse.json(data)
   } catch (error) {
     console.error("[API] Emails send proxy error:", error)
     return NextResponse.json(
