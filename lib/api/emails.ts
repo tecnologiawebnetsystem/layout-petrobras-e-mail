@@ -3,7 +3,7 @@
  * These will connect to the Python backend for email operations
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+const API_BASE_URL = "/api"
 
 export interface EmailRecipient {
   email: string
@@ -41,7 +41,7 @@ export interface EmailStatus {
 }
 
 export async function sendEmail(token: string, emailData: SendEmailRequest): Promise<SendEmailResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/emails/send`, {
+  const response = await fetch(`${API_BASE_URL}/emails/send`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -59,7 +59,7 @@ export async function sendEmail(token: string, emailData: SendEmailRequest): Pro
 }
 
 export async function getEmailStatus(token: string, messageId: string): Promise<EmailStatus> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/emails/${messageId}/status`, {
+  const response = await fetch(`${API_BASE_URL}/emails/${messageId}/status`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -79,7 +79,7 @@ export async function getEmailHistory(
   page = 1,
   limit = 50,
 ): Promise<{ emails: EmailStatus[]; total: number; page: number }> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/emails/history?page=${page}&limit=${limit}`, {
+  const response = await fetch(`${API_BASE_URL}/emails/history?page=${page}&limit=${limit}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,

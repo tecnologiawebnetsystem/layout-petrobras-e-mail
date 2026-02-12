@@ -16,7 +16,6 @@ async function logOtpEmailToBackend(params: {
   headers: Headers
 }) {
   try {
-    // Se temos accessToken, usamos o endpoint autenticado
     const authHeaders: Record<string, string> = {
       "Content-Type": "application/json",
       "X-Forwarded-For": params.headers.get("x-forwarded-for") || "",
@@ -26,15 +25,17 @@ async function logOtpEmailToBackend(params: {
       authHeaders["Authorization"] = `Bearer ${params.accessToken}`
     }
 
-    // Registra na tabela audit via endpoint de log
-    await fetch(`${BACKEND_URL}/api/v1/audit/logs`, {
+    // Registra na tabela email_log + audit via endpoint dedicado
+    await fetch(`${BACKEND_URL}/api/v1/emails/log-external`, {
       method: "POST",
       headers: authHeaders,
       body: JSON.stringify({
-        action: "ENVIAR_OTP_GRAPH",
-        detail: `to=${params.toEmail}, sender=${params.senderName}, file=${params.fileName}, message_id=${params.messageId}`,
-        ip_address: params.headers.get("x-forwarded-for") || undefined,
-        user_agent: params.headers.get("user-agent") || undefined,
+        message_id: params.messageId,
+        email_type: "otp",
+        to_email: params.toEmail,
+        subject: `[Graph/OTP] Codigo de acesso para ${params.fileName}`,
+        body_preview: `OTP enviado para ${params.toEmail} ref. ${params.senderName}/${params.fileName}`,
+        status: "sent",
       }),
     })
   } catch (err) {
