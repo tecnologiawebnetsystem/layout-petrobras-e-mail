@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Home, HardDrive, Target, Database, ArrowLeftRight } from "lucide-react"
+import { Search, BookOpen, Home, HardDrive, Target, Database, ArrowLeftRight, Info } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
@@ -138,13 +138,14 @@ export default function WikiDevPage() {
         <div className="mt-12 rounded-2xl border border-slate-200 bg-white/50 p-6 shadow-sm backdrop-blur-sm">
           <div className="flex items-start gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100">
-              <Shield className="h-5 w-5 text-blue-600" />
+              <Info className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h3 className="mb-1 font-semibold text-slate-900">Documentação Essencial</h3>
+              <h3 className="mb-1 font-semibold text-slate-900">Documentacao Tecnica</h3>
               <p className="text-sm leading-relaxed text-slate-600">
-                Esta Wiki contém a documentação técnica essencial para configurar autenticação, fazer deploy na AWS e
-                desenvolver localmente. Todas as informações estão sincronizadas com a versão atual do código.
+                Esta Wiki contem a documentacao tecnica do sistema: roadmap do projeto, schema completo do banco de dados
+                PostgreSQL (Neon) com 19 tabelas, mapa de integracoes entre Frontend (Next.js), Backend (Python/FastAPI) e
+                Banco, e referencia para DynamoDB na AWS.
               </p>
             </div>
           </div>
