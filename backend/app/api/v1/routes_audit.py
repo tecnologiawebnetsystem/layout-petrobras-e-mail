@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlmodel import Session, select, func
 from datetime import datetime, timedelta, UTC
 from pydantic import BaseModel
@@ -11,6 +11,7 @@ from app.models.share import Share, ShareStatus
 from app.models.share_file import ShareFile
 from app.models.restricted_file import RestrictedFile
 from app.utils.authz import get_current_user, require_supervisor
+from app.services.audit_service import log_event
 
 router = APIRouter(prefix="/audit", tags=["Audit"])
 
@@ -38,6 +39,7 @@ def get_audit_logs(
     limit: int = Query(50, ge=1, le=1000),
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
+    request: Request = None,
 ):
     """
     Lista logs de auditoria com filtros.

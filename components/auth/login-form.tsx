@@ -70,7 +70,7 @@ export function LoginForm() {
   })
 
   const { instance } = useMsal()
-  const { setAuth } = useAuthStore()
+  const { setAuth, login } = useAuthStore()
   const router = useRouter()
 
   const entraConfig = checkEntraIdConfig()
@@ -171,7 +171,7 @@ export function LoginForm() {
     setGeneratedCode("")
   }
 
-  const handleQuickLogin = (userType: "internal" | "external" | "supervisor" | "externalEmpty") => {
+  const handleQuickLogin = async (userType: "internal" | "external" | "supervisor" | "externalEmpty") => {
     const credentials = DEMO_CREDENTIALS[userType]
 
     if (userType === "external" || userType === "externalEmpty") {
@@ -186,35 +186,12 @@ export function LoginForm() {
     setDemoExternalMode(false)
     setEmail(credentials.email)
     setPassword(credentials.password)
+    setIsLoading(true)
 
-    setTimeout(() => {
-      setIsLoading(true)
-      setAuth(
-        {
-          id: "demo-user-id",
-          email: credentials.email,
-          name: credentials.name,
-          userType: userType,
-        },
-        "demo-access-token",
-        "demo-refresh-token",
-      )
+    // Chama API real de login
+    const result = await login(credentials.email, credentials.password)
 
-      useAuditLogStore.getState().addLog({
-        action: "login",
-        level: "success",
-        user: {
-          id: "demo-user-id",
-          name: credentials.name,
-          email: credentials.email,
-          type: userType,
-        },
-        details: {
-          description: `Login realizado com sucesso via acesso rápido`,
-          ipAddress: "192.168.1.100",
-        },
-      })
-
+    if (result.success) {
       setNotification({
         show: true,
         type: "success",
@@ -224,10 +201,18 @@ export function LoginForm() {
 
       setTimeout(() => {
         const redirectPath =
-          actualUserType === "internal" ? "/upload" : actualUserType === "supervisor" ? "/supervisor" : "/download"
+          userType === "internal" ? "/upload" : userType === "supervisor" ? "/supervisor" : "/download"
         router.push(redirectPath)
       }, 1500)
-    }, 100)
+    } else {
+      setNotification({
+        show: true,
+        type: "error",
+        title: "Erro no login",
+        message: result.error || "Nao foi possivel fazer login",
+      })
+    }
+    setIsLoading(false)
   }
 
   const handleExternalVerificationSuccess = (verifiedEmail: string) => {
@@ -324,108 +309,41 @@ export function LoginForm() {
           show: true,
           type: "error",
           title: "Muitas tentativas",
-          message: `Você excedeu o número de tentativas. Tente novamente em ${rateLimitCheck.retryAfter} segundos.`,
+          message: `Voce excedeu o numero de tentativas. Tente novamente em ${rateLimitCheck.retryAfter} segundos.`,
         })
         setIsLoading(false)
         return
       }
 
-      const isInternalDemo =
-        email === DEMO_CREDENTIALS.internal.email && password === DEMO_CREDENTIALS.internal.password
-      const isExternalDemo =
-        email === DEMO_CREDENTIALS.external.email && password === DEMO_CREDENTIALS.external.password
-      const isSupervisorDemo =
-        email === DEMO_CREDENTIALS.supervisor.email && password === DEMO_CREDENTIALS.supervisor.password
-      const isExternalEmptyDemo =
-        email === DEMO_CREDENTIALS.externalEmpty.email && password === DEMO_CREDENTIALS.externalEmpty.password
+      const sessionContext = captureSessionContext()
+      saveSessionContext(sessionContext)
 
-      if (isInternalDemo || isExternalDemo || isSupervisorDemo || isExternalEmptyDemo) {
+      // Chama API real de login no backend Python
+      const result = await login(email, password)
+
+      if (result.success) {
         rateLimiter.reset(identifier)
 
-        const sessionContext = captureSessionContext()
-        saveSessionContext(sessionContext)
-
-        const userType = isInternalDemo
-          ? "internal"
-          : isExternalDemo
-            ? "external"
-            : isSupervisorDemo
-              ? "supervisor"
-              : "externalEmpty"
-        const demoUser = isInternalDemo
-          ? DEMO_CREDENTIALS.internal
-          : isExternalDemo
-            ? DEMO_CREDENTIALS.external
-            : isSupervisorDemo
-              ? DEMO_CREDENTIALS.supervisor
-              : DEMO_CREDENTIALS.externalEmpty
-
-        setAuth(
-          {
-            id: userType === "externalEmpty" ? "demo-empty-user-id" : "demo-user-id",
-            email: demoUser.email,
-            name: demoUser.name,
-            userType: userType === "externalEmpty" ? "external" : userType,
-          },
-          "demo-access-token",
-          "demo-refresh-token",
-        )
-
-        useAuditLogStore.getState().addLog({
-          action: "login",
-          level: "success",
-          user: {
-            id: userType === "externalEmpty" ? "demo-empty-user-id" : "demo-user-id",
-            name: demoUser.name,
-            email: demoUser.email,
-            type: userType === "externalEmpty" ? "external" : userType,
-          },
-          details: {
-            description: `Login realizado com sucesso via formulário`,
-            ipAddress: "192.168.1.100",
-            metadata: {
-              attemptsRemaining: rateLimitCheck.attemptsRemaining,
-            },
-          },
-        })
-
+        const user = useAuthStore.getState().user
         setNotification({
           show: true,
           type: "success",
           title: "Login realizado com sucesso!",
-          message: `Bem-vindo, ${demoUser.name}`,
+          message: `Bem-vindo, ${user?.name || email}`,
         })
 
         setTimeout(() => {
+          const userType = user?.userType || "external"
           const redirectPath =
             userType === "internal" ? "/upload" : userType === "supervisor" ? "/supervisor" : "/download"
           router.push(redirectPath)
         }, 1500)
       } else {
-        useAuditLogStore.getState().addLog({
-          action: "login",
-          level: "error",
-          user: {
-            id: "unknown",
-            name: "Desconhecido",
-            email: email,
-            type: "external",
-          },
-          details: {
-            description: `Tentativa de login com credenciais inválidas`,
-            ipAddress: "192.168.1.100",
-            metadata: {
-              attemptedEmail: email,
-              attemptsRemaining: rateLimitCheck.attemptsRemaining,
-            },
-          },
-        })
-
         setNotification({
           show: true,
           type: "error",
-          title: "Credenciais inválidas",
-          message: `E-mail ou senha incorretos. Tentativas restantes: ${rateLimitCheck.attemptsRemaining}`,
+          title: "Credenciais invalidas",
+          message: result.error || `E-mail ou senha incorretos. Tentativas restantes: ${rateLimitCheck.attemptsRemaining}`,
         })
       }
     } catch (error) {

@@ -18,6 +18,7 @@ def get_notifications(
     limit: int = Query(20, ge=1, le=100),
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user),
+    request: Request = None,
 ):
     """
     Lista notificacoes do usuario autenticado.
@@ -48,6 +49,15 @@ def get_notifications(
     notifications = session.exec(query).all()
     
     total_pages = (total_items + limit - 1) // limit if total_items > 0 else 1
+    
+    log_event(
+        session=session,
+        action="VER_NOTIFICACOES",
+        user_id=user.id,
+        detail=f"page={page}, unread_only={unread_only}, total={total_items}",
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None
+    )
     
     return {
         "notifications": [

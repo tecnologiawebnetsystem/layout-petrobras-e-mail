@@ -1,12 +1,3 @@
-/**
- * POST /api/auth/refresh
- * 
- * Endpoint para renovar tokens JWT
- * Recebe refresh token, retorna novos tokens
- * 
- * Integracao com backend Python: POST /v1/auth/refresh
- */
-
 import { NextRequest, NextResponse } from "next/server"
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
@@ -14,63 +5,27 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { refreshToken } = body
 
-    if (!refreshToken) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "MISSING_TOKEN",
-            message: "Refresh token e obrigatorio",
-          },
-        },
-        { status: 400 }
-      )
-    }
-
-    // Chamada para o backend Python
-    const response = await fetch(`${BACKEND_URL}/v1/auth/refresh`, {
+    // O auth-store envia { refresh_token } diretamente
+    const response = await fetch(`${BACKEND_URL}/api/v1/auth/refresh`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refresh_token: refreshToken }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: body.refresh_token }),
     })
 
     const data = await response.json()
 
     if (!response.ok) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: data.error || {
-            code: "REFRESH_FAILED",
-            message: "Token expirado ou invalido",
-          },
-        },
-        { status: response.status }
-      )
+      return NextResponse.json(data, { status: response.status })
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        token: data.access_token,
-        refreshToken: data.refresh_token,
-        expiresIn: data.expires_in || 3600,
-      },
-    })
+    // Passthrough: retorna o formato exato do backend Python
+    // O auth-store espera: { access_token, refresh_token, token_type, expires_in }
+    return NextResponse.json(data)
   } catch (error) {
-    console.error("[API] Refresh token error:", error)
+    console.error("[API] Refresh proxy error:", error)
     return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: "SERVER_ERROR",
-          message: "Erro interno do servidor",
-        },
-      },
+      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
       { status: 500 }
     )
   }

@@ -50,6 +50,7 @@ def list_files(
     area_id: Optional[int] = Query(None),
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
+    request: Request = None,
 ):
     """
     Lista compartilhamentos/arquivos do usuario com paginacao.
@@ -130,6 +131,15 @@ def list_files(
             "approved_by": approved_by,
             "rejection_reason": share.rejection_reason,
         })
+    
+    log_event(
+        session=session,
+        action="LISTAR_ARQUIVOS",
+        user_id=current_user.id,
+        detail=f"page={page}, limit={limit}, status={status_filter or 'all'}",
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None
+    )
     
     return {
         "files": result,

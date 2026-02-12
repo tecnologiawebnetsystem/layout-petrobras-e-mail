@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { Bell, CheckCheck, Download, Upload, AlertTriangle, FileCheck, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -35,8 +36,13 @@ const notificationColors: Record<NotificationType, string> = {
 }
 
 export function NotificationCenter() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead, clearNotification } = useNotificationStore()
+  const { notifications, unreadCount, markAsRead, markAllAsRead, clearNotification, loadNotifications } = useNotificationStore()
   const router = useRouter()
+
+  // Carrega notificacoes da API ao montar
+  useEffect(() => {
+    loadNotifications()
+  }, [loadNotifications])
 
   const handleNotificationClick = (notification: any) => {
     markAsRead(notification.id)

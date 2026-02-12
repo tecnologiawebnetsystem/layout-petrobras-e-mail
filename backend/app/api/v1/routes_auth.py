@@ -209,6 +209,7 @@ def logout(
 def refresh_token(
     payload: RefreshRequest,
     session: Session = Depends(get_session),
+    request: Request = None,
 ):
     """
     Renova o token de acesso usando o refresh token.
@@ -247,6 +248,15 @@ def refresh_token(
     
     # Remove refresh token antigo
     del _refresh_tokens[payload.refresh_token]
+    
+    log_event(
+        session=session,
+        action="REFRESH_TOKEN",
+        user_id=user.id,
+        detail=f"email={user.email}",
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None
+    )
     
     return {
         "access_token": access_token,

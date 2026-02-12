@@ -65,6 +65,18 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# Fallback para dev local (SQLite)
-if not settings.database_url:
-    settings.database_url = "sqlite:///./dev.db"
+# Suporte a DATABASE_URL (padrao do Neon/Vercel) com fallback para SQLite
+import os
+
+_db_url = os.environ.get("DATABASE_URL") or settings.database_url
+if not _db_url:
+    _db_url = "sqlite:///./dev.db"
+
+# Neon usa postgresql:// mas SQLAlchemy prefere postgresql+psycopg://
+# psycopg3 usa o dialeto 'postgresql+psycopg'
+if _db_url.startswith("postgres://"):
+    _db_url = _db_url.replace("postgres://", "postgresql+psycopg://", 1)
+elif _db_url.startswith("postgresql://") and "+psycopg" not in _db_url:
+    _db_url = _db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
+settings.database_url = _db_url
