@@ -1,6 +1,49 @@
 import { NextResponse } from "next/server"
 import { microsoftGraphMailService } from "@/lib/services/microsoft-graph-mail"
 
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
+
+/**
+ * Registra o email enviado via Graph no backend (tabela email_log + audit).
+ * Fire-and-forget: nao bloqueia o retorno ao cliente.
+ */
+async function logEmailToBackend(params: {
+  accessToken: string
+  messageId?: string
+  emailType: string
+  toEmail: string
+  subject: string
+  bodyPreview?: string
+  userId?: number
+  shareId?: number
+  headers: Headers
+}) {
+  try {
+    // Log na tabela email_log via endpoint dedicado
+    await fetch(`${BACKEND_URL}/api/v1/emails/log-external`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${params.accessToken}`,
+        "X-Forwarded-For": params.headers.get("x-forwarded-for") || "",
+        "User-Agent": params.headers.get("user-agent") || "",
+      },
+      body: JSON.stringify({
+        message_id: params.messageId,
+        email_type: params.emailType,
+        to_email: params.toEmail,
+        subject: params.subject,
+        body_preview: params.bodyPreview,
+        status: "sent",
+        user_id: params.userId,
+        share_id: params.shareId,
+      }),
+    })
+  } catch (err) {
+    console.error("[API] Falha ao registrar email no backend (non-blocking):", err)
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -47,7 +90,7 @@ export async function POST(request: Request) {
       case "cancellation":
         result = await microsoftGraphMailService.sendEmail(
           {
-            subject: `❌ Compartilhamento Cancelado - ${uploadData.name}`,
+            subject: `Compartilhamento Cancelado - ${uploadData.name}`,
             body: {
               contentType: "HTML",
               content: `
@@ -77,6 +120,30 @@ export async function POST(request: Request) {
       console.error("[API] Erro ao enviar email:", result.error)
       return NextResponse.json({ error: result.error }, { status: 500 })
     }
+
+    // Registra no backend (email_log + audit) - fire-and-forget
+    const emailTypeMap: Record<string, string> = {
+      sender: "file_share",
+      supervisor: "approval_request",
+      cancellation: "system",
+    }
+    const recipientEmail =
+      type === "supervisor"
+        ? uploadData.supervisorEmail
+        : type === "cancellation"
+          ? uploadData.supervisorEmail
+          : uploadData.recipient
+
+    logEmailToBackend({
+      accessToken,
+      messageId: result.messageId,
+      emailType: emailTypeMap[type] || "system",
+      toEmail: recipientEmail,
+      subject: `[Graph/${type}] ${uploadData.name}`,
+      bodyPreview: `Email tipo ${type} enviado via Microsoft Graph`,
+      shareId: uploadData.uploadId,
+      headers: request.headers,
+    })
 
     return NextResponse.json({ success: true, messageId: result.messageId })
   } catch (error) {

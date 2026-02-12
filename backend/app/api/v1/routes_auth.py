@@ -16,10 +16,12 @@ from sqlmodel import Session, select
 from datetime import datetime, timedelta, UTC
 from typing import Optional
 import secrets
+import hashlib
 
 from app.db.session import get_session
 from app.models.user import User, TypeUser
 from app.models.credencial_local import CredentialLocal
+from app.models.session_token import SessionToken, TokenType
 from app.services.audit_service import log_event
 from app.utils.session_jwt import create_session_jwt, decode_session_jwt
 from app.core.config import settings
@@ -62,10 +64,26 @@ class LogoutRequest(BaseModel):
 
 
 # =====================================================
-# Armazenamento temporario de tokens (em producao usar Redis)
+# Helpers para hash de tokens
 # =====================================================
-_refresh_tokens: dict[str, dict] = {}
-_reset_tokens: dict[str, dict] = {}
+
+def _hash_token(token: str) -> str:
+    """Gera SHA-256 do token para armazenamento seguro."""
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def _cleanup_expired_tokens(session: Session) -> None:
+    """Remove tokens expirados ou usados para manter a tabela limpa."""
+    now = datetime.now(UTC)
+    expired = session.exec(
+        select(SessionToken).where(
+            (SessionToken.expires_at < now) | (SessionToken.used == True) | (SessionToken.revoked == True)
+        )
+    ).all()
+    for t in expired:
+        session.delete(t)
+    if expired:
+        session.commit()
 
 
 # =====================================================
@@ -119,11 +137,19 @@ def login(
     )
     
     refresh_token = secrets.token_urlsafe(32)
-    _refresh_tokens[refresh_token] = {
-        "user_id": user.id,
-        "created_at": datetime.now(UTC),
-        "expires_at": datetime.now(UTC) + timedelta(days=7)
-    }
+    
+    # Persiste refresh token hashado no banco
+    session_token = SessionToken(
+        user_id=user.id,
+        token_hash=_hash_token(refresh_token),
+        token_type=TokenType.REFRESH,
+        expires_at=datetime.now(UTC) + timedelta(days=7),
+        ip_address=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent")[:500] if request and request.headers.get("User-Agent") else None,
+        email=user.email,
+    )
+    session.add(session_token)
+    session.commit()
     
     # Busca manager se existir
     manager_data = None
@@ -173,10 +199,8 @@ def logout(
 ):
     """
     Invalida a sessao do usuario.
+    Revoga todos os refresh tokens ativos do usuario.
     """
-    # Em uma implementacao real, invalidar o token no Redis/banco
-    
-    # Extrai user_id do token se possivel
     auth_header = request.headers.get("Authorization") if request else None
     user_id = None
     
@@ -189,11 +213,25 @@ def logout(
             pass
     
     if user_id:
+        # Revoga todos os refresh tokens ativos do usuario
+        active_tokens = session.exec(
+            select(SessionToken).where(
+                SessionToken.user_id == user_id,
+                SessionToken.token_type == TokenType.REFRESH,
+                SessionToken.used == False,
+                SessionToken.revoked == False,
+            )
+        ).all()
+        for t in active_tokens:
+            t.revoked = True
+            session.add(t)
+        session.commit()
+        
         log_event(
             session=session,
             action="LOGOUT",
             user_id=user_id,
-            detail="logout_manual",
+            detail=f"revoked_tokens={len(active_tokens)}",
             ip=request.client.host if request else None,
             user_agent=request.headers.get("User-Agent") if request else None
         )
@@ -214,21 +252,37 @@ def refresh_token(
     """
     Renova o token de acesso usando o refresh token.
     """
-    token_data = _refresh_tokens.get(payload.refresh_token)
+    token_hash = _hash_token(payload.refresh_token)
     
-    if not token_data:
+    # Busca token no banco
+    token_record = session.exec(
+        select(SessionToken).where(
+            SessionToken.token_hash == token_hash,
+            SessionToken.token_type == TokenType.REFRESH,
+            SessionToken.used == False,
+            SessionToken.revoked == False,
+        )
+    ).first()
+    
+    if not token_record:
         raise HTTPException(status_code=401, detail="Refresh token invalido")
     
-    if datetime.now(UTC) > token_data["expires_at"]:
-        del _refresh_tokens[payload.refresh_token]
+    if datetime.now(UTC) > token_record.expires_at.replace(tzinfo=UTC) if token_record.expires_at.tzinfo is None else token_record.expires_at:
+        token_record.used = True
+        session.add(token_record)
+        session.commit()
         raise HTTPException(status_code=401, detail="Refresh token expirado")
     
-    user = session.get(User, token_data["user_id"])
+    user = session.get(User, token_record.user_id)
     if not user:
         raise HTTPException(status_code=401, detail="Usuario nao encontrado")
     
     if not user.status:
         raise HTTPException(status_code=401, detail="Usuario desativado")
+    
+    # Marca token antigo como usado
+    token_record.used = True
+    session.add(token_record)
     
     # Gera novo access token
     access_token = create_session_jwt(
@@ -238,16 +292,19 @@ def refresh_token(
         expires_minutes=60
     )
     
-    # Gera novo refresh token
+    # Gera novo refresh token e persiste no banco
     new_refresh_token = secrets.token_urlsafe(32)
-    _refresh_tokens[new_refresh_token] = {
-        "user_id": user.id,
-        "created_at": datetime.now(UTC),
-        "expires_at": datetime.now(UTC) + timedelta(days=7)
-    }
-    
-    # Remove refresh token antigo
-    del _refresh_tokens[payload.refresh_token]
+    new_session_token = SessionToken(
+        user_id=user.id,
+        token_hash=_hash_token(new_refresh_token),
+        token_type=TokenType.REFRESH,
+        expires_at=datetime.now(UTC) + timedelta(days=7),
+        ip_address=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent")[:500] if request and request.headers.get("User-Agent") else None,
+        email=user.email,
+    )
+    session.add(new_session_token)
+    session.commit()
     
     log_event(
         session=session,
@@ -257,6 +314,12 @@ def refresh_token(
         ip=request.client.host if request else None,
         user_agent=request.headers.get("User-Agent") if request else None
     )
+    
+    # Limpeza periodica de tokens expirados (async-safe)
+    try:
+        _cleanup_expired_tokens(session)
+    except Exception:
+        pass
     
     return {
         "access_token": access_token,
@@ -287,12 +350,19 @@ def forgot_password(
     if user:
         # Gera token de reset
         reset_token = secrets.token_urlsafe(32)
-        _reset_tokens[reset_token] = {
-            "user_id": user.id,
-            "email": user.email,
-            "created_at": datetime.now(UTC),
-            "expires_at": datetime.now(UTC) + timedelta(hours=1)
-        }
+        
+        # Persiste reset token hashado no banco
+        session_token = SessionToken(
+            user_id=user.id,
+            token_hash=_hash_token(reset_token),
+            token_type=TokenType.RESET,
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
+            ip_address=request.client.host if request else None,
+            user_agent=request.headers.get("User-Agent")[:500] if request and request.headers.get("User-Agent") else None,
+            email=user.email,
+        )
+        session.add(session_token)
+        session.commit()
         
         # TODO: Enviar email com link de reset
         # O link seria algo como: {frontend_url}/reset-password?token={reset_token}
@@ -326,16 +396,29 @@ def reset_password(
     """
     Reseta a senha usando o token recebido por email.
     """
-    token_data = _reset_tokens.get(payload.token)
+    token_hash = _hash_token(payload.token)
     
-    if not token_data:
+    # Busca token no banco
+    token_record = session.exec(
+        select(SessionToken).where(
+            SessionToken.token_hash == token_hash,
+            SessionToken.token_type == TokenType.RESET,
+            SessionToken.used == False,
+            SessionToken.revoked == False,
+        )
+    ).first()
+    
+    if not token_record:
         raise HTTPException(status_code=400, detail="Token invalido ou expirado")
     
-    if datetime.now(UTC) > token_data["expires_at"]:
-        del _reset_tokens[payload.token]
+    expires_at = token_record.expires_at.replace(tzinfo=UTC) if token_record.expires_at.tzinfo is None else token_record.expires_at
+    if datetime.now(UTC) > expires_at:
+        token_record.used = True
+        session.add(token_record)
+        session.commit()
         raise HTTPException(status_code=400, detail="Token expirado")
     
-    user = session.get(User, token_data["user_id"])
+    user = session.get(User, token_record.user_id)
     if not user:
         raise HTTPException(status_code=400, detail="Usuario nao encontrado")
     
@@ -347,10 +430,11 @@ def reset_password(
     if credential:
         credential.set_password(payload.new_password)
         session.add(credential)
-        session.commit()
     
-    # Remove token usado
-    del _reset_tokens[payload.token]
+    # Marca token como usado
+    token_record.used = True
+    session.add(token_record)
+    session.commit()
     
     log_event(
         session=session,

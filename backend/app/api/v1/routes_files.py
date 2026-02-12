@@ -161,6 +161,7 @@ def get_file_details(
     file_id: int,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
+    request: Request = None,
 ):
     """
     Retorna detalhes completos de um compartilhamento.
@@ -234,6 +235,16 @@ def get_file_details(
     
     # Logs de extensao (placeholder)
     expiration_logs = []
+    
+    log_event(
+        session=session,
+        action="VER_DETALHE_ARQUIVO",
+        user_id=current_user.id,
+        share_id=share.id,
+        detail=f"file_id={file_id}",
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None
+    )
     
     return {
         "id": share.id,
