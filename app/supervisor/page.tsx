@@ -19,7 +19,7 @@ import { SupervisorUploadForm } from "@/components/supervisor/supervisor-upload-
 export default function SupervisorPage() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
-  const { uploads } = useWorkflowStore()
+  const { uploads, loadPendingUploads } = useWorkflowStore()
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [isChecking, setIsChecking] = useState(true)
@@ -31,11 +31,13 @@ export default function SupervisorPage() {
         router.push("/")
       } else {
         setIsChecking(false)
+        // Carrega dados pendentes do backend
+        loadPendingUploads()
       }
     }, 100)
 
     return () => clearTimeout(timer)
-  }, [isAuthenticated, user, router])
+  }, [isAuthenticated, user, router, loadPendingUploads])
 
   const pendingCount = uploads.filter((u) => u.status === "pending").length
   const approvedCount = uploads.filter((u) => u.status === "approved").length

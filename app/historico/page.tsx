@@ -22,7 +22,7 @@ import { Textarea } from "@/components/ui/textarea"
 
 export default function HistoricoPage() {
   const { user, isAuthenticated } = useAuthStore()
-  const { uploads, cancelUpload } = useWorkflowStore()
+  const { uploads, cancelUpload, loadUploads } = useWorkflowStore()
   const router = useRouter()
 
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
@@ -34,7 +34,9 @@ export default function HistoricoPage() {
       router.push("/")
       return
     }
-  }, [isAuthenticated, router])
+    // Carrega uploads do backend
+    loadUploads()
+  }, [isAuthenticated, router, loadUploads])
 
   const handleCancelClick = (uploadId: string) => {
     setSelectedUploadId(uploadId)

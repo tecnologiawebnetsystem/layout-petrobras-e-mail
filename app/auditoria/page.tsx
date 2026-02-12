@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useAuditLogStore, type LogAction, type LogLevel } from "@/lib/stores/audit-log-store"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -32,7 +32,8 @@ const actionIcons: Record<LogAction, any> = {
   access: Eye,
   expiration_change: Clock,
   zip_validation: Shield,
-  file_expired: Trash2, // Adicionado ícone para arquivos expirados
+  file_expired: Trash2,
+  cancel: XCircle,
 }
 
 const actionLabels: Record<LogAction, string> = {
@@ -44,8 +45,9 @@ const actionLabels: Record<LogAction, string> = {
   download: "Download",
   access: "Acesso",
   expiration_change: "Alteração de Prazo",
-  zip_validation: "Validação de ZIP",
-  file_expired: "Arquivo Expirado", // Adicionado label para arquivos expirados
+  zip_validation: "Validacao de ZIP",
+  file_expired: "Arquivo Expirado",
+  cancel: "Cancelamento",
 }
 
 const levelColors: Record<LogLevel, string> = {
@@ -56,8 +58,12 @@ const levelColors: Record<LogLevel, string> = {
 }
 
 export default function AuditoriaPage() {
-  const { logs, exportLogs, getLogsByAction } = useAuditLogStore()
+  const { logs, exportLogs, getLogsByAction, loadLogs } = useAuditLogStore()
   const [searchTerm, setSearchTerm] = useState("")
+
+  useEffect(() => {
+    loadLogs()
+  }, [loadLogs])
   const [filterAction, setFilterAction] = useState<LogAction | "all">("all")
   const [filterLevel, setFilterLevel] = useState<LogLevel | "all">("all")
 
