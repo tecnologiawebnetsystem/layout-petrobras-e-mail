@@ -1,0 +1,60 @@
+# ============================================================
+# docker-compose.yml - Front-End + Back-End
+# Usar na raiz do projeto para subir tudo junto
+# ============================================================
+# USO:
+#   docker-compose up --build          (subir tudo)
+#   docker-compose up --build frontend (so o front)
+#   docker-compose up --build backend  (so o back)
+#   docker-compose down                (parar tudo)
+# ============================================================
+
+version: "3.9"
+
+services:
+  # --------------------------------------------------------
+  # BACK-END: Python / FastAPI
+  # --------------------------------------------------------
+  backend:
+    image: csa-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      ENV: production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  # --------------------------------------------------------
+  # FRONT-END: Next.js 16
+  # --------------------------------------------------------
+  frontend:
+    image: csa-frontend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+        - NEXT_PUBLIC_AZURE_CLIENT_ID=${NEXT_PUBLIC_AZURE_CLIENT_ID:-}
+        - NEXT_PUBLIC_AZURE_TENANT_ID=${NEXT_PUBLIC_AZURE_TENANT_ID:-}
+        - NEXT_PUBLIC_AZURE_REDIRECT_URI=${NEXT_PUBLIC_AZURE_REDIRECT_URI:-}
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      BACKEND_URL: http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
