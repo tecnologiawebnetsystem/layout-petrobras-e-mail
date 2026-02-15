@@ -344,7 +344,7 @@ curl https://petrobras-backend-api.onrender.com/docs
             <p>
               O frontend Next.js na Vercel precisa saber a URL do backend no Render.
               Todas as API routes do Next.js (<code className="bg-slate-100 px-1 rounded">app/api/*/route.ts</code>) usam a
-              variavel <code className="bg-slate-100 px-1 rounded">PYTHON_BACKEND_URL</code>.
+              variavel <code className="bg-slate-100 px-1 rounded">BACKEND_URL</code>.
             </p>
 
             <div className="space-y-3">
@@ -359,7 +359,7 @@ curl https://petrobras-backend-api.onrender.com/docs
                   </thead>
                   <tbody>
                     <tr>
-                      <td className="px-3 py-2 font-mono text-xs">PYTHON_BACKEND_URL</td>
+                      <td className="px-3 py-2 font-mono text-xs">BACKEND_URL</td>
                       <td className="px-3 py-2 font-mono text-xs">https://petrobras-backend-api.onrender.com</td>
                     </tr>
                   </tbody>
@@ -501,7 +501,7 @@ curl https://petrobras-backend-api.onrender.com/docs
                 "Build concluido com sucesso (verde)",
                 "curl / retorna {'status':'ok'}",
                 "/docs abre o Swagger",
-                "PYTHON_BACKEND_URL configurado na Vercel",
+                "BACKEND_URL configurado na Vercel",
                 "Frontend consegue chamar /api/* com sucesso",
               ].map((item, i) => (
                 <label key={i} className="flex items-start gap-2 cursor-pointer">
