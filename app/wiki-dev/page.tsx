@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Home, HardDrive, Target, Database, ArrowLeftRight, Info, Server, Container } from "lucide-react"
+import { Search, BookOpen, Home, HardDrive, Target, Database, ArrowLeftRight, Info, Server, Container, Wrench } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
@@ -20,6 +20,15 @@ export default function WikiDevPage() {
       color: "from-indigo-500 to-blue-600",
       topics: ["Fases", "Entregas", "Prazos", "Progresso", "Milestones"],
       category: "gestao",
+    },
+    {
+      title: "Instalar e Rodar o Backend (local)",
+      description: "Passo a passo do zero: instalar Python, baixar o projeto, configurar .env e rodar a API no seu computador",
+      icon: Wrench,
+      href: "/wiki-dev/instalar-backend",
+      color: "from-green-500 to-emerald-600",
+      topics: ["Python", "FastAPI", "Instalacao", "Para Iniciantes"],
+      category: "setup",
     },
     {
       title: "PostgreSQL (Neon) - Schema Completo",
@@ -161,9 +170,9 @@ export default function WikiDevPage() {
             <div>
               <h3 className="mb-1 font-semibold text-slate-900">Documentacao Tecnica</h3>
               <p className="text-sm leading-relaxed text-slate-600">
-                Esta Wiki contem a documentacao tecnica do sistema: roadmap do projeto, schema do banco PostgreSQL (Neon),
-                mapa de integracoes Front x Back x Banco, guias de deploy em containers na AWS (ECS/Fargate) e no Render.com,
-                e referencia para DynamoDB na AWS.
+                Esta Wiki contem a documentacao tecnica do sistema: instalacao local do backend, roadmap do projeto,
+                schema do banco PostgreSQL (Neon), mapa de integracoes Front x Back x Banco, guias de deploy em
+                containers na AWS (ECS/Fargate) e no Render.com, e referencia para DynamoDB na AWS.
               </p>
             </div>
           </div>
