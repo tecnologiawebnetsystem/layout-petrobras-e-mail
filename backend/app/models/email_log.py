@@ -74,4 +74,5 @@ class EmailLog(SQLModel, table=True):
     updated_at: Optional[datetime] = Field(default=None)
     
     # Metadados adicionais (JSON serializado)
-    metadata: Optional[str] = Field(default=None)
+    # Nota: "metadata" e palavra reservada do SQLAlchemy, por isso usamos "extra_metadata"
+    extra_metadata: Optional[str] = Field(default=None, sa_column_kwargs={"name": "extra_metadata"})

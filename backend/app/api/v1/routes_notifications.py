@@ -71,7 +71,7 @@ def get_notifications(
                 "timestamp": n.created_at.isoformat(),
                 "action_label": n.action_label,
                 "action_url": n.action_url,
-                "metadata": n.metadata,
+                "metadata": n.extra_metadata,
             }
             for n in notifications
         ],
@@ -163,7 +163,7 @@ def create_notification(
     priority: NotificationPriority = NotificationPriority.MEDIUM,
     action_label: str = None,
     action_url: str = None,
-    metadata: str = None,
+    extra_metadata: str = None,
 ) -> Notification:
     """
     Cria uma nova notificacao para um usuario.
@@ -176,7 +176,7 @@ def create_notification(
         message=message,
         action_label=action_label,
         action_url=action_url,
-        metadata=metadata,
+        extra_metadata=extra_metadata,
     )
     session.add(notification)
     session.commit()
