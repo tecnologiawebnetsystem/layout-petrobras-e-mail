@@ -1,24 +1,39 @@
 from logging.config import fileConfig
+import os
+import sys
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
 
+# Adicionar o diretorio raiz do backend ao sys.path para importar os models
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+# Sobrescrever sqlalchemy.url com DATABASE_URL do .env (se existir)
+database_url = os.environ.get("DATABASE_URL")
+if database_url:
+    # Ajustar driver para psycopg3
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+    elif database_url.startswith("postgresql://") and "+psycopg" not in database_url:
+        database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    config.set_main_option("sqlalchemy.url", database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = None
+# Importar todos os models para que o Alembic possa gerar migrations automaticas
+from app.db.base import SQLModel  # noqa
+import app.models  # noqa - importa todos os models via __init__.py
+
+target_metadata = SQLModel.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

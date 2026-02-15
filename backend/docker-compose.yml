@@ -10,14 +10,16 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+    env_file:
+      - .env
     environment:
       ENV: development
       UVICORN_RELOAD: "true"
-
-      # AWS (SDKs usam isso, não o pipeline)
-      # AWS_REGION: us-east-1
-      # AWS_DEFAULT_REGION: us-east-1
-      # AWS_PROFILE: default
+      # DATABASE_URL: postgresql://USER:PASS@HOST/DB?sslmode=require
+      # JWT_SECRET_KEY: troque-por-chave-segura
+      # STORAGE_PROVIDER: local
+      # AUTH_MODE: local
+      # EMAIL_PROVIDER: dev
     command: >
       uvicorn app.main:app
       --host 0.0.0.0
