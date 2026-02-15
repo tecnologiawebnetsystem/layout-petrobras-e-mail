@@ -364,8 +364,29 @@ def forgot_password(
         session.add(session_token)
         session.commit()
         
-        # TODO: Enviar email com link de reset
-        # O link seria algo como: {frontend_url}/reset-password?token={reset_token}
+        # Enviar email com link de reset
+        reset_url = f"{settings.frontend_external_portal_url}/reset-password?token={reset_token}"
+        try:
+            from app.services.email_service import send_email, render_email_template
+            html = render_email_template(
+                "email/password_reset.html",
+                {
+                    "subject": "Redefinicao de Senha",
+                    "user_name": user.name or user.email,
+                    "reset_url": reset_url,
+                    "expires_in": "1 hora",
+                }
+            )
+            import asyncio
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(send_email("Redefinicao de Senha", [user.email], html))
+            except RuntimeError:
+                asyncio.run(send_email("Redefinicao de Senha", [user.email], html))
+        except Exception as e:
+            # Nao falha o endpoint se o email nao for enviado
+            import logging
+            logging.getLogger(__name__).error(f"Falha ao enviar email de reset: {e}")
         
         log_event(
             session=session,

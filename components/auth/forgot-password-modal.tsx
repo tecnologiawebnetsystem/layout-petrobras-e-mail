@@ -19,12 +19,14 @@ export function ForgotPasswordModal({ open, onOpenChange }: ForgotPasswordModalP
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
+  const [errorMsg, setErrorMsg] = useState("")
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setErrorMsg("")
 
     try {
-      // TODO: Integrar com API Python
       const response = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: {
@@ -39,10 +41,15 @@ export function ForgotPasswordModal({ open, onOpenChange }: ForgotPasswordModalP
           onOpenChange(false)
           setIsSuccess(false)
           setEmail("")
+          setErrorMsg("")
         }, 3000)
+      } else {
+        const data = await response.json().catch(() => null)
+        setErrorMsg(data?.detail || "Erro ao enviar email de recuperacao. Tente novamente.")
       }
     } catch (error) {
       console.error("Error sending reset email:", error)
+      setErrorMsg("Erro de conexao. Verifique sua internet e tente novamente.")
     } finally {
       setIsLoading(false)
     }
@@ -78,6 +85,11 @@ export function ForgotPasswordModal({ open, onOpenChange }: ForgotPasswordModalP
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+            {errorMsg && (
+              <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                {errorMsg}
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="reset-email" className="text-sm font-medium text-foreground">
                 E-mail

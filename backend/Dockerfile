@@ -8,8 +8,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pip.ini /etc/pip.conf
+# Se pip.ini existir (Nexus corporativo), copia; senao usa PyPI padrao
 COPY requirements.txt .
+RUN if [ -f pip.ini ]; then cp pip.ini /etc/pip.conf; fi
 
 RUN pip install --upgrade pip \
     && pip wheel --no-cache-dir -r requirements.txt -w /wheels

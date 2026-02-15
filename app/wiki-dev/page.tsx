@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Home, HardDrive, Target, Database, ArrowLeftRight, Info } from "lucide-react"
+import { Search, BookOpen, Home, HardDrive, Target, Database, ArrowLeftRight, Info, Server, Container } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
@@ -38,6 +38,24 @@ export default function WikiDevPage() {
       color: "from-green-500 to-blue-600",
       topics: ["48 Rotas", "13 Routers", "Audit Logs", "100% Integrado"],
       category: "integracao",
+    },
+    {
+      title: "Deploy em Containers - Front + Back na AWS",
+      description: "Guia completo para publicar Next.js e FastAPI em Docker/ECS na AWS, contornando problemas com Nexus",
+      icon: Container,
+      href: "/wiki-dev/deploy-containers",
+      color: "from-blue-600 to-cyan-500",
+      topics: ["Docker", "AWS ECS", "ECR", "Nexus Fix", "Fargate"],
+      category: "deploy",
+    },
+    {
+      title: "Deploy Backend no Render.com",
+      description: "Guia passo a passo para hospedar a API Python/FastAPI no Render, conectada ao Neon PostgreSQL",
+      icon: Server,
+      href: "/wiki-dev/deploy-render",
+      color: "from-violet-500 to-purple-600",
+      topics: ["Render", "Deploy", "FastAPI", "Passo a Passo"],
+      category: "deploy",
     },
     {
       title: "DynamoDB na AWS - Guia Completo",
@@ -143,9 +161,9 @@ export default function WikiDevPage() {
             <div>
               <h3 className="mb-1 font-semibold text-slate-900">Documentacao Tecnica</h3>
               <p className="text-sm leading-relaxed text-slate-600">
-                Esta Wiki contem a documentacao tecnica do sistema: roadmap do projeto, schema completo do banco de dados
-                PostgreSQL (Neon) com 19 tabelas, mapa de integracoes entre Frontend (Next.js), Backend (Python/FastAPI) e
-                Banco, e referencia para DynamoDB na AWS.
+                Esta Wiki contem a documentacao tecnica do sistema: roadmap do projeto, schema do banco PostgreSQL (Neon),
+                mapa de integracoes Front x Back x Banco, guias de deploy em containers na AWS (ECS/Fargate) e no Render.com,
+                e referencia para DynamoDB na AWS.
               </p>
             </div>
           </div>
