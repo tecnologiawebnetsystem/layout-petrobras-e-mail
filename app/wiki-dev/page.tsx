@@ -154,7 +154,7 @@ export default function WikiDevPage() {
               <p className="text-sm leading-relaxed text-slate-600">
                 Esta Wiki contem a documentacao tecnica do sistema: roadmap do projeto, schema completo do banco de dados
                 PostgreSQL (Neon) com 19 tabelas, mapa de integracoes entre Frontend (Next.js), Backend (Python/FastAPI) e
-                Banco, e referencia para DynamoDB na AWS.
+                Banco, guia de deploy do backend no Render.com, e referencia para DynamoDB na AWS.
               </p>
             </div>
           </div>
