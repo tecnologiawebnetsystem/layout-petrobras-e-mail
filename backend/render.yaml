@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: petrobras-backend-api
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: STORAGE_PROVIDER
+        value: local
+      - key: AUTH_MODE
+        value: local
+      - key: EMAIL_PROVIDER
+        value: dev

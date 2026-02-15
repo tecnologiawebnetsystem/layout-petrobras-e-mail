@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Home, HardDrive, Target, Database, ArrowLeftRight, Info } from "lucide-react"
+import { Search, BookOpen, Home, HardDrive, Target, Database, ArrowLeftRight, Info, Server } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
@@ -38,6 +38,15 @@ export default function WikiDevPage() {
       color: "from-green-500 to-blue-600",
       topics: ["48 Rotas", "13 Routers", "Audit Logs", "100% Integrado"],
       category: "integracao",
+    },
+    {
+      title: "Deploy Backend no Render.com",
+      description: "Guia passo a passo para hospedar a API Python/FastAPI no Render, conectada ao Neon PostgreSQL",
+      icon: Server,
+      href: "/wiki-dev/deploy-render",
+      color: "from-violet-500 to-purple-600",
+      topics: ["Render", "Deploy", "FastAPI", "Passo a Passo"],
+      category: "deploy",
     },
     {
       title: "DynamoDB na AWS - Guia Completo",
