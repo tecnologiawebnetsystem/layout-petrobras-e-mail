@@ -39,7 +39,8 @@ class Notification(SQLModel, table=True):
     read: bool = Field(default=False, index=True)
     action_label: Optional[str] = Field(default=None, max_length=100)
     action_url: Optional[str] = Field(default=None, max_length=500)
-    metadata: Optional[str] = Field(default=None)  # JSON string for extra data
+    # Nota: "metadata" e palavra reservada do SQLAlchemy, por isso usamos "extra_metadata"
+    extra_metadata: Optional[str] = Field(default=None, sa_column_kwargs={"name": "extra_metadata"})  # JSON string for extra data
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     # Relacionamento
