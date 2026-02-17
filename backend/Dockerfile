@@ -31,6 +31,9 @@ RUN pip install --no-cache-dir /wheels/*
 
 COPY . .
 
-EXPOSE 8000
+# Porta configuravel via variavel de ambiente (Render usa PORT=10000)
+ENV PORT=8000
+EXPOSE ${PORT}
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Usa shell form para expandir $PORT em runtime
+CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
