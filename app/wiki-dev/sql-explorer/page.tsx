@@ -163,8 +163,7 @@ export default function SqlExplorerPage() {
                 <Database className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-white">SQL Explorer</h1>
-                <p className="text-xs text-slate-500">Neon PostgreSQL - Somente Leitura</p>
+                <h1 className="text-lg font-bold text-white">SQL Petrobras</h1>
               </div>
             </div>
           </div>
@@ -198,8 +197,16 @@ export default function SqlExplorerPage() {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-6 w-6 animate-spin text-slate-600" />
+            <div className="flex flex-col items-center justify-center gap-4 px-4 py-16">
+              <Loader2 className="h-7 w-7 animate-spin text-emerald-500" />
+              <div className="text-center">
+                <p className="text-sm font-medium text-slate-300">Carregando tabelas...</p>
+                <p className="mt-1 text-xs text-slate-500">Isso pode levar ate 15 segundos</p>
+                <p className="mt-0.5 text-xs text-slate-600">na primeira consulta do dia.</p>
+              </div>
+              <div className="mt-2 w-full max-w-[200px] overflow-hidden rounded-full bg-slate-800">
+                <div className="h-1 animate-pulse rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500" style={{ animation: "loading-bar 3s ease-in-out infinite", width: "60%" }} />
+              </div>
             </div>
           ) : (
             <div className="p-2">

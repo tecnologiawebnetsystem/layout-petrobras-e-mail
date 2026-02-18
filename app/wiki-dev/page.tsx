@@ -40,8 +40,8 @@ export default function WikiDevPage() {
       category: "setup",
     },
     {
-      title: "SQL Explorer - Consultar Banco ao Vivo",
-      description: "Visualize tabelas, colunas e execute SELECTs direto no banco Neon PostgreSQL em tempo real",
+      title: "SQL Petrobras - Consultar Banco ao Vivo",
+      description: "Visualize tabelas, colunas e execute SELECTs direto no banco PostgreSQL em tempo real",
       icon: TerminalSquare,
       href: "/wiki-dev/sql-explorer",
       color: "from-emerald-500 to-cyan-500",
