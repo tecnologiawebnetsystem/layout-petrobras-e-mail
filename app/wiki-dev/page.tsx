@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Home, HardDrive, Target, Database, ArrowLeftRight, Info, Server, Container, Wrench } from "lucide-react"
+import { Search, BookOpen, Home, HardDrive, Target, Database, ArrowLeftRight, Info, Server, Container, Wrench, KeyRound } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
