@@ -1,9 +1,14 @@
 import { neon } from '@neondatabase/serverless'
 import { NextResponse } from 'next/server'
 
-const sql = neon(process.env.DATABASE_URL!)
+function getSQL() {
+  const dbUrl = process.env.DATABASE_URL
+  if (!dbUrl) {
+    throw new Error('DATABASE_URL nao configurada')
+  }
+  return neon(dbUrl)
+}
 
-// Palavras bloqueadas para seguranca - apenas SELECT permitido
 const BLOCKED_KEYWORDS = [
   'INSERT', 'UPDATE', 'DELETE', 'DROP', 'ALTER', 'CREATE', 'TRUNCATE',
   'GRANT', 'REVOKE', 'EXEC', 'EXECUTE', 'CALL', 'MERGE', 'UPSERT',
@@ -12,15 +17,12 @@ const BLOCKED_KEYWORDS = [
 
 function isSafeQuery(query: string): { safe: boolean; reason?: string } {
   const upper = query.toUpperCase().trim()
-  
-  // Deve comecar com SELECT ou WITH (para CTEs)
+
   if (!upper.startsWith('SELECT') && !upper.startsWith('WITH') && !upper.startsWith('EXPLAIN')) {
     return { safe: false, reason: 'Apenas consultas SELECT, WITH e EXPLAIN sao permitidas' }
   }
 
-  // Verificar palavras bloqueadas
   for (const keyword of BLOCKED_KEYWORDS) {
-    // Verifica se a palavra aparece fora de aspas simples (strings)
     const withoutStrings = upper.replace(/'[^']*'/g, '')
     const regex = new RegExp(`\\b${keyword}\\b`)
     if (regex.test(withoutStrings)) {
@@ -31,9 +33,10 @@ function isSafeQuery(query: string): { safe: boolean; reason?: string } {
   return { safe: true }
 }
 
-// GET - Lista todas as tabelas e suas colunas
 export async function GET() {
   try {
+    const sql = getSQL()
+
     const tables = await sql`
       SELECT 
         t.table_name,
@@ -59,21 +62,25 @@ export async function GET() {
       ORDER BY t.table_name
     `
 
-    // Contar registros de cada tabela
-    const counts = await Promise.all(
-      tables.map(async (t: { table_name: string }) => {
-        try {
-          const result = await sql(`SELECT COUNT(*)::int as count FROM "${t.table_name}"`)
-          return { table: t.table_name, count: result[0]?.count || 0 }
-        } catch {
-          return { table: t.table_name, count: -1 }
-        }
-      })
-    )
+    const tableNames = tables.map((t: Record<string, unknown>) => String(t.table_name))
+    let countsMap: Record<string, number> = {}
 
-    const tablesWithCounts = tables.map((t: { table_name: string }) => ({
+    if (tableNames.length > 0) {
+      try {
+        const countParts = tableNames.map((name: string) => `SELECT '${name}' as tbl, COUNT(*)::int as cnt FROM "${name}"`)
+        const countQuery = countParts.join(' UNION ALL ')
+        const countResults = await sql(countQuery)
+        for (const row of countResults) {
+          countsMap[String(row.tbl)] = Number(row.cnt) || 0
+        }
+      } catch {
+        // fallback: leave all counts at 0
+      }
+    }
+
+    const tablesWithCounts = tables.map((t: Record<string, unknown>) => ({
       ...t,
-      row_count: counts.find((c: { table: string }) => c.table === t.table_name)?.count || 0,
+      row_count: countsMap[String(t.table_name)] || 0,
     }))
 
     return NextResponse.json({ tables: tablesWithCounts })
@@ -85,9 +92,9 @@ export async function GET() {
   }
 }
 
-// POST - Executa uma query SELECT
 export async function POST(request: Request) {
   try {
+    const sql = getSQL()
     const body = await request.json()
     const { query } = body
 
@@ -99,7 +106,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Query muito curta' }, { status: 400 })
     }
 
-    // Validar seguranca
     const validation = isSafeQuery(query)
     if (!validation.safe) {
       return NextResponse.json({ error: validation.reason }, { status: 403 })
@@ -109,7 +115,6 @@ export async function POST(request: Request) {
     const result = await sql(query)
     const duration = Date.now() - startTime
 
-    // Extrair nomes das colunas
     const columns = result.length > 0 ? Object.keys(result[0]) : []
 
     return NextResponse.json({
