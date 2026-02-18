@@ -1,13 +1,5 @@
-import { neon } from '@neondatabase/serverless'
+import { sql } from '@/lib/db/neon'
 import { NextResponse } from 'next/server'
-
-function getSQL() {
-  const dbUrl = process.env.DATABASE_URL
-  if (!dbUrl) {
-    throw new Error('DATABASE_URL nao configurada')
-  }
-  return neon(dbUrl)
-}
 
 const BLOCKED_KEYWORDS = [
   'INSERT', 'UPDATE', 'DELETE', 'DROP', 'ALTER', 'CREATE', 'TRUNCATE',
@@ -35,8 +27,6 @@ function isSafeQuery(query: string): { safe: boolean; reason?: string } {
 
 export async function GET() {
   try {
-    const sql = getSQL()
-
     const tables = await sql`
       SELECT 
         t.table_name,
@@ -94,7 +84,6 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const sql = getSQL()
     const body = await request.json()
     const { query } = body
 
