@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Home, HardDrive, Target, Database, ArrowLeftRight, Info, Server, Container, Wrench, KeyRound } from "lucide-react"
+import { Search, BookOpen, Home, HardDrive, Target, Database, ArrowLeftRight, Info, Server, Container, Wrench, KeyRound, TerminalSquare } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
@@ -38,6 +38,15 @@ export default function WikiDevPage() {
       color: "from-amber-500 to-orange-500",
       topics: ["Frontend", "Backend", "Vercel", "Render", "Local", ".env"],
       category: "setup",
+    },
+    {
+      title: "SQL Explorer - Consultar Banco ao Vivo",
+      description: "Visualize tabelas, colunas e execute SELECTs direto no banco Neon PostgreSQL em tempo real",
+      icon: TerminalSquare,
+      href: "/wiki-dev/sql-explorer",
+      color: "from-emerald-500 to-cyan-500",
+      topics: ["SELECT", "Tabelas", "Colunas", "Tempo Real", "Somente Leitura"],
+      category: "banco",
     },
     {
       title: "PostgreSQL (Neon) - Schema Completo",
