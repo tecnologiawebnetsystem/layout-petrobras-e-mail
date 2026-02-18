@@ -31,6 +31,15 @@ export default function WikiDevPage() {
       category: "setup",
     },
     {
+      title: "Variaveis de Ambiente (.env)",
+      description: "Todas as variaveis do Frontend (Vercel) e Backend (Render/local) com valores reais - pasta ENV pronta para copiar",
+      icon: KeyRound,
+      href: "/wiki-dev/variaveis-ambiente",
+      color: "from-amber-500 to-orange-500",
+      topics: ["Frontend", "Backend", "Vercel", "Render", "Local", ".env"],
+      category: "setup",
+    },
+    {
       title: "PostgreSQL (Neon) - Schema Completo",
       description: "Documentacao de todas as 19 tabelas do banco de dados Neon PostgreSQL - colunas, tipos, FK e relacionamentos",
       icon: Database,
@@ -170,9 +179,9 @@ export default function WikiDevPage() {
             <div>
               <h3 className="mb-1 font-semibold text-slate-900">Documentacao Tecnica</h3>
               <p className="text-sm leading-relaxed text-slate-600">
-                Esta Wiki contem a documentacao tecnica do sistema: instalacao local do backend, roadmap do projeto,
-                schema do banco PostgreSQL (Neon), mapa de integracoes Front x Back x Banco, guias de deploy em
-                containers na AWS (ECS/Fargate) e no Render.com, e referencia para DynamoDB na AWS.
+                Esta Wiki contem a documentacao tecnica do sistema: instalacao local do backend, variaveis de
+                ambiente (pasta ENV), roadmap do projeto, schema do banco PostgreSQL (Neon), mapa de integracoes
+                Front x Back x Banco, guias de deploy em containers na AWS e no Render.com, e referencia DynamoDB.
               </p>
             </div>
           </div>
