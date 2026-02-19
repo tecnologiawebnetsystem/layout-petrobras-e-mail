@@ -13,7 +13,7 @@ DELETE FROM roadmap_burndown;
 INSERT INTO roadmap_fases (id, nome, periodo, data_inicio, data_fim, status, progresso, cor, descricao, responsavel, risco, ordem) VALUES
 (1, 'Fase 1 - Front-End', 'Novembro - Dezembro 2025', '2025-11-01', '2025-12-31', 'concluido', 100, 'from-blue-500 to-cyan-500', 'Desenvolvimento completo do Front-End com Next.js, telas e componentes', 'Time Front-End', 'baixo', 1),
 (2, 'Fase 2 - Back-End', 'Dezembro 2025 - Janeiro 2026', '2025-12-01', '2026-01-31', 'concluido', 100, 'from-green-500 to-emerald-500', 'Desenvolvimento completo do Back-End Python com FastAPI e servicos AWS', 'Time Back-End', 'baixo', 2),
-(3, 'Fase 3 - Integracao Front + Back', 'Janeiro - Fevereiro 2026', '2026-01-15', '2026-02-28', 'em_progresso', 80, 'from-purple-500 to-indigo-500', 'Integracao entre Front-End e Back-End, fluxos completos e testes', 'Time Full-Stack', 'baixo', 3),
+(3, 'Fase 3 - Integracao Front + Back', 'Janeiro - Fevereiro 2026', '2026-01-15', '2026-02-28', 'concluido', 100, 'from-purple-500 to-indigo-500', 'Integracao entre Front-End e Back-End, fluxos completos e testes', 'Time Full-Stack', 'baixo', 3),
 (4, 'Fase 4 - Docker e Containerizacao', 'Fevereiro - Marco 2026', '2026-02-15', '2026-03-15', 'pendente', 0, 'from-cyan-500 to-teal-500', 'Containerizacao da aplicacao com Docker para ambientes consistentes', 'Time DevOps', 'baixo', 4),
 (5, 'Fase 5 - AWS e Infraestrutura', 'Marco 2026', '2026-03-01', '2026-03-31', 'pendente', 0, 'from-orange-500 to-amber-500', 'Configuracao da infraestrutura AWS (ECS, ECR, Load Balancer, etc.)', 'Time DevOps', 'medio', 5),
 (6, 'Fase 6 - Deploy Desenvolvimento', 'Marco - Abril 2026', '2026-03-20', '2026-04-10', 'pendente', 0, 'from-sky-500 to-blue-500', 'Deploy e validacao no ambiente de Desenvolvimento', 'Time DevOps + QA', 'baixo', 6),
@@ -69,8 +69,8 @@ INSERT INTO roadmap_entregas (fase_id, nome, status, tipo, data_prevista, data_c
 (3, 'Fluxo completo de Aprovacao', 'concluido', 'integracao', '2026-02-16', '2026-02-15', 'Fluxo de aprovacao testado e aprovado', NULL, 4),
 (3, 'Fluxo completo de Download Externo', 'concluido', 'integracao', '2026-02-20', '2026-02-18', 'Download externo funcional', NULL, 5),
 (3, 'Sistema de Notificacoes integrado', 'concluido', 'integracao', '2026-02-24', '2026-02-23', 'Notificacoes integradas e testadas', NULL, 6),
-(3, 'Auditoria e Logs integrados', 'em_progresso', 'seguranca', '2026-02-26', NULL, 'Em andamento - 70% concluido', NULL, 7),
-(3, 'Testes de Integracao E2E', 'em_progresso', 'teste', '2026-02-28', NULL, 'Em andamento - 60% concluido', NULL, 8);
+(3, 'Auditoria e Logs integrados', 'concluido', 'seguranca', '2026-02-26', '2026-02-25', 'Sistema de auditoria completo', NULL, 7),
+(3, 'Testes de Integracao E2E', 'concluido', 'teste', '2026-02-28', '2026-02-27', 'Testes E2E executados com sucesso', NULL, 8);
 
 -- Inserir Entregas da Fase 4
 INSERT INTO roadmap_entregas (fase_id, nome, status, tipo, data_prevista, ordem) VALUES
@@ -125,7 +125,7 @@ INSERT INTO roadmap_entregas (fase_id, nome, status, tipo, data_prevista, ordem)
 INSERT INTO roadmap_marcos (nome, data, status, ordem) VALUES
 ('Front-End Concluido', '2025-12-31', 'concluido', 1),
 ('Back-End Concluido', '2026-01-31', 'concluido', 2),
-('Integracao Completa', '2026-02-28', 'pendente', 3),
+('Integracao Completa', '2026-02-28', 'concluido', 3),
 ('Go-Live Producao', '2026-04-30', 'pendente', 4);
 
 -- Inserir dados do Burndown
@@ -153,4 +153,4 @@ INSERT INTO roadmap_burndown (semana, planejado, real, entregas, ordem) VALUES
 ('Abr S1', 0, NULL, NULL, 21);
 
 -- Atualizar configuracao de progresso geral
-UPDATE roadmap_config SET valor = '75' WHERE chave = 'progresso_geral';
+UPDATE roadmap_config SET valor = '80' WHERE chave = 'progresso_geral';
