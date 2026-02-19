@@ -13,7 +13,7 @@ DELETE FROM roadmap_burndown;
 INSERT INTO roadmap_fases (id, nome, periodo, data_inicio, data_fim, status, progresso, cor, descricao, responsavel, risco, ordem) VALUES
 (1, 'Fase 1 - Front-End', 'Novembro - Dezembro 2025', '2025-11-01', '2025-12-31', 'concluido', 100, 'from-blue-500 to-cyan-500', 'Desenvolvimento completo do Front-End com Next.js, telas e componentes', 'Time Front-End', 'baixo', 1),
 (2, 'Fase 2 - Back-End', 'Dezembro 2025 - Janeiro 2026', '2025-12-01', '2026-01-31', 'concluido', 100, 'from-green-500 to-emerald-500', 'Desenvolvimento completo do Back-End Python com FastAPI e servicos AWS', 'Time Back-End', 'baixo', 2),
-(3, 'Fase 3 - Integracao Front + Back', 'Janeiro - Fevereiro 2026', '2026-01-15', '2026-02-28', 'em_progresso', 40, 'from-purple-500 to-indigo-500', 'Integracao entre Front-End e Back-End, fluxos completos e testes', 'Time Full-Stack', 'medio', 3),
+(3, 'Fase 3 - Integracao Front + Back', 'Janeiro - Fevereiro 2026', '2026-01-15', '2026-02-28', 'em_progresso', 80, 'from-purple-500 to-indigo-500', 'Integracao entre Front-End e Back-End, fluxos completos e testes', 'Time Full-Stack', 'baixo', 3),
 (4, 'Fase 4 - Docker e Containerizacao', 'Fevereiro - Marco 2026', '2026-02-15', '2026-03-15', 'pendente', 0, 'from-cyan-500 to-teal-500', 'Containerizacao da aplicacao com Docker para ambientes consistentes', 'Time DevOps', 'baixo', 4),
 (5, 'Fase 5 - AWS e Infraestrutura', 'Marco 2026', '2026-03-01', '2026-03-31', 'pendente', 0, 'from-orange-500 to-amber-500', 'Configuracao da infraestrutura AWS (ECS, ECR, Load Balancer, etc.)', 'Time DevOps', 'medio', 5),
 (6, 'Fase 6 - Deploy Desenvolvimento', 'Marco - Abril 2026', '2026-03-20', '2026-04-10', 'pendente', 0, 'from-sky-500 to-blue-500', 'Deploy e validacao no ambiente de Desenvolvimento', 'Time DevOps + QA', 'baixo', 6),
@@ -62,15 +62,15 @@ INSERT INTO roadmap_entregas (fase_id, nome, status, tipo, data_prevista, data_c
 (2, 'Validacao de arquivos ZIP', 'concluido', 'backend', '2026-01-31', '2026-01-29', NULL, 10);
 
 -- Inserir Entregas da Fase 3
-INSERT INTO roadmap_entregas (fase_id, nome, status, tipo, data_prevista, notas, bloqueios, ordem) VALUES
-(3, 'Conectar Front com APIs reais', 'em_progresso', 'integracao', '2026-02-05', 'Em andamento - 70% concluido', 'Aguardando ajustes no endpoint de autenticacao', 1),
-(3, 'Fluxo completo de Login/SSO', 'em_progresso', 'integracao', '2026-02-08', 'Integracao com Microsoft Entra em testes', NULL, 2),
-(3, 'Fluxo completo de Upload', 'em_progresso', 'integracao', '2026-02-12', NULL, NULL, 3),
-(3, 'Fluxo completo de Aprovacao', 'pendente', 'integracao', '2026-02-16', NULL, NULL, 4),
-(3, 'Fluxo completo de Download Externo', 'pendente', 'integracao', '2026-02-20', NULL, NULL, 5),
-(3, 'Sistema de Notificacoes integrado', 'pendente', 'integracao', '2026-02-24', NULL, NULL, 6),
-(3, 'Auditoria e Logs integrados', 'pendente', 'seguranca', '2026-02-26', NULL, NULL, 7),
-(3, 'Testes de Integracao E2E', 'pendente', 'teste', '2026-02-28', NULL, NULL, 8);
+INSERT INTO roadmap_entregas (fase_id, nome, status, tipo, data_prevista, data_conclusao, notas, bloqueios, ordem) VALUES
+(3, 'Conectar Front com APIs reais', 'concluido', 'integracao', '2026-02-05', '2026-02-04', 'Integracao concluida com sucesso', NULL, 1),
+(3, 'Fluxo completo de Login/SSO', 'concluido', 'integracao', '2026-02-08', '2026-02-07', 'Integracao com Microsoft Entra validada', NULL, 2),
+(3, 'Fluxo completo de Upload', 'concluido', 'integracao', '2026-02-12', '2026-02-11', 'Upload funcionando corretamente', NULL, 3),
+(3, 'Fluxo completo de Aprovacao', 'concluido', 'integracao', '2026-02-16', '2026-02-15', 'Fluxo de aprovacao testado e aprovado', NULL, 4),
+(3, 'Fluxo completo de Download Externo', 'concluido', 'integracao', '2026-02-20', '2026-02-18', 'Download externo funcional', NULL, 5),
+(3, 'Sistema de Notificacoes integrado', 'concluido', 'integracao', '2026-02-24', '2026-02-23', 'Notificacoes integradas e testadas', NULL, 6),
+(3, 'Auditoria e Logs integrados', 'em_progresso', 'seguranca', '2026-02-26', NULL, 'Em andamento - 70% concluido', NULL, 7),
+(3, 'Testes de Integracao E2E', 'em_progresso', 'teste', '2026-02-28', NULL, 'Em andamento - 60% concluido', NULL, 8);
 
 -- Inserir Entregas da Fase 4
 INSERT INTO roadmap_entregas (fase_id, nome, status, tipo, data_prevista, ordem) VALUES

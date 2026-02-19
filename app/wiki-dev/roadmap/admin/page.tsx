@@ -921,28 +921,7 @@ function AdminDashboard() {
   )
 }
 
-// Componente principal com autenticacao
+// Componente principal sem autenticacao
 export default function RoadmapAdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [checkingAuth, setCheckingAuth] = useState(true)
-
-  useEffect(() => {
-    const auth = sessionStorage.getItem("roadmap_admin_auth")
-    setIsAuthenticated(auth === "true")
-    setCheckingAuth(false)
-  }, [])
-
-  if (checkingAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
-    return <LoginForm onLogin={() => setIsAuthenticated(true)} />
-  }
-
   return <AdminDashboard />
 }

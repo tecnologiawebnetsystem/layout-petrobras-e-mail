@@ -2,7 +2,7 @@ import { sql } from '@/lib/db/neon'
 import { NextResponse } from 'next/server'
 
 const BLOCKED_KEYWORDS = [
-  'INSERT', 'UPDATE', 'DELETE', 'DROP', 'ALTER', 'CREATE', 'TRUNCATE',
+  'DROP', 'ALTER', 'CREATE', 'TRUNCATE',
   'GRANT', 'REVOKE', 'EXEC', 'EXECUTE', 'CALL', 'MERGE', 'UPSERT',
   'VACUUM', 'REINDEX', 'CLUSTER', 'COPY', 'LOCK', 'COMMENT',
 ]
@@ -10,15 +10,19 @@ const BLOCKED_KEYWORDS = [
 function isSafeQuery(query: string): { safe: boolean; reason?: string } {
   const upper = query.toUpperCase().trim()
 
-  if (!upper.startsWith('SELECT') && !upper.startsWith('WITH') && !upper.startsWith('EXPLAIN')) {
-    return { safe: false, reason: 'Apenas consultas SELECT, WITH e EXPLAIN sao permitidas' }
+  // Allow SELECT, WITH, EXPLAIN, INSERT, UPDATE, DELETE
+  const allowedStarts = ['SELECT', 'WITH', 'EXPLAIN', 'INSERT', 'UPDATE', 'DELETE']
+  const startsWithAllowed = allowedStarts.some(keyword => upper.startsWith(keyword))
+  
+  if (!startsWithAllowed) {
+    return { safe: false, reason: 'Apenas consultas SELECT, INSERT, UPDATE, DELETE, WITH e EXPLAIN sao permitidas' }
   }
 
   for (const keyword of BLOCKED_KEYWORDS) {
     const withoutStrings = upper.replace(/'[^']*'/g, '')
     const regex = new RegExp(`\\b${keyword}\\b`)
     if (regex.test(withoutStrings)) {
-      return { safe: false, reason: `Comando "${keyword}" nao e permitido. Apenas leitura (SELECT).` }
+      return { safe: false, reason: `Comando "${keyword}" nao e permitido.` }
     }
   }
 
