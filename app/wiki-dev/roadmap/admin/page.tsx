@@ -758,7 +758,7 @@ function AdminDashboard() {
 
       {/* Dialog Entrega */}
       <Dialog open={entregaDialog.open} onOpenChange={(open) => setEntregaDialog(prev => ({ ...prev, open }))}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{entregaDialog.mode === "create" ? "Nova Entrega" : "Editar Entrega"}</DialogTitle>
             <DialogDescription>Preencha os dados da entrega</DialogDescription>
