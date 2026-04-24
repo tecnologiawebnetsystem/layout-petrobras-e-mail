@@ -1,0 +1,49 @@
+# Controle de versão
+.git
+.gitignore
+
+# Variáveis de ambiente – NUNCA incluir na imagem
+.env
+.env.*
+!.env.example
+
+# Banco de dados local
+*.db
+*.db-shm
+*.db-wal
+storage/uploads/
+
+# Cache Python
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+ENV/
+
+# Testes e scripts de verificação (SE NECESSÁRIO, REMOVA O COMENTÁRIO)
+# tests/
+
+# Build e CI
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# IDE e OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+docker-compose*.yml

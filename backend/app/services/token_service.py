@@ -123,8 +123,8 @@ def verify_otp(
     if not otp:
         raise TokenError("OTP não encontrado ou já utilizado.")
     
-    # cooldown ativo?
-    if otp.blocked_until and otp.blocked_until > datetime.now(UTC):
+    # cooldown ativo? (stored as naive in SQLite — compare via .replace)
+    if otp.blocked_until and otp.blocked_until.replace(tzinfo=UTC) > datetime.now(UTC):
         raise TokenError(f"Tentativas excedidas. Tente novamente após {otp.blocked_until.isoformat()}.")
 
     # Expiração
@@ -136,6 +136,7 @@ def verify_otp(
         otp.attempts += 1
         
         if otp.attempts >= max_attempts:
+            # Armazena como naive UTC para consistência com SQLite
             otp.blocked_until = datetime.now(UTC) + timedelta(minutes=cooldown_minutes)
         session.add(otp)
         session.commit()

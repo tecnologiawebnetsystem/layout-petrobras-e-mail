@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { microsoftGraphMailService } from "@/lib/services/microsoft-graph-mail"
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
+const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:8080"
 
 /**
  * Registra o email OTP enviado via Graph no backend (tabela email_log + audit).
@@ -21,8 +21,11 @@ async function logOtpEmailToBackend(params: {
       "X-Forwarded-For": params.headers.get("x-forwarded-for") || "",
       "User-Agent": params.headers.get("user-agent") || "",
     }
-    if (params.accessToken) {
-      authHeaders["Authorization"] = `Bearer ${params.accessToken}`
+    // Encaminha o cookie de sessao da app (app_session) para autenticar no backend Python.
+    // NAO usa o access token MSAL, que e incompativel com decode_app_jwt do backend.
+    const cookie = params.headers.get("cookie") || ""
+    if (cookie) {
+      authHeaders["Cookie"] = cookie
     }
 
     // Registra na tabela email_log + audit via endpoint dedicado
@@ -39,7 +42,7 @@ async function logOtpEmailToBackend(params: {
       }),
     })
   } catch (err) {
-    console.error("[API] Falha ao registrar OTP email no backend (non-blocking):", err)
+    // console.error("[API] Falha ao registrar OTP email no backend (non-blocking):", err)
   }
 }
 
@@ -76,7 +79,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, messageId: result.messageId })
   } catch (error) {
-    console.error("[API] Erro crítico ao enviar email OTP:", error)
+    // console.error("[API] Erro crítico ao enviar email OTP:", error)
     return NextResponse.json({ error: error instanceof Error ? error.message : "Erro desconhecido" }, { status: 500 })
   }
 }

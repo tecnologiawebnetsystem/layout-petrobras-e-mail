@@ -42,7 +42,7 @@ Usuário Interno → Cria Share → Supervisor Aprova → Usuário Externo Baixa
 |----------|----------|
 | Produção | https://api.transfer.petrobras.com.br/api/v1 |
 | Homologação | https://api-hml.transfer.petrobras.com.br/api/v1 |
-| Desenvolvimento | http://localhost:8000/api/v1 |
+| Desenvolvimento | http://localhost:8080/api/v1 |
     `,
     version: "2.0.0",
     contact: {
@@ -64,7 +64,7 @@ Usuário Interno → Cria Share → Supervisor Aprova → Usuário Externo Baixa
       description: "Homologação"
     },
     {
-      url: "http://localhost:8000/api/v1",
+      url: "http://localhost:8080/api/v1",
       description: "Desenvolvimento Local"
     }
   ],

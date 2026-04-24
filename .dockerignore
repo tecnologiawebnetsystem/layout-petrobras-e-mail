@@ -1,0 +1,25 @@
+# Arquivos locais de variáveis — NUNCA devem entrar na imagem Docker
+.env
+.env.*
+!.env.example
+
+# Dependências e build local
+node_modules
+.next
+
+# Cobertura e testes
+coverage
+*.lcov
+
+# Ferramentas de desenvolvimento
+.git
+.gitignore
+.vscode
+.idea
+*.log
+npm-debug.log*
+
+# Documentação interna e scripts de seed
+README.md
+scripts/
+sql/

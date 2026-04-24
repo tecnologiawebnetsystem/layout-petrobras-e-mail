@@ -30,8 +30,8 @@ class CredentialLocal(SQLModel, table=True):
 
     def verify_password(self, password: str) -> bool:
         """Verifica se a senha esta correta."""
-        # Verifica se esta bloqueado
-        if self.blocked_until and datetime.now(UTC) < self.blocked_until:
+        # Verifica se esta bloqueado (stored as naive in SQLite, compare via .replace)
+        if self.blocked_until and self.blocked_until.replace(tzinfo=UTC) > datetime.now(UTC):
             return False
         
         expected_hash = self._hash_password(password, self.salt)
@@ -39,7 +39,7 @@ class CredentialLocal(SQLModel, table=True):
         
         if not is_valid:
             self.failed_attempts += 1
-            # Bloqueia apos 5 tentativas por 15 minutos
+            # Bloqueia apos 5 tentativas por 15 minutos (naive UTC para consistência com SQLite)
             if self.failed_attempts >= 5:
                 from datetime import timedelta
                 self.blocked_until = datetime.now(UTC) + timedelta(minutes=15)

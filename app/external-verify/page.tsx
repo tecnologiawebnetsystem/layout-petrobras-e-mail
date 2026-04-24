@@ -13,7 +13,7 @@ function VerifyContent() {
   const searchParams = useSearchParams()
   const email = searchParams.get("email") || ""
   const router = useRouter()
-  const { login } = useAuthStore()
+  const { setAuth } = useAuthStore()
 
   const [code, setCode] = useState("")
   const [error, setError] = useState("")
@@ -28,7 +28,7 @@ function VerifyContent() {
     }
 
     const generatedCode = otpService.generateOTP(email)
-    console.log(`[DEV] Código OTP gerado para ${email}: ${generatedCode}`)
+    // console.log(`[DEV] Código OTP gerado para ${email}: ${generatedCode}`)
     setCodeSent(true)
 
     const interval = setInterval(() => {
@@ -56,12 +56,16 @@ function VerifyContent() {
     const result = otpService.validateOTP(email, code)
 
     if (result.valid) {
-      login({
-        id: `external-${Date.now()}`,
-        name: email.split("@")[0],
-        email: email,
-        userType: "external",
-      })
+      setAuth(
+        {
+          id: `external-${Date.now()}`,
+          name: email.split("@")[0],
+          email: email,
+          userType: "external",
+        },
+        "",  // external OTP não emite access_token JWT
+        ""
+      )
 
       router.push("/download")
     } else {
@@ -83,7 +87,7 @@ function VerifyContent() {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-4">
           <div className="flex justify-center">
-            <PetrobrasLogo size="large" />
+            <PetrobrasLogo size="xl" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-foreground">Verificação de Acesso</h1>

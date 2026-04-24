@@ -14,7 +14,7 @@ export async function PUT(
     }
     return NextResponse.json(entrega)
   } catch (error) {
-    console.error('Erro ao atualizar entrega:', error)
+    // console.error('Erro ao atualizar entrega:', error)
     return NextResponse.json({ error: 'Erro ao atualizar entrega' }, { status: 500 })
   }
 }
@@ -31,7 +31,7 @@ export async function DELETE(
     }
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Erro ao deletar entrega:', error)
+    // console.error('Erro ao deletar entrega:', error)
     return NextResponse.json({ error: 'Erro ao deletar entrega' }, { status: 500 })
   }
 }

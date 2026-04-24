@@ -116,7 +116,8 @@ export async function apiFetch<T = unknown>(
     let detail = "Erro desconhecido"
     try {
       const errorData = await response.json()
-      detail = errorData.detail || errorData.message || errorData.error || detail
+      const raw = errorData.detail || errorData.message || errorData.error || detail
+      detail = typeof raw === "string" ? raw : raw?.message || detail
     } catch {
       detail = response.statusText || detail
     }

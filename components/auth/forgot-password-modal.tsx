@@ -48,7 +48,7 @@ export function ForgotPasswordModal({ open, onOpenChange }: ForgotPasswordModalP
         setErrorMsg(data?.detail || "Erro ao enviar email de recuperacao. Tente novamente.")
       }
     } catch (error) {
-      console.error("Error sending reset email:", error)
+      // console.error("Error sending reset email:", error)
       setErrorMsg("Erro de conexao. Verifique sua internet e tente novamente.")
     } finally {
       setIsLoading(false)

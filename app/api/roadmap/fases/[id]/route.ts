@@ -13,7 +13,7 @@ export async function GET(
     }
     return NextResponse.json(fase)
   } catch (error) {
-    console.error('Erro ao buscar fase:', error)
+    // console.error('Erro ao buscar fase:', error)
     return NextResponse.json({ error: 'Erro ao buscar fase' }, { status: 500 })
   }
 }
@@ -31,7 +31,7 @@ export async function PUT(
     }
     return NextResponse.json(fase)
   } catch (error) {
-    console.error('Erro ao atualizar fase:', error)
+    // console.error('Erro ao atualizar fase:', error)
     return NextResponse.json({ error: 'Erro ao atualizar fase' }, { status: 500 })
   }
 }
@@ -48,7 +48,7 @@ export async function DELETE(
     }
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Erro ao deletar fase:', error)
+    // console.error('Erro ao deletar fase:', error)
     return NextResponse.json({ error: 'Erro ao deletar fase' }, { status: 500 })
   }
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useWorkflowStore } from "@/lib/stores/workflow-store"
@@ -24,12 +24,18 @@ import { ProtectedRoute } from "@/components/auth/protected-route"
 
 export default function CompartilhamentosPage() {
   const { user, isAuthenticated } = useAuthStore()
-  const { uploads, cancelUpload } = useWorkflowStore()
+  const { uploads, isLoadingUploads, loadUploads, cancelUpload } = useWorkflowStore()
   const router = useRouter()
 
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
   const [selectedUploadId, setSelectedUploadId] = useState<string>("")
   const [cancellationReason, setCancellationReason] = useState("")
+
+  // Carrega compartilhamentos do backend ao montar a página
+  useEffect(() => {
+    loadUploads()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleCancelClick = (uploadId: string) => {
     setSelectedUploadId(uploadId)

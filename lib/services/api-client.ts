@@ -95,7 +95,7 @@ class ApiClient {
 
       return data
     } catch (error) {
-      console.error("[API Client] Request failed:", error)
+      // console.error("[API Client] Request failed:", error)
       return {
         success: false,
         error: {
@@ -194,7 +194,7 @@ class ApiClient {
 
       return await response.json()
     } catch (error) {
-      console.error("[API Client] Upload failed:", error)
+      // console.error("[API Client] Upload failed:", error)
       return {
         success: false,
         error: {

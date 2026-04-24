@@ -48,7 +48,7 @@ export function DocumentCard({ document, isSelected, onSelect, onDownload }: Doc
     }
   }
 
-  const isExpired = document.expiresAt && new Date(document.expiresAt) < new Date()
+  const isExpired = !!document.expiresAt && new Date(document.expiresAt) < new Date()
   const isDisabled = document.downloaded || isExpired
 
   return (
@@ -111,7 +111,14 @@ export function DocumentCard({ document, isSelected, onSelect, onDownload }: Doc
           {document.expiresAt && !isExpired && (
             <p className="text-orange-600 dark:text-orange-400">
               <Clock className="h-3 w-3 inline mr-1" />
-              <span className="font-medium">Expira:</span> {document.expiresAt}
+              <span className="font-medium">Expira:</span>{" "}
+              {new Date(document.expiresAt).toLocaleString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </p>
           )}
         </div>

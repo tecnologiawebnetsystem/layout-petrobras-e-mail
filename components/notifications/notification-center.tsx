@@ -13,6 +13,8 @@ import type { NotificationType } from "@/types/notification"
 
 const notificationIcons: Record<NotificationType, any> = {
   upload_success: Upload,
+  upload_error: AlertTriangle,
+  upload_cancelled: X,
   download_complete: Download,
   file_expired: AlertTriangle,
   approval_pending: FileCheck,
@@ -25,6 +27,8 @@ const notificationIcons: Record<NotificationType, any> = {
 
 const notificationColors: Record<NotificationType, string> = {
   upload_success: "text-green-600 bg-green-100 dark:bg-green-900/30",
+  upload_error: "text-red-600 bg-red-100 dark:bg-red-900/30",
+  upload_cancelled: "text-gray-600 bg-gray-100 dark:bg-gray-900/30",
   download_complete: "text-blue-600 bg-blue-100 dark:bg-blue-900/30",
   file_expired: "text-orange-600 bg-orange-100 dark:bg-orange-900/30",
   approval_pending: "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30",

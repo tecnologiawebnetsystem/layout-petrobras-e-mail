@@ -16,6 +16,12 @@ router = APIRouter(prefix="/external", tags=["External"])
 
 @router.post("/logout")
 def external_logout(token: str = Form(...), session: Session = Depends(get_session), request: Request = None):
+    """
+    Encerra a sessão de um usuário externo.
+
+    Invalida o token de acesso temporário (consume_token) e registra o evento
+    LOGOUT_EXTERNO na auditoria. Retorna 403 se o token for inválido ou inexistente.
+    """
     token_obj = get_token_access(session, token)
     if not token_obj:
         raise HTTPException(status_code=403, detail="Token inválido.")
@@ -45,6 +51,13 @@ def list_files(
     session: Session = Depends(get_session),
     request: Request = None
 ):
+    """
+    Lista os arquivos disponíveis para download vinculados ao token externo.
+
+    Valida o token, verifica que o usuário é do tipo EXTERNAL e que o compartilhamento
+    está ATIVO e dentro do prazo de expiração. Gera URLs pre-assinadas (300s) para
+    cada arquivo e registra o evento LISTAR_ARQUIVOS na auditoria.
+    """
     token_obj = get_token_access(session, token)
     if not token_obj:
         raise HTTPException(status_code=403, detail="Token inválido.")
@@ -95,6 +108,13 @@ def confirm_down(
     session: Session = Depends(get_session),
     request: Request = None
 ):
+    """
+    Confirma o download de um arquivo específico (acknowledge).
+
+    Marca o ShareFile como downloaded=True e registra o timestamp. Verifica que o
+    arquivo pertence ao compartilhamento do token. Idempotente: se já fue baixado,
+    retorna {status: ok} sem duplicar registros de auditoria.
+    """
     token_obj = get_token_access(session, token)
     if not token_obj:
         raise HTTPException(status_code=403, detail="Token inválido.")

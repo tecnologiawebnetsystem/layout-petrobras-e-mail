@@ -66,11 +66,11 @@ def get_current_user_optional(
         return None
 
 def require_internal(user: User = Depends(get_current_user)) -> User:
-    if user.type not in (TypeUser.INTERNAL, TypeUser.SUPERVISOR):
+    if user.type != TypeUser.INTERNAL:
         raise HTTPException(status_code=403, detail="Acesso restrito a usuários internos.")
     return user
 
 def require_supervisor(user: User = Depends(get_current_user)) -> User:
-    if user.type != TypeUser.SUPERVISOR:
+    if user.type != TypeUser.INTERNAL or not user.is_supervisor:
         raise HTTPException(status_code=403, detail="Acesso restrito a supervisores.")
     return user

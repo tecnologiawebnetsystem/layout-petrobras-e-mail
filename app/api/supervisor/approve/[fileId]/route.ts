@@ -1,42 +1,15 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
+import { proxyJSON } from "@/lib/api/route-handler-utils"
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
-
+/** POST /api/supervisor/approve/[fileId] → POST /v1/supervisor/approve/{fileId} */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ fileId: string }> }
 ) {
-  try {
-    const { fileId } = await params
-    const authHeader = request.headers.get("authorization") || ""
-    const body = await request.json()
-
-    const response = await fetch(`${BACKEND_URL}/api/v1/supervisor/approve/${fileId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: authHeader,
-        "X-Forwarded-For": request.headers.get("x-forwarded-for") || "",
-        "User-Agent": request.headers.get("user-agent") || "",
-      },
-      body: JSON.stringify(body),
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { success: false, error: { code: "APPROVE_FAILED", message: data.detail || "Erro ao aprovar" } },
-        { status: response.status }
-      )
-    }
-
-    return NextResponse.json({ success: true, data })
-  } catch (error) {
-    console.error("[API] Supervisor approve proxy error:", error)
-    return NextResponse.json(
-      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
-      { status: 500 }
-    )
-  }
+  const { fileId } = await params
+  return proxyJSON("POST", request, `/api/v1/supervisor/approve/${fileId}`, {
+    errorCode: "APPROVE_FAILED",
+    errorMessage: "Erro ao aprovar",
+    successShape: "wrap",
+  })
 }

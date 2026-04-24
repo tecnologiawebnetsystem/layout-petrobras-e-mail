@@ -23,7 +23,7 @@ class MicrosoftGraphMailService {
 
   async sendEmail(emailData: EmailData, accessToken: string): Promise<EmailResult> {
     try {
-      console.log("[Graph Mail] Enviando email via Microsoft Graph API")
+      // console.log("[Graph Mail] Enviando email via Microsoft Graph API")
 
       if (!accessToken) {
         throw new Error("Token de acesso não fornecido")
@@ -43,17 +43,17 @@ class MicrosoftGraphMailService {
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.error("[Graph Mail] Erro na resposta:", errorText)
+        // console.error("[Graph Mail] Erro na resposta:", errorText)
         throw new Error(`Falha ao enviar email: ${response.status} ${errorText}`)
       }
 
-      console.log("[Graph Mail] Email enviado com sucesso")
+      // console.log("[Graph Mail] Email enviado com sucesso")
       return {
         success: true,
         messageId: "sent",
       }
     } catch (error) {
-      console.error("[Graph Mail] Erro ao enviar email:", error)
+      // console.error("[Graph Mail] Erro ao enviar email:", error)
       return {
         success: false,
         error: error instanceof Error ? error.message : "Erro desconhecido",

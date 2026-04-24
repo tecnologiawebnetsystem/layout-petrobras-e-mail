@@ -1,7 +1,8 @@
 @import "tailwindcss";
 /* Removido @import "tw-animate-css" que estava causando erro de parsing CSS */
 
-/* Removido @custom-variant que estava causando erro de parsing */
+/* Configura dark mode baseado na classe .dark no <html> (não na preferência do SO) */
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   /* Cores institucionais oficiais da Petrobras */

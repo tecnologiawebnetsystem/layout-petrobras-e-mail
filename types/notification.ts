@@ -1,5 +1,7 @@
 export type NotificationType =
   | "upload_success"
+  | "upload_error"
+  | "upload_cancelled"
   | "download_complete"
   | "file_expired"
   | "approval_pending"

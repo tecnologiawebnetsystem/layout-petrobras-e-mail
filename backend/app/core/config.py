@@ -1,12 +1,19 @@
 # variaveis de ambiente e settings
 
-from pydantic_settings import BaseSettings
+# Carrega Parameter Store / Secrets Manager ANTES de instanciar Settings().
+# Só executa quando USE_AWS_CONFIG=true (produção/homologação na AWS).
+# Em dev local, é no-op: sem boto3, sem rede, sem efeitos colaterais.
+from app.core.aws_loader import load_aws_config
+load_aws_config()
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 from typing import List, Optional
+import json as _json
 
 
 class Settings(BaseSettings):
-    app_host: str = "0.0.0.0"
-    app_port: int = 8000
+    app_port: int = 8080
     email_provider: str = "dev"  # dev | ses
 
     # SMTP
@@ -36,18 +43,47 @@ class Settings(BaseSettings):
     # Auth provider
     auth_mode: str = "local"  # 'local' | 'entra'
 
-    # Microsoft Entra ID (Azure AD) - configurar para producao
+    # Microsoft Entra ID (Azure AD)
+    # Desenvolvimento local: preencher no .env
+    # Produção/homologação: carregados da secret via ponteiro SSM:
+    #   /APP/backend-<env>/SECRETS_MANAGER/backend_<env>_secret
+    #     → { "ENTRA_TENANT_ID": ..., "ENTRA_CLIENT_ID": ...,
+    #         "ENTRA_CLIENT_SECRET": ..., "ENTRA_APP_NAME": ...,
+    #         "ENTRA_REDIRECT_URI": ... }
+    entra_app_name: str | None = None
     entra_tenant_id: str | None = None
     entra_client_id: str | None = None
     entra_client_secret: str | None = None
-    entra_redirect_uri: str = "http://localhost:8000/api/v1/auth/internal/callback"
+    entra_redirect_uri: str = "http://localhost:8080/api/v1/auth/internal/callback"
     entra_supervisor_group_ids: List[str] = []
+
+    @field_validator("entra_supervisor_group_ids", mode="before")
+    @classmethod
+    def _parse_group_ids(cls, v):
+        """Aceita tanto lista Python quanto string JSON vinda do Parameter Store."""
+        if isinstance(v, str):
+            v = v.strip()
+            if not v or v == "[]":
+                return []
+            try:
+                parsed = _json.loads(v)
+                if isinstance(parsed, list):
+                    return parsed
+            except _json.JSONDecodeError:
+                pass
+            # fallback: string separada por vírgulas
+            return [i.strip() for i in v.split(",") if i.strip()]
+        return v
+
+    # Chave de assinatura dos JWTs (obrigatória; gerada automaticamente em dev)
+    jwt_secret: str = "dev-secret-local-insecure-change-in-prod"
 
     # AWS (preparado para prod; vazio no dev por enquanto)
     aws_region: str | None = None
     aws_s3_bucket: str | None = None
     aws_access_key_id: str | None = None
     aws_secret_access_key: str | None = None
+    aws_session_token: str | None = None
 
     # Branding/Links
     app_name: str = "Compartilhamento Seguro de Arquivos"
@@ -56,11 +92,7 @@ class Settings(BaseSettings):
     frontend_external_portal_url: str = "http://localhost:3000"
     frontend_share_details_url: str = "http://localhost:3000/compartilhamentos/{share_id}"
 
-    # Seguranca (dev default)
-    jwt_secret_key: str = "dev-secret-change-me"
-
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(env_file=".env")
 
 
 settings = Settings()

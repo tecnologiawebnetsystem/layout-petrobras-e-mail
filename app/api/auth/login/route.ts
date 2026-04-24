@@ -1,35 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
+import { proxyJSON, BACKEND_URL } from "@/lib/api/route-handler-utils"
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
-
+/**
+ * POST /api/auth/login → POST /v1/auth/login (público)
+ * auth-store espera: { access_token, refresh_token, token_type, expires_in, user }
+ */
 export async function POST(request: NextRequest) {
+  console.log("[DEBUG] POST /api/auth/login → handler atingido no Next.js")
+  console.log("[DEBUG] BACKEND_URL =", BACKEND_URL)
   try {
-    const body = await request.json()
-
-    const response = await fetch(`${BACKEND_URL}/api/v1/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Forwarded-For": request.headers.get("x-forwarded-for") || "",
-        "User-Agent": request.headers.get("user-agent") || "",
-      },
-      body: JSON.stringify(body),
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status })
-    }
-
-    // Passthrough: retorna o formato exato do backend Python
-    // O auth-store espera: { access_token, refresh_token, token_type, expires_in, user }
-    return NextResponse.json(data)
+    return await proxyJSON("POST", request, "/api/v1/auth/login", { withAuth: false })
   } catch (error) {
-    console.error("[API] Login proxy error:", error)
-    return NextResponse.json(
-      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
-      { status: 500 }
-    )
+    console.error("[DEBUG] Erro ao chamar backend:", error)
+    return NextResponse.json({ error: "Erro interno" }, { status: 500 })
   }
 }

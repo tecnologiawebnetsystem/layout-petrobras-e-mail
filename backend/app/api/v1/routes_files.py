@@ -15,9 +15,7 @@ Endpoints:
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Request, Query
 from sqlmodel import Session, select, func
 from pathlib import Path
-from datetime import datetime, UTC
 from typing import Optional, List
-import json
 
 from app.db.session import get_session
 from app.models.restricted_file import RestrictedFile
@@ -26,9 +24,9 @@ from app.models.share import Share, ShareStatus
 from app.models.share_file import ShareFile
 from app.models.user import User
 from app.schemas.file_schema import FileCreate, FileRead
-from app.core.aws_utils import generate_presigned_upload, generate_presigned_download
 from app.services.audit_service import log_event
 from app.utils.authz import get_current_user
+from app.core.aws_utils import generate_presigned_upload, generate_presigned_download
 
 router = APIRouter(prefix="/files", tags=["Files"])
 
@@ -456,7 +454,6 @@ def create_metadata(
     session.add(rfile)
     session.commit()
     session.refresh(rfile)
-
     log_event(
         session=session,
         action="CRIAR_METADATA_ARQUIVO",
@@ -473,9 +470,8 @@ def create_metadata(
 @router.post("/upload-local", response_model=FileRead, status_code=status.HTTP_201_CREATED)
 def upload_local(
     area_id: int,
-    name: str,
+    upload_id: int,
     file: UploadFile = File(...),
-    upload_id: int | None = None,
     session: Session = Depends(get_session),
     request: Request = None
 ):
@@ -503,17 +499,15 @@ def upload_local(
     session.add(rfile)
     session.commit()
     session.refresh(rfile)
-
     log_event(
         session=session,
-        action="UPLOAD_LOCAL",
+        action="UPLOAD_S3",
         user_id=upload_id,
         file_id=rfile.id,
         detail=f"path={dest}",
         ip=request.client.host if request else None,
         user_agent=request.headers.get("User-Agent") if request else None
     )
-
     return rfile
 
 
@@ -525,7 +519,13 @@ def presigned_upload(
     session: Session = Depends(get_session),
     request: Request = None
 ):
-    """Gera URL pre-assinada para upload."""
+    """
+    Gera URL pré-assinada da AWS S3 para upload direto do arquivo.
+
+    O cliente deve usar a URL retornada para fazer PUT direto no S3, sem passar
+    pelo backend. O parâmetro expires_in define a validade em segundos (padrão: 600s).
+    Registra o evento PRESIGNED_UPLOAD na auditoria.
+    """
     rfile = session.get(RestrictedFile, file_id)
     if not rfile:
         raise HTTPException(status_code=404, detail="Arquivo nao encontrado.")
@@ -551,7 +551,13 @@ def presigned_download(
     session: Session = Depends(get_session),
     request: Request = None
 ):
-    """Gera URL pre-assinada para download."""
+    """
+    Gera URL pré-assinada da AWS S3 para download direto do arquivo.
+
+    O cliente deve usar a URL retornada para baixar o arquivo diretamente do S3.
+    O parâmetro expires_in define a validade em segundos (padrão: 300s).
+    Registra o evento PRESIGNED_DOWNLOAD na auditoria.
+    """
     rfile = session.get(RestrictedFile, file_id)
     if not rfile:
         raise HTTPException(status_code=404, detail="Arquivo nao encontrado.")

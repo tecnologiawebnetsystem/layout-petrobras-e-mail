@@ -19,7 +19,7 @@ import { SupervisorUploadForm } from "@/components/supervisor/supervisor-upload-
 export default function SupervisorPage() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
-  const { uploads, loadPendingUploads } = useWorkflowStore()
+  const { uploads, loadAllSupervisorShares } = useWorkflowStore()
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [isChecking, setIsChecking] = useState(true)
@@ -31,13 +31,13 @@ export default function SupervisorPage() {
         router.push("/")
       } else {
         setIsChecking(false)
-        // Carrega dados pendentes do backend
-        loadPendingUploads()
+        // Carrega todos os compartilhamentos do backend (pending + aprovados + rejeitados)
+        loadAllSupervisorShares()
       }
     }, 100)
 
     return () => clearTimeout(timer)
-  }, [isAuthenticated, user, router, loadPendingUploads])
+  }, [isAuthenticated, user, router, loadAllSupervisorShares])
 
   const pendingCount = uploads.filter((u) => u.status === "pending").length
   const approvedCount = uploads.filter((u) => u.status === "approved").length
@@ -64,7 +64,7 @@ export default function SupervisorPage() {
       <ScrollToTop />
 
       <main className="container mx-auto px-4 py-6 max-w-7xl">
-        <BreadcrumbNav items={[{ label: "Início", href: "/supervisor" }, { label: "Painel do Supervisor" }]} />
+        <BreadcrumbNav items={[{ label: "Início", href: "/supervisor" }, { label: "Painel do Supervisor" }]} dashboardLink="/supervisor" />
 
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Painel do Supervisor</h1>

@@ -294,11 +294,11 @@ sudo ./aws/install`} />
             <p className="text-sm text-slate-600">No mesmo terminal, rode:</p>
             <CodeBlock code={`docker compose up`} />
 
-            <p className="text-sm text-slate-600">Espere ate aparecer mensagens como "Uvicorn running on 0.0.0.0:8000" e "Ready on http://0.0.0.0:3000". Entao abra no navegador:</p>
+            <p className="text-sm text-slate-600">Espere ate aparecer mensagens como "Uvicorn running on 0.0.0.0:8080" e "Ready on http://0.0.0.0:3000". Entao abra no navegador:</p>
             <div className="rounded-lg bg-slate-100 p-4 text-sm space-y-2">
               <p><strong>Frontend:</strong> <code>http://localhost:3000</code> (deve mostrar o site)</p>
-              <p><strong>Backend:</strong> <code>http://localhost:8000</code> (deve mostrar {"{'\"status\": \"ok\"'}"} ou similar)</p>
-              <p><strong>Swagger (documentacao da API):</strong> <code>http://localhost:8000/docs</code></p>
+              <p><strong>Backend:</strong> <code>http://localhost:8080</code> (deve mostrar {"{'\"status\": \"ok\"'}"} ou similar)</p>
+              <p><strong>Swagger (documentacao da API):</strong> <code>http://localhost:8080/docs</code></p>
             </div>
 
             <p className="text-sm text-slate-600 mt-2">Para parar, pressione <strong>Ctrl+C</strong> no terminal. Depois rode:</p>
@@ -416,7 +416,7 @@ echo "Frontend: $ECR_URI/csa-frontend:latest"`} />
       "name": "csa-backend",
       "image": "SEU_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/csa-backend:latest",
       "portMappings": [
-        { "containerPort": 8000, "protocol": "tcp" }
+        { "containerPort": 8080, "protocol": "tcp" }
       ],
       "environment": [
         { "name": "ENV", "value": "production" },
@@ -457,7 +457,7 @@ echo "Frontend: $ECR_URI/csa-frontend:latest"`} />
         { "containerPort": 3000, "protocol": "tcp" }
       ],
       "environment": [
-        { "name": "BACKEND_URL", "value": "http://csa-backend-svc.csa-cluster.local:8000" },
+        { "name": "BACKEND_URL", "value": "http://csa-backend-svc.csa-cluster.local:8080" },
         { "name": "DATABASE_URL", "value": "SUA_URL_DO_NEON_POSTGRESQL" },
         { "name": "NEXT_PUBLIC_AZURE_CLIENT_ID", "value": "SEU_CLIENT_ID_ENTRA" },
         { "name": "NEXT_PUBLIC_AZURE_TENANT_ID", "value": "SEU_TENANT_ID_ENTRA" },
@@ -502,7 +502,7 @@ aws ecs register-task-definition --cli-input-json file://task-frontend.json --re
               <li>Selecione pelo menos 2 Availability Zones</li>
               <li>Crie 2 Target Groups:
                 <ul className="list-disc pl-5 mt-2 space-y-1">
-                  <li><code>csa-tg-backend</code> - tipo IP, porta <strong>8000</strong>, health check: <code>/</code></li>
+                  <li><code>csa-tg-backend</code> - tipo IP, porta <strong>8080</strong>, health check: <code>/</code></li>
                   <li><code>csa-tg-frontend</code> - tipo IP, porta <strong>3000</strong>, health check: <code>/</code></li>
                 </ul>
               </li>
@@ -653,7 +653,7 @@ echo "A AWS vai trocar os containers em 2-5 minutos."`} />
             <CardContent className="pt-6 space-y-2">
               <h4 className="font-semibold text-red-800">Frontend abre mas da erro ao carregar dados</h4>
               <p className="text-sm text-slate-600"><strong>Causa:</strong> O frontend nao esta conseguindo se comunicar com o backend.</p>
-              <p className="text-sm text-slate-600"><strong>Solucao:</strong> Verifique se a variavel <code>BACKEND_URL</code> na task definition do frontend aponta para o endereco correto do backend. Se estiver usando Service Connect do ECS, o endereco e <code>http://csa-backend-svc.csa-cluster.local:8000</code>.</p>
+              <p className="text-sm text-slate-600"><strong>Solucao:</strong> Verifique se a variavel <code>BACKEND_URL</code> na task definition do frontend aponta para o endereco correto do backend. Se estiver usando Service Connect do ECS, o endereco e <code>http://csa-backend-svc.csa-cluster.local:8080</code>.</p>
             </CardContent>
           </Card>
         </div>

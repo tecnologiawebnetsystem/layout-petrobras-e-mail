@@ -53,6 +53,10 @@ class Share(SQLModel, table=True):
 
     # Relacionamentos
     area: Optional["SharedArea"] = Relationship(back_populates="shares")
+    approver: Optional["User"] = Relationship(
+        back_populates="shares_approved",
+        sa_relationship_kwargs={"foreign_keys": "[Share.approver_id]"}
+    )
     created_by: Optional["User"] = Relationship(
         back_populates="shares_created",
         sa_relationship_kwargs={"foreign_keys": "[Share.created_by_id]"}

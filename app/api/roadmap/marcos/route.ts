@@ -6,7 +6,7 @@ export async function GET() {
     const marcos = await getMarcos()
     return NextResponse.json(marcos)
   } catch (error) {
-    console.error('Erro ao buscar marcos:', error)
+    // console.error('Erro ao buscar marcos:', error)
     return NextResponse.json({ error: 'Erro ao buscar marcos' }, { status: 500 })
   }
 }
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const marco = await createMarco(data)
     return NextResponse.json(marco, { status: 201 })
   } catch (error) {
-    console.error('Erro ao criar marco:', error)
+    // console.error('Erro ao criar marco:', error)
     return NextResponse.json({ error: 'Erro ao criar marco' }, { status: 500 })
   }
 }

@@ -1,15 +1,17 @@
 env:
-  Repository: backend
-  Name: csa-backend
+  Repository: a12022
+  Name: scac
 
 build:
   python:
-    Name: "a12022-backend"
+    #Name: "a12022-backend"
+    Name: "scac"
     PythonVersion: "3.12"
     PythonSourcePath: "."
     DependenciesManager: "pip"
     TestingTool: "pytest"
     SkipTests: false
+    SonarSources: app
 
   docker:
     RegistryName: ecr
@@ -17,3 +19,7 @@ build:
 
 upload:
   docker:
+
+deploy:
+  SnapshotEnvs: DSV
+ # StartReleaseEnvs: HMG

@@ -13,7 +13,7 @@ O sistema permite que usuários internos da Petrobras façam upload de arquivos 
 - Aprovação obrigatória por supervisor antes da disponibilização
 - Auditoria completa de todas as operações
 - Controle de acesso baseado em perfis (Interno/Supervisor)
-- Expiração automática de arquivos (máximo 72 horas)
+- Expiração automática de arquivos (máximo 168 horas)
 - Links temporários com token único por transferência
 - Autenticação Microsoft Entra ID (Azure AD) integrada ao Active Directory da Petrobras
 

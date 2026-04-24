@@ -119,8 +119,11 @@ def login(
     if not credential:
         raise HTTPException(status_code=401, detail="Credenciais invalidas")
     
-    # Verifica senha
-    if not credential.verify_password(payload.password):
+    # Verifica senha e persiste mudanças de tentativa/bloqueio (brute-force protection)
+    password_ok = credential.verify_password(payload.password)
+    session.add(credential)
+    session.commit()
+    if not password_ok:
         raise HTTPException(status_code=401, detail="Credenciais invalidas")
     
     # Atualiza ultimo login
@@ -133,6 +136,7 @@ def login(
         user_id=user.id,
         email=user.email,
         user_type=user.type,
+        is_supervisor=user.is_supervisor,
         expires_minutes=60
     )
     
@@ -179,7 +183,8 @@ def login(
             "id": user.id,
             "name": user.name,
             "email": user.email,
-            "role": user.type,
+            "role": "supervisor" if user.is_supervisor else user.type,
+            "is_supervisor": user.is_supervisor,
             "department": user.department,
             "employee_id": user.employee_id,
             "manager": manager_data,
@@ -289,6 +294,7 @@ def refresh_token(
         user_id=user.id,
         email=user.email,
         user_type=user.type,
+        is_supervisor=user.is_supervisor,
         expires_minutes=60
     )
     

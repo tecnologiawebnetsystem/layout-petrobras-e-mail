@@ -370,7 +370,7 @@ def export_env_format(env: str, region: str = DEFAULT_REGION):
     print()
     
     secrets_mapping = {
-        "jwt-secret": [("secret", "JWT_SECRET_KEY")],
+        "jwt-secret": [("secret", "AWS_SESSION_TOKEN")],
         "database": [
             ("host", "DATABASE_HOST"),
             ("port", "DATABASE_PORT"),

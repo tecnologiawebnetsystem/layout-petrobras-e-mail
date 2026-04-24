@@ -34,6 +34,11 @@ const actionIcons: Record<LogAction, any> = {
   zip_validation: Shield,
   file_expired: Trash2,
   cancel: XCircle,
+  generate_otp: Shield,
+  otp_expired: AlertTriangle,
+  otp_max_attempts: AlertTriangle,
+  otp_invalid: AlertTriangle,
+  otp_validated: CheckCircle,
 }
 
 const actionLabels: Record<LogAction, string> = {
@@ -48,6 +53,11 @@ const actionLabels: Record<LogAction, string> = {
   zip_validation: "Validacao de ZIP",
   file_expired: "Arquivo Expirado",
   cancel: "Cancelamento",
+  generate_otp: "Geração de OTP",
+  otp_expired: "OTP Expirado",
+  otp_max_attempts: "Máx. Tentativas OTP",
+  otp_invalid: "OTP Inválido",
+  otp_validated: "OTP Validado",
 }
 
 const levelColors: Record<LogLevel, string> = {

@@ -1,36 +1,10 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
+import { proxyFormData } from "@/lib/api/route-handler-utils"
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
-
+/**
+ * POST /api/files/upload → POST /v1/files/upload
+ * Repassa FormData diretamente; workflow-store espera: { upload_id, name, files, ... }
+ */
 export async function POST(request: NextRequest) {
-  try {
-    const authHeader = request.headers.get("authorization") || ""
-    const formData = await request.formData()
-
-    const response = await fetch(`${BACKEND_URL}/api/v1/files/upload`, {
-      method: "POST",
-      headers: {
-        Authorization: authHeader,
-        "X-Forwarded-For": request.headers.get("x-forwarded-for") || "",
-        "User-Agent": request.headers.get("user-agent") || "",
-      },
-      body: formData,
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status })
-    }
-
-    // Passthrough: retorna o formato exato do backend Python
-    // O workflow-store espera: { upload_id, name, files, ... }
-    return NextResponse.json(data)
-  } catch (error) {
-    console.error("[API] Upload proxy error:", error)
-    return NextResponse.json(
-      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
-      { status: 500 }
-    )
-  }
+  return proxyFormData(request, "/api/v1/files/upload")
 }

@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8080:8080"
     volumes:
       - .:/app
     env_file:
@@ -16,13 +16,13 @@ services:
       ENV: development
       UVICORN_RELOAD: "true"
       # DATABASE_URL: postgresql://USER:PASS@HOST/DB?sslmode=require
-      # JWT_SECRET_KEY: troque-por-chave-segura
+      # AWS_SESSION_TOKEN: troque-por-chave-segura
       # STORAGE_PROVIDER: local
       # AUTH_MODE: local
       # EMAIL_PROVIDER: dev
     command: >
       uvicorn app.main:app
       --host 0.0.0.0
-      --port 8000
+      --port 8080
       --reload
       --lifespan off

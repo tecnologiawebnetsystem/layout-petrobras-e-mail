@@ -1,36 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
+import { proxyJSON } from "@/lib/api/route-handler-utils"
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
-
+/** POST /api/emails/send → POST /v1/emails/send */
 export async function POST(request: NextRequest) {
-  try {
-    const authHeader = request.headers.get("authorization") || ""
-    const body = await request.json()
-
-    const response = await fetch(`${BACKEND_URL}/api/v1/emails/send`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: authHeader,
-        "X-Forwarded-For": request.headers.get("x-forwarded-for") || "",
-        "User-Agent": request.headers.get("user-agent") || "",
-      },
-      body: JSON.stringify(body),
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status })
-    }
-
-    // Passthrough: retorna formato exato do backend Python
-    return NextResponse.json(data)
-  } catch (error) {
-    console.error("[API] Emails send proxy error:", error)
-    return NextResponse.json(
-      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
-      { status: 500 }
-    )
-  }
+  return proxyJSON("POST", request, "/api/v1/emails/send")
 }

@@ -2,7 +2,6 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { useNotificationStore } from "./notification-store"
 import { useAuditLogStore } from "./audit-log-store"
-import { otpService } from "@/lib/auth/otp-service"
 import { showAlert } from "./alert-store"
 import { getAccessToken } from "@/lib/auth/get-access-token"
 import { apiFetch, ApiRequestError } from "@/lib/services/api-fetch"
@@ -130,12 +129,23 @@ function mapApiToFileUpload(item: Record<string, unknown>): FileUpload {
 }
 
 function mapStatus(status: string): FileUpload["status"] {
-  const s = status.toLowerCase()
-  if (s.includes("pending")) return "pending"
-  if (s.includes("approved") || s.includes("active")) return "approved"
-  if (s.includes("rejected")) return "rejected"
-  if (s.includes("cancel")) return "cancelled"
-  return "pending"
+  switch (status.toLowerCase()) {
+    case "ativo":
+    case "aprovado":
+    case "concluido":
+    case "approved":
+    case "active":
+      return "approved"
+    case "rejeitado":
+    case "rejected":
+      return "rejected"
+    case "cancelado":
+    case "expirado":
+    case "cancelled":
+      return "cancelled"
+    default:
+      return "pending"
+  }
 }
 
 function mapStepStatus(status: string): "pending" | "approved" | "rejected" | "in_progress" {
@@ -153,11 +163,14 @@ interface WorkflowState {
 
   // API actions
   loadUploads: (statusFilter?: string) => Promise<void>
-  loadPendingUploads: () => Promise<void>
+  loadAllSupervisorShares: () => Promise<void>
 
   // Local + API actions
   initializeMockZip: () => Promise<void>
-  addUpload: (upload: Omit<FileUpload, "id" | "status" | "uploadDate" | "expirationLogs">) => void
+  addUpload: (upload: Omit<FileUpload, "id" | "status" | "uploadDate" | "expirationLogs" | "file" | "currentStep" | "totalSteps" | "steps" | "sender"> & {
+    sender: Pick<FileUpload["sender"], "id" | "name" | "email"> & Partial<Omit<FileUpload["sender"], "id" | "name" | "email">>
+    rawFiles?: File[]
+  }) => void
   approveUpload: (id: string, approvedBy: string) => void
   rejectUpload: (id: string, rejectedBy: string, reason: string) => void
   cancelUpload: (id: string, cancelledBy: string, reason?: string) => void
@@ -205,34 +218,26 @@ export const useWorkflowStore = create<WorkflowState>()(
             }
           })
         } catch (err) {
-          console.error("[v0] Erro ao carregar uploads:", err)
+          // console.error(" Erro ao carregar uploads:", err)
           set({ isLoadingUploads: false })
         }
       },
 
       /**
-       * Carrega uploads pendentes para o supervisor.
-       * GET /api/supervisor/pending
+       * Carrega TODOS os compartilhamentos do supervisor (pending + active + rejected).
+       * GET /api/supervisor/shares
+       * Usa o backend como fonte de verdade — sem dependência de estado local.
        */
-      loadPendingUploads: async () => {
+      loadAllSupervisorShares: async () => {
         set({ isLoadingUploads: true })
         try {
           const data = await apiFetch<{ files: Record<string, unknown>[] }>(
-            "/supervisor/pending?limit=100"
+            "/supervisor/shares?limit=200"
           )
-
-          const pendingUploads = (data.files || []).map(mapApiToFileUpload)
-
-          set((state) => {
-            // Merge: substitui pendentes vindos da API, preserva outros statuses locais
-            const nonPending = state.uploads.filter((u) => u.status !== "pending")
-            return {
-              uploads: [...pendingUploads, ...nonPending],
-              isLoadingUploads: false,
-            }
-          })
+          const allUploads = (data.files || []).map(mapApiToFileUpload)
+          set({ uploads: allUploads, isLoadingUploads: false })
         } catch (err) {
-          console.error("[v0] Erro ao carregar pendentes:", err)
+          // console.error(" Erro ao carregar shares do supervisor:", err)
           set({ isLoadingUploads: false })
         }
       },
@@ -260,11 +265,27 @@ export const useWorkflowStore = create<WorkflowState>()(
       },
 
       addUpload: (upload) => {
+        const uploadDate = new Date().toLocaleString("pt-BR")
         const newUpload: FileUpload = {
           ...upload,
           id: `upload-${Date.now()}`,
           status: "pending",
-          uploadDate: new Date().toLocaleString("pt-BR"),
+          uploadDate,
+          // Preenche defaults dos campos opcionais de sender
+          sender: {
+            role: "",
+            avatar: null,
+            employeeId: "",
+            ...upload.sender,
+          },
+          // Campo "file" construido internamente a partir da lista de arquivos enviados
+          file: {
+            name: upload.name,
+            type: upload.files[0]?.type || "",
+            size: upload.files[0]?.size || "0",
+            uploadDate,
+            status: "pending",
+          },
           expirationLogs: [
             {
               timestamp: new Date().toLocaleString("pt-BR"),
@@ -295,8 +316,12 @@ export const useWorkflowStore = create<WorkflowState>()(
         formData.append("description", upload.description || "")
         formData.append("expirationHours", String(upload.expirationHours))
 
-        // Se tiver arquivos reais, envia-os
-        // (upload.files contem metadados; os arquivos reais sao adicionados pelo componente de upload)
+        // Adiciona os arquivos reais ao FormData
+        if (upload.rawFiles && upload.rawFiles.length > 0) {
+          for (const file of upload.rawFiles) {
+            formData.append("files", file)
+          }
+        }
 
         apiFetch<{ upload_id: number }>("/files/upload", {
           method: "POST",
@@ -313,7 +338,7 @@ export const useWorkflowStore = create<WorkflowState>()(
             }
           })
           .catch((err) => {
-            console.error("[v0] Erro ao enviar upload ao backend:", err)
+            // console.error(" Erro ao enviar upload ao backend:", err)
             // Mantem o upload local mesmo se a API falhar
           })
 
@@ -344,11 +369,10 @@ export const useWorkflowStore = create<WorkflowState>()(
         })
 
         useNotificationStore.getState().addNotification({
-          type: "approval",
+          type: "approval_approved",
           priority: "medium",
           title: "Novo upload aguardando aprovacao",
           message: `${upload.sender.name} enviou "${upload.name}" para aprovacao`,
-          actionLabel: "Revisar",
           actionUrl: "/supervisor",
         })
 
@@ -375,7 +399,7 @@ export const useWorkflowStore = create<WorkflowState>()(
               },
             }),
           }).catch((error) => {
-            console.error("[v0] Erro ao enviar email:", error)
+            // console.error(" Erro ao enviar email:", error)
           })
 
           // Email de confirmacao para remetente
@@ -396,7 +420,7 @@ export const useWorkflowStore = create<WorkflowState>()(
               },
             }),
           }).catch((error) => {
-            console.error("[v0] Erro ao enviar email confirmacao:", error)
+            // console.error(" Erro ao enviar email confirmacao:", error)
           })
         })
       },
@@ -430,7 +454,7 @@ export const useWorkflowStore = create<WorkflowState>()(
           method: "POST",
           body: { message: `Aprovado por ${approvedBy}` },
         }).catch((err) => {
-          console.error("[v0] Erro ao aprovar no backend:", err)
+          // console.error(" Erro ao aprovar no backend:", err)
           // Reverte se a API falhar
           set((state) => ({
             uploads: state.uploads.map((u) =>
@@ -440,23 +464,8 @@ export const useWorkflowStore = create<WorkflowState>()(
           showAlert.error("Erro", "Nao foi possivel aprovar no servidor")
         })
 
-        // OTP e notificacoes
-        const otpCode = otpService.generateOTP(upload.recipient)
-        fetch("/api/send-otp-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: upload.recipient,
-            code: otpCode,
-            shareInfo: {
-              senderName: upload.sender.name,
-              fileName: upload.name,
-              expirationHours: upload.expirationHours,
-            },
-          }),
-        }).catch((err) => {
-          console.error("[v0] Erro ao enviar OTP:", err)
-        })
+        // O backend envia e-mail de aprovação via background task.
+        // O externo deve solicitar o OTP separadamente via POST /download/verify.
 
         useAuditLogStore.getState().addLog({
           action: "approve",
@@ -482,11 +491,10 @@ export const useWorkflowStore = create<WorkflowState>()(
         })
 
         useNotificationStore.getState().addNotification({
-          type: "success",
+          type: "upload_success",
           priority: "high",
           title: "Upload Aprovado!",
           message: `Seu envio "${upload.name}" para ${upload.recipient} foi aprovado por ${approvedBy}. Valido por ${upload.expirationHours}h.`,
-          actionLabel: "Ver Historico",
           actionUrl: "/historico",
         })
       },
@@ -515,7 +523,7 @@ export const useWorkflowStore = create<WorkflowState>()(
           method: "POST",
           body: { reason },
         }).catch((err) => {
-          console.error("[v0] Erro ao rejeitar no backend:", err)
+          // console.error(" Erro ao rejeitar no backend:", err)
           set((state) => ({
             uploads: state.uploads.map((u) =>
               u.id === id
@@ -548,11 +556,10 @@ export const useWorkflowStore = create<WorkflowState>()(
         })
 
         useNotificationStore.getState().addNotification({
-          type: "error",
+          type: "upload_error",
           priority: "high",
           title: "Upload Rejeitado",
           message: `Seu envio "${upload.name}" foi rejeitado por ${rejectedBy}. Motivo: ${reason}`,
-          actionLabel: "Revisar",
           actionUrl: "/upload",
         })
       },
@@ -590,7 +597,7 @@ export const useWorkflowStore = create<WorkflowState>()(
 
         // Chama API real para cancelar
         apiFetch(`/files/${id}`, { method: "DELETE" }).catch((err) => {
-          console.error("[v0] Erro ao cancelar no backend:", err)
+          // console.error(" Erro ao cancelar no backend:", err)
         })
 
         useAuditLogStore.getState().addLog({
@@ -614,11 +621,10 @@ export const useWorkflowStore = create<WorkflowState>()(
         })
 
         useNotificationStore.getState().addNotification({
-          type: "info",
-          priority: "medium",
+          type: "upload_cancelled",
+          priority: "high",
           title: "Compartilhamento Cancelado",
           message: `Seu compartilhamento "${upload.name}" foi cancelado com sucesso.`,
-          actionLabel: "Ver Historico",
           actionUrl: "/historico",
         })
       },
@@ -665,7 +671,7 @@ export const useWorkflowStore = create<WorkflowState>()(
               reason: reason || "Ajuste pelo supervisor",
             },
           }).catch((err) => {
-            console.error("[v0] Erro ao estender no backend:", err)
+            // console.error(" Erro ao estender no backend:", err)
           })
         }
 
@@ -692,11 +698,10 @@ export const useWorkflowStore = create<WorkflowState>()(
         })
 
         useNotificationStore.getState().addNotification({
-          type: "info",
+          type: "file_expired",
           priority: "medium",
           title: "Tempo de expiracao alterado",
           message: `${changedBy} alterou o tempo de validade de "${upload.name}" de ${previousValue}h para ${newHours}h`,
-          actionLabel: "Ver Detalhes",
           actionUrl: "/historico",
         })
       },

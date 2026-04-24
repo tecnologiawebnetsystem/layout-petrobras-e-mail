@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge"
 import { FileText, Calendar, User } from "lucide-react"
 
-interface FileDetail {
+export interface FileDetail {
   id: string
   name: string
   size: string

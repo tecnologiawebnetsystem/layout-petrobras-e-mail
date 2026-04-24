@@ -6,7 +6,7 @@ export async function GET() {
     const config = await getConfig()
     return NextResponse.json(config)
   } catch (error) {
-    console.error('Erro ao buscar config:', error)
+    // console.error('Erro ao buscar config:', error)
     return NextResponse.json({ error: 'Erro ao buscar config' }, { status: 500 })
   }
 }
@@ -17,7 +17,7 @@ export async function PUT(request: Request) {
     await updateConfig(data.progresso_geral)
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Erro ao atualizar config:', error)
+    // console.error('Erro ao atualizar config:', error)
     return NextResponse.json({ error: 'Erro ao atualizar config' }, { status: 500 })
   }
 }

@@ -47,7 +47,7 @@ export function saveSessionContext(context: SessionContext): void {
   try {
     sessionStorage.setItem(SESSION_CONTEXT_KEY, JSON.stringify(context))
   } catch (error) {
-    console.error("[Session Binding] Erro ao salvar contexto:", error)
+    // console.error("[Session Binding] Erro ao salvar contexto:", error)
   }
 }
 
@@ -63,7 +63,7 @@ export function getSavedSessionContext(): SessionContext | null {
 
     return JSON.parse(saved)
   } catch (error) {
-    console.error("[Session Binding] Erro ao recuperar contexto:", error)
+    // console.error("[Session Binding] Erro ao recuperar contexto:", error)
     return null
   }
 }
@@ -92,12 +92,12 @@ export function validateSessionContext(): {
 
   // Validar resolução de tela (alerta, não bloqueia)
   if (saved.screenResolution !== current.screenResolution) {
-    console.warn("[Session Binding] Resolução de tela alterada")
+    // console.warn("[Session Binding] Resolução de tela alterada")
   }
 
   // Validar timezone (alerta, não bloqueia)
   if (saved.timezone !== current.timezone) {
-    console.warn("[Session Binding] Timezone alterado")
+    // console.warn("[Session Binding] Timezone alterado")
   }
 
   return { valid: true }
@@ -112,7 +112,7 @@ export function clearSessionContext(): void {
   try {
     sessionStorage.removeItem(SESSION_CONTEXT_KEY)
   } catch (error) {
-    console.error("[Session Binding] Erro ao limpar contexto:", error)
+    // console.error("[Session Binding] Erro ao limpar contexto:", error)
   }
 }
 
@@ -132,7 +132,7 @@ export function initializeSessionBinding(): void {
     const validation = validateSessionContext()
 
     if (!validation.valid) {
-      console.error("[Session Binding]", validation.reason)
+      // console.error("[Session Binding]", validation.reason)
 
       if (typeof window !== "undefined") {
         showAlert.error(

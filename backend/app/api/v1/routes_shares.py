@@ -305,8 +305,8 @@ def get_share_details(
     if not share:
         raise HTTPException(status_code=404, detail="Compartilhamento nao encontrado.")
 
-    # Permite visualizar se for criador ou supervisor
-    if share.created_by_id != user.id and user.type != "supervisor":
+    # Permite visualizar se for criador ou supervisor vinculado
+    if share.created_by_id != user.id and not user.is_supervisor:
         raise HTTPException(status_code=403, detail="Voce nao tem permissao para visualizar este compartilhamento.")
 
     itens = session.exec(select(ShareFile).where(ShareFile.share_id == share_id)).all()

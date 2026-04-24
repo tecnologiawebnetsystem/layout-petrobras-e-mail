@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
-import { useWorkflowStore } from "@/lib/stores/workflow-store"
 import { useAuditLogStore } from "@/lib/stores/audit-log-store"
 import { AppHeader } from "@/components/shared/app-header"
 import { DocumentCard } from "@/components/download/document-card"
 import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
+import type { FileDetail } from "@/components/dashboard/metric-detail-modal"
 import { SecurityVerificationModal } from "@/components/download/security-verification-modal"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -18,100 +18,37 @@ import { NotificationModal } from "@/components/shared/notification-modal"
 import { ScrollToTop } from "@/components/shared/scroll-to-top"
 import type { Document } from "@/types/download"
 
-const MOCK_DOCUMENTS: Document[] = [
-  {
-    id: "1",
-    name: "Relatorio_Anual_2023.pdf",
-    sender: "Ana Silva",
-    date: "15/07/2024",
-    size: "2.5 MB",
-    type: "pdf",
-    downloaded: true,
-    downloadedAt: "18/07/2024 14:30",
-    downloadCount: 1,
-  },
-  {
-    id: "2",
-    name: "Contrato_Servicos.docx",
-    sender: "Carlos Pereira",
-    date: "12/07/2024",
-    size: "128 KB",
-    type: "docx",
-    downloaded: false,
-    downloadCount: 0,
-  },
-  {
-    id: "3",
-    name: "DRIVE_SHEET_CONFIDENCIAL.xlsx",
-    sender: "Mariana Costa",
-    date: "10/07/2024",
-    size: "780 KB",
-    type: "xlsx",
-    downloaded: false,
-    downloadCount: 0,
-    expiresAt: "25/12/2024",
-  },
-  {
-    id: "4",
-    name: "Apresentacao_Projeto.pptx",
-    sender: "Ricardo Lima",
-    date: "08/07/2024",
-    size: "15.2 MB",
-    type: "pptx",
-    downloaded: true,
-    downloadedAt: "10/07/2024 09:15",
-    downloadCount: 2,
-  },
-  {
-    id: "5",
-    name: "Planilha_Orcamento_2024.xlsx",
-    sender: "Patricia Oliveira",
-    date: "05/07/2024",
-    size: "890 KB",
-    type: "xlsx",
-    downloaded: false,
-    downloadCount: 0,
-    expiresAt: "10/12/2024",
-  },
-]
+interface ShareFileResponse {
+  id: number
+  name: string
+  size: string
+  type: string
+  downloaded: boolean
+  downloaded_at: string | null
+}
+
+interface ShareResponse {
+  id: number
+  name: string
+  sender: { name: string; email: string | null; department: string | null }
+  files: ShareFileResponse[]
+  expires_at: string | null
+  remaining_time: number
+}
 
 export default function DownloadPage() {
-  const { user, isAuthenticated, clearAuth } = useAuthStore()
-  const { uploads, getUploadsByStatus } = useWorkflowStore()
+  const { user, isAuthenticated, accessToken } = useAuthStore()
   const router = useRouter()
 
-  const isEmptyDemo = user?.id === "demo-empty-user-id"
-
-  console.log("Total de uploads:", uploads.length)
-  console.log("Email do usuário externo:", user?.email)
-
-  const approvedUploads = uploads.filter((upload) => {
-    const isApproved = upload.status === "approved"
-    const isForThisUser = upload.recipient === user?.email
-
-    console.log(
-      `Upload ${upload.id}: status=${upload.status}, recipient=${upload.recipient}, match=${isApproved && isForThisUser}`,
-    )
-
-    return isApproved && isForThisUser
-  })
-
-  console.log("Uploads aprovados filtrados:", approvedUploads.length)
-
-  const documentsFromUploads: Document[] = approvedUploads.map((upload) => ({
-    id: upload.id,
-    name: upload.name,
-    sender: upload.sender.name,
-    date: upload.uploadDate,
-    size: upload.size,
-    type: upload.type,
-    downloaded: false,
-    downloadCount: 0,
-    expiresAt: upload.expiresAt,
-  }))
-
-  const [documents, setDocuments] = useState<Document[]>(isEmptyDemo ? [] : documentsFromUploads)
-  const [notification, setNotification] = useState({ show: false, type: "", title: "", message: "" })
+  const [documents, setDocuments] = useState<Document[]>([])
+  const [isLoadingFiles, setIsLoadingFiles] = useState(true)
+  const [filesError, setFilesError] = useState<string | null>(null)
+  const [notification, setNotification] = useState<{
+    show: boolean
+    type: "success" | "error" | "warning" | "info"
+    title: string
+    message: string
+  }>({ show: false, type: "info", title: "", message: "" })
   const [selectedDocs, setSelectedDocs] = useState<string[]>([])
   const [filterStatus, setFilterStatus] = useState("all")
   const [sortBy, setSortBy] = useState("recent")
@@ -119,33 +56,52 @@ export default function DownloadPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [securityModal, setSecurityModal] = useState({ show: false, documentId: "", documentName: "" })
 
-  useEffect(() => {
-    console.log("useEffect disparado - Atualizando documentos")
-    console.log("Uploads no store:", uploads)
-    console.log("Uploads aprovados para este usuário:", approvedUploads.length)
-
-    if (!isEmptyDemo) {
-      setDocuments(documentsFromUploads)
-    }
-  }, [uploads, user?.email, isEmptyDemo])
-
+  // Redireciona se não for usuário externo autenticado
   useEffect(() => {
     if (!isAuthenticated || user?.userType !== "external") {
       router.push("/")
     }
   }, [isAuthenticated, user, router])
 
+  // Carrega os arquivos compartilhados com o usuário via API real
   useEffect(() => {
-    if (isEmptyDemo && documents.length === 0) {
-      setNotification({
-        show: true,
-        type: "info",
-        title: "Nenhum Arquivo Disponível",
-        message:
-          "No momento, você não possui arquivos aprovados para download. Quando novos arquivos forem compartilhados com você e aprovados pelo supervisor, eles aparecerão nesta página.",
+    if (!isAuthenticated || user?.userType !== "external" || !accessToken) return
+
+    setIsLoadingFiles(true)
+    setFilesError(null)
+
+    fetch("/api/download/files", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const shares: ShareResponse[] = data.files ?? []
+        const docs: Document[] = shares.flatMap((share) =>
+          (share.files ?? []).map((file) => ({
+            id: String(file.id),
+            name: file.name,
+            sender: share.sender?.name ?? "Desconhecido",
+            date: share.expires_at
+              ? new Date(share.expires_at).toLocaleDateString("pt-BR")
+              : new Date().toLocaleDateString("pt-BR"),
+            size: file.size,
+            type: file.type?.split("/").pop()?.toLowerCase() ?? "unknown",
+            downloaded: file.downloaded,
+            downloadedAt: file.downloaded_at
+              ? new Date(file.downloaded_at).toLocaleString("pt-BR")
+              : undefined,
+            downloadCount: file.downloaded ? 1 : 0,
+            expiresAt: share.expires_at ?? undefined,
+          }))
+        )
+        setDocuments(docs)
       })
-    }
-  }, [isEmptyDemo, documents.length])
+      .catch((err) => {
+        // console.error("[DownloadPage] Erro ao buscar arquivos:", err)
+        setFilesError("Não foi possível carregar os arquivos. Tente novamente.")
+      })
+      .finally(() => setIsLoadingFiles(false))
+  }, [isAuthenticated, user?.userType, accessToken])
 
   const availableDocuments = documents.filter((doc) => {
     const isExpired = doc.expiresAt && new Date(doc.expiresAt) < new Date()
@@ -158,6 +114,15 @@ export default function DownloadPage() {
     pending: availableDocuments.filter((d) => !d.downloaded).length,
     expired: 0,
   }
+
+  const documentFiles: FileDetail[] = availableDocuments.map((doc) => ({
+    id: doc.id,
+    name: doc.name,
+    size: doc.size,
+    date: doc.downloadedAt ?? doc.date,
+    recipient: doc.sender,
+    status: doc.downloaded ? "downloaded" : "pending",
+  }))
 
   const filteredDocuments = availableDocuments.filter((doc) => {
     if (filterStatus === "downloaded" && !doc.downloaded) return false
@@ -183,7 +148,7 @@ export default function DownloadPage() {
     }
   }
 
-  const handleDownloadSelected = () => {
+  const handleDownloadSelected = async () => {
     if (selectedDocs.length === 0) {
       setNotification({
         show: true,
@@ -196,26 +161,79 @@ export default function DownloadPage() {
 
     setNotification({
       show: true,
-      type: "success",
-      title: "Download iniciado!",
-      message: `${selectedDocs.length} documento(s) sendo baixado(s) de forma segura.`,
+      type: "info",
+      title: "Iniciando downloads...",
+      message: `Processando ${selectedDocs.length} documento(s).`,
     })
 
-    setTimeout(() => {
-      setDocuments((prev) =>
-        prev.map((doc) =>
-          selectedDocs.includes(doc.id)
-            ? {
-                ...doc,
-                downloaded: true,
-                downloadedAt: new Date().toLocaleDateString("pt-BR") + " " + new Date().toLocaleTimeString("pt-BR"),
-                downloadCount: doc.downloadCount + 1,
-              }
-            : doc,
-        ),
-      )
-      setSelectedDocs([])
-    }, 2000)
+    let successCount = 0
+    let errorCount = 0
+
+    for (const docId of selectedDocs) {
+      const doc = documents.find((d) => d.id === docId)
+      if (!doc) continue
+
+      try {
+        const res = await fetch(`/api/download/files/${docId}/url`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}))
+          throw new Error((errorData as { message?: string }).message || "Erro ao obter URL de download")
+        }
+
+        const data = await res.json() as { download_url: string }
+        const a = document.createElement("a")
+        a.href = data.download_url
+        a.download = doc.name
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+
+        setDocuments((prev) =>
+          prev.map((d) =>
+            d.id === docId
+              ? {
+                  ...d,
+                  downloaded: true,
+                  downloadedAt: new Date().toLocaleString("pt-BR"),
+                  downloadCount: d.downloadCount + 1,
+                }
+              : d,
+          ),
+        )
+        successCount++
+      } catch (err) {
+        // console.error(`[DownloadPage] Erro ao baixar arquivo ${docId}:`, err)
+        errorCount++
+      }
+    }
+
+    setSelectedDocs([])
+
+    if (errorCount === 0) {
+      setNotification({
+        show: true,
+        type: "success",
+        title: "Downloads concluídos!",
+        message: `${successCount} documento(s) baixado(s) com sucesso.`,
+      })
+    } else if (successCount === 0) {
+      setNotification({
+        show: true,
+        type: "error",
+        title: "Falha nos downloads",
+        message: "Não foi possível baixar os documentos. Tente novamente.",
+      })
+    } else {
+      setNotification({
+        show: true,
+        type: "warning",
+        title: "Downloads parciais",
+        message: `${successCount} baixado(s) com sucesso, ${errorCount} com falha.`,
+      })
+    }
   }
 
   const handleDownloadSingle = (docId: string) => {
@@ -232,81 +250,139 @@ export default function DownloadPage() {
   const getTimeRemaining = (expiresAt?: string) => {
     if (!expiresAt) return null
 
-    const expiration = new Date(expiresAt.split(" - ")[0].split("/").reverse().join("-"))
+    const expiration = new Date(expiresAt)
     const now = new Date()
     const diff = expiration.getTime() - now.getTime()
 
     if (diff <= 0) return "Expirado"
 
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const days = Math.floor(hours / 24)
+    const totalHours = Math.floor(diff / (1000 * 60 * 60))
+    const days = Math.floor(totalHours / 24)
+    const hours = totalHours % 24
 
+    if (days > 0 && hours > 0)
+      return `${days} dia${days > 1 ? "s" : ""} e ${hours} hora${hours > 1 ? "s" : ""} restante${days > 1 || hours > 1 ? "s" : ""}`
     if (days > 0) return `${days} dia${days > 1 ? "s" : ""} restante${days > 1 ? "s" : ""}`
     if (hours > 0) return `${hours} hora${hours > 1 ? "s" : ""} restante${hours > 1 ? "s" : ""}`
     return "Menos de 1 hora"
   }
 
-  const handleSecurityVerified = (documentId: string) => {
+  const handleSecurityVerified = async (documentId: string) => {
     const doc = documents.find((d) => d.id === documentId)
     if (!doc) return
 
-    setDocuments((prev) =>
-      prev.map((doc) =>
-        doc.id === documentId
-          ? {
-              ...doc,
-              downloaded: true,
-              downloadedAt: new Date().toLocaleDateString("pt-BR") + " " + new Date().toLocaleTimeString("pt-BR"),
-              downloadCount: doc.downloadCount + 1,
-            }
-          : doc,
-      ),
-    )
+    try {
+      const res = await fetch(`/api/download/files/${documentId}/url`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
 
-    if (user) {
-      useAuditLogStore.getState().addLog({
-        action: "download",
-        level: "success",
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          type: user.userType,
-        },
-        details: {
-          targetId: documentId,
-          targetName: doc.name,
-          description: `Download do arquivo "${doc.name}" realizado com sucesso`,
-          metadata: {
-            sender: doc.sender,
-            fileSize: doc.size,
-            fileType: doc.type,
-            downloadCount: doc.downloadCount + 1,
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error((errorData as { message?: string }).message || "Erro ao obter URL de download")
+      }
+
+      const data = await res.json() as { download_url: string; file_name: string }
+
+      // Inicia o download real via link temporário
+      const a = document.createElement("a")
+      a.href = data.download_url
+      a.download = data.file_name ?? doc.name
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+
+      // Atualiza estado somente após sucesso da API
+      setDocuments((prev) =>
+        prev.map((d) =>
+          d.id === documentId
+            ? {
+                ...d,
+                downloaded: true,
+                downloadedAt: new Date().toLocaleString("pt-BR"),
+                downloadCount: d.downloadCount + 1,
+              }
+            : d,
+        ),
+      )
+
+      if (user) {
+        useAuditLogStore.getState().addLog({
+          action: "download",
+          level: "success",
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            type: user.userType,
           },
-        },
+          details: {
+            targetId: documentId,
+            targetName: doc.name,
+            description: `Download do arquivo "${doc.name}" realizado com sucesso`,
+            metadata: {
+              sender: doc.sender,
+              fileSize: doc.size,
+              fileType: doc.type,
+              downloadCount: doc.downloadCount + 1,
+            },
+          },
+        })
+      }
+
+      setSecurityModal({ show: false, documentId: "", documentName: "" })
+      setNotification({
+        show: true,
+        type: "success",
+        title: "Download iniciado!",
+        message: `O documento "${doc.name}" foi baixado com sucesso.`,
+      })
+    } catch (err) {
+      // console.error("[DownloadPage] Erro ao baixar arquivo:", err)
+      setSecurityModal({ show: false, documentId: "", documentName: "" })
+      setNotification({
+        show: true,
+        type: "error",
+        title: "Erro no download",
+        message: err instanceof Error ? err.message : "Não foi possível realizar o download. Tente novamente.",
       })
     }
-
-    setSecurityModal({ show: false, documentId: "", documentName: "" })
-    setNotification({
-      show: true,
-      type: "success",
-      title: "Download iniciado!",
-      message: `O documento "${doc.name}" foi baixado com sucesso.`,
-    })
   }
 
   const handleNotificationClose = (show: boolean) => {
-    if (!show && isEmptyDemo && documents.length === 0) {
-      clearAuth()
-      router.push("/")
-    } else {
-      setNotification({ ...notification, show })
-    }
+    setNotification({ ...notification, show })
   }
 
   if (!isAuthenticated || user?.userType !== "external") {
     return null
+  }
+
+  if (isLoadingFiles) {
+    return (
+      <div className="min-h-screen bg-muted/30">
+        <AppHeader subtitle="Solução de Compartilhamento de Arquivos Confidenciais" />
+        <main className="container max-w-7xl mx-auto px-6 py-12 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="h-10 w-10 border-4 border-[#0047BB] border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-muted-foreground">Carregando seus arquivos...</p>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  if (filesError) {
+    return (
+      <div className="min-h-screen bg-muted/30">
+        <AppHeader subtitle="Solução de Compartilhamento de Arquivos Confidenciais" />
+        <main className="container max-w-7xl mx-auto px-6 py-12 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto" />
+            <p className="text-foreground font-semibold">{filesError}</p>
+            <Button onClick={() => window.location.reload()} variant="outline">Tentar novamente</Button>
+          </div>
+        </main>
+      </div>
+    )
   }
 
   return (
@@ -337,6 +413,7 @@ export default function DownloadPage() {
           approved={stats.downloaded}
           rejected={stats.expired}
           userType="external"
+          files={documentFiles}
         />
 
         {availableDocuments.length === 0 ? (

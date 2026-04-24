@@ -15,9 +15,10 @@ interface DragDropZoneProps {
   onFilesSelected: (files: File[]) => void
   selectedFiles: File[]
   onRemoveFile: (index: number) => void
+  disabled?: boolean
 }
 
-export function DragDropZone({ onFilesSelected, selectedFiles, onRemoveFile }: DragDropZoneProps) {
+export function DragDropZone({ onFilesSelected, selectedFiles, onRemoveFile, disabled = false }: DragDropZoneProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [uploadingFiles, setUploadingFiles] = useState<{ [key: number]: number }>({})
   const [validatingZip, setValidatingZip] = useState(false)
@@ -206,7 +207,7 @@ export function DragDropZone({ onFilesSelected, selectedFiles, onRemoveFile }: D
               ? "border-[#00A99D] bg-gradient-to-br from-[#00A99D]/10 to-[#0047BB]/10 scale-[1.02] shadow-2xl"
               : "border-border hover:border-[#00A99D]/50 hover:bg-muted/30 hover:shadow-lg"
           }
-          ${validatingZip ? "pointer-events-none opacity-50" : ""}
+          ${validatingZip || disabled ? "pointer-events-none opacity-50" : ""}
         `}
         >
           <input
@@ -215,7 +216,7 @@ export function DragDropZone({ onFilesSelected, selectedFiles, onRemoveFile }: D
             multiple
             onChange={handleFileSelect}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            disabled={validatingZip}
+            disabled={validatingZip || disabled}
           />
 
           <div className="pointer-events-none space-y-4">

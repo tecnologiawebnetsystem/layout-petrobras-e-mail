@@ -62,6 +62,14 @@ def request_code(payload: RequestCode, background_tasks: BackgroundTasks, sessio
 
 @router.post("/verify-code")
 def verify_code(payload: VerifyCode, session: Session = Depends(get_session), request: Request = None):
+    """
+    Verifica o código OTP informado pelo usuário externo.
+
+    Valida o código contra o registro de OTP ativo no banco. Em caso de sucesso,
+    emite um token de acesso temporário (access_valid_hours) vinculado ao share.
+    Limita tentativas (max_attempts) e aplica cooldown após excesso de erros.
+    Retorna 400 com detalhes do TokenError em caso de falha.
+    """
     facade = AuthFacade()
     try:
         return facade.external.verify_code(

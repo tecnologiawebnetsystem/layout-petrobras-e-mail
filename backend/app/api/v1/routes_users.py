@@ -118,6 +118,12 @@ def update_current_user_profile(
 
 @router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 def create_user(payload: UserCreate, session: Session = Depends(get_session), request: Request = None):
+    """
+    Cria um novo usuário no sistema (rota administrativa).
+
+    Valida unicidade do email antes de persistir. Registra o evento CRIAR_USUARIO
+    na auditoria. O usuário é criado com status ativo por padrão.
+    """
     # Verifica email unico
     existing = session.exec(select(User).where(User.email == payload.email)).first()
     if existing:
@@ -147,12 +153,17 @@ def create_user(payload: UserCreate, session: Session = Depends(get_session), re
 
 
 @router.get("/", response_model=list[UserRead])
-def list_users(session: Session = Depends(get_session)):
+def list_users(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Retorna todos os usuários cadastrados. Requer usuário autenticado (sem filtro por tipo)."""
     return session.exec(select(User)).all()
 
 
 @router.get("/{user_id}", response_model=UserRead)
 def get_user(user_id: int, session: Session = Depends(get_session)):
+    """Busca um usuário pelo ID. Retorna 404 se não encontrado."""
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="Usuario nao encontrado.")
@@ -161,6 +172,12 @@ def get_user(user_id: int, session: Session = Depends(get_session)):
 
 @router.patch("/{user_id}", response_model=UserRead)
 def update_user(user_id: int, payload: UserUpdate, session: Session = Depends(get_session), request: Request = None):
+    """
+    Atualiza os dados de um usuário existente (rota administrativa).
+
+    Valida conflito de email antes de aplicar a alteração. Permite atualizar
+    nome, email, tipo e status (ativar/desativar). Registra o evento ATUALIZAR_USUARIO.
+    """
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="Usuario nao encontrado.")

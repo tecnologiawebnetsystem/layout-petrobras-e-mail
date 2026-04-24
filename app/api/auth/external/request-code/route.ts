@@ -1,37 +1,55 @@
 import { NextRequest, NextResponse } from "next/server"
-
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
+import { BACKEND_URL, proxyHeaders, handleProxyResponse, serverError } from "@/lib/api/route-handler-utils"
+import { verifyExternalUser } from "@/lib/auth/user-verification"
 
 /**
- * POST /api/auth/external/request-code - Solicitar codigo OTP externo
- * Proxy para POST /v1/auth/external/request-code
+ * POST /api/auth/external/request-code → POST /v1/auth/external/request-code
+ *
+ * Fluxo:
+ *   1. Lê o e-mail do body
+ *   2. Verifica se o usuário está autorizado (via `verifyExternalUser`)
+ *      - Enquanto USER_VERIFICATION_API_URL não estiver configurada → bypass mode
+ *   3. Se autorizado → repassa ao csa-backend que gera e envia o OTP por e-mail
+ *   4. Se não autorizado → retorna 403 sem chamar o backend
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const body = (await request.json()) as { email?: string; validity_minutes?: number }
+    const email = body.email?.trim() ?? ""
 
+    if (!email) {
+      return NextResponse.json(
+        { success: false, error: { code: "EMAIL_REQUIRED", message: "E-mail é obrigatório" } },
+        { status: 400 }
+      )
+    }
+
+    // ── Verificação de usuário autorizado ────────────────────────────────────
+    const verification = await verifyExternalUser(email)
+
+    if (!verification.verified) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: "USER_NOT_AUTHORIZED",
+            message: verification.reason ?? "Usuário não autorizado a receber o código de acesso.",
+          },
+        },
+        { status: 403 }
+      )
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
+    // Usuário verificado → solicita OTP ao backend
     const response = await fetch(`${BACKEND_URL}/api/v1/auth/external/request-code`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Forwarded-For": request.headers.get("x-forwarded-for") || "",
-        "User-Agent": request.headers.get("user-agent") || "",
-      },
+      headers: proxyHeaders(request, { withAuth: false, withContentType: true }),
       body: JSON.stringify(body),
     })
 
-    const data = await response.json()
-
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status })
-    }
-
-    return NextResponse.json(data)
+    return handleProxyResponse(response)
   } catch (error) {
-    console.error("[API] External request-code proxy error:", error)
-    return NextResponse.json(
-      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
-      { status: 500 }
-    )
+    return serverError("POST /api/auth/external/request-code", error)
   }
 }

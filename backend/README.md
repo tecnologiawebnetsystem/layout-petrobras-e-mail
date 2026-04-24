@@ -1,9 +1,5 @@
 # Petrobras File Transfer API - Backend
 
-![Snapshot](https://github.com/petrobrasbr/a12022-backend/actions/workflows/snapshot.yml/badge.svg)
-![Start Release](https://github.com/petrobrasbr/a12022-backend/actions/workflows/start-release.yml/badge.svg)
-![Finish Release](https://github.com/petrobrasbr/a12022-backend/actions/workflows/finish-release.yml/badge.svg)
-
 ## Sobre o Projeto
 
 Backend da aplicacao de transferencia segura de arquivos desenvolvido com FastAPI. Sistema que expoe uma API RESTful para:
@@ -223,7 +219,7 @@ DATABASE_URL=sqlite:///./dev.db
 
 # Autenticacao
 AUTH_MODE=local
-JWT_SECRET_KEY=sua-chave-secreta-aqui
+AWS_SESSION_TOKEN=sua-chave-secreta-aqui
 
 # Microsoft Entra ID (para producao)
 ENTRA_TENANT_ID=seu-tenant-id

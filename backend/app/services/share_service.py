@@ -1,8 +1,7 @@
-
-
+import os
+import uuid
 from sqlmodel import Session, select
 from datetime import datetime, UTC
-from pathlib import Path
 from typing import Iterable
 
 from app.models.area import SharedArea
@@ -11,14 +10,13 @@ from app.models.restricted_file import RestrictedFile
 from app.models.share import Share, ShareStatus, TokenConsumption
 from app.models.share_file import ShareFile
 from app.services.audit_service import log_event
+from app.services.s3_service import build_upload_key, sanitize_filename
+import boto3
 
-
-
-STORAGE_ROOT = Path("./storage")
+S3_BUCKET = os.getenv("S3_BUCKET", "s3-a12022-dsv-a12022-s3-119392112451-sa-east-1")
 
 class ShareError(Exception):
     pass
-
 
 def _get_or_create_automatic_area(session: Session, applicant_id: int) -> SharedArea:
     """
@@ -34,7 +32,6 @@ def _get_or_create_automatic_area(session: Session, applicant_id: int) -> Shared
     ).first()
     if area:
         return area
-
     area = SharedArea(
         name=f"Área Automática - {applicant_id}",
         prefix_s3=prefix_s3,
@@ -43,12 +40,10 @@ def _get_or_create_automatic_area(session: Session, applicant_id: int) -> Shared
         description=None,
         expires_at=None  # definir uma política padrão caso necessário
     )
-
     session.add(area)
     session.commit()
     session.refresh(area)
     return area
-
 
 def create_share(
     session: Session,
@@ -61,14 +56,12 @@ def create_share(
     new_uploads: Iterable[tuple[str, bytes, str]] | None = None,
     request_meta: dict | None = None
 ) -> Share:
-    
     # valida interno
     internal = session.exec(select(User).where(User.id == created_by_id)).first()
     if not internal:
         raise ShareError("Usuário interno (criador) não encontrado.")
     if not external_email:
         raise ShareError("E-mail do destinatário externo é obrigatório.")
-    
     # resolve área
     if area_id is None:
         area = _get_or_create_automatic_area(session, applicant_id=created_by_id)
@@ -78,9 +71,6 @@ def create_share(
             raise ShareError("Área informada não existe.")
         if not area.status:
             raise ShareError("Área não está ativa.")
-    area_path = STORAGE_ROOT / area.prefix_s3
-    area_path.mkdir(parents=True, exist_ok=True)
-
     # Cria o share
     share = Share(
         area_id=area.id,
@@ -94,29 +84,37 @@ def create_share(
     session.commit()
     session.refresh(share)
 
-
-    # vincula arquivos existentes (se vieram ids)
+    # 1) Vincula arquivos existentes pelo ID
     if file_ids:
         files = session.exec(
-            select(RestrictedFile).where(RestrictedFile.id.in_(file_ids), RestrictedFile.area_id == area.id)
+            select(RestrictedFile).where(
+                RestrictedFile.id.in_(file_ids),
+                RestrictedFile.area_id == area.id
+            )
         ).all()
         for rfile in files:
             sf = ShareFile(share_id=share.id, file_id=rfile.id)
             session.add(sf)
         session.commit()
 
-
-    # grava uploads novos (opcional) e vincula ao share
+    # 2) Grava uploads novos (bytes → S3) e vincula ao share — independente de file_ids
     if new_uploads:
+        s3 = boto3.client("s3")
         for name, content_bytes, mime_type in new_uploads:
-            dest = area_path / name
-            with dest.open("wb") as fh:
-                fh.write(content_bytes)
+            safe_name = sanitize_filename(name)
+            file_id = str(uuid.uuid4())
+            key_s3 = build_upload_key(area.id, file_id, safe_name)
+            s3.put_object(
+                Bucket=S3_BUCKET,
+                Key=key_s3,
+                Body=content_bytes,
+                ContentType=mime_type
+            )
             rfile = RestrictedFile(
                 area_id=area.id,
-                name=name,
-                key_s3=str(dest),  # ****em prod, trocar por key S3****
-                size_bytes=dest.stat().st_size,
+                name=safe_name,
+                key_s3=key_s3,
+                size_bytes=len(content_bytes),
                 mime_type=mime_type,
                 upload_id=created_by_id,
                 status=True,
@@ -125,11 +123,9 @@ def create_share(
             session.add(rfile)
             session.commit()
             session.refresh(rfile)
-
             sf = ShareFile(share_id=share.id, file_id=rfile.id)
             session.add(sf)
         session.commit()
-
 
     # Auditoria
     log_event(
@@ -142,7 +138,6 @@ def create_share(
         user_agent=request_meta.get("ua") if request_meta else None
     )
     return share
-
 
 def list_share_files(session: Session, share_id: int) -> list[ShareFile]:
     return session.exec(select(ShareFile).where(ShareFile.share_id == share_id)).all()

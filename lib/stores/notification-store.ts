@@ -86,7 +86,7 @@ export const useNotificationStore = create<NotificationState>()(
             isLoading: false,
           })
         } catch (err) {
-          console.error("[v0] Erro ao carregar notificacoes:", err)
+          // console.error(" Erro ao carregar notificacoes:", err)
           set({ isLoading: false })
           // Mantem dados locais no caso de erro
         }
@@ -117,7 +117,7 @@ export const useNotificationStore = create<NotificationState>()(
         // Chama API real
         apiFetch(`/notifications/${id}/read`, { method: "PATCH" }).catch(
           (err) => {
-            console.error("[v0] Erro ao marcar notificacao como lida:", err)
+            // console.error(" Erro ao marcar notificacao como lida:", err)
           }
         )
       },
@@ -130,7 +130,7 @@ export const useNotificationStore = create<NotificationState>()(
 
         // Chama API real
         apiFetch("/notifications/read-all", { method: "PUT" }).catch((err) => {
-          console.error("[v0] Erro ao marcar todas como lidas:", err)
+          // console.error(" Erro ao marcar todas como lidas:", err)
         })
       },
 

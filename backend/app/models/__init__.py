@@ -1,3 +1,6 @@
+from sqlmodel import SQLModel
+
+# importe todos os modelos que devem ir para migração
 from .area import SharedArea
 from .areasupervisors import AreaSupervisor
 from .audit import Audit

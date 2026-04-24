@@ -1,95 +1,12 @@
 /**
- * Microsoft Entra ID (Azure AD) Configuration
+ * Configuração de Autenticação – Entra ID
  *
- * Este arquivo contém todas as configurações necessárias para autenticação
- * com o Microsoft Entra ID da Petrobras.
+ * MSAL removido: toda a autenticação é tratada pelo backend (csa-backend).
+ * O frontend inicia o fluxo OAuth redirecionando para /api/auth/internal/entra-login,
+ * que o backend processa e redireciona de volta com um JWT de sessão.
  */
 
-import { type Configuration, PublicClientApplication } from "@azure/msal-browser"
-
-/**
- * Obter redirect URI dinamicamente
- * Usa a variável de ambiente se configurada, senão usa window.location.origin
- */
-function getRedirectUri(): string {
-  if (process.env.NEXT_PUBLIC_ENTRA_REDIRECT_URI) {
-    return process.env.NEXT_PUBLIC_ENTRA_REDIRECT_URI
-  }
-  // Em ambiente de browser, usar a origem atual (funciona em localhost e produção)
-  if (typeof window !== "undefined") {
-    return window.location.origin
-  }
-  // Fallback para SSR
-  return ""
-}
-
-/**
- * Configuração do MSAL (Microsoft Authentication Library)
- *
- * IMPORTANTE: As variáveis de ambiente devem ser fornecidas pelo time de infra
- */
-export const msalConfig: Configuration = {
-  auth: {
-    // Client ID da aplicação registrada no Entra ID
-    clientId: process.env.NEXT_PUBLIC_ENTRA_CLIENT_ID || "",
-
-    // Authority: URL do tenant da Petrobras
-    // Formato: https://login.microsoftonline.com/{TENANT_ID}
-    authority: `https://login.microsoftonline.com/${process.env.NEXT_PUBLIC_ENTRA_TENANT_ID}`,
-
-    // Redirect URI dinâmico - funciona em localhost e produção
-    redirectUri: getRedirectUri(),
-
-    // URL de redirecionamento após logout
-    postLogoutRedirectUri: getRedirectUri(),
-
-    navigateToLoginRequestUrl: true,
-  },
-  cache: {
-    // Armazenar tokens no sessionStorage (mais seguro que localStorage)
-    cacheLocation: "sessionStorage",
-
-    // Prevenir problemas com múltiplas abas
-    storeAuthStateInCookie: false,
-  },
-  system: {
-    loggerOptions: {
-      // Logs apenas em desenvolvimento
-      loggerCallback: (level: any, message: string, containsPii: boolean) => {
-        if (containsPii) return
-
-        if (process.env.NODE_ENV === "development") {
-          console.log(`[Entra ID] ${message}`)
-        }
-      },
-      piiLoggingEnabled: false,
-      logLevel: process.env.NODE_ENV === "development" ? 3 : 0, // LogLevel.Info : LogLevel.Error
-    },
-  },
-}
-
-/**
- * Escopos solicitados ao Entra ID
- *
- * Estes escopos determinam quais informações podemos acessar do usuário
- */
-export const loginRequest = {
-  scopes: [
-    "User.Read", // Ler perfil básico (nome, email)
-    "User.ReadBasic.All", // Ler perfil completo (cargo, departamento, telefone, employeeId)
-    "User.Read.All", // Ler informações de outros usuários (supervisor/manager)
-    "email", // Obter email
-    "profile", // Obter informações de perfil
-    "openid", // OpenID Connect
-  ],
-}
-
-/**
- * Inicializar MSAL Public Client Application
- *
- * Esta instância deve ser usada em todo o front-end
- */
-export const msalInstance = new PublicClientApplication(msalConfig)
+import { getClientEnv } from "@/lib/env"
 
 /**
  * Tipos de usuário baseados no email
@@ -141,10 +58,17 @@ export function checkEntraIdConfig(): {
   configured: boolean
   missing: string[]
 } {
+  // NEXT_PUBLIC_AUTH_MODE=dev força login local (email+senha), ignorando credenciais Entra ID.
+  // NEXT_PUBLIC_AUTH_MODE=entra (ou ausente) usa o fluxo Microsoft normalmente.
+  // Usa getClientEnv() para ler o valor runtime (window.__ENV__ no cliente, process.env no servidor).
+  if (getClientEnv("NEXT_PUBLIC_AUTH_MODE") === "dev") {
+    return { configured: false, missing: [] }
+  }
+
   const config = {
-    clientId: process.env.NEXT_PUBLIC_ENTRA_CLIENT_ID,
-    tenantId: process.env.NEXT_PUBLIC_ENTRA_TENANT_ID,
-    redirectUri: process.env.NEXT_PUBLIC_ENTRA_REDIRECT_URI,
+    clientId: getClientEnv("NEXT_PUBLIC_ENTRA_CLIENT_ID"),
+    tenantId: getClientEnv("NEXT_PUBLIC_ENTRA_TENANT_ID"),
+    redirectUri: getClientEnv("NEXT_PUBLIC_ENTRA_REDIRECT_URI"),
   }
 
   const missing: string[] = []

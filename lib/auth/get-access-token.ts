@@ -1,29 +1,12 @@
-import { msalInstance, loginRequest } from "./entra-config"
-
 /**
- * Obtém o token de acesso do MSAL para fazer chamadas autenticadas
- * @returns Token de acesso ou null se não houver usuário autenticado
+ * Stub mantido para compatibilidade com workflow-store.ts.
+ *
+ * MSAL removido: o token de acesso ao backend agora fica no auth-store.
+ * A integração de envio de e-mail via Microsoft Graph (Mail.Send) precisa
+ * ser migrada para o csa-backend com credenciais de aplicação (client_credentials).
+ *
+ * @deprecated Retorna sempre null. Migrar chamadas para useAuthStore.getState().accessToken.
  */
 export async function getAccessToken(): Promise<string | null> {
-  try {
-    const accounts = msalInstance.getAllAccounts()
-
-    if (accounts.length === 0) {
-      console.warn("[v0] Nenhuma conta MSAL encontrada para obter token")
-      return null
-    }
-
-    const account = accounts[0]
-
-    // Tentar obter token silenciosamente
-    const response = await msalInstance.acquireTokenSilent({
-      ...loginRequest,
-      account,
-    })
-
-    return response.accessToken
-  } catch (error) {
-    console.error("[v0] Erro ao obter token de acesso:", error)
-    return null
-  }
+  return null
 }

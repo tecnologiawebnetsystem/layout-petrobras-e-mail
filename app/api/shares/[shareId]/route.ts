@@ -1,83 +1,28 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
+import { proxyGET, proxyDELETE } from "@/lib/api/route-handler-utils"
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
-
-/**
- * GET /api/shares/[shareId] - Detalhes de um compartilhamento
- * Proxy para GET /v1/shares/{share_id}
- */
+/** GET /api/shares/[shareId] → GET /v1/shares/{shareId} */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ shareId: string }> }
 ) {
-  try {
-    const { shareId } = await params
-    const authHeader = request.headers.get("authorization") || ""
-
-    const response = await fetch(`${BACKEND_URL}/api/v1/shares/${shareId}`, {
-      method: "GET",
-      headers: {
-        Authorization: authHeader,
-        "X-Forwarded-For": request.headers.get("x-forwarded-for") || "",
-        "User-Agent": request.headers.get("user-agent") || "",
-      },
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { success: false, error: { code: "GET_SHARE_FAILED", message: data.detail || "Erro ao buscar compartilhamento" } },
-        { status: response.status }
-      )
-    }
-
-    return NextResponse.json({ success: true, data })
-  } catch (error) {
-    console.error("[API] Share detail proxy error:", error)
-    return NextResponse.json(
-      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
-      { status: 500 }
-    )
-  }
+  const { shareId } = await params
+  return proxyGET(request, `/api/v1/shares/${shareId}`, {
+    errorCode: "GET_SHARE_FAILED",
+    errorMessage: "Erro ao buscar compartilhamento",
+    successShape: "wrap",
+  })
 }
 
-/**
- * DELETE /api/shares/[shareId] - Excluir compartilhamento
- * Proxy para DELETE /v1/shares/{share_id}
- */
+/** DELETE /api/shares/[shareId] → DELETE /v1/shares/{shareId} */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ shareId: string }> }
 ) {
-  try {
-    const { shareId } = await params
-    const authHeader = request.headers.get("authorization") || ""
-
-    const response = await fetch(`${BACKEND_URL}/api/v1/shares/${shareId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: authHeader,
-        "X-Forwarded-For": request.headers.get("x-forwarded-for") || "",
-        "User-Agent": request.headers.get("user-agent") || "",
-      },
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { success: false, error: { code: "DELETE_SHARE_FAILED", message: data.detail || "Erro ao excluir compartilhamento" } },
-        { status: response.status }
-      )
-    }
-
-    return NextResponse.json({ success: true, data })
-  } catch (error) {
-    console.error("[API] Share delete proxy error:", error)
-    return NextResponse.json(
-      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
-      { status: 500 }
-    )
-  }
+  const { shareId } = await params
+  return proxyDELETE(request, `/api/v1/shares/${shareId}`, {
+    errorCode: "DELETE_SHARE_FAILED",
+    errorMessage: "Erro ao excluir compartilhamento",
+    successShape: "wrap",
+  })
 }

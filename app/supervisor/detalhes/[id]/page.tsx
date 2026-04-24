@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useWorkflowStore } from "@/lib/stores/workflow-store"
+import { useAuthStore } from "@/lib/stores/auth-store"
 import { useToast } from "@/hooks/use-toast"
 import { AppHeader } from "@/components/shared/app-header"
 import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
@@ -27,7 +28,8 @@ import { Separator } from "@/components/ui/separator"
 export default function SupervisorDetailsPage({ params }: { params: { id: string } | Promise<{ id: string }> }) {
   const router = useRouter()
   const { toast } = useToast()
-  const { uploads, approveUpload, rejectUpload, initializeMockZip, mockZipBlob } = useWorkflowStore()
+  const { uploads, approveUpload, rejectUpload, initializeMockZip, mockZipBlob, loadAllSupervisorShares } = useWorkflowStore()
+  const { user } = useAuthStore()
 
   const [id, setId] = useState<string>("")
   const [uploadData, setUploadData] = useState<any>(null)
@@ -57,7 +59,12 @@ export default function SupervisorDetailsPage({ params }: { params: { id: string
 
     const init = async () => {
       await initializeMockZip()
-      const foundUpload = uploads.find((u) => u.id === id)
+      // Se o store não tiver os dados (acesso direto / refresh), busca da API
+      let foundUpload = uploads.find((u) => u.id === id)
+      if (!foundUpload) {
+        await loadAllSupervisorShares()
+        foundUpload = useWorkflowStore.getState().uploads.find((u) => u.id === id)
+      }
       setUploadData(foundUpload || null)
       setIsLoading(false)
     }
@@ -68,7 +75,8 @@ export default function SupervisorDetailsPage({ params }: { params: { id: string
   const handleApprove = () => {
     if (!uploadData) return
 
-    approveUpload(uploadData.id, "Carlos Mendes")
+    const supervisorName = user?.name || "Supervisor"
+    approveUpload(uploadData.id, supervisorName)
 
     toast({
       title: "Documento aprovado",

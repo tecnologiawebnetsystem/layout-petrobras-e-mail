@@ -54,7 +54,7 @@ export function ZipViewerModal({ isOpen, onClose, fileName, fileUrl, fileBlob }:
         zip.forEach((relativePath, zipEntry) => {
           zipFiles.push({
             name: zipEntry.name.split("/").pop() || zipEntry.name,
-            size: zipEntry.dir ? 0 : zipEntry._data?.uncompressedSize || 0,
+            size: zipEntry.dir ? 0 : (zipEntry as unknown as { _data?: { uncompressedSize?: number } })._data?.uncompressedSize || 0,
             isFolder: zipEntry.dir,
             path: relativePath,
           })

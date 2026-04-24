@@ -1,33 +1,11 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
+import { proxyGET } from "@/lib/api/route-handler-utils"
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
-
+/** GET /api/emails/[messageId]/status → GET /v1/emails/{messageId}/status */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ messageId: string }> }
 ) {
-  try {
-    const { messageId } = await params
-    const authHeader = request.headers.get("authorization") || ""
-
-    const response = await fetch(`${BACKEND_URL}/api/v1/emails/${messageId}/status`, {
-      method: "GET",
-      headers: { Authorization: authHeader },
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status })
-    }
-
-    // Passthrough: retorna formato exato do backend Python
-    return NextResponse.json(data)
-  } catch (error) {
-    console.error("[API] Email status proxy error:", error)
-    return NextResponse.json(
-      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
-      { status: 500 }
-    )
-  }
+  const { messageId } = await params
+  return proxyGET(request, `/api/v1/emails/${messageId}/status`)
 }

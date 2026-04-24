@@ -423,19 +423,19 @@ FRONTEND_EXTERNAL_PORTAL_URL=http://localhost:3000`} />
             <CardContent className="space-y-4">
               <ExplainBox title="O que vai acontecer?">
                 Voce vai ligar o servidor. A partir deste momento, o backend vai estar rodando
-                no seu computador e esperando requisicoes na porta 8000.
+                no seu computador e esperando requisicoes na porta 8080.
                 E como ligar o motor de um carro.
               </ExplainBox>
 
               <CopyBlock
                 label="Digite este comando e aperte Enter:"
-                code="uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+                code="uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload"
               />
 
               <div className="rounded-lg border border-green-200 bg-green-50 p-4">
                 <h4 className="mb-2 font-semibold text-green-800">O que deve aparecer na tela:</h4>
                 <div className="rounded bg-slate-900 p-3 font-mono text-sm text-green-400">
-                  <p>INFO:     Uvicorn running on http://0.0.0.0:8000</p>
+                  <p>INFO:     Uvicorn running on http://0.0.0.0:8080</p>
                   <p>INFO:     Started reloader process</p>
                   <p>INFO:     Started server process</p>
                   <p>INFO:     Application startup complete.</p>
@@ -475,7 +475,7 @@ FRONTEND_EXTERNAL_PORTAL_URL=http://localhost:3000`} />
                 <div className="rounded-lg border p-4">
                   <h4 className="mb-2 font-semibold text-slate-800">Teste 1 - Health Check (esta vivo?)</h4>
                   <p className="mb-2 text-slate-600">Abra o navegador e acesse:</p>
-                  <CopyBlock code="http://localhost:8000/" />
+                  <CopyBlock code="http://localhost:8080/" />
                   <p className="mt-2 text-slate-600">
                     Deve aparecer:{" "}
                     <code className="rounded bg-green-100 px-2 py-1 text-green-800">{`{"status":"ok","storage":"local"}`}</code>
@@ -485,7 +485,7 @@ FRONTEND_EXTERNAL_PORTAL_URL=http://localhost:3000`} />
                 <div className="rounded-lg border p-4">
                   <h4 className="mb-2 font-semibold text-slate-800">Teste 2 - Versao da API</h4>
                   <p className="mb-2 text-slate-600">Acesse:</p>
-                  <CopyBlock code="http://localhost:8000/api/v1" />
+                  <CopyBlock code="http://localhost:8080/api/v1" />
                   <p className="mt-2 text-slate-600">
                     Deve aparecer:{" "}
                     <code className="rounded bg-green-100 px-2 py-1 text-green-800">{`{"version":"001","sytem":"active"}`}</code>
@@ -495,7 +495,7 @@ FRONTEND_EXTERNAL_PORTAL_URL=http://localhost:3000`} />
                 <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
                   <h4 className="mb-2 font-semibold text-blue-800">Teste 3 - Swagger (documentacao interativa da API)</h4>
                   <p className="mb-2 text-blue-700">Acesse:</p>
-                  <CopyBlock code="http://localhost:8000/docs" />
+                  <CopyBlock code="http://localhost:8080/docs" />
                   <p className="mt-2 text-blue-700">
                     Vai abrir uma pagina bonita com todos os endpoints da API listados.
                     Voce pode clicar em cada um e testar direto pelo navegador.
@@ -570,15 +570,15 @@ FRONTEND_EXTERNAL_PORTAL_URL=http://localhost:3000`} />
 
               <div className="rounded-lg border p-4">
                 <h4 className="mb-2 font-semibold text-slate-800">
-                  {'A porta 8000 ja esta em uso ("Address already in use")'}
+                  {'A porta 8080 ja esta em uso ("Address already in use")'}
                 </h4>
                 <p className="mb-2 text-slate-600">
-                  <strong>Causa:</strong> Outro programa ja esta usando a porta 8000.
+                  <strong>Causa:</strong> Outro programa ja esta usando a porta 8080.
                 </p>
                 <p className="mb-2 text-slate-600"><strong>Solucao 1:</strong> Use outra porta:</p>
                 <CopyBlock code="uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload" />
                 <p className="mt-2 mb-2 text-slate-600"><strong>Solucao 2:</strong> Mate o processo que esta usando a porta:</p>
-                <CopyBlock code={`# Windows\nnetstat -ano | findstr :8000\ntaskkill /PID NUMERO_DO_PID /F\n\n# Mac/Linux\nlsof -i :8000\nkill -9 NUMERO_DO_PID`} />
+                <CopyBlock code={`# Windows\nnetstat -ano | findstr :8080\ntaskkill /PID NUMERO_DO_PID /F\n\n# Mac/Linux\nlsof -i :8080\nkill -9 NUMERO_DO_PID`} />
               </div>
 
               <div className="rounded-lg border p-4">
@@ -604,9 +604,9 @@ FRONTEND_EXTERNAL_PORTAL_URL=http://localhost:3000`} />
             </CardHeader>
             <CardContent>
               <p className="mb-3 text-slate-600">Depois de configurado, da proxima vez que quiser rodar o backend, sao so 3 comandos:</p>
-              <CopyBlock code={`cd backend\n${typeof window !== "undefined" && navigator.platform?.includes("Win") ? "venv\\Scripts\\activate" : "source venv/bin/activate"}\nuvicorn app.main:app --host 0.0.0.0 --port 8000 --reload`} />
+              <CopyBlock code={`cd backend\n${typeof window !== "undefined" && navigator.platform?.includes("Win") ? "venv\\Scripts\\activate" : "source venv/bin/activate"}\nuvicorn app.main:app --host 0.0.0.0 --port 8080 --reload`} />
               <p className="mt-3 text-slate-600">
-                Depois acesse <code className="rounded bg-slate-200 px-2 py-1">http://localhost:8000/docs</code> para ver o Swagger.
+                Depois acesse <code className="rounded bg-slate-200 px-2 py-1">http://localhost:8080/docs</code> para ver o Swagger.
               </p>
             </CardContent>
           </Card>
@@ -621,8 +621,8 @@ FRONTEND_EXTERNAL_PORTAL_URL=http://localhost:3000`} />
             <CardContent className="space-y-2 text-blue-700">
               <p>Com o backend rodando localmente, voce pode:</p>
               <ul className="ml-4 list-disc space-y-1">
-                <li>Rodar o frontend Next.js (<code>npm run dev</code> na raiz do projeto) - ele vai se conectar ao backend em <code>localhost:8000</code></li>
-                <li>Testar endpoints pelo Swagger em <code>localhost:8000/docs</code></li>
+                <li>Rodar o frontend Next.js (<code>npm run dev</code> na raiz do projeto) - ele vai se conectar ao backend em <code>localhost:8080</code></li>
+                <li>Testar endpoints pelo Swagger em <code>localhost:8080/docs</code></li>
                 <li>Publicar na internet via <Link href="/wiki-dev/deploy-render" className="underline font-semibold">Render.com</Link></li>
                 <li>Publicar em container via <Link href="/wiki-dev/deploy-containers" className="underline font-semibold">Docker + AWS</Link></li>
               </ul>

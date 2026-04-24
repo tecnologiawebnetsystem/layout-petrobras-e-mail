@@ -14,6 +14,11 @@ export type LogAction =
   | "zip_validation"
   | "file_expired"
   | "cancel"
+  | "generate_otp"
+  | "otp_expired"
+  | "otp_max_attempts"
+  | "otp_invalid"
+  | "otp_validated"
 
 export type LogLevel = "info" | "warning" | "error" | "success"
 
@@ -168,7 +173,7 @@ export const useAuditLogStore = create<AuditLogState>()(
 
           set({ logs, isLoadingLogs: false })
         } catch (err) {
-          console.error("[v0] Erro ao carregar audit logs:", err)
+          // console.error(" Erro ao carregar audit logs:", err)
           set({ isLoadingLogs: false })
         }
       },
@@ -185,7 +190,7 @@ export const useAuditLogStore = create<AuditLogState>()(
           )
           set({ metrics: data, isLoadingMetrics: false })
         } catch (err) {
-          console.error("[v0] Erro ao carregar metricas:", err)
+          // console.error(" Erro ao carregar metricas:", err)
           set({ isLoadingMetrics: false })
         }
       },

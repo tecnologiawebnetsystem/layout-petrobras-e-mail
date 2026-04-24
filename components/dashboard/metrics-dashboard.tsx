@@ -6,6 +6,7 @@ import type { ReactNode } from "react"
 import { Card } from "@/components/ui/card"
 import { TrendingUp, TrendingDown, FileText, Clock, CheckCircle, XCircle } from "lucide-react"
 import { MetricDetailModal } from "./metric-detail-modal"
+import type { FileDetail } from "./metric-detail-modal"
 
 interface MetricCardProps {
   title: string
@@ -50,59 +51,22 @@ interface MetricsDashboardProps {
   approved: number
   rejected: number
   userType: "internal" | "external" | "supervisor"
+  files?: FileDetail[]
 }
 
-export function MetricsDashboard({ total, pending, approved, rejected, userType }: MetricsDashboardProps) {
+export function MetricsDashboard({ total, pending, approved, rejected, userType, files = [] }: MetricsDashboardProps) {
   const [selectedMetric, setSelectedMetric] = useState<"total" | "pending" | "approved" | "rejected" | null>(null)
 
-  const getMockFiles = (status: "total" | "pending" | "approved" | "rejected") => {
-    const mockFiles = {
-      total: [
-        {
-          id: "1",
-          name: "Relatorio_Anual_2024.pdf",
-          size: "2.5 MB",
-          date: "15/01/2025",
-          recipient: "cliente@gmail.com",
-          status: "approved",
-          category: "Financeiro",
-        },
-        {
-          id: "2",
-          name: "Contrato_Servicos.docx",
-          size: "128 KB",
-          date: "14/01/2025",
-          recipient: "fornecedor@empresa.com",
-          status: "pending",
-          category: "Contratos",
-        },
-      ],
-      pending: [
-        {
-          id: "2",
-          name: "Contrato_Servicos.docx",
-          size: "128 KB",
-          date: "14/01/2025",
-          recipient: "fornecedor@empresa.com",
-          status: "pending",
-          category: "Contratos",
-        },
-      ],
-      approved: [
-        {
-          id: "1",
-          name: "Relatorio_Anual_2024.pdf",
-          size: "2.5 MB",
-          date: "15/01/2025",
-          recipient: "cliente@gmail.com",
-          status: "approved",
-          category: "Financeiro",
-        },
-      ],
-      rejected: [],
+  const getFilesForMetric = (status: "total" | "pending" | "approved" | "rejected"): FileDetail[] => {
+    if (status === "total") return files
+    if (status === "pending") return files.filter((f) => f.status === "pending")
+    if (status === "approved") {
+      return userType === "external"
+        ? files.filter((f) => f.status === "downloaded" || f.status === "approved")
+        : files.filter((f) => f.status === "approved")
     }
-
-    return mockFiles[status] || []
+    if (status === "rejected") return files.filter((f) => f.status === "rejected" || f.status === "expired")
+    return []
   }
 
   const getMetrics = () => {
@@ -236,7 +200,7 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType 
           isOpen={!!selectedMetric}
           onClose={() => setSelectedMetric(null)}
           title={currentMetric.title}
-          files={getMockFiles(selectedMetric)}
+          files={getFilesForMetric(selectedMetric)}
           gradient={currentMetric.gradient}
         />
       )}

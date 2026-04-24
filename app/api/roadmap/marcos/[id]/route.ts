@@ -14,7 +14,7 @@ export async function PUT(
     }
     return NextResponse.json(marco)
   } catch (error) {
-    console.error('Erro ao atualizar marco:', error)
+    // console.error('Erro ao atualizar marco:', error)
     return NextResponse.json({ error: 'Erro ao atualizar marco' }, { status: 500 })
   }
 }
@@ -31,7 +31,7 @@ export async function DELETE(
     }
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Erro ao deletar marco:', error)
+    // console.error('Erro ao deletar marco:', error)
     return NextResponse.json({ error: 'Erro ao deletar marco' }, { status: 500 })
   }
 }

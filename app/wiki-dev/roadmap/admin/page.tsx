@@ -222,7 +222,7 @@ function AdminDashboard() {
       mutate("/api/roadmap/fases")
       setFaseDialog({ open: false, fase: null, mode: "create" })
     } catch (error) {
-      console.error("Erro ao salvar fase:", error)
+      // console.error("Erro ao salvar fase:", error)
     }
     setSaving(false)
   }
@@ -238,7 +238,7 @@ function AdminDashboard() {
       mutate("/api/roadmap/fases")
       setEntregaDialog({ open: false, entrega: null, faseId: null, mode: "create" })
     } catch (error) {
-      console.error("Erro ao salvar entrega:", error)
+      // console.error("Erro ao salvar entrega:", error)
     }
     setSaving(false)
   }
@@ -254,7 +254,7 @@ function AdminDashboard() {
       mutate("/api/roadmap/marcos")
       setMarcoDialog({ open: false, marco: null, mode: "create" })
     } catch (error) {
-      console.error("Erro ao salvar marco:", error)
+      // console.error("Erro ao salvar marco:", error)
     }
     setSaving(false)
   }
@@ -270,7 +270,7 @@ function AdminDashboard() {
       mutate("/api/roadmap/burndown")
       setBurndownDialog({ open: false, entry: null, mode: "create" })
     } catch (error) {
-      console.error("Erro ao salvar burndown:", error)
+      // console.error("Erro ao salvar burndown:", error)
     }
     setSaving(false)
   }
@@ -293,7 +293,7 @@ function AdminDashboard() {
       mutate("/api/roadmap/burndown")
       setDeleteDialog({ open: false, type: "", id: null, name: "" })
     } catch (error) {
-      console.error("Erro ao deletar:", error)
+      // console.error("Erro ao deletar:", error)
     }
     setSaving(false)
   }

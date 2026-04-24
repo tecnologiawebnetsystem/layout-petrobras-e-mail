@@ -19,6 +19,7 @@ from app.api.v1 import (
     routes_download,
     routes_auth,
     routes_emails,
+    routes_diagnostico,
 )
 
 app = FastAPI(
@@ -129,6 +130,9 @@ app.include_router(routes_emails.router, prefix=prefix_v1, tags=["Emails"])
 # Rotas de Login (legado - auth local e interno)
 app.include_router(routes_internal_auth.router, prefix=prefix_v1)
 
+# Diagnóstico de variáveis de ambiente
+app.include_router(routes_diagnostico.router, prefix=prefix_v1)
+
 # Rotas MOCK (sem AWS): integradas com core/aws_utils.py
 @app.get("/mock/upload/{key}")
 def mock_upload(key: str, expires_in: int = 3600):
@@ -141,12 +145,25 @@ def mock_download(key: str, expires_in: int = 3600):
     # Aqui você pode simular retorno de conteúdo ou apenas metadados
     return {"status": "ok", "action": "download", "key": key, "expires_in": expires_in}
 
-
 @app.get(prefix_v1)
 def version():
     return {"version": "001", "sytem": "active"}
 
+@app.get(f"{prefix_v1}/status")
+def version():
+    return {"version": "001", "sytem": "active"}
 
-@app.get("/")
+
+@app.get("/api")
 def health():
     return {"status": "ok", "storage": settings.storage_provider}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "app.main:app",
+        port=8080,
+        reload=True,
+        lifespan="off",
+    )

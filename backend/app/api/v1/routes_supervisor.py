@@ -43,18 +43,36 @@ def get_pending_files(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_supervisor),
     request: Request = None,
 ):
     """
-    Lista todos os compartilhamentos pendentes de aprovacao.
-    Para supervisores, mostra todos os pendentes de suas areas.
+    Lista compartilhamentos pendentes de aprovaçao.
+    Retorna apenas os shares criados por usuários que têm este supervisor como gestor
+    (manager_id == supervisor.id), refletindo o vínculo declarado no chamado ServiceNow.
     """
-    # Query base - shares pendentes
-    query = select(Share).where(Share.status == ShareStatus.PENDING)
-    
+    # Busca IDs dos supervisionados deste supervisor
+    supervised_users = session.exec(
+        select(User.id).where(User.manager_id == user.id)
+    ).all()
+
+    if not supervised_users:
+        return {
+            "files": [],
+            "pagination": {"current_page": page, "total_pages": 1, "total_items": 0},
+        }
+
+    # Query base - shares pendentes dos supervisionados
+    query = select(Share).where(
+        Share.status == ShareStatus.PENDING,
+        Share.created_by_id.in_(supervised_users),
+    )
+
     # Conta total
-    count_query = select(func.count()).select_from(Share).where(Share.status == ShareStatus.PENDING)
+    count_query = select(func.count()).select_from(Share).where(
+        Share.status == ShareStatus.PENDING,
+        Share.created_by_id.in_(supervised_users),
+    )
     total_items = session.exec(count_query).one()
     total_pages = (total_items + limit - 1) // limit if total_items > 0 else 1
     
@@ -141,15 +159,24 @@ async def approve_file(
     payload: ApproveRequest,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_supervisor),
     request: Request = None,
 ):
     """
     Aprova um compartilhamento pendente.
+    O supervisor só pode aprovar shares criados pelos seus supervisionados.
     """
     share = session.get(Share, file_id)
     if not share:
         raise HTTPException(status_code=404, detail="Compartilhamento nao encontrado.")
+
+    # Verifica autoridade: o criador do share deve ter este supervisor como gestor
+    creator = session.get(User, share.created_by_id)
+    if not creator or creator.manager_id != user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Acesso negado: este compartilhamento nao pertence a um de seus supervisionados.",
+        )
     
     if share.status != ShareStatus.PENDING:
         raise HTTPException(
@@ -159,7 +186,7 @@ async def approve_file(
     
     # Atualiza status
     now = datetime.now(UTC)
-    share.status = ShareStatus.APPROVED
+    share.status = ShareStatus.ACTIVE
     share.approver_id = user.id
     share.approved_at = now
     share.approval_comments = payload.message
@@ -221,15 +248,24 @@ def reject_file(
     file_id: int,
     payload: RejectRequest,
     session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_supervisor),
     request: Request = None,
 ):
     """
     Rejeita um compartilhamento pendente.
+    O supervisor só pode rejeitar shares criados pelos seus supervisionados.
     """
     share = session.get(Share, file_id)
     if not share:
         raise HTTPException(status_code=404, detail="Compartilhamento nao encontrado.")
+
+    # Verifica autoridade
+    creator = session.get(User, share.created_by_id)
+    if not creator or creator.manager_id != user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Acesso negado: este compartilhamento nao pertence a um de seus supervisionados.",
+        )
     
     if share.status != ShareStatus.PENDING:
         raise HTTPException(
@@ -275,15 +311,24 @@ def extend_expiration(
     file_id: int,
     payload: ExtendRequest,
     session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_supervisor),
     request: Request = None,
 ):
     """
     Estende o tempo de expiracao de um compartilhamento.
+    O supervisor só pode estender shares dos seus supervisionados.
     """
     share = session.get(Share, file_id)
     if not share:
         raise HTTPException(status_code=404, detail="Compartilhamento nao encontrado.")
+
+    # Verifica autoridade
+    creator = session.get(User, share.created_by_id)
+    if not creator or creator.manager_id != user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Acesso negado: este compartilhamento nao pertence a um de seus supervisionados.",
+        )
     
     if share.status not in [ShareStatus.APPROVED, ShareStatus.ACTIVE]:
         raise HTTPException(
@@ -335,6 +380,13 @@ def relatorio_area(
     user: User = Depends(require_supervisor),
     request: Request = None,
 ):
+    """
+    Gera relatório de compartilhamentos de uma área específica.
+
+    Requer que o supervisor esteja vinculado à área (tabela AreaSupervisor).
+    Retorna todos os shares da área com contagem de arquivos, downloads e pendentes.
+    Registra o evento VER_RELATORIO_AREA na auditoria.
+    """
     area = session.get(SharedArea, area_id)
     if not area:
         raise HTTPException(status_code=404, detail="Area nao encontrada.")
@@ -387,13 +439,20 @@ async def approve_share_legacy(
     share_id: int,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_supervisor),
     request: Request = None,
 ):
     """Endpoint legado - redireciona para novo endpoint."""
     share = session.get(Share, share_id)
     if not share:
         raise HTTPException(status_code=404, detail="Share nao encontrado.")
+
+    creator = session.get(User, share.created_by_id)
+    if not creator or creator.manager_id != user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Acesso negado: este compartilhamento nao pertence a um de seus supervisionados.",
+        )
 
     if share.status in [ShareStatus.ACTIVE, ShareStatus.APPROVED]:
         pass
@@ -440,3 +499,130 @@ async def approve_share_legacy(
     )
 
     return {"status": "ok", "share_id": share.id, "status_atual": share.status}
+
+
+# =====================================================
+# GET /supervisor/shares - Lista todos os shares do supervisor
+# =====================================================
+
+@router.get("/shares")
+def get_supervisor_shares(
+    status: Optional[str] = Query(None, description="Filtro: pending | active | rejected"),
+    page: int = Query(1, ge=1),
+    limit: int = Query(100, ge=1, le=200),
+    session: Session = Depends(get_session),
+    user: User = Depends(require_supervisor),
+    request: Request = None,
+):
+    """
+    Lista todos os compartilhamentos dos supervisionados deste supervisor.
+    Suporta filtro por status. Sem filtro → retorna todos (pending + active + rejected).
+    """
+    supervised_users = session.exec(
+        select(User.id).where(User.manager_id == user.id)
+    ).all()
+
+    if not supervised_users:
+        return {
+            "files": [],
+            "pagination": {"current_page": page, "total_pages": 1, "total_items": 0},
+        }
+
+    status_map = {
+        "pending": ShareStatus.PENDING,
+        "active": ShareStatus.ACTIVE,
+        "approved": ShareStatus.ACTIVE,
+        "rejected": ShareStatus.REJECTED,
+    }
+
+    base_condition = Share.created_by_id.in_(supervised_users)
+    status_condition = None
+    if status and status.lower() in status_map:
+        status_condition = Share.status == status_map[status.lower()]
+
+    count_query = select(func.count()).select_from(Share).where(base_condition)
+    if status_condition is not None:
+        count_query = count_query.where(status_condition)
+    total_items = session.exec(count_query).one()
+    total_pages = (total_items + limit - 1) // limit if total_items > 0 else 1
+
+    offset = (page - 1) * limit
+    query = select(Share).where(base_condition)
+    if status_condition is not None:
+        query = query.where(status_condition)
+    query = query.order_by(Share.created_at.desc()).offset(offset).limit(limit)
+    shares = session.exec(query).all()
+
+    result = []
+    for share in shares:
+        sender = session.get(User, share.created_by_id)
+        sender_data = {
+            "id": sender.id if sender else None,
+            "name": sender.name if sender else "Desconhecido",
+            "email": sender.email if sender else None,
+            "department": sender.department if sender else None,
+            "employee_id": sender.employee_id if sender else None,
+        }
+
+        share_files = session.exec(
+            select(ShareFile).where(ShareFile.share_id == share.id)
+        ).all()
+        files_data = []
+        for sf in share_files:
+            rfile = session.get(RestrictedFile, sf.file_id)
+            if rfile:
+                size_mb = rfile.size_bytes / (1024 * 1024) if rfile.size_bytes else 0
+                files_data.append({
+                    "name": rfile.name,
+                    "size": f"{size_mb:.2f} MB",
+                    "type": rfile.mime_type or "unknown",
+                })
+
+        if share.status == ShareStatus.PENDING:
+            workflow_step, steps = 2, [
+                {"name": "Criacao", "status": "completed"},
+                {"name": "Aprovacao", "status": "current"},
+                {"name": "Disponibilizacao", "status": "pending"},
+            ]
+        elif share.status == ShareStatus.ACTIVE:
+            workflow_step, steps = 3, [
+                {"name": "Criacao", "status": "completed"},
+                {"name": "Aprovacao", "status": "completed"},
+                {"name": "Disponibilizacao", "status": "completed"},
+            ]
+        else:
+            workflow_step, steps = 2, [
+                {"name": "Criacao", "status": "completed"},
+                {"name": "Aprovacao", "status": "failed"},
+                {"name": "Disponibilizacao", "status": "pending"},
+            ]
+
+        result.append({
+            "id": share.id,
+            "name": share.name or f"Compartilhamento #{share.id}",
+            "status": share.status,
+            "recipient_email": share.external_email,
+            "description": share.description,
+            "sender": sender_data,
+            "files": files_data,
+            "expiration_hours": share.expiration_hours,
+            "created_at": share.created_at.isoformat(),
+            "approved_at": share.approved_at.isoformat() if share.approved_at else None,
+            "rejected_at": share.rejected_at.isoformat() if hasattr(share, "rejected_at") and share.rejected_at else None,
+            "rejection_reason": share.rejection_reason if hasattr(share, "rejection_reason") else None,
+            "expires_at": share.expires_at.isoformat() if share.expires_at else None,
+            "workflow": {
+                "current_step": workflow_step,
+                "total_steps": 3,
+                "steps": steps,
+            },
+        })
+
+    return {
+        "files": result,
+        "pagination": {
+            "current_page": page,
+            "total_pages": total_pages,
+            "total_items": total_items,
+        },
+    }

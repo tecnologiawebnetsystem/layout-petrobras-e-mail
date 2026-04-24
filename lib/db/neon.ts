@@ -1,7 +1,21 @@
 import { neon } from '@neondatabase/serverless'
 
 // Cliente SQL para queries no Neon
-export const sql = neon(process.env.DATABASE_URL!)
+// export const sql = neon(process.env.DATABASE_URL!)
+
+let _sql: ReturnType<typeof neon> | null = null
+
+function getSql() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL não definida')
+  }
+
+  if (!_sql) {
+    _sql = neon(process.env.DATABASE_URL)
+  }
+
+  return _sql as unknown as (...args: unknown[]) => Promise<Record<string, unknown>[]>
+}
 
 // Tipos TypeScript para o Roadmap
 export type Status = 'concluido' | 'em_progresso' | 'pendente'
@@ -61,6 +75,7 @@ export interface RoadmapConfig {
 
 // Funcoes de acesso ao banco
 export async function getFases(): Promise<Fase[]> {
+  const sql = getSql()
   const fases = await sql`
     SELECT f.*, 
            COALESCE(
@@ -69,10 +84,11 @@ export async function getFases(): Promise<Fase[]> {
            ) as depende_de
     FROM roadmap_fases f 
     ORDER BY f.ordem, f.id
-  `
+  ` as unknown as unknown as Fase[]
   
   // Buscar entregas para cada fase
   for (const fase of fases) {
+    const sql = getSql()
     const entregas = await sql`
       SELECT e.*, 
              COALESCE(
@@ -83,13 +99,14 @@ export async function getFases(): Promise<Fase[]> {
       WHERE e.fase_id = ${fase.id} 
       ORDER BY e.ordem, e.id
     `
-    fase.entregas = entregas as Entrega[]
+    fase.entregas = entregas as unknown as Entrega[]
   }
   
-  return fases as Fase[]
+  return fases as unknown as Fase[]
 }
 
 export async function getFaseById(id: number): Promise<Fase | null> {
+  const sql = getSql()
   const [fase] = await sql`
     SELECT f.*, 
            COALESCE(
@@ -112,12 +129,13 @@ export async function getFaseById(id: number): Promise<Fase | null> {
     WHERE e.fase_id = ${id} 
     ORDER BY e.ordem, e.id
   `
-  fase.entregas = entregas as Entrega[]
+  fase.entregas = entregas as unknown as Entrega[]
   
-  return fase as Fase
+  return fase as unknown as Fase
 }
 
 export async function createFase(data: Omit<Fase, 'id' | 'entregas'>): Promise<Fase> {
+  const sql = getSql()
   const [fase] = await sql`
     INSERT INTO roadmap_fases (nome, periodo, data_inicio, data_fim, status, progresso, cor, descricao, responsavel, risco, ordem)
     VALUES (${data.nome}, ${data.periodo}, ${data.data_inicio}, ${data.data_fim}, ${data.status}, ${data.progresso}, ${data.cor}, ${data.descricao}, ${data.responsavel}, ${data.risco}, ${data.ordem})
@@ -131,10 +149,11 @@ export async function createFase(data: Omit<Fase, 'id' | 'entregas'>): Promise<F
     }
   }
   
-  return fase as Fase
+  return fase as unknown as Fase
 }
 
 export async function updateFase(id: number, data: Partial<Omit<Fase, 'id' | 'entregas'>>): Promise<Fase | null> {
+  const sql = getSql()
   const updates: string[] = []
   const values: Record<string, unknown> = { id }
   
@@ -176,16 +195,18 @@ export async function updateFase(id: number, data: Partial<Omit<Fase, 'id' | 'en
     }
   }
   
-  return fase as Fase || null
+  return fase as unknown as Fase || null
 }
 
 export async function deleteFase(id: number): Promise<boolean> {
+  const sql = getSql()
   const result = await sql`DELETE FROM roadmap_fases WHERE id = ${id} RETURNING id`
   return result.length > 0
 }
 
 // CRUD para Entregas
 export async function getEntregasByFase(faseId: number): Promise<Entrega[]> {
+  const sql = getSql()
   const entregas = await sql`
     SELECT e.*, 
            COALESCE(
@@ -196,10 +217,11 @@ export async function getEntregasByFase(faseId: number): Promise<Entrega[]> {
     WHERE e.fase_id = ${faseId} 
     ORDER BY e.ordem, e.id
   `
-  return entregas as Entrega[]
+  return entregas as unknown as Entrega[]
 }
 
 export async function createEntrega(data: Omit<Entrega, 'id'>): Promise<Entrega> {
+  const sql = getSql()
   const [entrega] = await sql`
     INSERT INTO roadmap_entregas (fase_id, nome, status, tipo, data_prevista, data_conclusao, notas, bloqueios, ordem)
     VALUES (${data.fase_id}, ${data.nome}, ${data.status}, ${data.tipo}, ${data.data_prevista}, ${data.data_conclusao}, ${data.notas}, ${data.bloqueios}, ${data.ordem})
@@ -212,10 +234,11 @@ export async function createEntrega(data: Omit<Entrega, 'id'>): Promise<Entrega>
     }
   }
   
-  return entrega as Entrega
+  return entrega as unknown as Entrega
 }
 
 export async function updateEntrega(id: number, data: Partial<Omit<Entrega, 'id'>>): Promise<Entrega | null> {
+  const sql = getSql()
   const [entrega] = await sql`
     UPDATE roadmap_entregas SET
       fase_id = COALESCE(${data.fase_id}, fase_id),
@@ -239,30 +262,34 @@ export async function updateEntrega(id: number, data: Partial<Omit<Entrega, 'id'
     }
   }
   
-  return entrega as Entrega || null
+  return entrega as unknown as Entrega || null
 }
 
 export async function deleteEntrega(id: number): Promise<boolean> {
+  const sql = getSql()
   const result = await sql`DELETE FROM roadmap_entregas WHERE id = ${id} RETURNING id`
   return result.length > 0
 }
 
 // CRUD para Marcos
 export async function getMarcos(): Promise<Marco[]> {
+  const sql = getSql()
   const marcos = await sql`SELECT * FROM roadmap_marcos ORDER BY ordem, data`
-  return marcos as Marco[]
+  return marcos as unknown as Marco[]
 }
 
 export async function createMarco(data: Omit<Marco, 'id'>): Promise<Marco> {
+  const sql = getSql()
   const [marco] = await sql`
     INSERT INTO roadmap_marcos (nome, data, status, ordem)
     VALUES (${data.nome}, ${data.data}, ${data.status}, ${data.ordem})
     RETURNING *
   `
-  return marco as Marco
+  return marco as unknown as Marco
 }
 
 export async function updateMarco(id: number, data: Partial<Omit<Marco, 'id'>>): Promise<Marco | null> {
+  const sql = getSql()
   const [marco] = await sql`
     UPDATE roadmap_marcos SET
       nome = COALESCE(${data.nome}, nome),
@@ -273,30 +300,34 @@ export async function updateMarco(id: number, data: Partial<Omit<Marco, 'id'>>):
     WHERE id = ${id}
     RETURNING *
   `
-  return marco as Marco || null
+  return marco as unknown as Marco || null
 }
 
 export async function deleteMarco(id: number): Promise<boolean> {
+  const sql = getSql()
   const result = await sql`DELETE FROM roadmap_marcos WHERE id = ${id} RETURNING id`
   return result.length > 0
 }
 
 // CRUD para Burndown
 export async function getBurndownData(): Promise<BurndownData[]> {
+  const sql = getSql()
   const data = await sql`SELECT * FROM roadmap_burndown ORDER BY ordem, id`
-  return data as BurndownData[]
+  return data as unknown as BurndownData[]
 }
 
 export async function createBurndownEntry(data: Omit<BurndownData, 'id'>): Promise<BurndownData> {
+  const sql = getSql()
   const [entry] = await sql`
     INSERT INTO roadmap_burndown (semana, planejado, real, entregas, ordem)
     VALUES (${data.semana}, ${data.planejado}, ${data.real}, ${data.entregas}, ${data.ordem})
     RETURNING *
   `
-  return entry as BurndownData
+  return entry as unknown as BurndownData
 }
 
 export async function updateBurndownEntry(id: number, data: Partial<Omit<BurndownData, 'id'>>): Promise<BurndownData | null> {
+  const sql = getSql()
   const [entry] = await sql`
     UPDATE roadmap_burndown SET
       semana = COALESCE(${data.semana}, semana),
@@ -307,21 +338,24 @@ export async function updateBurndownEntry(id: number, data: Partial<Omit<Burndow
     WHERE id = ${id}
     RETURNING *
   `
-  return entry as BurndownData || null
+  return entry as unknown as BurndownData || null
 }
 
 export async function deleteBurndownEntry(id: number): Promise<boolean> {
+  const sql = getSql()
   const result = await sql`DELETE FROM roadmap_burndown WHERE id = ${id} RETURNING id`
   return result.length > 0
 }
 
 // Config
 export async function getConfig(): Promise<RoadmapConfig> {
+  const sql = getSql()
   const [config] = await sql`SELECT valor FROM roadmap_config WHERE chave = 'progresso_geral'`
-  return { progresso_geral: config ? parseInt(config.valor) : 0 }
+  return { progresso_geral: config ? parseInt(config.valor as string) : 0 }
 }
 
 export async function updateConfig(progresso: number): Promise<void> {
+  const sql = getSql()
   await sql`
     INSERT INTO roadmap_config (chave, valor, updated_at) 
     VALUES ('progresso_geral', ${progresso.toString()}, CURRENT_TIMESTAMP)

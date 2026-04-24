@@ -1,41 +1,14 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
+import { proxyJSON } from "@/lib/api/route-handler-utils"
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
-
+/** PUT /api/notifications/[notificationId]/read → PATCH /v1/notifications/{id}/read */
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ notificationId: string }> }
 ) {
-  try {
-    const { notificationId } = await params
-    const authHeader = request.headers.get("authorization") || ""
-
-    const response = await fetch(
-      `${BACKEND_URL}/api/v1/notifications/${notificationId}/read`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: authHeader,
-        },
-      }
-    )
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { success: false, error: { code: "UPDATE_FAILED", message: data.detail || "Erro ao marcar" } },
-        { status: response.status }
-      )
-    }
-
-    return NextResponse.json(data)
-  } catch (error) {
-    console.error("[API] Notification read proxy error:", error)
-    return NextResponse.json(
-      { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
-      { status: 500 }
-    )
-  }
+  const { notificationId } = await params
+  return proxyJSON("PATCH", request, `/api/v1/notifications/${notificationId}/read`, {
+    errorCode: "UPDATE_FAILED",
+    errorMessage: "Erro ao marcar notificação",
+  })
 }

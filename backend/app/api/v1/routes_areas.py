@@ -10,6 +10,12 @@ router = APIRouter(prefix="/areas", tags=["Areas"])
 
 @router.post("/", response_model=AreaRead, status_code=status.HTTP_201_CREATED)
 def create_area(payload: AreaCreate, session: Session = Depends(get_session), request: Request = None):
+    """
+    Cria uma nova área compartilhada no sistema.
+
+    Persiste a área no banco, define seu status como ativo (True) e registra
+    o evento de auditoria CRIAR_AREA com o IP e User-Agent do solicitante.
+    """
     # Poderíamos validar se solicitante existe/é INTERNO aqui
     area = SharedArea(
         name=payload.name,
@@ -36,10 +42,12 @@ def create_area(payload: AreaCreate, session: Session = Depends(get_session), re
 
 @router.get("/", response_model=list[AreaRead])
 def list_areas(session: Session = Depends(get_session)):
+    """Retorna todas as áreas compartilhadas cadastradas, sem filtro ou paginação."""
     return session.exec(select(SharedArea)).all()
 
 @router.get("/{area_id}", response_model=AreaRead)
 def get_area(area_id: int, session: Session = Depends(get_session)):
+    """Busca uma área específica pelo seu ID. Retorna 404 se não encontrada."""
     area = session.get(SharedArea, area_id)
     if not area:
         raise HTTPException(status_code=404, detail="Área não encontrada.")
@@ -47,6 +55,11 @@ def get_area(area_id: int, session: Session = Depends(get_session)):
 
 @router.post("/{area_id}/close", response_model=AreaRead)
 def close_area(area_id: int, session: Session = Depends(get_session), request: Request = None):
+    """
+    Encerra uma área compartilhada definindo seu status como inativo (False).
+
+    Registra o evento de auditoria ENCERRAR_AREA. Retorna 404 se a área não existir.
+    """
     area = session.get(SharedArea, area_id)
     if not area:
         raise HTTPException(status_code=404, detail="Área não encontrada.")

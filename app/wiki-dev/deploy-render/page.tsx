@@ -369,8 +369,8 @@ export default function DeployRenderPage() {
                   <li>Na tela que abrir, procure <strong>Connection Details</strong> (geralmente fica na lateral direita)</li>
                   <li>Copie toda a linha que comeca com <code className="bg-red-100 px-1 rounded">postgresql://</code></li>
                 </ol>
-                <p className="text-xs text-slate-500 mt-2">O valor vai parecer algo assim (mas com os seus dados):</p>
-                <CopyBlock code="postgresql://neondb_owner:SUA_SENHA@ep-xxxxx.us-east-2.aws.neon.tech/neondb?sslmode=require" />
+                <p className="text-xs text-slate-500 mt-2">Exemplo de formato de connection:</p>
+                <CopyBlock code="postgresql://<DB_USER>:<DB_PASSWORD>@<DB_HOST>/<DB_NAME>?sslmode=require" />
               </div>
             </div>
 

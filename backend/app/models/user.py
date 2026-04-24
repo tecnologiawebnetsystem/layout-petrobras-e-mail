@@ -13,11 +13,13 @@ if TYPE_CHECKING:
     from app.models.token_access import TokenAccess
     from app.models.area import SharedArea
     from app.models.notification import Notification
+    from app.models.areasupervisors import AreaSupervisor
 
 class TypeUser(str, Enum):
     EXTERNAL = "externo"
     INTERNAL = "internal"
-    SUPERVISOR = "supervisor"
+    # SUPERVISOR foi removido: supervisores são usuários INTERNAL com is_supervisor=True.
+    # A relação supervisor-supervisionado vem do chamado ServiceNow e é armazenada em manager_id.
 
 
 class User(SQLModel, table=True):
@@ -33,6 +35,7 @@ class User(SQLModel, table=True):
     employee_id: Optional[str] = Field(default=None, max_length=50)
     photo_url: Optional[str] = Field(default=None, max_length=500)
     manager_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    is_supervisor: bool = Field(default=False)  # True = pode aprovar/rejeitar shares da sua área
     status: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     last_login: Optional[datetime] = Field(default=None)
@@ -40,7 +43,17 @@ class User(SQLModel, table=True):
     # Relacionamentos
     areas_created: List["SharedArea"] = Relationship(back_populates="applicant")
     upload_files: List["RestrictedFile"] = Relationship(back_populates="upload_by")
-    shares_created: List["Share"] = Relationship(back_populates="created_by")
+    shares_created: List["Share"] = Relationship(
+        back_populates="created_by",
+        sa_relationship_kwargs={"foreign_keys": "[Share.created_by_id]"}
+    )
+    shares_approved: List["Share"] = Relationship(
+        back_populates="approver",
+        sa_relationship_kwargs={"foreign_keys": "[Share.approver_id]"}
+    )
+    manager: Optional["User"] = Relationship(
+        sa_relationship_kwargs={"remote_side": "User.id"}
+    )
     tokens: List["TokenAccess"] = Relationship(back_populates="user")
     supervised_areas: List["AreaSupervisor"] = Relationship(back_populates="supervisor")
     notifications: List["Notification"] = Relationship(back_populates="user")

@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     const entregas = await getEntregasByFase(parseInt(faseId))
     return NextResponse.json(entregas)
   } catch (error) {
-    console.error('Erro ao buscar entregas:', error)
+    // console.error('Erro ao buscar entregas:', error)
     return NextResponse.json({ error: 'Erro ao buscar entregas' }, { status: 500 })
   }
 }
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     const entrega = await createEntrega(data)
     return NextResponse.json(entrega, { status: 201 })
   } catch (error) {
-    console.error('Erro ao criar entrega:', error)
+    // console.error('Erro ao criar entrega:', error)
     return NextResponse.json({ error: 'Erro ao criar entrega' }, { status: 500 })
   }
 }

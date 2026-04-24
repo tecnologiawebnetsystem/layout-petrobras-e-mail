@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 import { NextResponse } from 'next/server'
 import { updateBurndownEntry, deleteBurndownEntry } from '@/lib/db/neon'
 
@@ -14,7 +17,7 @@ export async function PUT(
     }
     return NextResponse.json(entry)
   } catch (error) {
-    console.error('Erro ao atualizar entrada:', error)
+    // console.error('Erro ao atualizar entrada:', error)
     return NextResponse.json({ error: 'Erro ao atualizar entrada' }, { status: 500 })
   }
 }
@@ -31,7 +34,7 @@ export async function DELETE(
     }
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Erro ao deletar entrada:', error)
+    // console.error('Erro ao deletar entrada:', error)
     return NextResponse.json({ error: 'Erro ao deletar entrada' }, { status: 500 })
   }
 }

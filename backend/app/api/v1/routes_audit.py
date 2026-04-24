@@ -222,7 +222,7 @@ def get_audit_metrics(
     
     # Total de usuarios internos
     total_internal_users = session.exec(
-        select(func.count()).select_from(User).where(User.type.in_([TypeUser.INTERNAL, TypeUser.SUPERVISOR]))
+        select(func.count()).select_from(User).where(User.type == TypeUser.INTERNAL)
     ).one()
     
     # Total de usuarios externos
@@ -315,6 +315,13 @@ def list_audit_legacy(
     file_id: int | None = Query(None),
     limit: int = Query(100, ge=1, le=1000),
 ):
+    """
+    Endpoint legado para listagem simples de logs de auditoria.
+
+    Mantido para compatibilidade com clientes antigos. Suporta filtro por user_id,
+    share_id e file_id. Retorna até 1000 registros, ordenados do mais recente.
+    Preferência: usar GET /audit/logs para busca paginada e com mais filtros.
+    """
     q = select(Audit)
     if user_id:
         q = q.where(Audit.user_id == user_id)

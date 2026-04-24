@@ -49,11 +49,10 @@ export function ExpirationMonitor() {
             const alreadyNotified = localStorage.getItem(`expired-${upload.id}`)
             if (!alreadyNotified) {
               addNotification({
-                type: "error",
+                type: "file_expired",
                 priority: "high",
                 title: "Arquivos Removidos - Prazo Expirado",
                 message: `Os arquivos "${upload.name}" enviados para ${upload.recipient} foram automaticamente removidos. O prazo de ${upload.expirationHours}h expirou.`,
-                actionLabel: "Ver Detalhes",
                 actionUrl: "/historico",
               })
 
@@ -114,11 +113,10 @@ export function ExpirationMonitor() {
 
             if (!alreadyWarned) {
               addNotification({
-                type: "warning",
+                type: "file_expired",
                 priority: "medium",
                 title: "Arquivos expirando em breve",
                 message: `Os arquivos "${upload.name}" expiram em menos de 24 horas. Destinatário: ${upload.recipient}`,
-                actionLabel: "Ver Detalhes",
                 actionUrl: "/historico",
               })
 
@@ -147,7 +145,7 @@ export function ExpirationMonitor() {
             }
           }
         } catch (error) {
-          console.error("Erro ao processar expiração:", error)
+          // console.error("Erro ao processar expiração:", error)
         }
       })
     }

@@ -20,7 +20,7 @@ export function SupervisorUploadForm() {
   const [recipient, setRecipient] = useState("")
   const [description, setDescription] = useState("")
   const [files, setFiles] = useState<File[]>([])
-  const [expirationHours, setExpirationHours] = useState<number>(72)
+  const [expirationHours, setExpirationHours] = useState<number>(168)
   const [isLoading, setIsLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [notification, setNotification] = useState<{
@@ -137,7 +137,7 @@ export function SupervisorUploadForm() {
 
       await new Promise((resolve) => setTimeout(resolve, 2000))
 
-      addUpload(uploadData)
+      addUpload({ ...uploadData, rawFiles: files })
 
       setUploadSuccessData({
         name: uploadData.name,
@@ -153,7 +153,7 @@ export function SupervisorUploadForm() {
         setRecipient("")
         setDescription("")
         setFiles([])
-        setExpirationHours(72)
+        setExpirationHours(168)
         setShowSuccess(false)
       }, 1000)
     } catch (error) {
@@ -266,7 +266,7 @@ export function SupervisorUploadForm() {
             <SelectContent>
               <SelectItem value="24">24 horas (1 dia)</SelectItem>
               <SelectItem value="48">48 horas (2 dias)</SelectItem>
-              <SelectItem value="72">72 horas (3 dias)</SelectItem>
+              <SelectItem value="168">168 horas (7 dias)</SelectItem>
             </SelectContent>
           </Select>
           <p className="text-sm text-muted-foreground leading-relaxed">
