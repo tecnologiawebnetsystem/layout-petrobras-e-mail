@@ -758,7 +758,7 @@ function AdminDashboard() {
 
       {/* Dialog Entrega */}
       <Dialog open={entregaDialog.open} onOpenChange={(open) => setEntregaDialog(prev => ({ ...prev, open }))}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{entregaDialog.mode === "create" ? "Nova Entrega" : "Editar Entrega"}</DialogTitle>
             <DialogDescription>Preencha os dados da entrega</DialogDescription>
@@ -921,28 +921,7 @@ function AdminDashboard() {
   )
 }
 
-// Componente principal com autenticacao
+// Componente principal sem autenticacao
 export default function RoadmapAdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [checkingAuth, setCheckingAuth] = useState(true)
-
-  useEffect(() => {
-    const auth = sessionStorage.getItem("roadmap_admin_auth")
-    setIsAuthenticated(auth === "true")
-    setCheckingAuth(false)
-  }, [])
-
-  if (checkingAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
-    return <LoginForm onLogin={() => setIsAuthenticated(true)} />
-  }
-
   return <AdminDashboard />
 }
