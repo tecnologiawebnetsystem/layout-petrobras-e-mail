@@ -22,5 +22,5 @@ upload:
      docker:
 
 deploy:
-    SnapshotEnvs: DSV
+    SnapshotEnvs: DSV,TST
     StartReleaseEnvs: HMG

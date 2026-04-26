@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, BookOpen, Home, HardDrive, Target, Database, ArrowLeftRight, Info, Server, Container, Wrench, KeyRound, TerminalSquare } from "lucide-react"
+import { Search, BookOpen, Home, HardDrive, Target, Database, ArrowLeftRight, Info, Server, Container, Wrench } from "lucide-react"
 import Link from "next/link"
 
 export default function WikiDevPage() {
@@ -29,24 +29,6 @@ export default function WikiDevPage() {
       color: "from-green-500 to-emerald-600",
       topics: ["Python", "FastAPI", "Instalacao", "Para Iniciantes"],
       category: "setup",
-    },
-    {
-      title: "Variaveis de Ambiente (.env)",
-      description: "Todas as variaveis do Frontend (Vercel) e Backend (Render/local) com valores reais - pasta ENV pronta para copiar",
-      icon: KeyRound,
-      href: "/wiki-dev/variaveis-ambiente",
-      color: "from-amber-500 to-orange-500",
-      topics: ["Frontend", "Backend", "Vercel", "Render", "Local", ".env"],
-      category: "setup",
-    },
-    {
-      title: "SQL Petrobras - Consultar Banco ao Vivo",
-      description: "Visualize tabelas, colunas e execute SELECTs direto no banco PostgreSQL em tempo real",
-      icon: TerminalSquare,
-      href: "/wiki-dev/sql-explorer",
-      color: "from-emerald-500 to-cyan-500",
-      topics: ["SELECT", "Tabelas", "Colunas", "Tempo Real", "Somente Leitura"],
-      category: "banco",
     },
     {
       title: "PostgreSQL (Neon) - Schema Completo",
@@ -188,9 +170,9 @@ export default function WikiDevPage() {
             <div>
               <h3 className="mb-1 font-semibold text-slate-900">Documentacao Tecnica</h3>
               <p className="text-sm leading-relaxed text-slate-600">
-                Esta Wiki contem a documentacao tecnica do sistema: instalacao local do backend, variaveis de
-                ambiente (pasta ENV), roadmap do projeto, schema do banco PostgreSQL (Neon), mapa de integracoes
-                Front x Back x Banco, guias de deploy em containers na AWS e no Render.com, e referencia DynamoDB.
+                Esta Wiki contem a documentacao tecnica do sistema: instalacao local do backend, roadmap do projeto,
+                schema do banco PostgreSQL (Neon), mapa de integracoes Front x Back x Banco, guias de deploy em
+                containers na AWS (ECS/Fargate) e no Render.com, e referencia para DynamoDB na AWS.
               </p>
             </div>
           </div>
