@@ -34,6 +34,7 @@ import {
   LogIn,
   ArrowLeft
 } from "lucide-react"
+import { FullPageLoader } from "@/components/ui/full-page-loader"
 
 // Tipo para registro de cadastro
 interface CadastroRegistro {
@@ -81,6 +82,9 @@ const DEMO_REGISTROS: CadastroRegistro[] = [
 export default function SuportePage() {
   const { user, isAuthenticated, setAuth } = useAuthStore()
   const router = useRouter()
+  
+  // Estado de carregamento inicial da pagina
+  const [pageLoading, setPageLoading] = useState(true)
   
   // Estado do formulario
   const [numeroSolicitacao, setNumeroSolicitacao] = useState("")
@@ -132,6 +136,14 @@ export default function SuportePage() {
            (r.status === "ativo" || r.status === "pendente")
     )
   }
+
+  // Simular carregamento inicial da pagina
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPageLoading(false)
+    }, 1500) // 1.5 segundos de carregamento
+    return () => clearTimeout(timer)
+  }, [])
 
   // Handler de busca
   useEffect(() => {
@@ -267,6 +279,16 @@ export default function SuportePage() {
     }
     const { label, className } = config[status]
     return <Badge variant="outline" className={className}>{label}</Badge>
+  }
+
+  // Mostra loader enquanto a pagina carrega
+  if (pageLoading) {
+    return (
+      <FullPageLoader
+        message="Carregando painel de suporte..."
+        subMessage="Preparando recursos e dados"
+      />
+    )
   }
 
   return (
