@@ -1,7 +1,12 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuthStore } from "@/lib/stores/auth-store"
 import { useAuditLogStore, type LogAction, type LogLevel } from "@/lib/stores/audit-log-store"
+import { AppHeader } from "@/components/shared/app-header"
+import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
+import { ScrollToTop } from "@/components/shared/scroll-to-top"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -20,6 +25,8 @@ import {
   AlertTriangle,
   Shield,
   Trash2,
+  ArrowLeft,
+  Activity
 } from "lucide-react"
 
 const actionIcons: Record<LogAction, any> = {
@@ -68,12 +75,18 @@ const levelColors: Record<LogLevel, string> = {
 }
 
 export default function AuditoriaPage() {
+  const router = useRouter()
+  const { user, isAuthenticated } = useAuthStore()
   const { logs, exportLogs, getLogsByAction, loadLogs } = useAuditLogStore()
   const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/")
+      return
+    }
     loadLogs()
-  }, [loadLogs])
+  }, [loadLogs, isAuthenticated, router])
   const [filterAction, setFilterAction] = useState<LogAction | "all">("all")
   const [filterLevel, setFilterLevel] = useState<LogLevel | "all">("all")
 
@@ -117,21 +130,51 @@ export default function AuditoriaPage() {
     }
   }, [logs, getLogsByAction])
 
+  if (!isAuthenticated) {
+    return null
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 pt-8 pb-16 px-8">
-      <div className="mx-auto max-w-7xl space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <AppHeader subtitle="Auditoria e Logs" />
+      <ScrollToTop />
+
+      <main className="container mx-auto px-4 py-6 max-w-7xl">
+        <BreadcrumbNav 
+          items={[
+            { label: "Inicio", href: user?.userType === "supervisor" ? "/supervisor" : "/upload" }, 
+            { label: "Auditoria" }
+          ]} 
+          dashboardLink={user?.userType === "supervisor" ? "/supervisor" : "/upload"} 
+        />
+
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-slate-900 leading-tight">Auditoria e Logs</h1>
-            <p className="mt-2 text-lg text-slate-600 leading-relaxed">
-              Rastreabilidade completa de todas as ações do sistema
-            </p>
+        <div className="flex items-center justify-between flex-wrap gap-4 mb-8 mt-4">
+          <div className="flex items-center gap-4">
+            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center shadow-lg">
+              <Activity className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Auditoria e Logs</h1>
+              <p className="text-muted-foreground">
+                Rastreabilidade completa de todas as acoes do sistema
+              </p>
+            </div>
           </div>
-          <Button onClick={handleExport} className="bg-petrobras-green hover:bg-petrobras-green-dark">
-            <Download className="mr-2 h-4 w-4" />
-            Exportar Logs
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => router.push(user?.userType === "supervisor" ? "/supervisor" : "/upload")}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar
+            </Button>
+            <Button onClick={handleExport} className="bg-[#00A99D] hover:bg-[#008A81] text-white gap-2">
+              <Download className="h-4 w-4" />
+              Exportar Logs
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -320,7 +363,7 @@ export default function AuditoriaPage() {
             </div>
           </ScrollArea>
         </Card>
-      </div>
+      </main>
     </div>
   )
 }

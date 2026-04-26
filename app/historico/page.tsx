@@ -1,363 +1,460 @@
 "use client"
 
-import type React from "react"
-import { useEffect, useState } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useWorkflowStore } from "@/lib/stores/workflow-store"
 import { AppHeader } from "@/components/shared/app-header"
-import { DragDropZone } from "@/components/upload/drag-drop-zone"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { NotificationModal } from "@/components/shared/notification-modal"
-import { Lock, Send, Sparkles, Clock } from "lucide-react"
-import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
-import type { FileDetail } from "@/components/dashboard/metric-detail-modal"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { 
+  FileText, 
+  Clock, 
+  CheckCircle2, 
+  XCircle, 
+  Calendar, 
+  Mail, 
+  Ban, 
+  Search,
+  Filter,
+  Eye,
+  RefreshCcw,
+  History,
+  ArrowLeft,
+  Download
+} from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
 import { ScrollToTop } from "@/components/shared/scroll-to-top"
-import { UploadSuccessModal } from "@/components/upload/upload-success-modal"
 import { ProtectedRoute } from "@/components/auth/protected-route"
+import { FullPageLoader } from "@/components/ui/full-page-loader"
 
-export default function UploadPage() {
+export default function HistoricoPage() {
   const { user, isAuthenticated } = useAuthStore()
-  const { addUpload, uploads } = useWorkflowStore()
+  const { uploads, loadUploads } = useWorkflowStore()
   const router = useRouter()
-const [recipient, setRecipient] = useState("")
-  const [description, setDescription] = useState("")
-  const [files, setFiles] = useState<File[]>([])
-  const [expirationHours, setExpirationHours] = useState<number>(168) // Padrão: 7 dias
-  const [isLoading, setIsLoading] = useState(false)
-  const [showSuccess, setShowSuccess] = useState(false)
-  const [notification, setNotification] = useState<{
-    show: boolean
-    type: "success" | "error" | "warning" | "info"
-    title: string
-    message: string
-  }>({
-    show: false,
-    type: "info",
-    title: "",
-    message: "",
-  })
-const [uploadSuccessData, setUploadSuccessData] = useState<{
-    name: string
-    recipient: string
-    files: Array<{ name: string; size: string; type: string }>
-    expirationHours: number
-    senderEmail: string
-  } | null>(null)
-// Validação de e-mail
-  const isValidEmail = (email: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-useEffect(() => {
-    if (!isAuthenticated || user?.userType !== "internal") {
-      router.push("/")
+
+  const [pageLoading, setPageLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [selectedUpload, setSelectedUpload] = useState<typeof uploads[0] | null>(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+
+  useEffect(() => {
+    loadUploads()
+    const timer = setTimeout(() => setPageLoading(false), 1000)
+    return () => clearTimeout(timer)
+  }, [loadUploads])
+
+  // Filtra apenas compartilhamentos finalizados (aprovados, rejeitados, cancelados)
+  const historicalUploads = useMemo(() => {
+    return uploads.filter(u => 
+      u.status === "approved" || 
+      u.status === "rejected" || 
+      u.status === "cancelled"
+    )
+  }, [uploads])
+
+  const filteredUploads = useMemo(() => {
+    let filtered = historicalUploads
+
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(u => u.status === statusFilter)
     }
-  }, [isAuthenticated, user, router])
-const handleFilesSelected = async (newFiles: File[]) => {
-    const dangerousExtensions = [".exe", ".dll", ".bat", ".cmd", ".com", ".msi", ".scr", ".vbs", ".ps1", ".sh"]
-    const blockedFiles: string[] = []
-  for (const file of newFiles) {
-      const extension = "." + file.name.split(".").pop()?.toLowerCase()
-      if (dangerousExtensions.includes(extension)) {
-        blockedFiles.push(file.name)
-      }
+
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase()
+      filtered = filtered.filter(u =>
+        u.name.toLowerCase().includes(term) ||
+        u.recipient.toLowerCase().includes(term) ||
+        u.description?.toLowerCase().includes(term)
+      )
     }
-  if (blockedFiles.length > 0) {
-      setNotification({
-        show: true,
-        type: "error",
-        title: "Arquivos Bloqueados por Segurança",
-        message: `Os seguintes arquivos não podem ser enviados por motivos de segurança: ${blockedFiles.join(", ")}. Extensões bloqueadas: .exe, .dll, .bat, .cmd, .com, .msi, .scr, .vbs, .ps1, .sh`,
-      })
-      return
-    }
-  setFiles((prev) => [...prev, ...newFiles])
+
+    return filtered
+  }, [historicalUploads, statusFilter, searchTerm])
+
+  const stats = useMemo(() => ({
+    total: historicalUploads.length,
+    approved: historicalUploads.filter(u => u.status === "approved").length,
+    rejected: historicalUploads.filter(u => u.status === "rejected").length,
+    cancelled: historicalUploads.filter(u => u.status === "cancelled").length,
+  }), [historicalUploads])
+
+  const handleViewDetails = (upload: typeof uploads[0]) => {
+    setSelectedUpload(upload)
+    setIsDetailModalOpen(true)
   }
-const handleFileRemove = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index))
-  }
-const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-  if (!recipient) {
-      setNotification({
-        show: true,
-        type: "warning",
-        title: "Campo obrigatório",
-        message: "Por favor, informe o destinatário.",
-      })
-      return
-    }
-  if (!isValidEmail(recipient)) {
-      setNotification({
-        show: true,
-        type: "warning",
-        title: "E-mail inválido",
-        message: "Por favor, informe um e-mail de destinatário válido.",
-      })
-      return
-    }
-  if (files.length === 0) {
-      setNotification({
-        show: true,
-        type: "warning",
-        title: "Nenhum arquivo",
-        message: "Por favor, selecione pelo menos um arquivo.",
-      })
-      return
-    }
-  if (!description) {
-      setNotification({
-        show: true,
-        type: "warning",
-        title: "Campo obrigatório",
-        message: "Por favor, descreva o conteúdo dos arquivos.",
-      })
-      return
-    }
-  setIsLoading(true)
-  try {
-      const uploadData = {
-        name: description.substring(0, 50),
-        sender: {
-          id: user!.id,
-          name: user!.name,
-          email: user!.email,
-        },
-        recipient,
-        description,
-        files: files.map((f) => ({
-          name: f.name,
-          size: `${(f.size / (1024 * 1024)).toFixed(2)} MB`,
-          type: f.name.split(".").pop()?.toUpperCase() || "FILE",
-        })),
-        expirationHours,
-      }
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    addUpload({ ...uploadData, rawFiles: files })
-    setUploadSuccessData({
-        name: uploadData.name,
-        recipient: uploadData.recipient,
-        files: uploadData.files,
-        expirationHours: uploadData.expirationHours,
-        senderEmail: user!.email,
-      })
-    setShowSuccess(true)
-    setTimeout(() => {
-        setRecipient("")
-        setDescription("")
-        setFiles([])
-        setExpirationHours(168)
-        setShowSuccess(false)
-      }, 1000)
-    } catch (error) {
-      setNotification({
-        show: true,
-        type: "error",
-        title: "Erro ao enviar arquivos",
-        message: "Ocorreu um erro. Tente novamente.",
-      })
-    } finally {
-      setIsLoading(false)
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "approved":
+        return (
+          <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20">
+            <CheckCircle2 className="w-3 h-3 mr-1" />
+            Aprovado
+          </Badge>
+        )
+      case "rejected":
+        return (
+          <Badge className="bg-red-500/10 text-red-700 border-red-500/20">
+            <XCircle className="w-3 h-3 mr-1" />
+            Rejeitado
+          </Badge>
+        )
+      case "cancelled":
+        return (
+          <Badge className="bg-gray-500/10 text-gray-700 border-gray-500/20">
+            <Ban className="w-3 h-3 mr-1" />
+            Cancelado
+          </Badge>
+        )
+      default:
+        return null
     }
   }
-const uploadStats = {
-    total: uploads.length,
-    pending: uploads.filter((u) => u.status === "pending").length,
-    approved: uploads.filter((u) => u.status === "approved").length,
-    rejected: uploads.filter((u) => u.status === "rejected").length,
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "approved": return "border-l-emerald-500"
+      case "rejected": return "border-l-red-500"
+      case "cancelled": return "border-l-gray-400"
+      default: return "border-l-gray-300"
+    }
   }
-const uploadFiles: FileDetail[] = uploads.flatMap((u) =>
-    (u.files ?? []).map((f, i) => ({
-      id: `${u.id}-${i}`,
-      name: f.name,
-      size: f.size,
-      date: u.uploadDate,
-      recipient: u.recipient,
-      status: u.status,
-    }))
-  )
-return (
-    <ProtectedRoute allowedUserTypes={["internal"]}>
+
+  if (pageLoading) {
+    return (
+      <FullPageLoader
+        message="Carregando historico..."
+        subMessage="Buscando registros anteriores"
+      />
+    )
+  }
+
+  return (
+    <ProtectedRoute allowedUserTypes={["internal", "supervisor"]}>
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <AppHeader subtitle="Solução de Compartilhamento de Arquivos Confidenciais" />
-      <main className="container max-w-5xl mx-auto px-6 py-10 pb-20">
+        <AppHeader subtitle="Historico de Compartilhamentos" />
+        <ScrollToTop />
+
+        <main className="container mx-auto px-4 md:px-6 py-6 md:py-8 max-w-7xl">
           <BreadcrumbNav
-            items={[{ label: "Início", href: "/upload" }, { label: "Upload de Arquivos" }]}
-            dashboardLink="/upload"
+            items={[
+              { label: "Inicio", href: user?.userType === "supervisor" ? "/supervisor" : "/upload" }, 
+              { label: "Historico" }
+            ]}
+            dashboardLink={user?.userType === "supervisor" ? "/supervisor" : "/upload"}
           />
-        <MetricsDashboard {...uploadStats} userType="internal" files={uploadFiles} />
-        <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-10 space-y-8 relative overflow-hidden">
-            <div className="relative">
-              <div className="flex items-center gap-4 mb-3">
-                <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
-                  <Sparkles className="h-7 w-7 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-foreground leading-tight">Transferência Segura de Arquivos</h1>
-                  <p className="text-muted-foreground text-base leading-relaxed">
-                    Envie documentos para destinatários externos com segurança
-                  </p>
-                </div>
+
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 mt-4">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center shadow-lg">
+                <History className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">Historico de Compartilhamentos</h1>
+                <p className="text-muted-foreground">Visualize todos os compartilhamentos finalizados</p>
               </div>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-7">
-              {user?.manager && (
-                <div className="bg-muted/30 border border-border/50 rounded-xl p-5 space-y-3">
-                  <Label className="text-base font-medium flex items-center gap-2">
-                    <Lock className="h-4 w-4 text-[#0047BB]" />
-                    Aprovador
-                  </Label>
-                  <div className="bg-background/50 rounded-lg p-4 space-y-2">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <p className="font-semibold text-foreground">{user.manager.name}</p>
-                        <p className="text-sm text-muted-foreground">{user.manager.email}</p>
-                        {user.manager.jobTitle && (
-                          <p className="text-sm text-muted-foreground">
-                            <span className="font-medium">Cargo:</span> {user.manager.jobTitle}
-                          </p>
-                        )}
-                        {user.manager.department && (
-                          <p className="text-sm text-muted-foreground">
-                            <span className="font-medium">Departamento:</span> {user.manager.department}
-                          </p>
-                        )}
-                      </div>
-                      <div className="px-3 py-1.5 bg-[#0047BB]/10 text-[#0047BB] rounded-full text-xs font-medium">
-                        Supervisor Direto
-                      </div>
-                    </div>
+            <Button
+              variant="outline"
+              onClick={() => router.push(user?.userType === "supervisor" ? "/supervisor" : "/upload")}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar
+            </Button>
+          </div>
+
+          {/* Cards de Estatisticas */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <Card 
+              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${statusFilter === "all" ? "ring-2 ring-[#0047BB]" : ""}`}
+              onClick={() => setStatusFilter("all")}
+            >
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0047BB]/10 to-[#0047BB]/5 flex items-center justify-center">
+                    <History className="h-6 w-6 text-[#0047BB]" />
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Este compartilhamento será enviado para aprovação do seu supervisor direto.
-                  </p>
-                </div>
-              )}
-            {!user?.manager && (
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-5 space-y-2">
-                  <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-blue-600 font-bold text-sm">i</span>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="font-medium text-blue-800 dark:text-blue-500">Supervisor não identificado</p>
-                      <p className="text-sm text-blue-700 dark:text-blue-600 leading-relaxed">
-                        Não foi possível identificar seu supervisor no Active Directory. Você pode continuar com o
-                        compartilhamento, mas recomendamos entrar em contato com o RH ou TI para atualizar seu cadastro
-                        hierárquico.
-                      </p>
-                    </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-foreground">{stats.total}</p>
+                    <p className="text-sm text-muted-foreground">Total</p>
                   </div>
                 </div>
-              )}
-            <div className="space-y-3">
-                <Label htmlFor="recipient" className="text-base font-medium flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-[#00A99D]" />
-                  Destinatário Externo
-                </Label>
-                <Input
-                  id="recipient"
-                  type="email"
-                  placeholder="cliente@empresa.com"
-                  value={recipient}
-                  onChange={(e) => setRecipient(e.target.value)}
-                  required
-                  aria-label="E-mail do destinatário"
-                  disabled={isLoading || showSuccess}
-                />
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  O destinatário receberá um email com link seguro para download
-                </p>
-              </div>
-              <div className="space-y-3">
-                <Label className="text-base font-medium">Anexar Arquivos</Label>
-                <DragDropZone
-                  onFilesSelected={handleFilesSelected}
-                  selectedFiles={files}
-                  onRemoveFile={handleFileRemove}
-                  aria-label="Área para anexar arquivos"
-                  disabled={isLoading || showSuccess}
-                />
-              </div>
-              <div className="space-y-3">
-                <Label htmlFor="expiration" className="text-base font-medium flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-[#FDB913]" />
-                  Tempo de Disponibilidade
-                </Label>
-                <Select
-                  value={expirationHours.toString()}
-                  onValueChange={(v) => setExpirationHours(Number(v))}
-                  disabled={isLoading || showSuccess}
-                  aria-label="Tempo de disponibilidade dos arquivos"
-                >
-                  <SelectTrigger>
-                    <SelectValue />
+              </CardContent>
+            </Card>
+
+            <Card 
+              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg border-l-4 border-l-emerald-500 ${statusFilter === "approved" ? "ring-2 ring-emerald-500" : ""}`}
+              onClick={() => setStatusFilter("approved")}
+            >
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                  <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+                    <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-emerald-600">{stats.approved}</p>
+                    <p className="text-sm text-muted-foreground">Aprovados</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg border-l-4 border-l-red-500 ${statusFilter === "rejected" ? "ring-2 ring-red-500" : ""}`}
+              onClick={() => setStatusFilter("rejected")}
+            >
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                  <div className="h-12 w-12 rounded-xl bg-red-100 flex items-center justify-center">
+                    <XCircle className="h-6 w-6 text-red-600" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-red-600">{stats.rejected}</p>
+                    <p className="text-sm text-muted-foreground">Rejeitados</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg border-l-4 border-l-gray-400 ${statusFilter === "cancelled" ? "ring-2 ring-gray-500" : ""}`}
+              onClick={() => setStatusFilter("cancelled")}
+            >
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                  <div className="h-12 w-12 rounded-xl bg-gray-100 flex items-center justify-center">
+                    <Ban className="h-6 w-6 text-gray-600" />
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-gray-600">{stats.cancelled}</p>
+                    <p className="text-sm text-muted-foreground">Cancelados</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Barra de Busca e Filtros */}
+          <Card className="mb-6 bg-card/50 backdrop-blur-sm">
+            <CardContent className="p-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nome, destinatario..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 h-12"
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full md:w-[200px] h-12">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="24">24 horas (1 dia)</SelectItem>
-                    <SelectItem value="48">48 horas (2 dias)</SelectItem>
-                    <SelectItem value="168">168 horas (7 dias)</SelectItem>
+                    <SelectItem value="all">Todos os Status</SelectItem>
+                    <SelectItem value="approved">Aprovados</SelectItem>
+                    <SelectItem value="rejected">Rejeitados</SelectItem>
+                    <SelectItem value="cancelled">Cancelados</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Os arquivos ficarão disponíveis para download por {expirationHours} horas após a aprovação. Máximo: 168 horas (7 dias).
-                </p>
-              </div>
-              <div className="space-y-3">
-                <Label htmlFor="description" className="text-base font-medium">
-                  Descrição do Envio (obrigatório)
-                </Label>
-                <Textarea
-                  id="description"
-                  placeholder="Descreva o conteúdo e a finalidade dos arquivos..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="min-h-[140px] resize-none text-base"
-                  required
-                  aria-label="Descrição do envio"
-                  disabled={isLoading || showSuccess}
-                />
-              </div>
-              <div className="flex justify-end pt-6">
                 <Button
-                  type="submit"
-                  disabled={isLoading || showSuccess}
-                  size="lg"
-                  className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:from-[#008A81] hover:to-[#003A99] text-white font-semibold px-10 text-base shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label="Enviar arquivos para aprovação"
+                  variant="outline"
+                  onClick={() => {
+                    setSearchTerm("")
+                    setStatusFilter("all")
+                  }}
+                  className="gap-2 h-12"
                 >
-                  {isLoading && (
-                    <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  )}
-                  {showSuccess && <Sparkles className="h-5 w-5 mr-2" />}
-                  <Send className="h-5 w-5 mr-2" />
-                  {isLoading ? "Enviando..." : showSuccess ? "Enviado!" : "Enviar para Aprovação"}
+                  <RefreshCcw className="h-4 w-4" />
+                  Limpar
                 </Button>
               </div>
-            </form>
-          </div>
+
+              {(searchTerm || statusFilter !== "all") && (
+                <div className="flex items-center gap-2 mt-3 pt-3 border-t">
+                  <span className="text-sm text-muted-foreground">Filtros:</span>
+                  {statusFilter !== "all" && (
+                    <Badge variant="secondary" className="gap-1">
+                      {statusFilter === "approved" ? "Aprovados" : statusFilter === "rejected" ? "Rejeitados" : "Cancelados"}
+                      <button onClick={() => setStatusFilter("all")} className="ml-1 hover:text-foreground">×</button>
+                    </Badge>
+                  )}
+                  {searchTerm && (
+                    <Badge variant="secondary" className="gap-1">
+                      Busca: {searchTerm}
+                      <button onClick={() => setSearchTerm("")} className="ml-1 hover:text-foreground">×</button>
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Contador */}
+          <p className="text-sm text-muted-foreground mb-4">
+            Exibindo <span className="font-semibold text-foreground">{filteredUploads.length}</span> de{" "}
+            <span className="font-semibold text-foreground">{historicalUploads.length}</span> registros
+          </p>
+
+          {/* Lista */}
+          {filteredUploads.length === 0 ? (
+            <Card className="p-12 text-center bg-card/50">
+              <History className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+              <h3 className="text-xl font-semibold mb-2">Nenhum registro encontrado</h3>
+              <p className="text-muted-foreground">
+                {searchTerm || statusFilter !== "all" 
+                  ? "Tente ajustar os filtros de busca."
+                  : "O historico de compartilhamentos aparecera aqui."}
+              </p>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {filteredUploads.map((upload) => (
+                <Card 
+                  key={upload.id} 
+                  className={`border-l-4 ${getStatusColor(upload.status)} hover:shadow-lg transition-all`}
+                >
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-4 flex-1">
+                        <div className={`p-3 rounded-xl ${
+                          upload.status === "approved" ? "bg-emerald-100" :
+                          upload.status === "rejected" ? "bg-red-100" :
+                          "bg-gray-100"
+                        }`}>
+                          <FileText className={`h-6 w-6 ${
+                            upload.status === "approved" ? "text-emerald-600" :
+                            upload.status === "rejected" ? "text-red-600" :
+                            "text-gray-600"
+                          }`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            <h3 className="text-lg font-semibold text-foreground truncate">{upload.name}</h3>
+                            {getStatusBadge(upload.status)}
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4 flex-shrink-0" />
+                              <span className="truncate">{upload.recipient}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 flex-shrink-0" />
+                              <span>{upload.uploadDate}</span>
+                            </div>
+                          </div>
+                          {upload.files && upload.files.length > 0 && (
+                            <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                              <FileText className="h-3 w-3" />
+                              <span>{upload.files.length} arquivo(s)</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewDetails(upload)}
+                        className="gap-2"
+                      >
+                        <Eye className="h-4 w-4" />
+                        Detalhes
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </main>
-        <ScrollToTop />
-        <NotificationModal
-          open={notification.show}
-          onOpenChange={(show) => setNotification({ ...notification, show })}
-          type={notification.type}
-          title={notification.title}
-          message={notification.message}
-        />
-        {uploadSuccessData && (
-          <UploadSuccessModal
-            open={uploadSuccessData !== null}
-            onOpenChange={(open) => {
-              if (!open) setUploadSuccessData(null)
-            }}
-            uploadData={uploadSuccessData}
-          />
-        )}
+
+        {/* Modal de Detalhes */}
+        <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-white" />
+                </div>
+                Detalhes do Compartilhamento
+              </DialogTitle>
+              <DialogDescription>
+                Informacoes completas do registro
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedUpload && (
+              <div className="space-y-6 py-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-foreground">{selectedUpload.name}</h4>
+                  {getStatusBadge(selectedUpload.status)}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-muted/50 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Destinatario:</span>
+                      <span className="font-medium text-foreground">{selectedUpload.recipient}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Data:</span>
+                      <span className="font-medium text-foreground">{selectedUpload.uploadDate}</span>
+                    </div>
+                  </div>
+
+                  {selectedUpload.description && (
+                    <div className="bg-muted/50 rounded-xl p-4">
+                      <h5 className="text-sm font-semibold text-muted-foreground mb-2">Descricao</h5>
+                      <p className="text-sm text-foreground">{selectedUpload.description}</p>
+                    </div>
+                  )}
+
+                  {selectedUpload.files && selectedUpload.files.length > 0 && (
+                    <div className="bg-muted/50 rounded-xl p-4">
+                      <h5 className="text-sm font-semibold text-muted-foreground mb-3">Arquivos ({selectedUpload.files.length})</h5>
+                      <div className="space-y-2">
+                        {selectedUpload.files.map((file, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 bg-background rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-[#0047BB]" />
+                              <span className="text-sm font-medium truncate">{file.name}</span>
+                            </div>
+                            <span className="text-xs text-muted-foreground">{file.size}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end pt-4 border-t">
+                  <Button variant="outline" onClick={() => setIsDetailModalOpen(false)}>
+                    Fechar
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </ProtectedRoute>
   )
