@@ -20,19 +20,11 @@ import {
   Clock, 
   Upload, 
   ClipboardCheck,
-  Activity,
-  Users,
-  TrendingUp,
-  Calendar,
   Filter,
   RefreshCcw,
   Shield,
   AlertTriangle,
   FileCheck,
-  History,
-  Download,
-  Mail,
-  User,
   ChevronRight,
   BarChart3,
   ArrowUpRight,
@@ -43,82 +35,6 @@ import { ScrollToTop } from "@/components/shared/scroll-to-top"
 import { SupervisorUploadForm } from "@/components/supervisor/supervisor-upload-form"
 import { FullPageLoader } from "@/components/ui/full-page-loader"
 
-// Dados de demonstracao para logs
-const DEMO_LOGS = [
-  {
-    id: "1",
-    action: "APROVACAO",
-    description: "Compartilhamento aprovado",
-    details: "Arquivo 'Relatorio_Q4_2024.pdf' aprovado para destinatario@empresa.com",
-    user: "Wagner Silva",
-    userEmail: "wagner@petrobras.com.br",
-    timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-    status: "success",
-    ip: "10.0.0.45",
-    shareId: "SOL-2024-001234"
-  },
-  {
-    id: "2",
-    action: "REJEICAO",
-    description: "Compartilhamento rejeitado",
-    details: "Arquivo 'Dados_Confidenciais.xlsx' rejeitado - Motivo: Dados sensiveis nao autorizados",
-    user: "Wagner Silva",
-    userEmail: "wagner@petrobras.com.br",
-    timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    status: "error",
-    ip: "10.0.0.45",
-    shareId: "SOL-2024-001233"
-  },
-  {
-    id: "3",
-    action: "DOWNLOAD",
-    description: "Arquivo baixado",
-    details: "Destinatario cliente@parceiro.com baixou 'Contrato_2024.pdf'",
-    user: "cliente@parceiro.com",
-    userEmail: "cliente@parceiro.com",
-    timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-    status: "info",
-    ip: "189.45.123.78",
-    shareId: "SOL-2024-001230"
-  },
-  {
-    id: "4",
-    action: "ENVIO_CODIGO",
-    description: "Codigo OTP enviado",
-    details: "Codigo de verificacao enviado para fornecedor@empresa.com.br",
-    user: "Sistema",
-    userEmail: "sistema@petrobras.com.br",
-    timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-    status: "info",
-    ip: "10.0.0.1",
-    shareId: "SOL-2024-001228"
-  },
-  {
-    id: "5",
-    action: "EXPIRACAO",
-    description: "Link expirado",
-    details: "Link de compartilhamento expirou automaticamente apos 72 horas",
-    user: "Sistema",
-    userEmail: "sistema@petrobras.com.br",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-    status: "warning",
-    ip: "10.0.0.1",
-    shareId: "SOL-2024-001200"
-  },
-  {
-    id: "6",
-    action: "CADASTRO",
-    description: "Usuario externo cadastrado",
-    details: "Novo usuario 'parceiro@empresa.com' cadastrado pelo suporte",
-    user: "Suporte Demo",
-    userEmail: "suporte@petrobras.com.br",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
-    status: "success",
-    ip: "10.0.0.50",
-    shareId: null
-  },
-]
-
 export default function SupervisorPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -128,13 +44,11 @@ export default function SupervisorPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("aprovacoes")
-  const [logFilter, setLogFilter] = useState("all")
-  const [logSearch, setLogSearch] = useState("")
 
   // Verifica parametro tab na URL
   useEffect(() => {
     const tabParam = searchParams.get("tab")
-    if (tabParam && ["aprovacoes", "compartilhar", "logs"].includes(tabParam)) {
+    if (tabParam && ["aprovacoes", "compartilhar"].includes(tabParam)) {
       setActiveTab(tabParam)
     }
   }, [searchParams])
@@ -168,40 +82,6 @@ export default function SupervisorPage() {
 
     return matchesSearch && matchesStatus
   })
-
-  // Filtrar logs
-  const filteredLogs = DEMO_LOGS.filter((log) => {
-    const matchesSearch = 
-      log.description.toLowerCase().includes(logSearch.toLowerCase()) ||
-      log.details.toLowerCase().includes(logSearch.toLowerCase()) ||
-      log.user.toLowerCase().includes(logSearch.toLowerCase()) ||
-      (log.shareId?.toLowerCase().includes(logSearch.toLowerCase()) ?? false)
-
-    const matchesFilter = logFilter === "all" || log.status === logFilter
-
-    return matchesSearch && matchesFilter
-  })
-
-  const getLogIcon = (action: string) => {
-    switch (action) {
-      case "APROVACAO": return <CheckCircle className="h-4 w-4" />
-      case "REJEICAO": return <XCircle className="h-4 w-4" />
-      case "DOWNLOAD": return <Download className="h-4 w-4" />
-      case "ENVIO_CODIGO": return <Mail className="h-4 w-4" />
-      case "EXPIRACAO": return <Clock className="h-4 w-4" />
-      case "CADASTRO": return <User className="h-4 w-4" />
-      default: return <Activity className="h-4 w-4" />
-    }
-  }
-
-  const getLogStatusColor = (status: string) => {
-    switch (status) {
-      case "success": return "bg-emerald-100 text-emerald-700 border-emerald-200"
-      case "error": return "bg-red-100 text-red-700 border-red-200"
-      case "warning": return "bg-amber-100 text-amber-700 border-amber-200"
-      default: return "bg-blue-100 text-blue-700 border-blue-200"
-    }
-  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -358,7 +238,7 @@ export default function SupervisorPage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3 h-14 p-1 bg-muted/50">
+          <TabsList className="grid w-full max-w-md grid-cols-2 h-14 p-1 bg-muted/50">
             <TabsTrigger value="aprovacoes" className="gap-2 text-base data-[state=active]:bg-background data-[state=active]:shadow-sm">
               <ClipboardCheck className="h-5 w-5" />
               Aprovacoes
@@ -371,10 +251,6 @@ export default function SupervisorPage() {
             <TabsTrigger value="compartilhar" className="gap-2 text-base data-[state=active]:bg-background data-[state=active]:shadow-sm">
               <Upload className="h-5 w-5" />
               Compartilhar
-            </TabsTrigger>
-            <TabsTrigger value="logs" className="gap-2 text-base data-[state=active]:bg-background data-[state=active]:shadow-sm">
-              <History className="h-5 w-5" />
-              Logs
             </TabsTrigger>
           </TabsList>
 
@@ -526,109 +402,6 @@ export default function SupervisorPage() {
           {/* Tab Compartilhar */}
           <TabsContent value="compartilhar" className="space-y-6">
             <SupervisorUploadForm />
-          </TabsContent>
-
-          {/* Tab Logs */}
-          <TabsContent value="logs" className="space-y-6">
-            <Card className="bg-card/50 backdrop-blur-sm border shadow-xl">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center shadow-lg">
-                      <Activity className="h-7 w-7 text-white" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-2xl">Logs e Rastreamento</CardTitle>
-                      <CardDescription className="text-base">
-                        Historico completo de acoes e eventos do sistema
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <RefreshCcw className="h-4 w-4" />
-                    Atualizar
-                  </Button>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-4">
-                {/* Filtros de logs */}
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar nos logs..."
-                      value={logSearch}
-                      onChange={(e) => setLogSearch(e.target.value)}
-                      className="pl-11 h-12"
-                    />
-                  </div>
-                  <Select value={logFilter} onValueChange={setLogFilter}>
-                    <SelectTrigger className="w-full md:w-[180px] h-12">
-                      <Filter className="h-4 w-4 mr-2" />
-                      <SelectValue placeholder="Tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os Tipos</SelectItem>
-                      <SelectItem value="success">Sucesso</SelectItem>
-                      <SelectItem value="error">Erro</SelectItem>
-                      <SelectItem value="warning">Aviso</SelectItem>
-                      <SelectItem value="info">Info</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Timeline de logs */}
-                <div className="space-y-3 mt-6">
-                  {filteredLogs.length === 0 ? (
-                    <div className="text-center py-12">
-                      <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-lg font-medium text-muted-foreground">Nenhum log encontrado</p>
-                    </div>
-                  ) : (
-                    filteredLogs.map((log, index) => (
-                      <div
-                        key={log.id}
-                        className="bg-background/50 border rounded-xl p-4 hover:bg-background/80 transition-colors"
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className={`p-2 rounded-lg ${getLogStatusColor(log.status)}`}>
-                            {getLogIcon(log.action)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                              <span className="font-semibold text-foreground">{log.description}</span>
-                              <Badge variant="outline" className={`text-xs ${getLogStatusColor(log.status)}`}>
-                                {log.action}
-                              </Badge>
-                              {log.shareId && (
-                                <Badge variant="outline" className="text-xs font-mono">
-                                  {log.shareId}
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-2">{log.details}</p>
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <User className="h-3 w-3" />
-                                {log.user}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {new Date(log.timestamp).toLocaleString("pt-BR")}
-                              </span>
-                              <span className="flex items-center gap-1 font-mono">
-                                IP: {log.ip}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </main>

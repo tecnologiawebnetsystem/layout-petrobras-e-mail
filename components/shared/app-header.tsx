@@ -49,7 +49,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
   }
 
   const handleViewLogs = () => {
-    router.push("/supervisor?tab=logs")
+    router.push("/logs")
     setMobileMenuOpen(false)
   }
 
