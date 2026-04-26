@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LoginBackground } from "@/components/ui/login-background"
 import { NotificationModal } from "@/components/shared/notification-modal"
+import { FullPageLoader } from "@/components/ui/full-page-loader"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useRouter } from "next/navigation"
 import { getMsalInstance, loginRequest } from "@/lib/auth/msal-config"
@@ -20,6 +21,7 @@ export function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isRedirectingToMicrosoft, setIsRedirectingToMicrosoft] = useState(false)
   const [externalStep, setExternalStep] = useState<"email" | "code">("email")
   const [verificationCode, setVerificationCode] = useState(["", "", "", "", "", ""])
   const [generatedCode, setGeneratedCode] = useState("")
@@ -186,6 +188,7 @@ export function LoginForm() {
 
   const handleEntraIdLogin = async () => {
     setIsLoading(true)
+    setIsRedirectingToMicrosoft(true)
     try {
       const msal = await getMsalInstance()
       // loginRedirect: navega a página inteira para a Microsoft.
@@ -196,6 +199,7 @@ export function LoginForm() {
     } catch (error: unknown) {
       // Só chega aqui se loginRedirect lançar (ex: popups bloqueados, config inválida).
       setIsLoading(false)
+      setIsRedirectingToMicrosoft(false)
       const message =
         error instanceof Error ? error.message : "Nao foi possivel iniciar o login com a Microsoft."
       setNotification({
@@ -234,6 +238,16 @@ export function LoginForm() {
         })
       }
     }
+  }
+
+  // Mostra loader em tela cheia quando está redirecionando para a Microsoft
+  if (isRedirectingToMicrosoft) {
+    return (
+      <FullPageLoader 
+        message="Conectando com Microsoft..."
+        subMessage="Voce sera redirecionado para a pagina de login da Microsoft"
+      />
+    )
   }
 
   return (
