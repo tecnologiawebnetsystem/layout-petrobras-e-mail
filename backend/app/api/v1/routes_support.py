@@ -12,6 +12,8 @@ from typing import Optional, List
 from app.db.session import get_session
 from app.models.user import User, TypeUser
 from app.models.audit import Audit
+from app.models.support_registration import SupportRegistration, SupportRegistrationStatus
+from app.models.support_audit import SupportAudit, SupportAction
 from app.core.security import get_current_user_from_token
 from app.services.audit_service import log_action
 
@@ -94,7 +96,34 @@ async def cadastrar_usuario_externo(
         session.commit()
         session.refresh(inactive_user)
 
-        # Registra auditoria
+        # Registra na tabela support_registration
+        registration = SupportRegistration(
+            request_number=data.numero_solicitacao,
+            requester_email=data.email_solicitante,
+            external_user_email=inactive_user.email,
+            external_user_id=inactive_user.id,
+            registered_by_id=current_user.id,
+            registered_by_name=current_user.name,
+            status=SupportRegistrationStatus.ATIVO,
+            is_reactivation=True,
+        )
+        session.add(registration)
+        session.commit()
+        session.refresh(registration)
+
+        # Registra auditoria de suporte
+        audit = SupportAudit(
+            action=SupportAction.REATIVACAO,
+            description=f"Usuario {inactive_user.email} reativado",
+            details=f'{{"numero_solicitacao": "{data.numero_solicitacao}", "email_solicitante": "{data.email_solicitante}"}}',
+            support_user_id=current_user.id,
+            registration_id=registration.id,
+            affected_user_id=inactive_user.id,
+        )
+        session.add(audit)
+        session.commit()
+
+        # Registra auditoria geral
         log_action(
             session=session,
             actor_id=current_user.id,
@@ -131,7 +160,34 @@ async def cadastrar_usuario_externo(
     session.commit()
     session.refresh(new_user)
 
-    # Registra auditoria
+    # Registra na tabela support_registration
+    registration = SupportRegistration(
+        request_number=data.numero_solicitacao,
+        requester_email=data.email_solicitante,
+        external_user_email=new_user.email,
+        external_user_id=new_user.id,
+        registered_by_id=current_user.id,
+        registered_by_name=current_user.name,
+        status=SupportRegistrationStatus.ATIVO,
+        is_reactivation=False,
+    )
+    session.add(registration)
+    session.commit()
+    session.refresh(registration)
+
+    # Registra auditoria de suporte
+    audit = SupportAudit(
+        action=SupportAction.CADASTRO,
+        description=f"Novo usuario {new_user.email} cadastrado",
+        details=f'{{"numero_solicitacao": "{data.numero_solicitacao}", "email_solicitante": "{data.email_solicitante}"}}',
+        support_user_id=current_user.id,
+        registration_id=registration.id,
+        affected_user_id=new_user.id,
+    )
+    session.add(audit)
+    session.commit()
+
+    # Registra auditoria geral
     log_action(
         session=session,
         actor_id=current_user.id,

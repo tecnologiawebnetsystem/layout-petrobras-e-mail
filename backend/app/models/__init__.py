@@ -13,3 +13,5 @@ from .share_file import ShareFile
 from .share import Share
 from .token_access import TokenAccess
 from .user import User
+from .support_registration import SupportRegistration
+from .support_audit import SupportAudit
