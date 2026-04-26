@@ -87,7 +87,10 @@ export default function CompartilhamentosPage() {
     }
   }
 
-  const userUploads = uploads.filter((u) => u.sender.id === user?.id)
+  // A API /files já retorna apenas compartilhamentos do usuário logado
+  // (filtrado no backend via created_by_id == current_user.id)
+  // Portanto, não precisamos filtrar novamente por sender.id aqui
+  const userUploads = uploads
 
   const pendingUploads = userUploads.filter((u) => u.status === "pending")
   const approvedUploads = userUploads.filter((u) => u.status === "approved")

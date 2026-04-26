@@ -115,11 +115,33 @@ def list_files(
             if approver:
                 approved_by = approver.name
         
+        # Busca dados do remetente (sender)
+        sender = session.get(User, share.created_by_id)
+        sender_data = None
+        if sender:
+            sender_data = {
+                "id": sender.id,
+                "name": sender.name,
+                "email": sender.email,
+                "department": sender.department,
+                "employee_id": sender.employee_id,
+            }
+            # Busca manager se existir
+            if sender.manager_id:
+                manager = session.get(User, sender.manager_id)
+                if manager:
+                    sender_data["manager"] = {
+                        "id": manager.id,
+                        "name": manager.name,
+                        "email": manager.email,
+                    }
+        
         result.append({
             "id": share.id,
             "name": share.name or f"Compartilhamento #{share.id}",
             "recipient_email": share.external_email,
             "description": share.description,
+            "sender": sender_data,
             "files": files_data,
             "status": share.status,
             "expiration_hours": share.expiration_hours,
