@@ -19,7 +19,6 @@ import { getClientEnv } from "@/lib/env"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isRedirectingToMicrosoft, setIsRedirectingToMicrosoft] = useState(false)
   const [externalStep, setExternalStep] = useState<"email" | "code">("email")
@@ -40,7 +39,7 @@ export function LoginForm() {
     message: "",
   })
 
-  const { setAuth, login } = useAuthStore()
+  const { setAuth } = useAuthStore()
   const router = useRouter()
 
   // Exibe o botão Entra ID em todos os modos exceto 'dev'
@@ -213,30 +212,13 @@ export function LoginForm() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    // Usuários externos SEMPRE usam o fluxo OTP, independente do modo (dev/entra)
+    // Usuários externos usam o fluxo OTP
     if (isExternalUser) {
       await handleSendCode()
       return
     }
-    // Login com email + senha para usuários internos
-    if (!email || !password) return
-    setIsLoading(true)
-    const result = await login(email, password)
-    setIsLoading(false)
-    if (result.success) {
-      const { user } = useAuthStore.getState()
-      if (user?.userType === "supervisor") router.push("/supervisor")
-      else if (user?.userType === "support") router.push("/suporte")
-      else if (user?.userType === "internal") router.push("/upload")
-      else router.push("/download")
-    } else {
-      setNotification({
-        show: true,
-        type: "error",
-        title: "Credenciais inválidas",
-        message: result.error || "E-mail ou senha incorretos. Verifique e tente novamente.",
-      })
-    }
+    // Usuários internos usam o login com Microsoft (Entra ID)
+    // O botão de submit não é exibido para usuários internos
   }
 
   // Mostra loader em tela cheia quando está redirecionando para a Microsoft
@@ -304,37 +286,7 @@ export function LoginForm() {
               </div>
             </div>
 
-            {/* Campo de senha – visível para usuários internos */}
-            {isInternalUser && (
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-foreground">
-                  Senha
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Digite sua senha"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 h-12 bg-muted/50 border-border"
-                    required
-                  />
-                </div>
-              </div>
-            )}
 
-            {/* Botão de login para usuários internos */}
-            {isInternalUser && (
-              <Button
-                type="submit"
-                disabled={isLoading || !email || !password}
-                className="w-full h-12 text-base font-semibold bg-[#0047BB] hover:bg-[#003399] text-white transition-all duration-200 shadow-sm hover:shadow-md"
-              >
-                {isLoading ? "Entrando..." : "Entrar"}
-              </Button>
-            )}
 
             {/* Campos de código - aparecem abaixo do e-mail após o envio */}
             {isExternalUser && externalStep === "code" && (
@@ -444,7 +396,7 @@ export function LoginForm() {
               </Button>
             </div>
           )}
-          {/* Botao Suporte - apenas para demonstracao */}
+          {/* Botao Acesso Suporte */}
           <div className="pt-2">
             <Button
               type="button"
@@ -455,7 +407,7 @@ export function LoginForm() {
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
               </svg>
-              Acesso Suporte (Demo)
+              Acesso Suporte
             </Button>
           </div>
 
