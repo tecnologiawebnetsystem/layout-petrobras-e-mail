@@ -218,25 +218,23 @@ export function LoginForm() {
       await handleSendCode()
       return
     }
-    if (isLocalMode) {
-      // Login local com email + senha (modo dev sem Entra ID)
-      if (!email || !password) return
-      setIsLoading(true)
-      const result = await login(email, password)
-      setIsLoading(false)
-      if (result.success) {
-        const { user } = useAuthStore.getState()
-        if (user?.userType === "supervisor") router.push("/supervisor")
-        else if (user?.userType === "internal") router.push("/upload")
-        else router.push("/download")
-      } else {
-        setNotification({
-          show: true,
-          type: "error",
-          title: "Credenciais inválidas",
-          message: result.error || "E-mail ou senha incorretos. Verifique e tente novamente.",
-        })
-      }
+    // Login com email + senha para usuários internos
+    if (!email || !password) return
+    setIsLoading(true)
+    const result = await login(email, password)
+    setIsLoading(false)
+    if (result.success) {
+      const { user } = useAuthStore.getState()
+      if (user?.userType === "supervisor") router.push("/supervisor")
+      else if (user?.userType === "internal") router.push("/upload")
+      else router.push("/download")
+    } else {
+      setNotification({
+        show: true,
+        type: "error",
+        title: "Credenciais inválidas",
+        message: result.error || "E-mail ou senha incorretos. Verifique e tente novamente.",
+      })
     }
   }
 
@@ -305,16 +303,8 @@ export function LoginForm() {
               </div>
             </div>
 
-            {/* Hint para usuários Petrobras (apenas quando Entra ID está configurado) */}
-            {isInternalUser && !isLocalMode && (
-              <p className="text-sm text-center text-muted-foreground">
-                Colaboradores Petrobras devem usar o botão{" "}
-                <span className="font-semibold text-[#0047BB]">Login com Microsoft</span> abaixo.
-              </p>
-            )}
-
-            {/* Campo de senha – visível apenas no modo local e somente para usuários internos */}
-            {isLocalMode && !isExternalUser && (
+            {/* Campo de senha – visível para usuários internos */}
+            {isInternalUser && (
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium text-foreground">
                   Senha
@@ -331,14 +321,11 @@ export function LoginForm() {
                     required
                   />
                 </div>
-                <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
-                  Modo de desenvolvimento — autenticação local ativa
-                </p>
               </div>
             )}
 
-            {/* Botão de login local */}
-            {isLocalMode && !isExternalUser && (
+            {/* Botão de login para usuários internos */}
+            {isInternalUser && (
               <Button
                 type="submit"
                 disabled={isLoading || !email || !password}
