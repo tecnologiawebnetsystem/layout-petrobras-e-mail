@@ -1,40 +1,153 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useWorkflowStore } from "@/lib/stores/workflow-store"
 import { AppHeader } from "@/components/shared/app-header"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FileText, Search, Eye, CheckCircle, XCircle, Clock, Upload, ClipboardCheck } from "lucide-react"
+import { 
+  FileText, 
+  Search, 
+  Eye, 
+  CheckCircle, 
+  XCircle, 
+  Clock, 
+  Upload, 
+  ClipboardCheck,
+  Activity,
+  Users,
+  TrendingUp,
+  Calendar,
+  Filter,
+  RefreshCcw,
+  Shield,
+  AlertTriangle,
+  FileCheck,
+  History,
+  Download,
+  Mail,
+  User,
+  ChevronRight,
+  BarChart3,
+  ArrowUpRight,
+  ArrowDownRight
+} from "lucide-react"
 import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
 import { ScrollToTop } from "@/components/shared/scroll-to-top"
 import { SupervisorUploadForm } from "@/components/supervisor/supervisor-upload-form"
+import { FullPageLoader } from "@/components/ui/full-page-loader"
+
+// Dados de demonstracao para logs
+const DEMO_LOGS = [
+  {
+    id: "1",
+    action: "APROVACAO",
+    description: "Compartilhamento aprovado",
+    details: "Arquivo 'Relatorio_Q4_2024.pdf' aprovado para destinatario@empresa.com",
+    user: "Wagner Silva",
+    userEmail: "wagner@petrobras.com.br",
+    timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+    status: "success",
+    ip: "10.0.0.45",
+    shareId: "SOL-2024-001234"
+  },
+  {
+    id: "2",
+    action: "REJEICAO",
+    description: "Compartilhamento rejeitado",
+    details: "Arquivo 'Dados_Confidenciais.xlsx' rejeitado - Motivo: Dados sensiveis nao autorizados",
+    user: "Wagner Silva",
+    userEmail: "wagner@petrobras.com.br",
+    timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+    status: "error",
+    ip: "10.0.0.45",
+    shareId: "SOL-2024-001233"
+  },
+  {
+    id: "3",
+    action: "DOWNLOAD",
+    description: "Arquivo baixado",
+    details: "Destinatario cliente@parceiro.com baixou 'Contrato_2024.pdf'",
+    user: "cliente@parceiro.com",
+    userEmail: "cliente@parceiro.com",
+    timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+    status: "info",
+    ip: "189.45.123.78",
+    shareId: "SOL-2024-001230"
+  },
+  {
+    id: "4",
+    action: "ENVIO_CODIGO",
+    description: "Codigo OTP enviado",
+    details: "Codigo de verificacao enviado para fornecedor@empresa.com.br",
+    user: "Sistema",
+    userEmail: "sistema@petrobras.com.br",
+    timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+    status: "info",
+    ip: "10.0.0.1",
+    shareId: "SOL-2024-001228"
+  },
+  {
+    id: "5",
+    action: "EXPIRACAO",
+    description: "Link expirado",
+    details: "Link de compartilhamento expirou automaticamente apos 72 horas",
+    user: "Sistema",
+    userEmail: "sistema@petrobras.com.br",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    status: "warning",
+    ip: "10.0.0.1",
+    shareId: "SOL-2024-001200"
+  },
+  {
+    id: "6",
+    action: "CADASTRO",
+    description: "Usuario externo cadastrado",
+    details: "Novo usuario 'parceiro@empresa.com' cadastrado pelo suporte",
+    user: "Suporte Demo",
+    userEmail: "suporte@petrobras.com.br",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
+    status: "success",
+    ip: "10.0.0.50",
+    shareId: null
+  },
+]
 
 export default function SupervisorPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user, isAuthenticated } = useAuthStore()
   const { uploads, loadAllSupervisorShares } = useWorkflowStore()
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [isChecking, setIsChecking] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("aprovacoes")
+  const [logFilter, setLogFilter] = useState("all")
+  const [logSearch, setLogSearch] = useState("")
+
+  // Verifica parametro tab na URL
+  useEffect(() => {
+    const tabParam = searchParams.get("tab")
+    if (tabParam && ["aprovacoes", "compartilhar", "logs"].includes(tabParam)) {
+      setActiveTab(tabParam)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!isAuthenticated || user?.userType !== "supervisor") {
         router.push("/")
       } else {
-        setIsChecking(false)
-        // Carrega todos os compartilhamentos do backend (pending + aprovados + rejeitados)
         loadAllSupervisorShares()
+        setIsLoading(false)
       }
-    }, 100)
+    }, 1500)
 
     return () => clearTimeout(timer)
   }, [isAuthenticated, user, router, loadAllSupervisorShares])
@@ -42,215 +155,480 @@ export default function SupervisorPage() {
   const pendingCount = uploads.filter((u) => u.status === "pending").length
   const approvedCount = uploads.filter((u) => u.status === "approved").length
   const rejectedCount = uploads.filter((u) => u.status === "rejected").length
+  const totalCount = uploads.length
 
   const filteredUploads = uploads.filter((upload) => {
     const matchesSearch =
       upload.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      upload.sender.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      upload.sender.email.toLowerCase().includes(searchQuery.toLowerCase())
+      upload.sender?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      upload.sender?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      upload.recipient?.toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesStatus = statusFilter === "all" || upload.status === statusFilter
 
     return matchesSearch && matchesStatus
   })
 
-  if (isChecking || !isAuthenticated || user?.userType !== "supervisor") {
+  // Filtrar logs
+  const filteredLogs = DEMO_LOGS.filter((log) => {
+    const matchesSearch = 
+      log.description.toLowerCase().includes(logSearch.toLowerCase()) ||
+      log.details.toLowerCase().includes(logSearch.toLowerCase()) ||
+      log.user.toLowerCase().includes(logSearch.toLowerCase()) ||
+      (log.shareId?.toLowerCase().includes(logSearch.toLowerCase()) ?? false)
+
+    const matchesFilter = logFilter === "all" || log.status === logFilter
+
+    return matchesSearch && matchesFilter
+  })
+
+  const getLogIcon = (action: string) => {
+    switch (action) {
+      case "APROVACAO": return <CheckCircle className="h-4 w-4" />
+      case "REJEICAO": return <XCircle className="h-4 w-4" />
+      case "DOWNLOAD": return <Download className="h-4 w-4" />
+      case "ENVIO_CODIGO": return <Mail className="h-4 w-4" />
+      case "EXPIRACAO": return <Clock className="h-4 w-4" />
+      case "CADASTRO": return <User className="h-4 w-4" />
+      default: return <Activity className="h-4 w-4" />
+    }
+  }
+
+  const getLogStatusColor = (status: string) => {
+    switch (status) {
+      case "success": return "bg-emerald-100 text-emerald-700 border-emerald-200"
+      case "error": return "bg-red-100 text-red-700 border-red-200"
+      case "warning": return "bg-amber-100 text-amber-700 border-amber-200"
+      default: return "bg-blue-100 text-blue-700 border-blue-200"
+    }
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "pending":
+        return (
+          <Badge className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100">
+            <Clock className="h-3 w-3 mr-1" />
+            Pendente
+          </Badge>
+        )
+      case "approved":
+        return (
+          <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Aprovado
+          </Badge>
+        )
+      case "rejected":
+        return (
+          <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100">
+            <XCircle className="h-3 w-3 mr-1" />
+            Rejeitado
+          </Badge>
+        )
+      default:
+        return <Badge variant="outline">{status}</Badge>
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <FullPageLoader
+        message="Carregando painel do supervisor..."
+        subMessage="Buscando compartilhamentos e dados"
+      />
+    )
+  }
+
+  if (!isAuthenticated || user?.userType !== "supervisor") {
     return null
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <AppHeader />
       <ScrollToTop />
 
       <main className="container mx-auto px-4 py-6 max-w-7xl">
-        <BreadcrumbNav items={[{ label: "Início", href: "/supervisor" }, { label: "Painel do Supervisor" }]} dashboardLink="/supervisor" />
+        <BreadcrumbNav 
+          items={[
+            { label: "Inicio", href: "/supervisor" }, 
+            { label: "Painel do Supervisor" }
+          ]} 
+          dashboardLink="/supervisor" 
+        />
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Painel do Supervisor</h1>
-          <p className="text-muted-foreground">Gerencie aprovações e compartilhe arquivos com segurança</p>
+        {/* Header com gradiente */}
+        <div className="mb-8 mt-4">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center shadow-lg">
+              <Shield className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Painel do Supervisor</h1>
+              <p className="text-muted-foreground">Gerencie aprovacoes, compartilhamentos e visualize logs do sistema</p>
+            </div>
+          </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
-            <TabsTrigger value="aprovacoes" className="flex items-center gap-2">
-              <ClipboardCheck className="h-4 w-4" />
-              Aprovações
+        {/* Cards de Metricas */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] ${statusFilter === "all" ? "ring-2 ring-[#0047BB]" : ""}`}
+            onClick={() => { setStatusFilter("all"); setActiveTab("aprovacoes") }}
+          >
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0047BB]/10 to-[#0047BB]/5 flex items-center justify-center">
+                  <BarChart3 className="h-6 w-6 text-[#0047BB]" />
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-foreground">{totalCount}</p>
+                  <p className="text-sm text-muted-foreground">Total</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] border-l-4 border-l-amber-500 ${statusFilter === "pending" ? "ring-2 ring-amber-500" : ""}`}
+            onClick={() => { setStatusFilter("pending"); setActiveTab("aprovacoes") }}
+          >
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div className="h-12 w-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-amber-600" />
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-amber-600">{pendingCount}</p>
+                  <p className="text-sm text-muted-foreground">Pendentes</p>
+                </div>
+              </div>
               {pendingCount > 0 && (
-                <Badge variant="secondary" className="ml-1 bg-yellow-100 text-yellow-700 border-yellow-300">
+                <div className="mt-3 flex items-center gap-1 text-amber-600 text-sm">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span>Requer atencao</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] border-l-4 border-l-emerald-500 ${statusFilter === "approved" ? "ring-2 ring-emerald-500" : ""}`}
+            onClick={() => { setStatusFilter("approved"); setActiveTab("aprovacoes") }}
+          >
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <CheckCircle className="h-6 w-6 text-emerald-600" />
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-emerald-600">{approvedCount}</p>
+                  <p className="text-sm text-muted-foreground">Aprovados</p>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-1 text-emerald-600 text-sm">
+                <ArrowUpRight className="h-4 w-4" />
+                <span>Ultimos 30 dias</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] border-l-4 border-l-red-500 ${statusFilter === "rejected" ? "ring-2 ring-red-500" : ""}`}
+            onClick={() => { setStatusFilter("rejected"); setActiveTab("aprovacoes") }}
+          >
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div className="h-12 w-12 rounded-xl bg-red-100 flex items-center justify-center">
+                  <XCircle className="h-6 w-6 text-red-600" />
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-red-600">{rejectedCount}</p>
+                  <p className="text-sm text-muted-foreground">Rejeitados</p>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-1 text-red-600 text-sm">
+                <ArrowDownRight className="h-4 w-4" />
+                <span>Ultimos 30 dias</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3 h-14 p-1 bg-muted/50">
+            <TabsTrigger value="aprovacoes" className="gap-2 text-base data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <ClipboardCheck className="h-5 w-5" />
+              Aprovacoes
+              {pendingCount > 0 && (
+                <Badge className="ml-1 bg-amber-500 text-white text-xs px-2">
                   {pendingCount}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="compartilhar" className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
+            <TabsTrigger value="compartilhar" className="gap-2 text-base data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <Upload className="h-5 w-5" />
               Compartilhar
+            </TabsTrigger>
+            <TabsTrigger value="logs" className="gap-2 text-base data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <History className="h-5 w-5" />
+              Logs
             </TabsTrigger>
           </TabsList>
 
+          {/* Tab Aprovacoes */}
           <TabsContent value="aprovacoes" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Widget Pendentes */}
-              <Card
-                className="p-6 cursor-pointer hover:shadow-lg transition-shadow border-2 border-yellow-200 bg-yellow-50/50"
-                onClick={() => setStatusFilter("pending")}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-yellow-100 rounded-xl">
-                    <Clock className="h-6 w-6 text-yellow-600" />
+            {/* Barra de busca e filtros */}
+            <Card className="bg-card/50 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar por nome, remetente, destinatario..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-11 h-12 text-base"
+                    />
                   </div>
-                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-300">
-                    {pendingCount}
-                  </Badge>
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-1">Pendentes</h3>
-                <p className="text-sm text-muted-foreground">Aguardando sua aprovação</p>
-              </Card>
-
-              {/* Widget Aprovados */}
-              <Card
-                className="p-6 cursor-pointer hover:shadow-lg transition-shadow border-2 border-green-200 bg-green-50/50"
-                onClick={() => setStatusFilter("approved")}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-green-100 rounded-xl">
-                    <CheckCircle className="h-6 w-6 text-green-600" />
+                  <div className="flex gap-2">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-full md:w-[180px] h-12">
+                        <Filter className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os Status</SelectItem>
+                        <SelectItem value="pending">Pendentes</SelectItem>
+                        <SelectItem value="approved">Aprovados</SelectItem>
+                        <SelectItem value="rejected">Rejeitados</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-12 w-12"
+                      onClick={() => { setSearchQuery(""); setStatusFilter("all") }}
+                    >
+                      <RefreshCcw className="h-5 w-5" />
+                    </Button>
                   </div>
-                  <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-300">
-                    {approvedCount}
-                  </Badge>
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-1">Aprovados</h3>
-                <p className="text-sm text-muted-foreground">Documentos aprovados</p>
-              </Card>
 
-              {/* Widget Rejeitados */}
-              <Card
-                className="p-6 cursor-pointer hover:shadow-lg transition-shadow border-2 border-red-200 bg-red-50/50"
-                onClick={() => setStatusFilter("rejected")}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-red-100 rounded-xl">
-                    <XCircle className="h-6 w-6 text-red-600" />
+                {/* Indicadores de filtro ativo */}
+                {(searchQuery || statusFilter !== "all") && (
+                  <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+                    <span className="text-sm text-muted-foreground">Filtros ativos:</span>
+                    {searchQuery && (
+                      <Badge variant="secondary" className="gap-1">
+                        Busca: {searchQuery}
+                        <button onClick={() => setSearchQuery("")} className="ml-1 hover:text-destructive">x</button>
+                      </Badge>
+                    )}
+                    {statusFilter !== "all" && (
+                      <Badge variant="secondary" className="gap-1">
+                        Status: {statusFilter === "pending" ? "Pendentes" : statusFilter === "approved" ? "Aprovados" : "Rejeitados"}
+                        <button onClick={() => setStatusFilter("all")} className="ml-1 hover:text-destructive">x</button>
+                      </Badge>
+                    )}
                   </div>
-                  <Badge variant="secondary" className="bg-red-100 text-red-700 border-red-300">
-                    {rejectedCount}
-                  </Badge>
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-1">Rejeitados</h3>
-                <p className="text-sm text-muted-foreground">Documentos rejeitados</p>
-              </Card>
-            </div>
-
-            <Card className="p-6 mb-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por nome do arquivo, remetente ou e-mail..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full md:w-[200px]">
-                    <SelectValue placeholder="Filtrar por status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os Status</SelectItem>
-                    <SelectItem value="pending">Pendentes</SelectItem>
-                    <SelectItem value="approved">Aprovados</SelectItem>
-                    <SelectItem value="rejected">Rejeitados</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                )}
+              </CardContent>
             </Card>
 
+            {/* Lista de compartilhamentos */}
             <div className="space-y-4">
               {filteredUploads.length === 0 ? (
-                <Card className="p-12 text-center">
-                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg font-medium text-foreground mb-2">Nenhum documento encontrado</p>
-                  <p className="text-sm text-muted-foreground">Tente ajustar os filtros de busca</p>
+                <Card className="p-12 text-center bg-card/50">
+                  <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                  <p className="text-xl font-medium text-foreground mb-2">Nenhum documento encontrado</p>
+                  <p className="text-muted-foreground mb-6">Tente ajustar os filtros de busca</p>
+                  <Button variant="outline" onClick={() => { setSearchQuery(""); setStatusFilter("all") }}>
+                    Limpar Filtros
+                  </Button>
                 </Card>
               ) : (
                 filteredUploads.map((upload) => (
-                  <Card key={upload.id} className="p-6 hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-4 flex-1">
-                        <div className="p-3 bg-primary/10 rounded-lg">
-                          <FileText className="h-6 w-6 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-semibold text-foreground mb-2">{upload.name}</h3>
-                          <div className="space-y-1 text-sm text-muted-foreground">
-                            <p>
-                              <span className="font-medium">Remetente:</span> {upload.sender.name}
-                            </p>
-                            <p>
-                              <span className="font-medium">Destinatário:</span> {upload.recipient}
-                            </p>
-                            <p>
-                              <span className="font-medium">Data:</span>{" "}
-                              {new Date(upload.uploadDate).toLocaleDateString("pt-BR", {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}{" "}
-                              • {upload.files.length} arquivo(s)
-                            </p>
+                  <Card 
+                    key={upload.id} 
+                    className={`overflow-hidden transition-all hover:shadow-lg border-l-4 ${
+                      upload.status === "pending" ? "border-l-amber-500" :
+                      upload.status === "approved" ? "border-l-emerald-500" :
+                      "border-l-red-500"
+                    }`}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-4 flex-1">
+                          <div className={`p-3 rounded-xl ${
+                            upload.status === "pending" ? "bg-amber-100" :
+                            upload.status === "approved" ? "bg-emerald-100" :
+                            "bg-red-100"
+                          }`}>
+                            <FileCheck className={`h-6 w-6 ${
+                              upload.status === "pending" ? "text-amber-600" :
+                              upload.status === "approved" ? "text-emerald-600" :
+                              "text-red-600"
+                            }`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-lg font-semibold text-foreground truncate">{upload.name}</h3>
+                              {getStatusBadge(upload.status)}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <User className="h-4 w-4 flex-shrink-0" />
+                                <span className="truncate">
+                                  <span className="font-medium">Remetente:</span> {upload.sender?.name || "N/A"}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <Mail className="h-4 w-4 flex-shrink-0" />
+                                <span className="truncate">
+                                  <span className="font-medium">Destinatario:</span> {upload.recipient || "N/A"}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {new Date(upload.uploadDate).toLocaleDateString("pt-BR")}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <FileText className="h-3 w-3" />
+                                {upload.files?.length || 0} arquivo(s)
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <Badge
-                          variant={
-                            upload.status === "approved"
-                              ? "default"
-                              : upload.status === "rejected"
-                                ? "destructive"
-                                : "secondary"
-                          }
-                          className={
-                            upload.status === "pending"
-                              ? "bg-yellow-100 text-yellow-700 border-yellow-300"
-                              : upload.status === "approved"
-                                ? "bg-green-100 text-green-700 border-green-300"
-                                : ""
-                          }
-                        >
-                          {upload.status === "pending" && <Clock className="h-3 w-3 mr-1" />}
-                          {upload.status === "approved" && <CheckCircle className="h-3 w-3 mr-1" />}
-                          {upload.status === "rejected" && <XCircle className="h-3 w-3 mr-1" />}
-                          {upload.status === "pending"
-                            ? "Pendente"
-                            : upload.status === "approved"
-                              ? "Aprovado"
-                              : "Rejeitado"}
-                        </Badge>
 
                         <Button
-                          variant="outline"
+                          variant="default"
                           size="sm"
+                          className="bg-[#0047BB] hover:bg-[#003399] gap-2"
                           onClick={() => router.push(`/supervisor/detalhes/${upload.id}`)}
                         >
-                          <Eye className="h-4 w-4 mr-2" />
+                          <Eye className="h-4 w-4" />
                           Ver Detalhes
+                          <ChevronRight className="h-4 w-4" />
                         </Button>
                       </div>
-                    </div>
+                    </CardContent>
                   </Card>
                 ))
               )}
             </div>
           </TabsContent>
+
+          {/* Tab Compartilhar */}
           <TabsContent value="compartilhar" className="space-y-6">
-            {/* Content for compartilhar tab */}
             <SupervisorUploadForm />
+          </TabsContent>
+
+          {/* Tab Logs */}
+          <TabsContent value="logs" className="space-y-6">
+            <Card className="bg-card/50 backdrop-blur-sm border shadow-xl">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center shadow-lg">
+                      <Activity className="h-7 w-7 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-2xl">Logs e Rastreamento</CardTitle>
+                      <CardDescription className="text-base">
+                        Historico completo de acoes e eventos do sistema
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <RefreshCcw className="h-4 w-4" />
+                    Atualizar
+                  </Button>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="space-y-4">
+                {/* Filtros de logs */}
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar nos logs..."
+                      value={logSearch}
+                      onChange={(e) => setLogSearch(e.target.value)}
+                      className="pl-11 h-12"
+                    />
+                  </div>
+                  <Select value={logFilter} onValueChange={setLogFilter}>
+                    <SelectTrigger className="w-full md:w-[180px] h-12">
+                      <Filter className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os Tipos</SelectItem>
+                      <SelectItem value="success">Sucesso</SelectItem>
+                      <SelectItem value="error">Erro</SelectItem>
+                      <SelectItem value="warning">Aviso</SelectItem>
+                      <SelectItem value="info">Info</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Timeline de logs */}
+                <div className="space-y-3 mt-6">
+                  {filteredLogs.length === 0 ? (
+                    <div className="text-center py-12">
+                      <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-lg font-medium text-muted-foreground">Nenhum log encontrado</p>
+                    </div>
+                  ) : (
+                    filteredLogs.map((log, index) => (
+                      <div
+                        key={log.id}
+                        className="bg-background/50 border rounded-xl p-4 hover:bg-background/80 transition-colors"
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className={`p-2 rounded-lg ${getLogStatusColor(log.status)}`}>
+                            {getLogIcon(log.action)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <span className="font-semibold text-foreground">{log.description}</span>
+                              <Badge variant="outline" className={`text-xs ${getLogStatusColor(log.status)}`}>
+                                {log.action}
+                              </Badge>
+                              {log.shareId && (
+                                <Badge variant="outline" className="text-xs font-mono">
+                                  {log.shareId}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2">{log.details}</p>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <User className="h-3 w-3" />
+                                {log.user}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {new Date(log.timestamp).toLocaleString("pt-BR")}
+                              </span>
+                              <span className="flex items-center gap-1 font-mono">
+                                IP: {log.ip}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>

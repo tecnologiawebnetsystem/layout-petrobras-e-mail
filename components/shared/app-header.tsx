@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, Moon, Sun, Menu, FolderOpen, Building2, MapPin, User } from "lucide-react"
+import { LogOut, Moon, Sun, Menu, FolderOpen, Building2, MapPin, User, Activity } from "lucide-react"
 import { PetrobrasLogo } from "@/components/ui/petrobras-logo"
 import { Button } from "@/components/ui/button"
 import {
@@ -48,8 +48,8 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
     setMobileMenuOpen(false)
   }
 
-  const handleViewWiki = () => {
-    router.push("/wiki")
+  const handleViewLogs = () => {
+    router.push("/supervisor?tab=logs")
     setMobileMenuOpen(false)
   }
 
@@ -89,15 +89,15 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={handleViewWiki}
+                    onClick={handleViewLogs}
                     className="h-10 w-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all duration-300"
-                    aria-label="Wiki"
+                    aria-label="Logs e Rastreamento"
                   >
-                    <FolderOpen className="h-4 w-4" />
+                    <Activity className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Wiki</p>
+                  <p>Logs e Rastreamento</p>
                 </TooltipContent>
               </Tooltip>
             )}
@@ -210,11 +210,11 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                 {!isExternalUser && user?.userType === "supervisor" && (
                   <>
                     <DropdownMenuItem
-                      onClick={handleViewWiki}
+                      onClick={handleViewLogs}
                       className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 hover:text-blue-900 dark:hover:text-blue-100 focus:text-blue-900 dark:focus:text-blue-100 min-h-[44px]"
                     >
-                      <FolderOpen className="h-4 w-4" />
-                      <span>Wiki</span>
+                      <Activity className="h-4 w-4" />
+                      <span>Logs e Rastreamento</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
                   </>
@@ -302,10 +302,10 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                     <Button
                       variant="ghost"
                       className="justify-start h-12 text-base hover:bg-accent transition-colors min-h-[44px]"
-                      onClick={handleViewWiki}
+                      onClick={handleViewLogs}
                     >
-                      <FolderOpen className="h-5 w-5 mr-3" />
-                      Wiki
+                      <Activity className="h-5 w-5 mr-3" />
+                      Logs e Rastreamento
                     </Button>
                   )}
 
