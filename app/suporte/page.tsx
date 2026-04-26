@@ -38,8 +38,6 @@ import {
   Loader2,
   History,
   Eye,
-  LogIn,
-  ArrowLeft,
   X,
   Calendar,
   Building,
@@ -61,36 +59,8 @@ interface CadastroRegistro {
   observacao?: string
 }
 
-// Dados de demonstracao
-const DEMO_REGISTROS: CadastroRegistro[] = [
-  {
-    id: "1",
-    numeroSolicitacao: "SOL-2024-001234",
-    emailSolicitante: "maria.santos@petrobras.com.br",
-    emailUsuarioExterno: "fornecedor@empresa.com.br",
-    status: "ativo",
-    dataCadastro: "2024-01-15T10:30:00",
-    cadastradoPor: "Suporte Demo",
-  },
-  {
-    id: "2",
-    numeroSolicitacao: "SOL-2024-001235",
-    emailSolicitante: "joao.silva@petrobras.com.br",
-    emailUsuarioExterno: "parceiro@parceiro.com.br",
-    status: "ativo",
-    dataCadastro: "2024-01-14T14:20:00",
-    cadastradoPor: "Suporte Demo",
-  },
-  {
-    id: "3",
-    numeroSolicitacao: "SOL-2024-001236",
-    emailSolicitante: "ana.costa@petrobras.com.br",
-    emailUsuarioExterno: "cliente@cliente.com.br",
-    status: "pendente",
-    dataCadastro: "2024-01-13T09:15:00",
-    cadastradoPor: "Suporte Demo",
-  },
-]
+// Dados iniciais (vazios - serao carregados da API)
+const REGISTROS_INICIAIS: CadastroRegistro[] = []
 
 export default function SuportePage() {
   const { user, isAuthenticated, setAuth } = useAuthStore()
@@ -107,8 +77,8 @@ export default function SuportePage() {
   const [searchTerm, setSearchTerm] = useState("")
   
   // Estado dos registros
-  const [registros, setRegistros] = useState<CadastroRegistro[]>(DEMO_REGISTROS)
-  const [registrosFiltrados, setRegistrosFiltrados] = useState<CadastroRegistro[]>(DEMO_REGISTROS)
+  const [registros, setRegistros] = useState<CadastroRegistro[]>(REGISTROS_INICIAIS)
+  const [registrosFiltrados, setRegistrosFiltrados] = useState<CadastroRegistro[]>(REGISTROS_INICIAIS)
   const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativo" | "pendente" | "inativo" | "hoje">("todos")
   const [activeTab, setActiveTab] = useState("cadastrar")
   const [registroSelecionado, setRegistroSelecionado] = useState<CadastroRegistro | null>(null)
@@ -129,7 +99,6 @@ export default function SuportePage() {
 
   // Verifica se usuario tem permissao de suporte
   const hasSuportAccess = user?.userType === "support" || user?.userType === "supervisor"
-  const isDemoMode = !isAuthenticated || !hasSuportAccess
 
   // Estatisticas
   const stats = {
@@ -156,11 +125,22 @@ export default function SuportePage() {
 
   // Simular carregamento inicial da pagina
   useEffect(() => {
+    // Verifica autenticacao e permissao
+    if (!isAuthenticated) {
+      router.push("/")
+      return
+    }
+    
+    if (!hasSuportAccess) {
+      router.push("/")
+      return
+    }
+    
     const timer = setTimeout(() => {
       setPageLoading(false)
     }, 1500) // 1.5 segundos de carregamento
     return () => clearTimeout(timer)
-  }, [])
+  }, [isAuthenticated, hasSuportAccess, router])
 
   // Handler de busca e filtro
   useEffect(() => {
@@ -211,27 +191,6 @@ export default function SuportePage() {
       type: "success",
       title: "Copiado",
       message: "Texto copiado para a area de transferencia",
-    })
-  }
-
-  // Login de demonstracao para suporte
-  const handleDemoLogin = () => {
-    setAuth(
-      {
-        id: "demo-support",
-        email: "suporte@petrobras.com.br",
-        name: "Suporte Demo",
-        userType: "support",
-        department: "Atendimento",
-      },
-      "demo_support_token",
-      "demo_support_refresh"
-    )
-    setNotification({
-      show: true,
-      type: "success",
-      title: "Login realizado",
-      message: "Voce esta logado como usuario de suporte para demonstracao.",
     })
   }
 
@@ -294,7 +253,7 @@ export default function SuportePage() {
         emailUsuarioExterno,
         status: "ativo",
         dataCadastro: new Date().toISOString(),
-        cadastradoPor: user?.name || "Suporte Demo",
+        cadastradoPor: user?.name || "Suporte",
       }
 
       setRegistros(prev => [novoRegistro, ...prev])
@@ -354,44 +313,7 @@ export default function SuportePage() {
           dashboardLink="/suporte"
         />
 
-        {/* Banner de modo demo se nao autenticado como suporte */}
-        {isDemoMode && (
-          <div className="mb-6 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-5">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="h-10 w-10 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                  <Shield className="h-5 w-5 text-amber-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-amber-800 dark:text-amber-300">Modo Demonstracao</p>
-                  <p className="text-sm text-amber-700 dark:text-amber-400">
-                    Voce esta visualizando a pagina de suporte em modo demonstracao. 
-                    {!isAuthenticated ? " Faca login para ter acesso completo." : " Seu perfil nao tem permissao de suporte."}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => router.push("/")}
-                  className="gap-2 border-amber-500/30 text-amber-700 hover:bg-amber-500/10"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Voltar
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleDemoLogin}
-                  className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
-                >
-                  <LogIn className="h-4 w-4" />
-                  Entrar como Suporte (Demo)
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* Metricas - Clicaveis para filtrar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
