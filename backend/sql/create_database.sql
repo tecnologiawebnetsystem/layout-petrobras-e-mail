@@ -44,8 +44,8 @@ DROP TYPE IF EXISTS type_user            CASCADE;
 -- TIPOS ENUMERADOS
 -- ---------------------------------------------------------------------------
 
--- Tipo de usuário: externo (terceiro) ou interno (colaborador Petrobras)
-CREATE TYPE type_user AS ENUM ('externo', 'internal');
+-- Tipo de usuário: externo (terceiro), interno (colaborador), ou support (atendimento)
+CREATE TYPE type_user AS ENUM ('externo', 'internal', 'support');
 
 -- Nível de severidade para auditoria
 CREATE TYPE type_level AS ENUM ('info', 'success', 'warning', 'error');
@@ -397,6 +397,73 @@ CREATE TABLE session_token (
 CREATE INDEX idx_session_token_user_id    ON session_token(user_id);
 CREATE INDEX idx_session_token_token_hash ON session_token(token_hash);
 CREATE INDEX idx_session_token_token_type ON session_token(token_type);
+
+-- ---------------------------------------------------------------------------
+-- 13. support_registration – Cadastros de usuarios externos pelo suporte
+-- ---------------------------------------------------------------------------
+CREATE TABLE support_registration (
+    id                   SERIAL        PRIMARY KEY,
+    -- Numero da solicitacao (ServiceNow ou outro sistema)
+    request_number       VARCHAR(50)   NOT NULL,
+    -- Email do solicitante interno (quem pediu o cadastro)
+    requester_email      VARCHAR(255)  NOT NULL,
+    -- Email do usuario externo que foi cadastrado
+    external_user_email  VARCHAR(255)  NOT NULL,
+    -- ID do usuario externo criado (referencia a tabela user)
+    external_user_id     INTEGER       REFERENCES "user"(id) ON DELETE SET NULL,
+    -- ID do atendente de suporte que realizou o cadastro
+    registered_by_id     INTEGER       NOT NULL REFERENCES "user"(id) ON DELETE RESTRICT,
+    -- Nome do atendente (desnormalizado para historico)
+    registered_by_name   VARCHAR(255)  NOT NULL,
+    -- Status do cadastro
+    status               VARCHAR(20)   NOT NULL DEFAULT 'ativo' 
+                         CHECK (status IN ('ativo', 'pendente', 'inativo', 'cancelado')),
+    -- Observacoes adicionais
+    notes                TEXT,
+    -- Timestamps
+    created_at           TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    updated_at           TIMESTAMPTZ,
+    -- Se foi reativacao (usuario ja existia mas estava inativo)
+    is_reactivation      BOOLEAN       NOT NULL DEFAULT FALSE
+);
+
+CREATE INDEX idx_support_reg_request_number  ON support_registration(request_number);
+CREATE INDEX idx_support_reg_requester_email ON support_registration(requester_email);
+CREATE INDEX idx_support_reg_external_email  ON support_registration(external_user_email);
+CREATE INDEX idx_support_reg_registered_by   ON support_registration(registered_by_id);
+CREATE INDEX idx_support_reg_status          ON support_registration(status);
+CREATE INDEX idx_support_reg_created_at      ON support_registration(created_at DESC);
+
+-- ---------------------------------------------------------------------------
+-- 14. support_audit – Auditoria de acoes do suporte
+-- ---------------------------------------------------------------------------
+CREATE TABLE support_audit (
+    id               SERIAL        PRIMARY KEY,
+    -- Tipo de acao realizada
+    action           VARCHAR(50)   NOT NULL 
+                     CHECK (action IN ('CADASTRO', 'REATIVACAO', 'INATIVACAO', 'ALTERACAO', 'CONSULTA')),
+    -- Descricao da acao
+    description      VARCHAR(500)  NOT NULL,
+    -- Detalhes adicionais (JSON)
+    details          TEXT,
+    -- ID do atendente que realizou a acao
+    support_user_id  INTEGER       NOT NULL REFERENCES "user"(id) ON DELETE RESTRICT,
+    -- ID do registro de suporte relacionado (se aplicavel)
+    registration_id  INTEGER       REFERENCES support_registration(id) ON DELETE SET NULL,
+    -- ID do usuario afetado pela acao (se aplicavel)
+    affected_user_id INTEGER       REFERENCES "user"(id) ON DELETE SET NULL,
+    -- Informacoes de rastreamento
+    ip_address       VARCHAR(45),
+    user_agent       VARCHAR(500),
+    -- Timestamp
+    created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_support_audit_action        ON support_audit(action);
+CREATE INDEX idx_support_audit_support_user  ON support_audit(support_user_id);
+CREATE INDEX idx_support_audit_registration  ON support_audit(registration_id);
+CREATE INDEX idx_support_audit_affected_user ON support_audit(affected_user_id);
+CREATE INDEX idx_support_audit_created_at    ON support_audit(created_at DESC);
 
 -- =============================================================================
 -- FIM DO SCRIPT

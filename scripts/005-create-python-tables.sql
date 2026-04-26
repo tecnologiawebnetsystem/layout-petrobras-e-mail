@@ -8,7 +8,7 @@
 -- ENUM TYPES
 -- ====================
 DO $$ BEGIN
-    CREATE TYPE typeuser AS ENUM ('externo', 'internal', 'supervisor');
+    CREATE TYPE typeuser AS ENUM ('externo', 'internal', 'supervisor', 'support');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
