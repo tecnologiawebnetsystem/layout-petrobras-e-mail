@@ -14,6 +14,13 @@ import { ScrollToTop } from "@/components/shared/scroll-to-top"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { 
   UserPlus, 
   Search, 
@@ -32,7 +39,13 @@ import {
   History,
   Eye,
   LogIn,
-  ArrowLeft
+  ArrowLeft,
+  X,
+  Calendar,
+  Building,
+  Phone,
+  Copy,
+  ExternalLink
 } from "lucide-react"
 import { FullPageLoader } from "@/components/ui/full-page-loader"
 
@@ -98,6 +111,8 @@ export default function SuportePage() {
   const [registrosFiltrados, setRegistrosFiltrados] = useState<CadastroRegistro[]>(DEMO_REGISTROS)
   const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativo" | "pendente" | "inativo" | "hoje">("todos")
   const [activeTab, setActiveTab] = useState("cadastrar")
+  const [registroSelecionado, setRegistroSelecionado] = useState<CadastroRegistro | null>(null)
+  const [showDetalhesModal, setShowDetalhesModal] = useState(false)
   
   // Notificacao
   const [notification, setNotification] = useState<{
@@ -180,6 +195,23 @@ export default function SuportePage() {
   const handleFiltrarPorStatus = (status: "todos" | "ativo" | "pendente" | "inativo" | "hoje") => {
     setFiltroStatus(status)
     setActiveTab("consulta")
+  }
+
+  // Funcao para visualizar detalhes do registro
+  const handleVisualizarDetalhes = (registro: CadastroRegistro) => {
+    setRegistroSelecionado(registro)
+    setShowDetalhesModal(true)
+  }
+
+  // Funcao para copiar texto
+  const handleCopiar = (texto: string) => {
+    navigator.clipboard.writeText(texto)
+    setNotification({
+      show: true,
+      type: "success",
+      title: "Copiado",
+      message: "Texto copiado para a area de transferencia",
+    })
   }
 
   // Login de demonstracao para suporte
@@ -694,7 +726,13 @@ export default function SuportePage() {
                               <span>{new Date(registro.dataCadastro).toLocaleString("pt-BR")}</span>
                             </div>
                           </div>
-                          <Button variant="ghost" size="icon" className="flex-shrink-0">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="flex-shrink-0 hover:bg-[#0047BB]/10"
+                            onClick={() => handleVisualizarDetalhes(registro)}
+                            title="Ver detalhes"
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
                         </div>
@@ -790,6 +828,132 @@ export default function SuportePage() {
         title={notification.title}
         message={notification.message}
       />
+
+      {/* Modal de Detalhes do Usuario */}
+      <Dialog open={showDetalhesModal} onOpenChange={setShowDetalhesModal}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center">
+                <User className="h-5 w-5 text-white" />
+              </div>
+              Detalhes do Usuario
+            </DialogTitle>
+            <DialogDescription>
+              Informacoes completas do cadastro
+            </DialogDescription>
+          </DialogHeader>
+
+          {registroSelecionado && (
+            <div className="space-y-6 py-4">
+              {/* Status e Numero da Solicitacao */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Hash className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-mono text-lg font-semibold text-[#0047BB]">
+                    {registroSelecionado.numeroSolicitacao}
+                  </span>
+                </div>
+                {getStatusBadge(registroSelecionado.status)}
+              </div>
+
+              {/* Informacoes do Usuario */}
+              <div className="space-y-4">
+                <div className="bg-muted/50 rounded-xl p-4 space-y-3">
+                  <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                    Usuario Cadastrado
+                  </h4>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Mail className="h-5 w-5 text-[#00A99D]" />
+                      <span className="text-foreground font-medium">
+                        {registroSelecionado.emailUsuarioExterno}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleCopiar(registroSelecionado.emailUsuarioExterno)}
+                      className="h-8 w-8"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="bg-muted/50 rounded-xl p-4 space-y-3">
+                  <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                    Solicitante
+                  </h4>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <User className="h-5 w-5 text-[#0047BB]" />
+                      <span className="text-foreground font-medium">
+                        {registroSelecionado.emailSolicitante}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleCopiar(registroSelecionado.emailSolicitante)}
+                      className="h-8 w-8"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-muted/50 rounded-xl p-4 space-y-2">
+                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                      Cadastrado por
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-amber-600" />
+                      <span className="text-foreground text-sm font-medium">
+                        {registroSelecionado.cadastradoPor}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="bg-muted/50 rounded-xl p-4 space-y-2">
+                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                      Data de Cadastro
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground text-sm font-medium">
+                        {new Date(registroSelecionado.dataCadastro).toLocaleDateString("pt-BR")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {registroSelecionado.observacao && (
+                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 space-y-2">
+                    <h4 className="text-sm font-semibold text-amber-800 dark:text-amber-200 uppercase tracking-wide">
+                      Observacao
+                    </h4>
+                    <p className="text-sm text-amber-700 dark:text-amber-300">
+                      {registroSelecionado.observacao}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Acoes */}
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDetalhesModal(false)}
+                >
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
