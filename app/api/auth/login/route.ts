@@ -57,6 +57,19 @@ const DEMO_USERS: Record<string, { password: string; user: Record<string, unknow
       manager: null,
     },
   },
+  "suporte@petrobras.com.br": {
+    password: "suporte@123",
+    user: {
+      id: 5,
+      name: "Suporte Atendimento",
+      email: "suporte@petrobras.com.br",
+      role: "support",
+      is_supervisor: false,
+      department: "Atendimento",
+      employee_id: "P33333",
+      manager: null,
+    },
+  },
 }
 
 /**
