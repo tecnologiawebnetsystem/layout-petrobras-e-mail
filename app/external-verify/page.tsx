@@ -7,6 +7,7 @@ import { otpService } from "@/lib/auth/otp-service"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { PetrobrasLogo } from "@/components/ui/petrobras-logo"
+import { FullPageLoader } from "@/components/ui/full-page-loader"
 import { AlertCircle, Mail, Clock, CheckCircle2 } from "lucide-react"
 
 function VerifyContent() {
@@ -20,12 +21,18 @@ function VerifyContent() {
   const [timeRemaining, setTimeRemaining] = useState(180)
   const [loading, setLoading] = useState(false)
   const [codeSent, setCodeSent] = useState(false)
+  const [pageLoading, setPageLoading] = useState(true)
 
   useEffect(() => {
     if (!email) {
       router.push("/")
       return
     }
+
+    // Simular carregamento inicial
+    const loadTimer = setTimeout(() => {
+      setPageLoading(false)
+    }, 1200)
 
     const generatedCode = otpService.generateOTP(email)
     // console.log(`[DEV] Código OTP gerado para ${email}: ${generatedCode}`)
@@ -41,8 +48,20 @@ function VerifyContent() {
       }
     }, 1000)
 
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      clearTimeout(loadTimer)
+    }
   }, [email, router])
+
+  if (pageLoading) {
+    return (
+      <FullPageLoader
+        message="Preparando verificacao..."
+        subMessage="Gerando codigo de acesso"
+      />
+    )
+  }
 
   const handleVerify = async () => {
     if (!code || code.length !== 6) {

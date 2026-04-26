@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AppHeader } from "@/components/shared/app-header"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { FullPageLoader } from "@/components/ui/full-page-loader"
 import { User, Lock, Bell, Activity } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ProfileSettings } from "@/components/settings/profile-settings"
@@ -16,15 +16,31 @@ export default function ConfiguracoesPage() {
   const { isAuthenticated } = useAuthStore()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("profile")
+  const [pageLoading, setPageLoading] = useState(true)
 
   useEffect(() => {
     if (!isAuthenticated) {
       router.push("/")
+      return
     }
+    // Simular carregamento inicial
+    const timer = setTimeout(() => {
+      setPageLoading(false)
+    }, 1200)
+    return () => clearTimeout(timer)
   }, [isAuthenticated, router])
 
   if (!isAuthenticated) {
     return null
+  }
+
+  if (pageLoading) {
+    return (
+      <FullPageLoader
+        message="Carregando configuracoes..."
+        subMessage="Preparando suas preferencias"
+      />
+    )
   }
 
   return (

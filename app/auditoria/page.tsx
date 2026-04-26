@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { FullPageLoader } from "@/components/ui/full-page-loader"
 import {
   Search,
   Download,
@@ -79,6 +80,7 @@ export default function AuditoriaPage() {
   const { user, isAuthenticated } = useAuthStore()
   const { logs, exportLogs, getLogsByAction, loadLogs } = useAuditLogStore()
   const [searchTerm, setSearchTerm] = useState("")
+  const [pageLoading, setPageLoading] = useState(true)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -86,6 +88,11 @@ export default function AuditoriaPage() {
       return
     }
     loadLogs()
+    // Simular carregamento inicial
+    const timer = setTimeout(() => {
+      setPageLoading(false)
+    }, 1200)
+    return () => clearTimeout(timer)
   }, [loadLogs, isAuthenticated, router])
   const [filterAction, setFilterAction] = useState<LogAction | "all">("all")
   const [filterLevel, setFilterLevel] = useState<LogLevel | "all">("all")
@@ -132,6 +139,15 @@ export default function AuditoriaPage() {
 
   if (!isAuthenticated) {
     return null
+  }
+
+  if (pageLoading) {
+    return (
+      <FullPageLoader
+        message="Carregando auditoria..."
+        subMessage="Preparando logs do sistema"
+      />
+    )
   }
 
   return (
