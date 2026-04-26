@@ -1,8 +1,6 @@
 import { neon } from '@neondatabase/serverless'
 
 // Cliente SQL para queries no Neon
-// export const sql = neon(process.env.DATABASE_URL!)
-
 let _sql: ReturnType<typeof neon> | null = null
 
 function getSql() {
@@ -16,6 +14,9 @@ function getSql() {
 
   return _sql as unknown as (...args: unknown[]) => Promise<Record<string, unknown>[]>
 }
+
+// Exportar sql para uso externo (sql-explorer, etc.)
+export const sql = (...args: unknown[]) => getSql()(...args)
 
 // Tipos TypeScript para o Roadmap
 export type Status = 'concluido' | 'em_progresso' | 'pendente'
