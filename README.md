@@ -92,15 +92,9 @@ O sistema permite que usuários internos da Petrobras façam upload de arquivos 
 │   ├── download/                # Download de arquivos (destinatário)
 │   ├── external-verify/         # Verificação OTP usuário externo
 │   ├── configuracoes/           # Configurações do usuário
-│   ├── wiki-dev/                # Wiki interna de desenvolvimento
-│   │   ├── entra-id/           # Guia Microsoft Entra ID
-│   │   ├── sincronizacao-backend/ # Guia sincronização back-end
-│   │   ├── implementacoes-jan-2026/ # Implementações 04/01/2026
-│   │   ├── aws-implementation/ # Guia AWS
-│   │   ├── data-models/        # Modelos de dados
-│   │   ├── sql-readme/         # Documentação SQL
-│   │   └── servicenow/         # Integração ServiceNow
-│   └── api/                     # API Routes (removidos send-email e send-otp)
+│   ├── logs/                    # Logs e Rastreamento (supervisor)
+│   ├── suporte/                 # Painel de Suporte (cadastro usuarios)
+│   └── api/                     # API Routes
 │
 ├── components/                  # Componentes React
 │   ├── auth/                   # Autenticação
@@ -277,18 +271,6 @@ AWS_SES_REPLY_TO=suporte@petrobras.com.br
 - **Confirmação ao Remetente**: Upload confirmado
 - **Código OTP para Externo**: Verificação de acesso
 - **Aprovação/Rejeição**: Status final do compartilhamento
-
-## Wiki de Desenvolvimento
-
-O sistema possui uma wiki interna completa acessível em `/wiki-dev` com:
-
-- **Microsoft Entra ID**: Guia completo de autenticação SSO com Azure AD
-- **Sincronização Back-end**: Guia passo a passo para implementar back-end Python
-- **Implementações 04/01/2026**: Documentação de todas as 14 funcionalidades implementadas
-- **Implementação AWS**: Guia detalhado de todos os serviços AWS utilizados
-- **Modelos de Dados**: Estrutura completa das 5 tabelas DynamoDB
-- **SQL & DynamoDB**: Documentação completa do banco de dados
-- **ServiceNow**: Integração com sistema de tickets
 
 ## Banco de Dados
 

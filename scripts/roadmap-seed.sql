@@ -45,8 +45,7 @@ INSERT INTO roadmap_entregas (fase_id, nome, status, tipo, data_prevista, data_c
 (1, 'Tela de Auditoria', 'concluido', 'frontend', '2025-12-20', '2025-12-18', NULL, 8),
 (1, 'Tela de Configuracoes', 'concluido', 'frontend', '2025-12-25', '2025-12-22', NULL, 9),
 (1, 'Componentes de UI reutilizaveis', 'concluido', 'frontend', '2025-12-28', '2025-12-26', NULL, 10),
-(1, 'Sistema de Notificacoes (UI)', 'concluido', 'frontend', '2025-12-30', '2025-12-28', NULL, 11),
-(1, 'Wiki-Dev (Documentacao)', 'concluido', 'documentacao', '2025-12-31', '2025-12-30', NULL, 12);
+(1, 'Sistema de Notificacoes (UI)', 'concluido', 'frontend', '2025-12-30', '2025-12-28', NULL, 11);
 
 -- Inserir Entregas da Fase 2
 INSERT INTO roadmap_entregas (fase_id, nome, status, tipo, data_prevista, data_conclusao, notas, ordem) VALUES

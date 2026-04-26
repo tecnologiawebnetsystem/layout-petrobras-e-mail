@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import type React from "react"
 
@@ -10,7 +10,7 @@ import { showAlert } from "@/lib/stores/alert-store"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
-  allowedUserTypes: Array<"internal" | "external" | "supervisor">
+  allowedUserTypes: Array<"internal" | "external" | "supervisor" | "support">
 }
 
 export function ProtectedRoute({ children, allowedUserTypes }: ProtectedRouteProps) {

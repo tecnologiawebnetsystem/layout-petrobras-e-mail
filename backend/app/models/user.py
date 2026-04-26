@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 class TypeUser(str, Enum):
     EXTERNAL = "externo"
     INTERNAL = "internal"
+    SUPPORT = "support"  # Time de atendimento - pode cadastrar usuarios externos
     # SUPERVISOR foi removido: supervisores são usuários INTERNAL com is_supervisor=True.
     # A relação supervisor-supervisionado vem do chamado ServiceNow e é armazenada em manager_id.
 

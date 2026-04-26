@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LoginBackground } from "@/components/ui/login-background"
 import { NotificationModal } from "@/components/shared/notification-modal"
+import { FullPageLoader } from "@/components/ui/full-page-loader"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useRouter } from "next/navigation"
 import { getMsalInstance, loginRequest } from "@/lib/auth/msal-config"
@@ -20,6 +21,7 @@ export function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isRedirectingToMicrosoft, setIsRedirectingToMicrosoft] = useState(false)
   const [externalStep, setExternalStep] = useState<"email" | "code">("email")
   const [verificationCode, setVerificationCode] = useState(["", "", "", "", "", ""])
   const [generatedCode, setGeneratedCode] = useState("")
@@ -186,6 +188,7 @@ export function LoginForm() {
 
   const handleEntraIdLogin = async () => {
     setIsLoading(true)
+    setIsRedirectingToMicrosoft(true)
     try {
       const msal = await getMsalInstance()
       // loginRedirect: navega a página inteira para a Microsoft.
@@ -196,6 +199,7 @@ export function LoginForm() {
     } catch (error: unknown) {
       // Só chega aqui se loginRedirect lançar (ex: popups bloqueados, config inválida).
       setIsLoading(false)
+      setIsRedirectingToMicrosoft(false)
       const message =
         error instanceof Error ? error.message : "Nao foi possivel iniciar o login com a Microsoft."
       setNotification({
@@ -214,26 +218,35 @@ export function LoginForm() {
       await handleSendCode()
       return
     }
-    if (isLocalMode) {
-      // Login local com email + senha (modo dev sem Entra ID)
-      if (!email || !password) return
-      setIsLoading(true)
-      const result = await login(email, password)
-      setIsLoading(false)
-      if (result.success) {
-        const { user } = useAuthStore.getState()
-        if (user?.userType === "supervisor") router.push("/supervisor")
-        else if (user?.userType === "internal") router.push("/upload")
-        else router.push("/download")
-      } else {
-        setNotification({
-          show: true,
-          type: "error",
-          title: "Credenciais inválidas",
-          message: result.error || "E-mail ou senha incorretos. Verifique e tente novamente.",
-        })
-      }
+    // Login com email + senha para usuários internos
+    if (!email || !password) return
+    setIsLoading(true)
+    const result = await login(email, password)
+    setIsLoading(false)
+    if (result.success) {
+      const { user } = useAuthStore.getState()
+      if (user?.userType === "supervisor") router.push("/supervisor")
+      else if (user?.userType === "support") router.push("/suporte")
+      else if (user?.userType === "internal") router.push("/upload")
+      else router.push("/download")
+    } else {
+      setNotification({
+        show: true,
+        type: "error",
+        title: "Credenciais inválidas",
+        message: result.error || "E-mail ou senha incorretos. Verifique e tente novamente.",
+      })
     }
+  }
+
+  // Mostra loader em tela cheia quando está redirecionando para a Microsoft
+  if (isRedirectingToMicrosoft) {
+    return (
+      <FullPageLoader 
+        message="Conectando com Microsoft..."
+        subMessage="Voce sera redirecionado para a pagina de login da Microsoft"
+      />
+    )
   }
 
   return (
@@ -291,16 +304,8 @@ export function LoginForm() {
               </div>
             </div>
 
-            {/* Hint para usuários Petrobras (apenas quando Entra ID está configurado) */}
-            {isInternalUser && !isLocalMode && (
-              <p className="text-sm text-center text-muted-foreground">
-                Colaboradores Petrobras devem usar o botão{" "}
-                <span className="font-semibold text-[#0047BB]">Login com Microsoft</span> abaixo.
-              </p>
-            )}
-
-            {/* Campo de senha – visível apenas no modo local e somente para usuários internos */}
-            {isLocalMode && !isExternalUser && (
+            {/* Campo de senha – visível para usuários internos */}
+            {isInternalUser && (
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium text-foreground">
                   Senha
@@ -317,14 +322,11 @@ export function LoginForm() {
                     required
                   />
                 </div>
-                <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
-                  Modo de desenvolvimento — autenticação local ativa
-                </p>
               </div>
             )}
 
-            {/* Botão de login local */}
-            {isLocalMode && !isExternalUser && (
+            {/* Botão de login para usuários internos */}
+            {isInternalUser && (
               <Button
                 type="submit"
                 disabled={isLoading || !email || !password}
@@ -442,6 +444,21 @@ export function LoginForm() {
               </Button>
             </div>
           )}
+          {/* Botao Suporte - apenas para demonstracao */}
+          <div className="pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => router.push("/suporte")}
+              className="w-full h-10 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            >
+              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+              </svg>
+              Acesso Suporte (Demo)
+            </Button>
+          </div>
+
           {/* Footer */}
           <footer className="text-center text-xs text-muted-foreground/60 pt-4">
             <p>2025 Petrobras. Todos os direitos reservados.</p>

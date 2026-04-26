@@ -1,9 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Gera output standalone para deploy em container Docker
-  output: 'standalone',
-  // Evita que o bundler tente empacotar o AWS SDK — deve rodar como módulo Node.js nativo
-  serverExternalPackages: ['@aws-sdk/client-ssm', '@aws-sdk/client-secrets-manager'],
   typescript: {
     ignoreBuildErrors: false,
   },

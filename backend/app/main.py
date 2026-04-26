@@ -20,6 +20,7 @@ from app.api.v1 import (
     routes_auth,
     routes_emails,
     routes_diagnostico,
+    routes_support,
 )
 
 app = FastAPI(
@@ -113,6 +114,7 @@ app.include_router(routes_areas.router, prefix=prefix_v1, tags=["Areas"])
 app.include_router(routes_files.router, prefix=prefix_v1, tags=["Files"])
 app.include_router(routes_shares.router, prefix=prefix_v1, tags=["Shares"])
 app.include_router(routes_supervisor.router, prefix=prefix_v1, tags=["Supervisor"])
+app.include_router(routes_support.router, prefix=prefix_v1, tags=["Support"])
 app.include_router(routes_audit.router, prefix=prefix_v1, tags=["Audit"])
 app.include_router(routes_notifications.router, prefix=prefix_v1, tags=["Notifications"])
 app.include_router(routes_download.router, prefix=prefix_v1, tags=["Download"])
