@@ -3,7 +3,7 @@
 import type { FormEvent } from "react"
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
-import { User, Lock, ArrowLeft } from "lucide-react"
+import { User, Lock, ArrowLeft, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,6 +15,13 @@ import { useRouter } from "next/navigation"
 import { getMsalInstance, loginRequest } from "@/lib/auth/msal-config"
 import { getUserTypeFromEmail } from "@/lib/auth/entra-config"
 import { getClientEnv } from "@/lib/env"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 
 export function LoginForm() {
@@ -39,8 +46,14 @@ export function LoginForm() {
     message: "",
   })
 
-  const { setAuth } = useAuthStore()
+  const { setAuth, login } = useAuthStore()
   const router = useRouter()
+
+  // Estado do modal de login de suporte
+  const [showSuporteModal, setShowSuporteModal] = useState(false)
+  const [suporteEmail, setSuporteEmail] = useState("")
+  const [suporteSenha, setSuporteSenha] = useState("")
+  const [suporteLoading, setSuporteLoading] = useState(false)
 
   // Exibe o botão Entra ID em todos os modos exceto 'dev'
   // Usa getClientEnv() para ler o valor runtime ao invés do valor baked no bundle
@@ -219,6 +232,62 @@ export function LoginForm() {
     }
     // Usuários internos usam o login com Microsoft (Entra ID)
     // O botão de submit não é exibido para usuários internos
+  }
+
+  const handleSuporteLogin = async (e: FormEvent) => {
+    e.preventDefault()
+
+    if (!suporteEmail.trim() || !suporteSenha.trim()) {
+      setNotification({
+        show: true,
+        type: "warning",
+        title: "Campos obrigatórios",
+        message: "Informe o e-mail e a senha para acessar o suporte.",
+      })
+      return
+    }
+
+    setSuporteLoading(true)
+    try {
+      const result = await login(suporteEmail.trim(), suporteSenha)
+
+      if (!result.success) {
+        setNotification({
+          show: true,
+          type: "error",
+          title: "Credenciais inválidas",
+          message: result.error || "E-mail ou senha incorretos. Tente novamente.",
+        })
+        return
+      }
+
+      // Verifica se o usuário autenticado tem permissão de suporte
+      const { user: loggedUser } = useAuthStore.getState()
+      if (loggedUser?.userType !== "support" && loggedUser?.userType !== "supervisor") {
+        useAuthStore.getState().clearAuth()
+        setNotification({
+          show: true,
+          type: "error",
+          title: "Acesso negado",
+          message: "Sua conta não possui permissão para acessar o painel de suporte.",
+        })
+        return
+      }
+
+      setShowSuporteModal(false)
+      setSuporteEmail("")
+      setSuporteSenha("")
+      router.push("/suporte")
+    } catch {
+      setNotification({
+        show: true,
+        type: "error",
+        title: "Erro ao autenticar",
+        message: "Ocorreu um erro ao tentar autenticar. Tente novamente.",
+      })
+    } finally {
+      setSuporteLoading(false)
+    }
   }
 
   // Mostra loader em tela cheia quando está redirecionando para a Microsoft
@@ -401,7 +470,7 @@ export function LoginForm() {
             <Button
               type="button"
               variant="ghost"
-              onClick={() => router.push("/suporte")}
+              onClick={() => setShowSuporteModal(true)}
               className="w-full h-10 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50"
             >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -417,6 +486,99 @@ export function LoginForm() {
           </footer>
         </div>
       </div>
+
+      {/* Modal de Login de Suporte */}
+      <Dialog open={showSuporteModal} onOpenChange={(open) => {
+        if (!suporteLoading) {
+          setShowSuporteModal(open)
+          if (!open) {
+            setSuporteEmail("")
+            setSuporteSenha("")
+          }
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Acesso ao Suporte</DialogTitle>
+            <DialogDescription>
+              Informe suas credenciais de suporte para acessar o painel.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSuporteLogin} className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label htmlFor="suporte-email" className="text-sm font-medium">
+                E-mail
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="suporte-email"
+                  type="email"
+                  placeholder="suporte@petrobras.com.br"
+                  value={suporteEmail}
+                  onChange={(e) => setSuporteEmail(e.target.value)}
+                  className="pl-10 h-11"
+                  disabled={suporteLoading}
+                  required
+                  autoComplete="email"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="suporte-senha" className="text-sm font-medium">
+                Senha
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="suporte-senha"
+                  type="password"
+                  placeholder="Digite sua senha"
+                  value={suporteSenha}
+                  onChange={(e) => setSuporteSenha(e.target.value)}
+                  className="pl-10 h-11"
+                  disabled={suporteLoading}
+                  required
+                  autoComplete="current-password"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setShowSuporteModal(false)
+                  setSuporteEmail("")
+                  setSuporteSenha("")
+                }}
+                disabled={suporteLoading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1 bg-[#0047BB] hover:bg-[#003A99] text-white font-semibold"
+                disabled={suporteLoading}
+              >
+                {suporteLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Entrando...
+                  </>
+                ) : (
+                  "Entrar"
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       <NotificationModal
         open={notification.show}
         onOpenChange={(show) => setNotification({ ...notification, show })}
