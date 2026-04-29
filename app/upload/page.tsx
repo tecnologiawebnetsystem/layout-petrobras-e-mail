@@ -282,6 +282,38 @@ return (
           </TabsList>
 
           <TabsContent value="novo">
+            {/* Tela de bloqueio total: sem chamado ativo, o usuario nao ve o formulario */}
+            {!ticketsLoading && myTickets.length === 0 && (
+              <div className="flex flex-col items-center justify-center min-h-[480px] bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-10 text-center space-y-6">
+                <div className="h-20 w-20 rounded-full bg-red-500/10 flex items-center justify-center">
+                  <AlertTriangle className="h-10 w-10 text-red-500" />
+                </div>
+                <div className="space-y-2 max-w-md">
+                  <h2 className="text-2xl font-bold text-foreground">Acesso nao autorizado</h2>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Voce nao possui nenhum chamado ativo aberto pelo suporte com o seu e-mail.
+                    Para realizar um compartilhamento de arquivos, e necessario que o suporte abra um chamado com seu e-mail de solicitante.
+                  </p>
+                </div>
+                <div className="bg-muted/40 border border-border rounded-xl p-5 space-y-2 w-full max-w-sm text-left">
+                  <p className="text-sm font-semibold text-foreground">O que fazer?</p>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>Entre em contato com o time de suporte</li>
+                    <li>Informe o numero do seu chamado ou solicitacao</li>
+                    <li>Aguarde o cadastro ser realizado</li>
+                    <li>O acesso e liberado por ate 7 dias por chamado</li>
+                  </ul>
+                </div>
+                <a
+                  href="mailto:suporte@petrobras.com.br"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0047BB] text-white font-semibold text-sm hover:bg-[#003A99] transition-colors"
+                >
+                  Contatar Suporte
+                </a>
+              </div>
+            )}
+
+            {(ticketsLoading || myTickets.length > 0) && (
         <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-10 space-y-8 relative overflow-hidden">
             <div className="relative">
               <div className="flex items-center gap-4 mb-3">
@@ -366,22 +398,7 @@ return (
                   <div className="h-5 w-5 border-2 border-[#0047BB] border-t-transparent rounded-full animate-spin" />
                   <span className="text-sm text-muted-foreground">Verificando chamados ativos...</span>
                 </div>
-              ) : myTickets.length === 0 ? (
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-5 space-y-2">
-                  <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <AlertTriangle className="h-4 w-4 text-amber-600" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="font-medium text-amber-800 dark:text-amber-500">Nenhum chamado ativo encontrado</p>
-                      <p className="text-sm text-amber-700 dark:text-amber-600 leading-relaxed">
-                        Para realizar um compartilhamento, e necessario ter um chamado ativo aberto pelo suporte com o
-                        seu e-mail. Entre em contato com o suporte para solicitar o cadastro.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
+              ) : myTickets.length > 0 ? (
                 <div className="space-y-4">
                   {/* Seletor de chamado */}
                   <div className="space-y-3">
@@ -406,6 +423,7 @@ return (
                         {myTickets.map((t) => (
                           <SelectItem key={t.id} value={String(t.id)}>
                             #{t.numero_solicitacao} — {t.email_usuario_externo}
+                            {t.dias_restantes != null && ` (${t.dias_restantes}d restante${t.dias_restantes !== 1 ? "s" : ""})`}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -506,6 +524,7 @@ return (
               </div>
             </form>
           </div>
+            )}
           </TabsContent>
 
           {/* Aba: Meus Envios */}

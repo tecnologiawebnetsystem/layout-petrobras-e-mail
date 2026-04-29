@@ -5,7 +5,7 @@ Acesso restrito a usuarios com role 'support' ou supervisores.
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
-from datetime import datetime, UTC
+from datetime import datetime, UTC, timedelta
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 
@@ -20,6 +20,34 @@ from app.core.security import get_current_user_from_token
 from app.services.audit_service import log_action
 
 router = APIRouter(prefix="/support", tags=["support"])
+
+
+def expire_overdue_registrations(session: Session, requester_email: Optional[str] = None) -> int:
+    """
+    Inativa todos os chamados que ultrapassaram expires_at mas ainda estao como ATIVO.
+    Se requester_email for fornecido, filtra apenas os chamados daquele usuario.
+    Retorna a quantidade de chamados inativados.
+    """
+    now = datetime.now(UTC)
+    query = select(SupportRegistration).where(
+        SupportRegistration.status == SupportRegistrationStatus.ATIVO,
+        SupportRegistration.expires_at <= now,
+    )
+    if requester_email:
+        query = query.where(SupportRegistration.requester_email == requester_email)
+
+    overdue = session.exec(query).all()
+    count = 0
+    for reg in overdue:
+        reg.status = SupportRegistrationStatus.INATIVO
+        reg.updated_at = now
+        session.add(reg)
+        count += 1
+
+    if count:
+        session.commit()
+
+    return count
 
 
 class CadastroUsuarioRequest(BaseModel):
@@ -220,7 +248,9 @@ class MyTicketItem(BaseModel):
     numero_solicitacao: str
     email_usuario_externo: str
     created_at: datetime
+    expires_at: datetime
     cadastrado_por: str
+    dias_restantes: int
 
 
 @router.get("/my-tickets", response_model=List[MyTicketItem])
@@ -232,8 +262,10 @@ async def listar_meus_chamados(
     Retorna os chamados ativos do suporte onde requester_email bate com o
     e-mail do usuario interno autenticado.
 
-    Usado pela pagina de upload para verificar se o usuario possui chamado
-    ativo antes de permitir o compartilhamento.
+    Regras:
+    - Somente chamados com status ATIVO e expires_at > agora sao retornados.
+    - Chamados vencidos sao inativados automaticamente antes da consulta (lazy expiration).
+    - Se nao houver chamados, o usuario interno NAO pode compartilhar arquivos.
     """
     if current_user.type not in (TypeUser.INTERNAL,):
         raise HTTPException(
@@ -241,14 +273,24 @@ async def listar_meus_chamados(
             detail="Acesso negado. Apenas usuarios internos podem consultar seus chamados.",
         )
 
+    # Lazy expiration: inativa chamados vencidos deste usuario antes de consultar
+    expire_overdue_registrations(session, requester_email=current_user.email)
+
+    now = datetime.now(UTC)
     registrations = session.exec(
         select(SupportRegistration)
         .where(
             SupportRegistration.requester_email == current_user.email,
             SupportRegistration.status == SupportRegistrationStatus.ATIVO,
+            SupportRegistration.expires_at > now,
         )
         .order_by(SupportRegistration.created_at.desc())
     ).all()
+
+    def _dias_restantes(reg: SupportRegistration) -> int:
+        exp = reg.expires_at.replace(tzinfo=UTC) if reg.expires_at.tzinfo is None else reg.expires_at
+        delta = exp - now
+        return max(0, delta.days)
 
     return [
         MyTicketItem(
@@ -256,7 +298,9 @@ async def listar_meus_chamados(
             numero_solicitacao=r.request_number,
             email_usuario_externo=r.external_user_email,
             created_at=r.created_at,
+            expires_at=r.expires_at,
             cadastrado_por=r.registered_by_name,
+            dias_restantes=_dias_restantes(r),
         )
         for r in registrations
     ]

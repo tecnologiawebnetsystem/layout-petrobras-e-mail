@@ -3,9 +3,11 @@ Modelo para registro de cadastros de usuarios externos pelo suporte.
 """
 
 from sqlmodel import SQLModel, Field, Relationship
-from datetime import datetime, UTC
+from datetime import datetime, UTC, timedelta
 from typing import Optional, TYPE_CHECKING
 from enum import Enum
+
+TICKET_EXPIRY_DAYS = 7  # Chamados ficam ativos por no maximo 7 dias
 
 if TYPE_CHECKING:
     from app.models.user import User
@@ -55,9 +57,22 @@ class SupportRegistration(SQLModel, table=True):
     # Timestamps
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), index=True)
     updated_at: Optional[datetime] = Field(default=None)
-    
+
+    # Expiracao automatica: chamado fica ativo por no maximo 7 dias
+    expires_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC) + timedelta(days=TICKET_EXPIRY_DAYS),
+        index=True,
+    )
+
     # Se foi reativacao (usuario ja existia mas estava inativo)
     is_reactivation: bool = Field(default=False)
+
+    @property
+    def is_expired(self) -> bool:
+        """Retorna True se o prazo de 7 dias ja passou."""
+        now = datetime.now(UTC)
+        exp = self.expires_at.replace(tzinfo=UTC) if self.expires_at.tzinfo is None else self.expires_at
+        return now > exp
 
     # Relacionamentos
     external_user: Optional["User"] = Relationship(

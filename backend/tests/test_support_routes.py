@@ -8,6 +8,7 @@ Execucao:
 from __future__ import annotations
 
 import pytest
+from datetime import datetime, UTC, timedelta
 from fastapi.testclient import TestClient
 
 from app.models.support_registration import SupportRegistration, SupportRegistrationStatus
@@ -84,6 +85,40 @@ class TestMyTickets:
         data = response.json()
         ids = [item["id"] for item in data]
         assert support_registration.id not in ids
+
+    def test_nao_retorna_chamado_vencido_apos_7_dias(
+        self, internal_client, session, support_registration
+    ):
+        """
+        Chamado com expires_at no passado (mais de 7 dias) nao deve aparecer.
+        A lazy expiration deve inativa-lo antes de retornar a lista.
+        """
+        # Simula chamado criado ha 8 dias (expirado)
+        support_registration.expires_at = datetime.now(UTC) - timedelta(days=1)
+        session.add(support_registration)
+        session.commit()
+
+        response = internal_client.get("/api/v1/support/my-tickets")
+        assert response.status_code == 200
+        data = response.json()
+        ids = [item["id"] for item in data]
+        assert support_registration.id not in ids
+
+        # Verifica que foi inativado no banco pela lazy expiration
+        session.refresh(support_registration)
+        assert support_registration.status == SupportRegistrationStatus.INATIVO
+
+    def test_retorna_dias_restantes_no_chamado(
+        self, internal_client, support_registration
+    ):
+        """O campo dias_restantes deve ser retornado para cada chamado ativo."""
+        response = internal_client.get("/api/v1/support/my-tickets")
+        assert response.status_code == 200
+        data = response.json()
+        for item in data:
+            assert "dias_restantes" in item
+            assert item["dias_restantes"] >= 0
+            assert "expires_at" in item
 
     def test_acesso_negado_para_usuario_suporte(self, support_client):
         """Usuario de suporte nao pode acessar my-tickets (apenas interno)."""

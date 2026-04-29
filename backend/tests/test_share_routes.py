@@ -122,6 +122,61 @@ class TestGetShare:
 # Testes de cancelamento
 # ─────────────────────────────────────────────────────────────────────────────
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Testes de inativacao do chamado ao criar share (regra de negocio)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestShareInativaChaMado:
+    def test_chamado_e_inativado_apos_criar_share(
+        self, authed_client, session, usuario_interno, area, support_registration
+    ):
+        """
+        Regra de negocio: ao criar um share vinculado a um chamado,
+        o chamado deve ser inativado imediatamente.
+        """
+        from app.models.support_registration import SupportRegistrationStatus
+
+        # Verifica estado inicial: chamado ativo
+        assert support_registration.status == SupportRegistrationStatus.ATIVO
+
+        payload = {
+            "name": "Teste Inativacao",
+            "description": "Share que inativa o chamado",
+            "recipient_email": support_registration.external_user_email,
+            "expiration_hours": 48,
+            "file_ids": [],
+            "support_registration_id": support_registration.id,
+        }
+        response = authed_client.post("/api/v1/shares/", json=payload)
+        assert response.status_code == 201
+
+        # Verifica que o chamado foi inativado pelo backend
+        session.refresh(support_registration)
+        assert support_registration.status == SupportRegistrationStatus.INATIVO
+
+    def test_share_sem_chamado_nao_altera_nada(
+        self, authed_client, session, usuario_interno, area, support_registration
+    ):
+        """
+        Share criado sem support_registration_id nao deve alterar nenhum chamado.
+        """
+        from app.models.support_registration import SupportRegistrationStatus
+
+        payload = {
+            "name": "Sem chamado",
+            "description": "Share sem vinculo",
+            "recipient_email": "sem@chamado.com",
+            "expiration_hours": 24,
+            "file_ids": [],
+        }
+        response = authed_client.post("/api/v1/shares/", json=payload)
+        assert response.status_code == 201
+
+        # Chamado deve permanecer ativo
+        session.refresh(support_registration)
+        assert support_registration.status == SupportRegistrationStatus.ATIVO
+
+
 class TestCancelShare:
     def test_cancela_share_pendente(
         self, authed_client, session, usuario_interno, area

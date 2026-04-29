@@ -20,6 +20,7 @@ from app.schemas.token_schema import TokenRead
 from app.utils.authz import require_internal, get_current_user
 from app.services.audit_service import log_event
 from app.models.token_access import TokenAccess
+from app.models.support_registration import SupportRegistration, SupportRegistrationStatus
 
 router = APIRouter(prefix="/shares", tags=["Shares"])
 
@@ -85,12 +86,22 @@ async def create_share_endpoint(
 
         session.commit()
 
+        # Regra de negocio: ao compartilhar, o chamado vinculado e inativado imediatamente.
+        # O chamado cumpriu seu proposito — nao deve permitir novos compartilhamentos.
+        if payload.support_registration_id:
+            reg = session.get(SupportRegistration, payload.support_registration_id)
+            if reg and reg.status == SupportRegistrationStatus.ATIVO:
+                reg.status = SupportRegistrationStatus.INATIVO
+                reg.updated_at = datetime.now(UTC)
+                session.add(reg)
+                session.commit()
+
         log_event(
             session=session,
             action="CRIAR_SHARE",
             user_id=user.id,
             share_id=share.id,
-            detail=f"recipient={payload.recipient_email}, files={len(payload.file_ids)}",
+            detail=f"recipient={payload.recipient_email}, files={len(payload.file_ids)}, ticket={payload.support_registration_id}",
             ip=request.client.host if request else None,
             user_agent=request.headers.get("User-Agent") if request else None
         )

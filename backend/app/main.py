@@ -3,6 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.init_db import init_db
+from app.db.session import get_session as _get_session
 
 # Rotas existentes
 from app.api.v1 import (
@@ -94,6 +95,16 @@ app.add_middleware(
 @app.on_event("startup")
 def on_startup():
     init_db()
+    # Limpeza global: inativa chamados vencidos (status ATIVO mas expires_at ja passou)
+    try:
+        from app.api.v1.routes_support import expire_overdue_registrations
+        session_gen = _get_session()
+        db = next(session_gen)
+        expired = expire_overdue_registrations(db)
+        if expired:
+            print(f"[startup] {expired} chamado(s) vencido(s) inativado(s) automaticamente.")
+    except Exception as e:
+        print(f"[startup] Aviso: nao foi possivel executar limpeza de chamados: {e}")
 
 
 # Middleware simples de logging
