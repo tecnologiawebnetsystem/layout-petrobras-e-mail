@@ -4,39 +4,25 @@ import { useState } from "react"
 import type { ReactNode } from "react"
 
 import { Card } from "@/components/ui/card"
-import { TrendingUp, TrendingDown, FileText, Clock, CheckCircle, XCircle } from "lucide-react"
+import { FileText, Clock, CheckCircle, XCircle } from "lucide-react"
 import { MetricDetailModal } from "./metric-detail-modal"
 import type { FileDetail } from "./metric-detail-modal"
 
 interface MetricCardProps {
   title: string
   value: string | number
-  change?: {
-    value: number
-    isPositive: boolean
-  }
   icon: ReactNode
   gradient: string
   onClick?: () => void
 }
 
-function MetricCard({ title, value, change, icon, gradient, onClick }: MetricCardProps) {
+function MetricCard({ title, value, icon, gradient, onClick }: MetricCardProps) {
   return (
     <Card className={`p-6 relative overflow-hidden card-hover ${onClick ? "cursor-pointer" : ""}`} onClick={onClick}>
       <div className={`absolute inset-0 ${gradient} opacity-5`} />
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-4">
           <div className={`h-12 w-12 rounded-xl ${gradient} flex items-center justify-center`}>{icon}</div>
-          {change && (
-            <div
-              className={`flex items-center gap-1 text-sm font-semibold ${
-                change.isPositive ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              {change.isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-              {Math.abs(change.value)}%
-            </div>
-          )}
         </div>
         <p className="text-2xl font-bold text-foreground mb-1">{value}</p>
         <p className="text-sm text-muted-foreground">{title}</p>
@@ -76,7 +62,6 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType,
           type: "total" as const,
           title: "Total Enviados",
           value: total,
-          change: { value: 12, isPositive: true },
           icon: <FileText className="h-6 w-6 text-white" />,
           gradient: "bg-gradient-to-br from-[#00A99D] to-[#0047BB]",
           onClick: () => setSelectedMetric("total"),
@@ -93,7 +78,6 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType,
           type: "approved" as const,
           title: "Aprovados",
           value: approved,
-          change: { value: 8, isPositive: true },
           icon: <CheckCircle className="h-6 w-6 text-white" />,
           gradient: "bg-gradient-to-br from-green-500 to-emerald-500",
           onClick: () => setSelectedMetric("approved"),
@@ -131,7 +115,6 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType,
           type: "approved" as const,
           title: "Baixados",
           value: approved,
-          change: { value: 15, isPositive: true },
           icon: <CheckCircle className="h-6 w-6 text-white" />,
           gradient: "bg-gradient-to-br from-green-500 to-emerald-500",
           onClick: () => setSelectedMetric("approved"),
@@ -164,15 +147,14 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType,
         gradient: "bg-gradient-to-br from-yellow-500 to-orange-500",
         onClick: () => setSelectedMetric("pending"),
       },
-      {
-        type: "approved" as const,
-        title: "Aprovados",
-        value: approved,
-        change: { value: 10, isPositive: true },
-        icon: <CheckCircle className="h-6 w-6 text-white" />,
-        gradient: "bg-gradient-to-br from-green-500 to-emerald-500",
-        onClick: () => setSelectedMetric("approved"),
-      },
+        {
+          type: "approved" as const,
+          title: "Aprovados",
+          value: approved,
+          icon: <CheckCircle className="h-6 w-6 text-white" />,
+          gradient: "bg-gradient-to-br from-green-500 to-emerald-500",
+          onClick: () => setSelectedMetric("approved"),
+        },
       {
         type: "rejected" as const,
         title: "Rejeitados",

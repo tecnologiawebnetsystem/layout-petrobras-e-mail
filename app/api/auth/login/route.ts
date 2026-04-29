@@ -73,21 +73,12 @@ const DEMO_USERS: Record<string, { password: string; user: Record<string, unknow
 }
 
 /**
- * Funcao auxiliar para criar delay (para visualizar o loader)
- * REMOVER APOS TESTES
- */
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-
-/**
  * POST /api/auth/login
  * 
  * Tenta primeiro o backend Python. Se falhar (backend indisponivel),
  * usa usuarios de demonstracao para permitir testes das paginas.
  */
 export async function POST(request: NextRequest) {
-  // DELAY PARA VISUALIZAR O LOADER - REMOVER APOS TESTES
-  await delay(3000) // 3 segundos de delay
-  
   const body = await request.json()
   const { email, password } = body as { email?: string; password?: string }
 
