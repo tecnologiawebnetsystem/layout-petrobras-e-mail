@@ -277,7 +277,13 @@ export function LoginForm() {
       setShowSuporteModal(false)
       setSuporteEmail("")
       setSuporteSenha("")
-      router.push("/suporte")
+
+      // Supervisor vai para a página de aprovações, suporte vai para o painel de suporte
+      if (loggedUser?.userType === "supervisor") {
+        router.push("/supervisor")
+      } else {
+        router.push("/suporte")
+      }
     } catch {
       setNotification({
         show: true,
