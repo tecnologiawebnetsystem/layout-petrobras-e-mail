@@ -212,6 +212,54 @@ async def cadastrar_usuario_externo(
     )
 
 
+class MyTicketItem(BaseModel):
+    """Schema de chamado retornado para o usuario interno"""
+    id: int
+    numero_solicitacao: str
+    email_usuario_externo: str
+    created_at: datetime
+    cadastrado_por: str
+
+
+@router.get("/my-tickets", response_model=List[MyTicketItem])
+async def listar_meus_chamados(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token),
+):
+    """
+    Retorna os chamados ativos do suporte onde requester_email bate com o
+    e-mail do usuario interno autenticado.
+
+    Usado pela pagina de upload para verificar se o usuario possui chamado
+    ativo antes de permitir o compartilhamento.
+    """
+    if current_user.type not in (TypeUser.INTERNAL,):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado. Apenas usuarios internos podem consultar seus chamados.",
+        )
+
+    registrations = session.exec(
+        select(SupportRegistration)
+        .where(
+            SupportRegistration.requester_email == current_user.email,
+            SupportRegistration.status == SupportRegistrationStatus.ATIVO,
+        )
+        .order_by(SupportRegistration.created_at.desc())
+    ).all()
+
+    return [
+        MyTicketItem(
+            id=r.id,
+            numero_solicitacao=r.request_number,
+            email_usuario_externo=r.external_user_email,
+            created_at=r.created_at,
+            cadastrado_por=r.registered_by_name,
+        )
+        for r in registrations
+    ]
+
+
 @router.get("/users")
 async def listar_usuarios_cadastrados(
     search: Optional[str] = None,

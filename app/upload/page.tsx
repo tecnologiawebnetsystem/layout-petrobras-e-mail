@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { NotificationModal } from "@/components/shared/notification-modal"
-import { Lock, Send, Sparkles, Clock } from "lucide-react"
+import { Lock, Send, Sparkles, Clock, AlertTriangle, Ticket } from "lucide-react"
+import type { MyTicket } from "@/app/api/support/my-tickets/route"
 import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
 import type { FileDetail } from "@/components/dashboard/metric-detail-modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -25,6 +26,11 @@ export default function UploadPage() {
   const { user, isAuthenticated } = useAuthStore()
   const { addUpload, uploads, loadUploads } = useWorkflowStore()
   const router = useRouter()
+  // Chamados do suporte vinculados ao usuario interno
+  const [myTickets, setMyTickets] = useState<MyTicket[]>([])
+  const [selectedTicket, setSelectedTicket] = useState<MyTicket | null>(null)
+  const [ticketsLoading, setTicketsLoading] = useState(true)
+
 const [recipient, setRecipient] = useState("")
   const [description, setDescription] = useState("")
   const [files, setFiles] = useState<File[]>([])
@@ -63,6 +69,34 @@ useEffect(() => {
     loadUploads()
   }, [])
 
+  // Busca chamados ativos do suporte para o usuario interno logado
+  useEffect(() => {
+    if (!isAuthenticated || user?.userType !== "internal") return
+
+    const fetchTickets = async () => {
+      setTicketsLoading(true)
+      try {
+        const token = (user as Record<string, unknown>)?.token as string | undefined
+        const res = await fetch("/api/support/my-tickets", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        const json = await res.json()
+        const tickets: MyTicket[] = json?.data ?? []
+        setMyTickets(tickets)
+        if (tickets.length === 1) {
+          setSelectedTicket(tickets[0])
+          setRecipient(tickets[0].email_usuario_externo)
+        }
+      } catch {
+        setMyTickets([])
+      } finally {
+        setTicketsLoading(false)
+      }
+    }
+
+    fetchTickets()
+  }, [isAuthenticated, user])
+
 const handleFilesSelected = async (newFiles: File[]) => {
     const dangerousExtensions = [".exe", ".dll", ".bat", ".cmd", ".com", ".msi", ".scr", ".vbs", ".ps1", ".sh"]
     const blockedFiles: string[] = []
@@ -93,6 +127,16 @@ const handleFileRemove = (index: number) => {
 
 const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+  if (myTickets.length === 0 || !selectedTicket) {
+      setNotification({
+        show: true,
+        type: "warning",
+        title: "Chamado obrigatorio",
+        message: "E necessario ter um chamado ativo aberto pelo suporte para realizar o compartilhamento.",
+      })
+      return
+    }
 
   if (!recipient) {
       setNotification({
@@ -150,6 +194,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           type: f.name.split(".").pop()?.toUpperCase() || "FILE",
         })),
         expirationHours,
+        support_registration_id: selectedTicket?.id ?? null,
       }
 
     await new Promise((resolve) => setTimeout(resolve, 2000))
@@ -281,25 +326,82 @@ return (
                 </div>
               )}
 
-            <div className="space-y-3">
-                <Label htmlFor="recipient" className="text-base font-medium flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-[#00A99D]" />
-                  Destinatário Externo
-                </Label>
-                <Input
-                  id="recipient"
-                  type="email"
-                  placeholder="cliente@empresa.com"
-                  value={recipient}
-                  onChange={(e) => setRecipient(e.target.value)}
-                  required
-                  aria-label="E-mail do destinatário"
-                  disabled={isLoading || showSuccess}
-                />
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  O destinatário receberá um email com link seguro para download
-                </p>
-              </div>
+            {/* Bloco de chamados do suporte */}
+              {ticketsLoading ? (
+                <div className="flex items-center gap-3 p-5 rounded-xl border border-border/50 bg-muted/20">
+                  <div className="h-5 w-5 border-2 border-[#0047BB] border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm text-muted-foreground">Verificando chamados ativos...</span>
+                </div>
+              ) : myTickets.length === 0 ? (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-5 space-y-2">
+                  <div className="flex items-start gap-3">
+                    <div className="h-8 w-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-amber-800 dark:text-amber-500">Nenhum chamado ativo encontrado</p>
+                      <p className="text-sm text-amber-700 dark:text-amber-600 leading-relaxed">
+                        Para realizar um compartilhamento, e necessario ter um chamado ativo aberto pelo suporte com o
+                        seu e-mail. Entre em contato com o suporte para solicitar o cadastro.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Seletor de chamado */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium flex items-center gap-2">
+                      <Ticket className="h-4 w-4 text-[#0047BB]" />
+                      Chamado do Suporte
+                    </Label>
+                    <Select
+                      value={selectedTicket ? String(selectedTicket.id) : ""}
+                      onValueChange={(val) => {
+                        const ticket = myTickets.find((t) => String(t.id) === val) ?? null
+                        setSelectedTicket(ticket)
+                        setRecipient(ticket?.email_usuario_externo ?? "")
+                      }}
+                      disabled={isLoading || showSuccess}
+                      aria-label="Selecione o chamado do suporte"
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um chamado..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {myTickets.map((t) => (
+                          <SelectItem key={t.id} value={String(t.id)}>
+                            #{t.numero_solicitacao} — {t.email_usuario_externo}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Selecione o chamado aberto pelo suporte para este compartilhamento.
+                    </p>
+                  </div>
+
+                  {/* Campo destinatario somente leitura */}
+                  <div className="space-y-3">
+                    <Label htmlFor="recipient" className="text-base font-medium flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-[#00A99D]" />
+                      Destinatario Externo
+                    </Label>
+                    <Input
+                      id="recipient"
+                      type="email"
+                      value={recipient}
+                      readOnly
+                      aria-label="E-mail do destinatario (somente leitura)"
+                      className="bg-muted/40 cursor-not-allowed select-none"
+                      tabIndex={-1}
+                    />
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      O e-mail e preenchido automaticamente a partir do chamado selecionado e nao pode ser alterado.
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="space-y-3">
                 <Label className="text-base font-medium">Anexar Arquivos</Label>
                 <DragDropZone
@@ -355,7 +457,7 @@ return (
               <div className="flex justify-end pt-6">
                 <Button
                   type="submit"
-                  disabled={isLoading || showSuccess}
+                  disabled={isLoading || showSuccess || myTickets.length === 0 || !selectedTicket || ticketsLoading}
                   size="lg"
                   className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:from-[#008A81] hover:to-[#003A99] text-white font-semibold px-10 text-base shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Enviar arquivos para aprovação"
