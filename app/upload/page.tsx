@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { NotificationModal } from "@/components/shared/notification-modal"
-import { Lock, Send, Sparkles, Clock, AlertTriangle, Ticket } from "lucide-react"
+import { Lock, Send, Sparkles, Clock, AlertTriangle, Ticket, CheckCircle2, XCircle, Timer, FileCheck, ChevronRight, History } from "lucide-react"
 import type { MyTicket } from "@/app/api/support/my-tickets/route"
 import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
 import type { FileDetail } from "@/components/dashboard/metric-detail-modal"
@@ -21,6 +21,9 @@ import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
 import { ScrollToTop } from "@/components/shared/scroll-to-top"
 import { UploadSuccessModal } from "@/components/upload/upload-success-modal"
 import { ProtectedRoute } from "@/components/auth/protected-route"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent } from "@/components/ui/card"
 
 export default function UploadPage() {
   const { user, isAuthenticated } = useAuthStore()
@@ -30,6 +33,8 @@ export default function UploadPage() {
   const [myTickets, setMyTickets] = useState<MyTicket[]>([])
   const [selectedTicket, setSelectedTicket] = useState<MyTicket | null>(null)
   const [ticketsLoading, setTicketsLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState("novo")
+  const [supervisorManual, setSupervisorManual] = useState("")
 
 const [recipient, setRecipient] = useState("")
   const [description, setDescription] = useState("")
@@ -261,6 +266,22 @@ return (
 
         <MetricsDashboard {...uploadStats} userType="internal" files={uploadFiles} />
 
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full max-w-sm grid-cols-2 h-12 p-1 bg-muted/50">
+            <TabsTrigger value="novo" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <Send className="h-4 w-4" />
+              Novo Envio
+            </TabsTrigger>
+            <TabsTrigger value="historico" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <History className="h-4 w-4" />
+              Meus Envios
+              {uploadStats.pending > 0 && (
+                <Badge className="ml-1 bg-amber-500 text-white text-xs px-1.5">{uploadStats.pending}</Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="novo">
         <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-10 space-y-8 relative overflow-hidden">
             <div className="relative">
               <div className="flex items-center gap-4 mb-3">
@@ -309,19 +330,32 @@ return (
                 </div>
               )}
             {!user?.manager && (
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-5 space-y-2">
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-5 space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-blue-600 font-bold text-sm">i</span>
+                      <AlertTriangle className="h-4 w-4 text-blue-600" />
                     </div>
                     <div className="space-y-1">
-                      <p className="font-medium text-blue-800 dark:text-blue-500">Supervisor não identificado</p>
+                      <p className="font-medium text-blue-800 dark:text-blue-500">Supervisor nao identificado</p>
                       <p className="text-sm text-blue-700 dark:text-blue-600 leading-relaxed">
-                        Não foi possível identificar seu supervisor no Active Directory. Você pode continuar com o
-                        compartilhamento, mas recomendamos entrar em contato com o RH ou TI para atualizar seu cadastro
-                        hierárquico.
+                        Nao foi possivel identificar seu supervisor no Active Directory. Informe o e-mail do supervisor
+                        manualmente para que o compartilhamento seja encaminhado para aprovacao.
                       </p>
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="supervisor-manual" className="text-sm font-medium text-blue-800 dark:text-blue-400">
+                      E-mail do Supervisor (obrigatorio)
+                    </Label>
+                    <Input
+                      id="supervisor-manual"
+                      type="email"
+                      placeholder="supervisor@petrobras.com.br"
+                      value={supervisorManual}
+                      onChange={(e) => setSupervisorManual(e.target.value)}
+                      className="bg-white/50 border-blue-300"
+                      disabled={isLoading || showSuccess}
+                    />
                   </div>
                 </div>
               )}
@@ -472,6 +506,71 @@ return (
               </div>
             </form>
           </div>
+          </TabsContent>
+
+          {/* Aba: Meus Envios */}
+          <TabsContent value="historico" className="space-y-4">
+            {uploads.length === 0 ? (
+              <Card className="p-12 text-center bg-card/50">
+                <FileCheck className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <p className="text-xl font-medium text-foreground mb-2">Nenhum envio encontrado</p>
+                <p className="text-muted-foreground">Seus compartilhamentos aparecerão aqui.</p>
+              </Card>
+            ) : (
+              uploads.map((u) => {
+                const statusConfig = {
+                  pending: { label: "Pendente", className: "bg-amber-100 text-amber-700 border-amber-200", icon: <Clock className="h-3 w-3 mr-1" /> },
+                  approved: { label: "Aprovado", className: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: <CheckCircle2 className="h-3 w-3 mr-1" /> },
+                  rejected: { label: "Rejeitado", className: "bg-red-100 text-red-700 border-red-200", icon: <XCircle className="h-3 w-3 mr-1" /> },
+                  cancelled: { label: "Cancelado", className: "bg-slate-100 text-slate-600 border-slate-200", icon: null },
+                }
+                const sc = statusConfig[u.status] ?? statusConfig.pending
+                return (
+                  <Card key={u.id} className={`overflow-hidden border-l-4 ${u.status === "pending" ? "border-l-amber-500" : u.status === "approved" ? "border-l-emerald-500" : u.status === "rejected" ? "border-l-red-500" : "border-l-slate-400"}`}>
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-2 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-foreground truncate">{u.name || `Compartilhamento #${u.id}`}</span>
+                            <Badge className={`${sc.className} flex items-center text-xs`}>
+                              {sc.icon}{sc.label}
+                            </Badge>
+                            {u.chamado && (
+                              <span className="inline-flex items-center gap-1 text-xs bg-[#0047BB]/10 text-[#0047BB] border border-[#0047BB]/20 px-2 py-0.5 rounded-full font-medium">
+                                <Ticket className="h-3 w-3" />
+                                #{u.chamado.numero_solicitacao}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground space-y-1">
+                            <p>Destinatario: <span className="text-foreground">{u.recipient}</span></p>
+                            <p>Enviado em: <span className="text-foreground">{u.uploadDate}</span></p>
+                            {u.expiresAt && <p>Expira em: <span className="text-foreground">{u.expiresAt}</span></p>}
+                            {u.status === "pending" && u.horasPendente != null && (
+                              <p className="flex items-center gap-1">
+                                <Timer className="h-3 w-3" />
+                                <span className={u.horasPendente > 24 ? "text-red-600 font-medium" : u.horasPendente > 8 ? "text-amber-600" : "text-emerald-600"}>
+                                  {u.horasPendente}h aguardando aprovacao
+                                </span>
+                              </p>
+                            )}
+                            {u.status === "rejected" && u.rejectionReason && (
+                              <p className="text-red-600">Motivo: {u.rejectionReason}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-xs text-muted-foreground">{u.files?.length ?? 0} arq.</span>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })
+            )}
+          </TabsContent>
+        </Tabs>
         </main>
         <ScrollToTop />
         <NotificationModal

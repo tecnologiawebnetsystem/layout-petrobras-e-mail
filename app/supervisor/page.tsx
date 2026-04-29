@@ -31,7 +31,9 @@ import {
   ArrowDownRight,
   User,
   Mail,
-  Calendar
+  Calendar,
+  Ticket,
+  Timer
 } from "lucide-react"
 import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
 import { ScrollToTop } from "@/components/shared/scroll-to-top"
@@ -45,6 +47,7 @@ export default function SupervisorPage() {
   const { uploads, loadAllSupervisorShares } = useWorkflowStore()
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [senderFilter, setSenderFilter] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("aprovacoes")
 
@@ -79,11 +82,14 @@ export default function SupervisorPage() {
       upload.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       upload.sender?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       upload.sender?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      upload.recipient?.toLowerCase().includes(searchQuery.toLowerCase())
+      upload.recipient?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (upload.chamado?.numero_solicitacao ?? "").toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesStatus = statusFilter === "all" || upload.status === statusFilter
 
-    return matchesSearch && matchesStatus
+    const matchesSender = !senderFilter || (upload.sender?.email ?? "").toLowerCase().includes(senderFilter.toLowerCase())
+
+    return matchesSearch && matchesStatus && matchesSender
   })
 
   const getStatusBadge = (status: string) => {
@@ -273,6 +279,15 @@ export default function SupervisorPage() {
                     />
                   </div>
                   <div className="flex gap-2">
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Filtrar por remetente..."
+                        value={senderFilter}
+                        onChange={(e) => setSenderFilter(e.target.value)}
+                        className="pl-9 h-12 w-full md:w-[200px]"
+                      />
+                    </div>
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
                       <SelectTrigger className="w-full md:w-[180px] h-12">
                         <Filter className="h-4 w-4 mr-2" />
@@ -289,7 +304,7 @@ export default function SupervisorPage() {
                       variant="outline" 
                       size="icon" 
                       className="h-12 w-12"
-                      onClick={() => { setSearchQuery(""); setStatusFilter("all") }}
+                      onClick={() => { setSearchQuery(""); setStatusFilter("all"); setSenderFilter("") }}
                     >
                       <RefreshCcw className="h-5 w-5" />
                     </Button>
@@ -371,7 +386,7 @@ export default function SupervisorPage() {
                                 </span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
                                 {new Date(upload.uploadDate).toLocaleDateString("pt-BR")}
@@ -380,6 +395,18 @@ export default function SupervisorPage() {
                                 <FileText className="h-3 w-3" />
                                 {upload.files?.length || 0} arquivo(s)
                               </span>
+                              {upload.chamado && (
+                                <span className="flex items-center gap-1 text-[#0047BB] font-medium bg-[#0047BB]/5 px-2 py-0.5 rounded-full border border-[#0047BB]/20">
+                                  <Ticket className="h-3 w-3" />
+                                  Chamado #{upload.chamado.numero_solicitacao}
+                                </span>
+                              )}
+                              {upload.status === "pending" && upload.horasPendente != null && (
+                                <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full border font-medium ${upload.horasPendente > 24 ? "text-red-600 bg-red-50 border-red-200" : upload.horasPendente > 8 ? "text-amber-600 bg-amber-50 border-amber-200" : "text-emerald-600 bg-emerald-50 border-emerald-200"}`}>
+                                  <Timer className="h-3 w-3" />
+                                  {upload.horasPendente}h pendente
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>

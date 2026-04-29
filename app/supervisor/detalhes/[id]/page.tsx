@@ -1,8 +1,8 @@
-﻿"use client"
+"use client"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Download, CheckCircle2, XCircle, Clock, FileText, Search, CheckCircle } from "lucide-react"
+import { Download, CheckCircle2, XCircle, Clock, FileText, Search, CheckCircle, Ticket, Timer } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -264,21 +264,57 @@ export default function SupervisorDetailsPage({ params }: { params: { id: string
                   <p className="font-semibold text-foreground text-lg">{uploadData.name}</p>
                 </div>
 
-                <div className="flex gap-6">
+                <div className="flex gap-6 flex-wrap">
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Remetente</p>
                     <p className="font-medium text-foreground">{sender.name}</p>
                     <p className="text-sm text-muted-foreground">{sender.email}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Destinatário</p>
+                    <p className="text-sm text-muted-foreground mb-1">Destinatario</p>
                     <p className="font-medium text-foreground">{uploadData.recipient}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Data de Upload</p>
                     <p className="font-medium text-foreground">{uploadData.uploadDate}</p>
                   </div>
+                  {uploadData.horasPendente != null && uploadData.status === "pending" && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Tempo Pendente</p>
+                      <p className={`font-semibold flex items-center gap-1 ${uploadData.horasPendente > 24 ? "text-red-600" : uploadData.horasPendente > 8 ? "text-amber-600" : "text-emerald-600"}`}>
+                        <Timer className="h-4 w-4" />
+                        {uploadData.horasPendente}h
+                      </p>
+                    </div>
+                  )}
                 </div>
+
+                {uploadData.chamado && (
+                  <div className="bg-[#0047BB]/5 border border-[#0047BB]/20 rounded-xl p-4 space-y-2">
+                    <p className="text-sm font-semibold text-[#0047BB] flex items-center gap-2">
+                      <Ticket className="h-4 w-4" />
+                      Chamado do Suporte vinculado
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Numero</p>
+                        <p className="font-mono font-semibold text-foreground">#{uploadData.chamado.numero_solicitacao}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Solicitante</p>
+                        <p className="text-foreground truncate">{uploadData.chamado.email_solicitante}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Usuario Externo</p>
+                        <p className="text-foreground truncate">{uploadData.chamado.email_usuario_externo}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Cadastrado por</p>
+                        <p className="text-foreground">{uploadData.chamado.cadastrado_por}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {uploadData.description && (
                   <div>

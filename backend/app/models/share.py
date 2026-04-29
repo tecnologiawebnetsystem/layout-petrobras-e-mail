@@ -44,6 +44,9 @@ class Share(SQLModel, table=True):
     # Quem criou o compartilhamento (interno)
     created_by_id: int = Field(foreign_key="user.id", index=True)
 
+    # Chamado do suporte que originou o compartilhamento (rastreabilidade)
+    support_registration_id: Optional[int] = Field(default=None, foreign_key="support_registration.id", index=True)
+
     # Aprovacao/Rejeicao
     approver_id: Optional[int] = Field(default=None, foreign_key="user.id")
     approved_at: Optional[datetime] = Field(default=None)

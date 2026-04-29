@@ -61,12 +61,15 @@ import app.models.email_log       # noqa: E402
 import app.models.credencial_local# noqa: E402
 import app.models.areasupervisors # noqa: E402
 import app.models.session_token   # noqa: E402
+import app.models.support_registration  # noqa: E402
+import app.models.support_audit         # noqa: E402
 
 from app.main import app as fastapi_app
 from app.models.area import SharedArea
 from app.models.credencial_local import CredentialLocal
 from app.models.share import Share, ShareStatus, TokenConsumption
 from app.models.user import User, TypeUser
+from app.models.support_registration import SupportRegistration, SupportRegistrationStatus
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -153,6 +156,39 @@ def usuario_supervisor(session) -> User:
     session.add(cred)
     session.commit()
     return sup
+
+
+@pytest.fixture()
+def usuario_suporte(session) -> User:
+    user = User(
+        name="Suporte Dev",
+        email="suporte.dev@petrobras.com.br",
+        type=TypeUser.SUPPORT,
+        status=True,
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
+
+
+@pytest.fixture()
+def support_registration(session, usuario_interno, usuario_externo, usuario_suporte) -> SupportRegistration:
+    """Chamado ativo vinculando usuario_interno como solicitante e usuario_externo como destinatario."""
+    reg = SupportRegistration(
+        request_number="INC-TEST-001",
+        requester_email=usuario_interno.email,
+        external_user_email=usuario_externo.email,
+        external_user_id=usuario_externo.id,
+        registered_by_id=usuario_suporte.id,
+        registered_by_name=usuario_suporte.name,
+        status=SupportRegistrationStatus.ATIVO,
+        is_reactivation=False,
+    )
+    session.add(reg)
+    session.commit()
+    session.refresh(reg)
+    return reg
 
 
 @pytest.fixture()

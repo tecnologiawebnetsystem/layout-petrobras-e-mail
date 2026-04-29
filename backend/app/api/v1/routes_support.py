@@ -9,6 +9,8 @@ from datetime import datetime, UTC
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 
+from app.models.share import Share, ShareStatus
+
 from app.db.session import get_session
 from app.models.user import User, TypeUser
 from app.models.audit import Audit
@@ -258,6 +260,82 @@ async def listar_meus_chamados(
         )
         for r in registrations
     ]
+
+
+class ShareVinculadoItem(BaseModel):
+    id: int
+    name: Optional[str]
+    status: str
+    recipient_email: str
+    created_at: datetime
+    approved_at: Optional[datetime]
+    expiration_hours: int
+
+
+@router.get("/registrations/{registration_id}/shares", response_model=List[ShareVinculadoItem])
+async def listar_shares_vinculados(
+    registration_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token),
+):
+    """
+    Lista os compartilhamentos vinculados a um chamado especifico.
+    Permite que o suporte veja se o chamado foi utilizado em um compartilhamento.
+    """
+    if current_user.type != TypeUser.SUPPORT and not current_user.is_supervisor:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso negado.")
+
+    reg = session.get(SupportRegistration, registration_id)
+    if not reg:
+        raise HTTPException(status_code=404, detail="Chamado nao encontrado.")
+
+    shares = session.exec(
+        select(Share)
+        .where(Share.support_registration_id == registration_id)
+        .order_by(Share.created_at.desc())
+    ).all()
+
+    return [
+        ShareVinculadoItem(
+            id=s.id,
+            name=s.name,
+            status=s.status,
+            recipient_email=s.external_email,
+            created_at=s.created_at,
+            approved_at=s.approved_at,
+            expiration_hours=s.expiration_hours,
+        )
+        for s in shares
+    ]
+
+
+@router.patch("/registrations/{registration_id}/encerrar")
+async def encerrar_chamado(
+    registration_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token),
+):
+    """
+    Encerra (inativa) um chamado apos o compartilhamento ser concluido.
+    Apenas suporte ou supervisor podem encerrar.
+    """
+    if current_user.type != TypeUser.SUPPORT and not current_user.is_supervisor:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso negado.")
+
+    reg = session.get(SupportRegistration, registration_id)
+    if not reg:
+        raise HTTPException(status_code=404, detail="Chamado nao encontrado.")
+
+    if reg.status == SupportRegistrationStatus.INATIVO:
+        raise HTTPException(status_code=400, detail="Chamado ja esta encerrado.")
+
+    reg.status = SupportRegistrationStatus.INATIVO
+    reg.updated_at = datetime.now(UTC)
+    session.add(reg)
+    session.commit()
+    session.refresh(reg)
+
+    return {"id": reg.id, "status": reg.status, "updated_at": reg.updated_at.isoformat()}
 
 
 @router.get("/users")

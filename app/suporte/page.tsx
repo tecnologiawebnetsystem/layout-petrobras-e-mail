@@ -42,9 +42,22 @@ import {
   Building,
   Phone,
   Copy,
-  ExternalLink
+  ExternalLink,
+  LinkIcon,
+  XCircle,
+  CheckCircle
 } from "lucide-react"
 import { FullPageLoader } from "@/components/ui/full-page-loader"
+
+interface ShareVinculado {
+  id: number
+  name: string | null
+  status: string
+  recipient_email: string
+  created_at: string
+  approved_at: string | null
+  expiration_hours: number
+}
 
 // Tipo para registro de cadastro
 interface CadastroRegistro {
@@ -82,6 +95,8 @@ export default function SuportePage() {
   const [activeTab, setActiveTab] = useState("cadastrar")
   const [registroSelecionado, setRegistroSelecionado] = useState<CadastroRegistro | null>(null)
   const [showDetalhesModal, setShowDetalhesModal] = useState(false)
+  const [sharesVinculados, setSharesVinculados] = useState<Record<string, ShareVinculado[]>>({})
+  const [encerrando, setEncerrando] = useState(false)
   
   // Notificacao
   const [notification, setNotification] = useState<{
@@ -174,9 +189,47 @@ export default function SuportePage() {
   }
 
   // Funcao para visualizar detalhes do registro
-  const handleVisualizarDetalhes = (registro: CadastroRegistro) => {
+  const handleVisualizarDetalhes = async (registro: CadastroRegistro) => {
     setRegistroSelecionado(registro)
     setShowDetalhesModal(true)
+    // Busca shares vinculados se ainda nao foram carregados
+    if (!sharesVinculados[registro.id]) {
+      try {
+        const token = (user as Record<string, unknown>)?.token as string | undefined
+        const res = await fetch(`/api/support/registrations/${registro.id}/shares`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        if (res.ok) {
+          const json = await res.json()
+          setSharesVinculados(prev => ({ ...prev, [registro.id]: json?.data ?? [] }))
+        }
+      } catch {
+        setSharesVinculados(prev => ({ ...prev, [registro.id]: [] }))
+      }
+    }
+  }
+
+  // Encerrar chamado
+  const handleEncerrarChamado = async (registro: CadastroRegistro) => {
+    setEncerrando(true)
+    try {
+      const token = (user as Record<string, unknown>)?.token as string | undefined
+      const res = await fetch(`/api/support/registrations/${registro.id}/encerrar`, {
+        method: "PATCH",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (res.ok) {
+        setRegistros(prev => prev.map(r => r.id === registro.id ? { ...r, status: "inativo" as const } : r))
+        setShowDetalhesModal(false)
+        setNotification({ show: true, type: "success", title: "Chamado encerrado", message: `Chamado ${registro.numeroSolicitacao} encerrado com sucesso.` })
+      } else {
+        setNotification({ show: true, type: "error", title: "Erro", message: "Nao foi possivel encerrar o chamado." })
+      }
+    } catch {
+      setNotification({ show: true, type: "error", title: "Erro", message: "Falha de comunicacao ao encerrar chamado." })
+    } finally {
+      setEncerrando(false)
+    }
   }
 
   // Funcao para copiar texto
@@ -599,6 +652,12 @@ export default function SuportePage() {
                                 {registro.numeroSolicitacao}
                               </span>
                               {getStatusBadge(registro.status)}
+                              {(sharesVinculados[registro.id]?.length ?? 0) > 0 && (
+                                <span className="inline-flex items-center gap-1 text-xs bg-[#0047BB]/10 text-[#0047BB] border border-[#0047BB]/20 px-2 py-0.5 rounded-full font-medium">
+                                  <LinkIcon className="h-3 w-3" />
+                                  {sharesVinculados[registro.id].length} compartilhamento(s)
+                                </span>
+                              )}
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                               <div className="flex items-center gap-2 text-muted-foreground">
@@ -833,8 +892,55 @@ export default function SuportePage() {
                 )}
               </div>
 
+              {/* Shares vinculados */}
+              {registroSelecionado && (() => {
+                const shares = sharesVinculados[registroSelecionado.id]
+                if (!shares) return (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Carregando compartilhamentos...
+                  </div>
+                )
+                if (shares.length === 0) return (
+                  <div className="bg-muted/30 rounded-xl p-4 text-sm text-muted-foreground flex items-center gap-2">
+                    <LinkIcon className="h-4 w-4" />
+                    Nenhum compartilhamento vinculado a este chamado ainda.
+                  </div>
+                )
+                return (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                      <LinkIcon className="h-4 w-4" />
+                      Compartilhamentos vinculados ({shares.length})
+                    </h4>
+                    {shares.map(s => (
+                      <div key={s.id} className="bg-muted/30 rounded-lg p-3 flex items-center justify-between gap-3 text-sm">
+                        <div className="min-w-0">
+                          <p className="font-medium text-foreground truncate">{s.name ?? `Compartilhamento #${s.id}`}</p>
+                          <p className="text-xs text-muted-foreground">{s.recipient_email} &bull; {new Date(s.created_at).toLocaleDateString("pt-BR")}</p>
+                        </div>
+                        <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium border ${s.status === "ativo" || s.status === "aprovado" ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/20" : s.status === "rejeitado" ? "bg-red-500/10 text-red-700 border-red-500/20" : "bg-amber-500/10 text-amber-700 border-amber-500/20"}`}>
+                          {s.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
+
               {/* Acoes */}
               <div className="flex justify-end gap-2 pt-4 border-t">
+                {registroSelecionado?.status === "ativo" && (
+                  <Button
+                    variant="outline"
+                    className="border-red-300 text-red-600 hover:bg-red-50"
+                    disabled={encerrando}
+                    onClick={() => handleEncerrarChamado(registroSelecionado)}
+                  >
+                    {encerrando ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <XCircle className="h-4 w-4 mr-2" />}
+                    Encerrar Chamado
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => setShowDetalhesModal(false)}
