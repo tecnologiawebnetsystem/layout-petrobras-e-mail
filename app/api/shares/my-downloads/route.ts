@@ -1,30 +1,26 @@
 import { NextRequest, NextResponse } from "next/server"
+import { BACKEND_URL, proxyHeaders, serverError } from "@/lib/api/route-handler-utils"
 
-const BACKEND = process.env.BACKEND_URL ?? "http://localhost:8000/api/v1"
-
-export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization")
-
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const res = await fetch(`${BACKEND}/shares/my-downloads`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...(authHeader ? { Authorization: authHeader } : {}),
-      },
-    })
-
+    const res = await fetch(
+      `${BACKEND_URL}/api/v1/shares/my-downloads`,
+      { headers: proxyHeaders(request, { withAuth: true }) }
+    )
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      return NextResponse.json({ error: err?.detail ?? "Erro ao buscar downloads" }, { status: res.status })
+      return NextResponse.json(
+        { error: (err as Record<string, unknown>)?.detail ?? "Erro ao buscar downloads" },
+        { status: res.status }
+      )
     }
-
     const data = await res.json()
     return NextResponse.json(data)
-  } catch {
-    // Fallback modo demo para desenvolvimento
-    return NextResponse.json({
-      downloads: [],
-      total: 0,
-    })
+  } catch (error) {
+    // Fallback modo demo para desenvolvimento local sem backend
+    if (process.env.NODE_ENV !== "production") {
+      return NextResponse.json({ downloads: [], total: 0 })
+    }
+    return serverError("GET /shares/my-downloads", error)
   }
 }

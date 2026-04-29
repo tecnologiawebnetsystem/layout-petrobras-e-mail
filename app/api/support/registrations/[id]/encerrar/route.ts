@@ -1,31 +1,29 @@
 import { NextRequest, NextResponse } from "next/server"
-
-const BACKEND = process.env.BACKEND_URL ?? "http://localhost:8000/api/v1"
+import { BACKEND_URL, proxyHeaders, serverError } from "@/lib/api/route-handler-utils"
 
 export async function PATCH(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<NextResponse> {
   const { id } = await params
-  const authHeader = req.headers.get("authorization")
-
   try {
-    const res = await fetch(`${BACKEND}/support/registrations/${id}/encerrar`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...(authHeader ? { Authorization: authHeader } : {}),
-      },
-    })
-
+    const res = await fetch(
+      `${BACKEND_URL}/api/v1/support/registrations/${id}/encerrar`,
+      {
+        method: "PATCH",
+        headers: proxyHeaders(request, { withAuth: true, withContentType: true }),
+      }
+    )
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      return NextResponse.json({ error: err?.detail ?? "Erro ao encerrar chamado" }, { status: res.status })
+      return NextResponse.json(
+        { error: (err as Record<string, unknown>)?.detail ?? "Erro ao encerrar chamado" },
+        { status: res.status }
+      )
     }
-
     const data = await res.json()
     return NextResponse.json(data)
-  } catch {
-    return NextResponse.json({ error: "Servico indisponivel" }, { status: 503 })
+  } catch (error) {
+    return serverError(`PATCH /support/registrations/${id}/encerrar`, error)
   }
 }
