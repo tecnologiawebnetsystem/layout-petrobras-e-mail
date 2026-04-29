@@ -333,9 +333,10 @@ export function LoginForm() {
       label: "Acesso Interno",
       description: "Colaboradores Petrobras",
       icon: <Building2 className="h-5 w-5" />,
-      color: "from-[#0047BB] to-[#0035A0]",
+      color: "from-[#0047BB] to-[#003A99]",
       border: "border-[#0047BB]/20 hover:border-[#0047BB]/50",
       text: "text-[#0047BB]",
+      credential: { email: "jefferson.breno.prestserv@petrobras.com.br", senha: "internal@123" },
     },
     {
       id: "externo" as AccessModal,
@@ -345,6 +346,7 @@ export function LoginForm() {
       color: "from-[#00A859] to-[#008a48]",
       border: "border-[#00A859]/20 hover:border-[#00A859]/50",
       text: "text-[#00A859]",
+      credential: { email: "destinatario@email.com", senha: "— (código por e-mail)" },
     },
     {
       id: "suporte" as AccessModal,
@@ -354,6 +356,7 @@ export function LoginForm() {
       color: "from-[#F59E0B] to-[#D97706]",
       border: "border-[#F59E0B]/20 hover:border-[#F59E0B]/50",
       text: "text-[#D97706]",
+      credential: { email: "suporte@petrobras.com.br", senha: "suporte@123" },
     },
     {
       id: "supervisor" as AccessModal,
@@ -363,6 +366,7 @@ export function LoginForm() {
       color: "from-[#00A99D] to-[#007d78]",
       border: "border-[#00A99D]/20 hover:border-[#00A99D]/50",
       text: "text-[#00A99D]",
+      credential: { email: "supervisor@petrobras.com.br", senha: "supervisor@123" },
     },
   ]
 
@@ -412,6 +416,16 @@ export function LoginForm() {
                   <p className={`text-sm font-semibold ${btn.text}`}>{btn.label}</p>
                   <p className="text-xs text-muted-foreground leading-tight">{btn.description}</p>
                 </div>
+                {btn.credential && (
+                  <div className="w-full mt-1 pt-2 border-t border-border/60 space-y-0.5">
+                    <p className="text-[10px] text-muted-foreground/70 font-mono truncate w-full" title={btn.credential.email}>
+                      {btn.credential.email}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground/70 font-mono">
+                      {btn.credential.senha}
+                    </p>
+                  </div>
+                )}
               </button>
             ))}
           </div>
@@ -437,6 +451,21 @@ export function LoginForm() {
               Informe suas credenciais para acessar o portal.
             </DialogDescription>
           </DialogHeader>
+
+          {/* Credenciais de demonstração */}
+          {currentButton?.credential && (
+            <div className="rounded-lg border border-dashed border-border bg-muted/40 px-4 py-3 space-y-1">
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Credenciais de demonstração</p>
+              <div className="flex items-center gap-2">
+                <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <p className="text-xs font-mono text-foreground/80 break-all">{currentButton.credential.email}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <p className="text-xs font-mono text-foreground/80">{currentButton.credential.senha}</p>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handlePasswordLogin} className="space-y-4 pt-2">
             <div className="space-y-2">
