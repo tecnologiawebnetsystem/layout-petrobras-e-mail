@@ -13,7 +13,6 @@ if TYPE_CHECKING:
 
 class SupportRegistrationStatus(str, Enum):
     ATIVO = "ativo"
-    PENDENTE = "pendente"
     INATIVO = "inativo"
     CANCELADO = "cancelado"
 

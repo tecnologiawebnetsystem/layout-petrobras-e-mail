@@ -26,7 +26,6 @@ import {
   Search, 
   CheckCircle2, 
   AlertCircle, 
-  Clock, 
   Shield,
   Users,
   FileText,
@@ -53,7 +52,7 @@ interface CadastroRegistro {
   numeroSolicitacao: string
   emailSolicitante: string
   emailUsuarioExterno: string
-  status: "pendente" | "ativo" | "inativo" | "erro"
+  status: "ativo" | "inativo" | "erro"
   dataCadastro: string
   cadastradoPor: string
   observacao?: string
@@ -79,7 +78,7 @@ export default function SuportePage() {
   // Estado dos registros
   const [registros, setRegistros] = useState<CadastroRegistro[]>(REGISTROS_INICIAIS)
   const [registrosFiltrados, setRegistrosFiltrados] = useState<CadastroRegistro[]>(REGISTROS_INICIAIS)
-  const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativo" | "pendente" | "inativo" | "hoje">("todos")
+  const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativo" | "inativo" | "hoje">("todos")
   const [activeTab, setActiveTab] = useState("cadastrar")
   const [registroSelecionado, setRegistroSelecionado] = useState<CadastroRegistro | null>(null)
   const [showDetalhesModal, setShowDetalhesModal] = useState(false)
@@ -104,7 +103,6 @@ export default function SuportePage() {
   const stats = {
     total: registros.length,
     ativos: registros.filter(r => r.status === "ativo").length,
-    pendentes: registros.filter(r => r.status === "pendente").length,
     hoje: registros.filter(r => {
       const hoje = new Date().toDateString()
       return new Date(r.dataCadastro).toDateString() === hoje
@@ -119,7 +117,7 @@ export default function SuportePage() {
   const verificarDuplicidade = (email: string) => {
     return registros.some(
       r => r.emailUsuarioExterno.toLowerCase() === email.toLowerCase() && 
-           (r.status === "ativo" || r.status === "pendente")
+           r.status === "ativo"
     )
   }
 
@@ -149,8 +147,6 @@ export default function SuportePage() {
     // Aplicar filtro de status
     if (filtroStatus === "ativo") {
       filtrados = filtrados.filter(r => r.status === "ativo")
-    } else if (filtroStatus === "pendente") {
-      filtrados = filtrados.filter(r => r.status === "pendente")
     } else if (filtroStatus === "inativo") {
       filtrados = filtrados.filter(r => r.status === "inativo")
     } else if (filtroStatus === "hoje") {
@@ -172,7 +168,7 @@ export default function SuportePage() {
   }, [searchTerm, registros, filtroStatus])
 
   // Funcao para filtrar por status e ir para aba de consulta
-  const handleFiltrarPorStatus = (status: "todos" | "ativo" | "pendente" | "inativo" | "hoje") => {
+  const handleFiltrarPorStatus = (status: "todos" | "ativo" | "inativo" | "hoje") => {
     setFiltroStatus(status)
     setActiveTab("consulta")
   }
@@ -235,7 +231,7 @@ export default function SuportePage() {
         show: true,
         type: "error",
         title: "Cadastro duplicado",
-        message: "Ja existe um cadastro ativo ou pendente para este e-mail de usuario externo.",
+        message: "Ja existe um cadastro ativo para este e-mail de usuario externo.",
       })
       return
     }
@@ -285,7 +281,6 @@ export default function SuportePage() {
   const getStatusBadge = (status: CadastroRegistro["status"]) => {
     const config = {
       ativo: { label: "Ativo", className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
-      pendente: { label: "Pendente", className: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
       inativo: { label: "Inativo", className: "bg-slate-500/10 text-slate-600 border-slate-500/20" },
       erro: { label: "Erro", className: "bg-red-500/10 text-red-600 border-red-500/20" },
     }
@@ -316,7 +311,7 @@ export default function SuportePage() {
 
 
         {/* Metricas - Clicaveis para filtrar */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card 
             className={`bg-gradient-to-br from-card to-card/80 border-border/50 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] ${filtroStatus === "todos" ? "ring-2 ring-[#0047BB]" : ""}`}
             onClick={() => handleFiltrarPorStatus("todos")}
@@ -346,23 +341,6 @@ export default function SuportePage() {
                 <div>
                   <p className="text-2xl font-bold text-foreground">{stats.ativos}</p>
                   <p className="text-sm text-muted-foreground">Usuarios Ativos</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className={`bg-gradient-to-br from-card to-card/80 border-border/50 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] ${filtroStatus === "pendente" ? "ring-2 ring-amber-500" : ""}`}
-            onClick={() => handleFiltrarPorStatus("pendente")}
-          >
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 flex items-center justify-center">
-                  <Clock className="h-6 w-6 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.pendentes}</p>
-                  <p className="text-sm text-muted-foreground">Pendentes</p>
                 </div>
               </div>
             </CardContent>
@@ -543,7 +521,7 @@ export default function SuportePage() {
                   <div className="flex items-center gap-2">
                     {filtroStatus !== "todos" && (
                       <Badge variant="outline" className="bg-[#0047BB]/10 text-[#0047BB] border-[#0047BB]/30 px-3 py-1">
-                        Filtro: {filtroStatus === "ativo" ? "Ativos" : filtroStatus === "pendente" ? "Pendentes" : filtroStatus === "hoje" ? "Hoje" : "Inativos"}
+                        Filtro: {filtroStatus === "ativo" ? "Ativos" : filtroStatus === "hoje" ? "Hoje" : "Inativos"}
                       </Badge>
                     )}
                     <Button
@@ -592,14 +570,6 @@ export default function SuportePage() {
                     className={filtroStatus === "ativo" ? "bg-emerald-600" : ""}
                   >
                     Ativos ({stats.ativos})
-                  </Button>
-                  <Button
-                    variant={filtroStatus === "pendente" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFiltroStatus("pendente")}
-                    className={filtroStatus === "pendente" ? "bg-amber-600" : ""}
-                  >
-                    Pendentes ({stats.pendentes})
                   </Button>
                 </div>
 
