@@ -3,7 +3,7 @@
 import type { FormEvent } from "react"
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
-import { User, Lock, ArrowLeft, Loader2 } from "lucide-react"
+import { User, Lock, ArrowLeft, Loader2, Building2, Users, Headset, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,7 +13,6 @@ import { FullPageLoader } from "@/components/ui/full-page-loader"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useRouter } from "next/navigation"
 import { getMsalInstance, loginRequest } from "@/lib/auth/msal-config"
-import { getUserTypeFromEmail } from "@/lib/auth/entra-config"
 import { getClientEnv } from "@/lib/env"
 import {
   Dialog,
@@ -23,17 +22,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
+// Tipos de modal de acesso disponíveis
+type AccessModal = "interno" | "externo" | "suporte" | "supervisor" | null
 
 export function LoginForm() {
-  const [email, setEmail] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
   const [isRedirectingToMicrosoft, setIsRedirectingToMicrosoft] = useState(false)
-  const [externalStep, setExternalStep] = useState<"email" | "code">("email")
-  const [verificationCode, setVerificationCode] = useState(["", "", "", "", "", ""])
-  const [generatedCode, setGeneratedCode] = useState("")
-  const [countdown, setCountdown] = useState(60)
-  const [isResending, setIsResending] = useState(false)
-  const codeInputRefs = useRef<(HTMLInputElement | null)[]>([])
   const [notification, setNotification] = useState<{
     show: boolean
     type: "success" | "error" | "warning" | "info"
@@ -46,53 +39,185 @@ export function LoginForm() {
     message: "",
   })
 
-  const { setAuth, login } = useAuthStore()
+  const { login } = useAuthStore()
   const router = useRouter()
 
-  // Estado do modal de login de suporte
-  const [showSuporteModal, setShowSuporteModal] = useState(false)
-  const [suporteEmail, setSuporteEmail] = useState("")
-  const [suporteSenha, setSuporteSenha] = useState("")
-  const [suporteLoading, setSuporteLoading] = useState(false)
+  // Modal ativo
+  const [activeModal, setActiveModal] = useState<AccessModal>(null)
 
-  // Exibe o botão Entra ID em todos os modos exceto 'dev'
-  // Usa getClientEnv() para ler o valor runtime ao invés do valor baked no bundle
+  // Campos compartilhados dos modais de senha (interno, suporte, supervisor)
+  const [modalEmail, setModalEmail] = useState("")
+  const [modalSenha, setModalSenha] = useState("")
+  const [modalLoading, setModalLoading] = useState(false)
+
+  // Campos e estado do fluxo externo (OTP)
+  const [externalEmail, setExternalEmail] = useState("")
+  const [externalStep, setExternalStep] = useState<"email" | "code">("email")
+  const [verificationCode, setVerificationCode] = useState(["", "", "", "", "", ""])
+  const [generatedCode, setGeneratedCode] = useState("")
+  const [countdown, setCountdown] = useState(60)
+  const [isResending, setIsResending] = useState(false)
+  const [externalLoading, setExternalLoading] = useState(false)
+  const codeInputRefs = useRef<(HTMLInputElement | null)[]>([])
+
   const showEntraIdButton = getClientEnv("NEXT_PUBLIC_AUTH_MODE") !== "dev"
-  // Modo local: força login com senha (sem Entra ID)
-  const isLocalMode = !showEntraIdButton
 
-  const isExternalUser = email.trim().length > 0 && !email.toLowerCase().includes("@petrobras")
-  const isInternalUser = !isExternalUser
-
-  // Countdown timer for verification code
+  // Countdown para reenvio do código externo
   useEffect(() => {
-    if (externalStep === "code" && countdown > 0) {
+    if (activeModal === "externo" && externalStep === "code" && countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
       return () => clearTimeout(timer)
     }
-  }, [countdown, externalStep])
+  }, [countdown, externalStep, activeModal])
 
+  const resetModal = () => {
+    setModalEmail("")
+    setModalSenha("")
+    setModalLoading(false)
+    setExternalEmail("")
+    setExternalStep("email")
+    setVerificationCode(["", "", "", "", "", ""])
+    setGeneratedCode("")
+    setCountdown(60)
+  }
+
+  const openModal = (type: AccessModal) => {
+    resetModal()
+    setActiveModal(type)
+  }
+
+  const closeModal = () => {
+    if (!modalLoading && !externalLoading) {
+      resetModal()
+      setActiveModal(null)
+    }
+  }
+
+  // --- Login com senha (interno, suporte, supervisor) ---
+  const handlePasswordLogin = async (e: FormEvent) => {
+    e.preventDefault()
+
+    if (!modalEmail.trim() || !modalSenha.trim()) {
+      setNotification({
+        show: true,
+        type: "warning",
+        title: "Campos obrigatórios",
+        message: "Informe o e-mail e a senha para continuar.",
+      })
+      return
+    }
+
+    setModalLoading(true)
+    try {
+      const result = await login(modalEmail.trim(), modalSenha)
+
+      if (!result.success) {
+        setNotification({
+          show: true,
+          type: "error",
+          title: "Credenciais inválidas",
+          message: result.error || "E-mail ou senha incorretos. Tente novamente.",
+        })
+        return
+      }
+
+      const { user: loggedUser } = useAuthStore.getState()
+
+      // Valida se o userType corresponde ao acesso solicitado
+      if (activeModal === "interno" && loggedUser?.userType !== "internal") {
+        useAuthStore.getState().clearAuth()
+        setNotification({
+          show: true,
+          type: "error",
+          title: "Acesso negado",
+          message: "Sua conta não possui permissão para acesso interno.",
+        })
+        return
+      }
+
+      if (activeModal === "suporte" && loggedUser?.userType !== "support") {
+        useAuthStore.getState().clearAuth()
+        setNotification({
+          show: true,
+          type: "error",
+          title: "Acesso negado",
+          message: "Sua conta não possui permissão para o painel de suporte.",
+        })
+        return
+      }
+
+      if (activeModal === "supervisor" && loggedUser?.userType !== "supervisor") {
+        useAuthStore.getState().clearAuth()
+        setNotification({
+          show: true,
+          type: "error",
+          title: "Acesso negado",
+          message: "Sua conta não possui permissão para o painel de supervisor.",
+        })
+        return
+      }
+
+      setActiveModal(null)
+      resetModal()
+
+      // Redireciona conforme o tipo de acesso
+      if (activeModal === "interno") router.push("/compartilhamentos")
+      else if (activeModal === "suporte") router.push("/suporte")
+      else if (activeModal === "supervisor") router.push("/supervisor")
+    } catch {
+      setNotification({
+        show: true,
+        type: "error",
+        title: "Erro ao autenticar",
+        message: "Ocorreu um erro ao tentar autenticar. Tente novamente.",
+      })
+    } finally {
+      setModalLoading(false)
+    }
+  }
+
+  // --- Login com Entra ID (Microsoft) ---
+  const handleEntraIdLogin = async () => {
+    setModalLoading(true)
+    setIsRedirectingToMicrosoft(true)
+    try {
+      const msal = await getMsalInstance()
+      await msal.loginRedirect(loginRequest)
+    } catch (error: unknown) {
+      setModalLoading(false)
+      setIsRedirectingToMicrosoft(false)
+      const message =
+        error instanceof Error ? error.message : "Nao foi possivel iniciar o login com a Microsoft."
+      setNotification({
+        show: true,
+        type: "error",
+        title: "Erro ao autenticar",
+        message,
+      })
+    }
+  }
+
+  // --- Fluxo externo OTP ---
   const handleSendCode = async () => {
-    if (!email) return
-    setIsLoading(true)
+    if (!externalEmail) return
+    setExternalLoading(true)
     try {
       const res = await fetch("/api/auth/external/request-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, validity_minutes: 10 }),
+        body: JSON.stringify({ email: externalEmail, validity_minutes: 10 }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail ?? data.error?.message ?? "Erro ao enviar código")
       setExternalStep("code")
       setCountdown(60)
       setVerificationCode(["", "", "", "", "", ""])
-      // Em desenvolvimento, o backend retorna o código para facilitar os testes
       if (data.code) setGeneratedCode(data.code)
       setNotification({
         show: true,
         type: "success",
         title: "Código enviado!",
-        message: `Um código de 6 dígitos foi enviado para ${email}`,
+        message: `Um código de 6 dígitos foi enviado para ${externalEmail}`,
       })
     } catch (error: any) {
       setNotification({
@@ -102,7 +227,7 @@ export function LoginForm() {
         message: error.message || "Não foi possível enviar o código. Tente novamente.",
       })
     } finally {
-      setIsLoading(false)
+      setExternalLoading(false)
     }
   }
 
@@ -118,18 +243,17 @@ export function LoginForm() {
 
     if (index === 5 && value) {
       const fullCode = newCode.join("")
-      setIsLoading(true)
+      setExternalLoading(true)
       try {
         const res = await fetch("/api/auth/external/verify-code", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, code: fullCode }),
+          body: JSON.stringify({ email: externalEmail, code: fullCode }),
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.detail || "Código inválido")
-        // data = { token, expires_at, share_id }
-        setAuth(
-          { id: email, email, name: email, userType: "external" },
+        useAuthStore.getState().setAuth(
+          { id: externalEmail, email: externalEmail, name: externalEmail, userType: "external" },
           data.token,
           data.token,
         )
@@ -139,6 +263,7 @@ export function LoginForm() {
           title: "Código verificado!",
           message: "Redirecionando para seus documentos...",
         })
+        setActiveModal(null)
         setTimeout(() => router.push("/download"), 1500)
       } catch (error: any) {
         setNotification({
@@ -150,7 +275,7 @@ export function LoginForm() {
         setVerificationCode(["", "", "", "", "", ""])
         codeInputRefs.current[0]?.focus()
       } finally {
-        setIsLoading(false)
+        setExternalLoading(false)
       }
     }
   }
@@ -169,7 +294,7 @@ export function LoginForm() {
       const res = await fetch("/api/auth/external/request-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, validity_minutes: 10 }),
+        body: JSON.stringify({ email: externalEmail, validity_minutes: 10 }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail ?? data.error?.message ?? "Erro ao reenviar código")
@@ -178,7 +303,7 @@ export function LoginForm() {
         show: true,
         type: "info",
         title: "Código reenviado",
-        message: `Um novo código foi enviado para ${email}`,
+        message: `Um novo código foi enviado para ${externalEmail}`,
       })
     } catch (resendError: unknown) {
       setNotification({
@@ -192,119 +317,58 @@ export function LoginForm() {
     }
   }
 
-  const handleBackToEmail = () => {
-    setExternalStep("email")
-    setVerificationCode(["", "", "", "", "", ""])
-    setGeneratedCode("")
-  }
-
-  const handleEntraIdLogin = async () => {
-    setIsLoading(true)
-    setIsRedirectingToMicrosoft(true)
-    try {
-      const msal = await getMsalInstance()
-      // loginRedirect: navega a página inteira para a Microsoft.
-      // O resultado é processado pelo EntraProvider via handleRedirectPromise()
-      // quando a Microsoft redireciona de volta para localhost:3000.
-      await msal.loginRedirect(loginRequest)
-      // A página navega para fora daqui — nenhum código abaixo é executado.
-    } catch (error: unknown) {
-      // Só chega aqui se loginRedirect lançar (ex: popups bloqueados, config inválida).
-      setIsLoading(false)
-      setIsRedirectingToMicrosoft(false)
-      const message =
-        error instanceof Error ? error.message : "Nao foi possivel iniciar o login com a Microsoft."
-      setNotification({
-        show: true,
-        type: "error",
-        title: "Erro ao autenticar",
-        message,
-      })
-    }
-  }
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    // Usuários externos usam o fluxo OTP
-    if (isExternalUser) {
-      await handleSendCode()
-      return
-    }
-    // Usuários internos usam o login com Microsoft (Entra ID)
-    // O botão de submit não é exibido para usuários internos
-  }
-
-  const handleSuporteLogin = async (e: FormEvent) => {
-    e.preventDefault()
-
-    if (!suporteEmail.trim() || !suporteSenha.trim()) {
-      setNotification({
-        show: true,
-        type: "warning",
-        title: "Campos obrigatórios",
-        message: "Informe o e-mail e a senha para acessar o suporte.",
-      })
-      return
-    }
-
-    setSuporteLoading(true)
-    try {
-      const result = await login(suporteEmail.trim(), suporteSenha)
-
-      if (!result.success) {
-        setNotification({
-          show: true,
-          type: "error",
-          title: "Credenciais inválidas",
-          message: result.error || "E-mail ou senha incorretos. Tente novamente.",
-        })
-        return
-      }
-
-      // Verifica se o usuário autenticado tem permissão de suporte
-      const { user: loggedUser } = useAuthStore.getState()
-      if (loggedUser?.userType !== "support" && loggedUser?.userType !== "supervisor") {
-        useAuthStore.getState().clearAuth()
-        setNotification({
-          show: true,
-          type: "error",
-          title: "Acesso negado",
-          message: "Sua conta não possui permissão para acessar o painel de suporte.",
-        })
-        return
-      }
-
-      setShowSuporteModal(false)
-      setSuporteEmail("")
-      setSuporteSenha("")
-
-      // Supervisor vai para a página de aprovações, suporte vai para o painel de suporte
-      if (loggedUser?.userType === "supervisor") {
-        router.push("/supervisor")
-      } else {
-        router.push("/suporte")
-      }
-    } catch {
-      setNotification({
-        show: true,
-        type: "error",
-        title: "Erro ao autenticar",
-        message: "Ocorreu um erro ao tentar autenticar. Tente novamente.",
-      })
-    } finally {
-      setSuporteLoading(false)
-    }
-  }
-
-  // Mostra loader em tela cheia quando está redirecionando para a Microsoft
   if (isRedirectingToMicrosoft) {
     return (
-      <FullPageLoader 
+      <FullPageLoader
         message="Conectando com Microsoft..."
         subMessage="Voce sera redirecionado para a pagina de login da Microsoft"
       />
     )
   }
+
+  // Configuração dos botões de acesso
+  const accessButtons = [
+    {
+      id: "interno" as AccessModal,
+      label: "Acesso Interno",
+      description: "Colaboradores Petrobras",
+      icon: <Building2 className="h-5 w-5" />,
+      color: "from-[#0047BB] to-[#0035A0]",
+      border: "border-[#0047BB]/20 hover:border-[#0047BB]/50",
+      text: "text-[#0047BB]",
+    },
+    {
+      id: "externo" as AccessModal,
+      label: "Acesso Externo",
+      description: "Destinatários externos",
+      icon: <Users className="h-5 w-5" />,
+      color: "from-[#00A859] to-[#008a48]",
+      border: "border-[#00A859]/20 hover:border-[#00A859]/50",
+      text: "text-[#00A859]",
+    },
+    {
+      id: "suporte" as AccessModal,
+      label: "Acesso Suporte",
+      description: "Painel de atendimento",
+      icon: <Headset className="h-5 w-5" />,
+      color: "from-[#F59E0B] to-[#D97706]",
+      border: "border-[#F59E0B]/20 hover:border-[#F59E0B]/50",
+      text: "text-[#D97706]",
+    },
+    {
+      id: "supervisor" as AccessModal,
+      label: "Acesso Supervisor",
+      description: "Aprovações de compartilhamento",
+      icon: <ShieldCheck className="h-5 w-5" />,
+      color: "from-[#00A99D] to-[#007d78]",
+      border: "border-[#00A99D]/20 hover:border-[#00A99D]/50",
+      text: "text-[#00A99D]",
+    },
+  ]
+
+  // Modal de senha genérico (interno, suporte, supervisor)
+  const passwordModal = activeModal && activeModal !== "externo"
+  const currentButton = accessButtons.find((b) => b.id === activeModal)
 
   return (
     <main className="min-h-screen flex" role="main" aria-label="Pagina de login">
@@ -332,200 +396,61 @@ export function LoginForm() {
             </p>
           </header>
 
-          {/* Formulario principal */}
-          <form onSubmit={handleSubmit} className="space-y-5" aria-label="Formulario de login">
-            {/* Campo de e-mail */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-foreground">
-                E-mail
-              </Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Digite seu e-mail"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value)
-                    if (externalStep === "code") {
-                      setExternalStep("email")
-                      setVerificationCode(["", "", "", "", "", ""])
-                      setGeneratedCode("")
-                    }
-                  }}
-                  disabled={isExternalUser && externalStep === "code"}
-                  className="pl-10 h-12 bg-muted/50 border-border disabled:opacity-60"
-                  required
-                />
-              </div>
-            </div>
-
-
-
-            {/* Campos de código - aparecem abaixo do e-mail após o envio */}
-            {isExternalUser && externalStep === "code" && (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground text-center text-pretty">
-                  Digite o código de 6 dígitos enviado para{" "}
-                  <span className="text-[#00A99D] font-semibold">{email}</span>
-                </p>
-
-                {/* Código retornado pelo backend em ambiente dev */}
-                {generatedCode && (
-                  <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-200 dark:border-amber-900/50 rounded-lg p-4">
-                    <div className="flex items-center gap-2">
-                      <Lock className="h-5 w-5 text-amber-700 dark:text-amber-300" />
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">Código (apenas em dev):</p>
-                        <p className="text-2xl font-mono font-bold text-amber-900 dark:text-amber-100 tracking-wider">
-                          {generatedCode}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Inputs dos dígitos */}
-                <div className="flex justify-center gap-2">
-                  {verificationCode.map((digit, index) => (
-                    <Input
-                      key={index}
-                      ref={(el) => { codeInputRefs.current[index] = el }}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleCodeChange(index, e.target.value)}
-                      onKeyDown={(e) => handleCodeKeyDown(index, e)}
-                      className="w-12 h-14 text-center text-2xl font-bold"
-                      autoFocus={index === 0}
-                    />
-                  ))}
-                </div>
-
-                {/* Reenviar código */}
-                <div className="text-center">
-                  {countdown > 0 ? (
-                    <p className="text-sm text-muted-foreground">Reenviar codigo em {countdown}s</p>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="link"
-                      onClick={handleResendCode}
-                      disabled={isResending}
-                      className="text-[#00A99D] hover:text-[#00857A]"
-                    >
-                      {isResending ? "Reenviando..." : "Reenviar codigo"}
-                    </Button>
-                  )}
-                </div>
-
-                {/* Voltar */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleBackToEmail}
-                  className="w-full h-12 text-base font-medium"
-                >
-                  <ArrowLeft className="mr-2 h-5 w-5" />
-                  Voltar
-                </Button>
-              </div>
-            )}
-
-            {/* Botão de envio - apenas para usuários externos na etapa de e-mail */}
-            {isExternalUser && externalStep === "email" && (
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full h-12 text-base font-semibold bg-[#00A859] hover:bg-[#008a48] text-white transition-all duration-200 shadow-sm hover:shadow-md"
-              >
-                {isLoading ? "Enviando..." : "Enviar código de acesso"}
-              </Button>
-            )}
-          </form>
-          {showEntraIdButton && (
-            <div className="space-y-4">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-border" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Ou continue com</span>
-                </div>
-              </div>
-              <Button
+          {/* Botões de acesso */}
+          <div className="grid grid-cols-2 gap-3">
+            {accessButtons.map((btn) => (
+              <button
+                key={btn.id}
                 type="button"
-                variant="outline"
-                onClick={handleEntraIdLogin}
-                className="w-full h-12 text-base font-medium border-2 hover:bg-accent bg-transparent"
+                onClick={() => openModal(btn.id)}
+                className={`group flex flex-col items-start gap-2 p-4 rounded-xl border-2 bg-background transition-all duration-200 hover:shadow-md ${btn.border}`}
               >
-                <svg className="mr-2 h-5 w-5" viewBox="0 0 23 23" fill="none">
-                  <path
-                    d="M11.5 0L0 4.6V11.5C0 17.8 4.6 23 11.5 23C18.4 23 23 17.8 23 11.5V4.6L11.5 0Z"
-                    fill="#00A4EF"
-                  />
-                </svg>
-                Login com Microsoft
-              </Button>
-            </div>
-          )}
-          {/* Botao Acesso Suporte */}
-          <div className="pt-2">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setShowSuporteModal(true)}
-              className="w-full h-10 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50"
-            >
-              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-              </svg>
-              Acesso Suporte
-            </Button>
+                <div className={`h-10 w-10 rounded-lg bg-gradient-to-br ${btn.color} flex items-center justify-center text-white shadow-sm`}>
+                  {btn.icon}
+                </div>
+                <div className="text-left">
+                  <p className={`text-sm font-semibold ${btn.text}`}>{btn.label}</p>
+                  <p className="text-xs text-muted-foreground leading-tight">{btn.description}</p>
+                </div>
+              </button>
+            ))}
           </div>
 
           {/* Footer */}
-          <footer className="text-center text-xs text-muted-foreground/60 pt-4">
+          <footer className="text-center text-xs text-muted-foreground/60 pt-2">
             <p>2025 Petrobras. Todos os direitos reservados.</p>
           </footer>
         </div>
       </div>
 
-      {/* Modal de Login de Suporte */}
-      <Dialog open={showSuporteModal} onOpenChange={(open) => {
-        if (!suporteLoading) {
-          setShowSuporteModal(open)
-          if (!open) {
-            setSuporteEmail("")
-            setSuporteSenha("")
-          }
-        }
-      }}>
+      {/* Modal de senha (Interno / Suporte / Supervisor) */}
+      <Dialog open={!!passwordModal} onOpenChange={(open) => { if (!open) closeModal() }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Acesso ao Suporte</DialogTitle>
+            <div className={`inline-flex items-center gap-2 mb-1`}>
+              <div className={`h-8 w-8 rounded-lg bg-gradient-to-br ${currentButton?.color} flex items-center justify-center text-white`}>
+                {currentButton?.icon}
+              </div>
+              <DialogTitle className="text-xl font-bold">{currentButton?.label}</DialogTitle>
+            </div>
             <DialogDescription>
-              Informe suas credenciais de suporte para acessar o painel.
+              Informe suas credenciais para acessar o portal.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSuporteLogin} className="space-y-4 pt-2">
+          <form onSubmit={handlePasswordLogin} className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label htmlFor="suporte-email" className="text-sm font-medium">
-                E-mail
-              </Label>
+              <Label htmlFor="modal-email" className="text-sm font-medium">E-mail</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="suporte-email"
+                  id="modal-email"
                   type="email"
-                  placeholder="suporte@petrobras.com.br"
-                  value={suporteEmail}
-                  onChange={(e) => setSuporteEmail(e.target.value)}
+                  placeholder="seu@petrobras.com.br"
+                  value={modalEmail}
+                  onChange={(e) => setModalEmail(e.target.value)}
                   className="pl-10 h-11"
-                  disabled={suporteLoading}
+                  disabled={modalLoading}
                   required
                   autoComplete="email"
                 />
@@ -533,45 +458,65 @@ export function LoginForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="suporte-senha" className="text-sm font-medium">
-                Senha
-              </Label>
+              <Label htmlFor="modal-senha" className="text-sm font-medium">Senha</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="suporte-senha"
+                  id="modal-senha"
                   type="password"
                   placeholder="Digite sua senha"
-                  value={suporteSenha}
-                  onChange={(e) => setSuporteSenha(e.target.value)}
+                  value={modalSenha}
+                  onChange={(e) => setModalSenha(e.target.value)}
                   className="pl-10 h-11"
-                  disabled={suporteLoading}
+                  disabled={modalLoading}
                   required
                   autoComplete="current-password"
                 />
               </div>
             </div>
 
-            <div className="flex gap-3 pt-2">
+            {/* Botão Entra ID apenas para acesso interno */}
+            {activeModal === "interno" && showEntraIdButton && (
+              <>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Ou continue com</span>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleEntraIdLogin}
+                  disabled={modalLoading}
+                  className="w-full h-11 font-medium border-2 hover:bg-accent bg-transparent"
+                >
+                  <svg className="mr-2 h-5 w-5" viewBox="0 0 23 23" fill="none">
+                    <path d="M11.5 0L0 4.6V11.5C0 17.8 4.6 23 11.5 23C18.4 23 23 17.8 23 11.5V4.6L11.5 0Z" fill="#00A4EF" />
+                  </svg>
+                  Login com Microsoft
+                </Button>
+              </>
+            )}
+
+            <div className="flex gap-3 pt-1">
               <Button
                 type="button"
                 variant="outline"
                 className="flex-1"
-                onClick={() => {
-                  setShowSuporteModal(false)
-                  setSuporteEmail("")
-                  setSuporteSenha("")
-                }}
-                disabled={suporteLoading}
+                onClick={closeModal}
+                disabled={modalLoading}
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
-                className="flex-1 bg-[#0047BB] hover:bg-[#003A99] text-white font-semibold"
-                disabled={suporteLoading}
+                className={`flex-1 bg-gradient-to-r ${currentButton?.color} text-white font-semibold hover:opacity-90`}
+                disabled={modalLoading}
               >
-                {suporteLoading ? (
+                {modalLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Entrando...
@@ -582,6 +527,133 @@ export function LoginForm() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Acesso Externo (OTP) */}
+      <Dialog open={activeModal === "externo"} onOpenChange={(open) => { if (!open) closeModal() }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="inline-flex items-center gap-2 mb-1">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#00A859] to-[#008a48] flex items-center justify-center text-white">
+                <Users className="h-4 w-4" />
+              </div>
+              <DialogTitle className="text-xl font-bold">Acesso Externo</DialogTitle>
+            </div>
+            <DialogDescription>
+              {externalStep === "email"
+                ? "Informe seu e-mail para receber o código de acesso."
+                : `Digite o código enviado para ${externalEmail}`}
+            </DialogDescription>
+          </DialogHeader>
+
+          {externalStep === "email" ? (
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleSendCode() }}
+              className="space-y-4 pt-2"
+            >
+              <div className="space-y-2">
+                <Label htmlFor="ext-email" className="text-sm font-medium">E-mail</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="ext-email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={externalEmail}
+                    onChange={(e) => setExternalEmail(e.target.value)}
+                    className="pl-10 h-11"
+                    disabled={externalLoading}
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-1">
+                <Button type="button" variant="outline" className="flex-1" onClick={closeModal} disabled={externalLoading}>
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={externalLoading}
+                  className="flex-1 bg-gradient-to-r from-[#00A859] to-[#008a48] text-white font-semibold hover:opacity-90"
+                >
+                  {externalLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    "Enviar código"
+                  )}
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div className="space-y-4 pt-2">
+              {generatedCode && (
+                <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-200 dark:border-amber-900/50 rounded-lg p-4">
+                  <div className="flex items-center gap-2">
+                    <Lock className="h-5 w-5 text-amber-700 dark:text-amber-300" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">Código (apenas em dev):</p>
+                      <p className="text-2xl font-mono font-bold text-amber-900 dark:text-amber-100 tracking-wider">
+                        {generatedCode}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-center gap-2">
+                {verificationCode.map((digit, index) => (
+                  <Input
+                    key={index}
+                    ref={(el) => { codeInputRefs.current[index] = el }}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleCodeChange(index, e.target.value)}
+                    onKeyDown={(e) => handleCodeKeyDown(index, e)}
+                    className="w-12 h-14 text-center text-2xl font-bold"
+                    autoFocus={index === 0}
+                  />
+                ))}
+              </div>
+
+              <div className="text-center">
+                {countdown > 0 ? (
+                  <p className="text-sm text-muted-foreground">Reenviar codigo em {countdown}s</p>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="link"
+                    onClick={handleResendCode}
+                    disabled={isResending}
+                    className="text-[#00A99D] hover:text-[#00857A]"
+                  >
+                    {isResending ? "Reenviando..." : "Reenviar codigo"}
+                  </Button>
+                )}
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setExternalStep("email")
+                  setVerificationCode(["", "", "", "", "", ""])
+                  setGeneratedCode("")
+                }}
+                className="w-full h-11"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Voltar
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
