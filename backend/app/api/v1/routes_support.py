@@ -5,9 +5,11 @@ Acesso restrito a usuarios com role 'support' ou supervisores.
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
-from datetime import datetime, UTC
+from datetime import datetime, UTC, timedelta
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
+
+from app.models.share import Share, ShareStatus
 
 from app.db.session import get_session
 from app.models.user import User, TypeUser
@@ -18,6 +20,34 @@ from app.core.security import get_current_user_from_token
 from app.services.audit_service import log_action
 
 router = APIRouter(prefix="/support", tags=["support"])
+
+
+def expire_overdue_registrations(session: Session, requester_email: Optional[str] = None) -> int:
+    """
+    Inativa todos os chamados que ultrapassaram expires_at mas ainda estao como ATIVO.
+    Se requester_email for fornecido, filtra apenas os chamados daquele usuario.
+    Retorna a quantidade de chamados inativados.
+    """
+    now = datetime.now(UTC)
+    query = select(SupportRegistration).where(
+        SupportRegistration.status == SupportRegistrationStatus.ATIVO,
+        SupportRegistration.expires_at <= now,
+    )
+    if requester_email:
+        query = query.where(SupportRegistration.requester_email == requester_email)
+
+    overdue = session.exec(query).all()
+    count = 0
+    for reg in overdue:
+        reg.status = SupportRegistrationStatus.INATIVO
+        reg.updated_at = now
+        session.add(reg)
+        count += 1
+
+    if count:
+        session.commit()
+
+    return count
 
 
 class CadastroUsuarioRequest(BaseModel):
@@ -210,6 +240,146 @@ async def cadastrar_usuario_externo(
         created_at=new_user.created_at,
         cadastrado_por=current_user.name,
     )
+
+
+class MyTicketItem(BaseModel):
+    """Schema de chamado retornado para o usuario interno"""
+    id: int
+    numero_solicitacao: str
+    email_usuario_externo: str
+    created_at: datetime
+    expires_at: datetime
+    cadastrado_por: str
+    dias_restantes: int
+
+
+@router.get("/my-tickets", response_model=List[MyTicketItem])
+async def listar_meus_chamados(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token),
+):
+    """
+    Retorna os chamados ativos do suporte onde requester_email bate com o
+    e-mail do usuario interno autenticado.
+
+    Regras:
+    - Somente chamados com status ATIVO e expires_at > agora sao retornados.
+    - Chamados vencidos sao inativados automaticamente antes da consulta (lazy expiration).
+    - Se nao houver chamados, o usuario interno NAO pode compartilhar arquivos.
+    """
+    if current_user.type not in (TypeUser.INTERNAL,):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado. Apenas usuarios internos podem consultar seus chamados.",
+        )
+
+    # Lazy expiration: inativa chamados vencidos deste usuario antes de consultar
+    expire_overdue_registrations(session, requester_email=current_user.email)
+
+    now = datetime.now(UTC)
+    registrations = session.exec(
+        select(SupportRegistration)
+        .where(
+            SupportRegistration.requester_email == current_user.email,
+            SupportRegistration.status == SupportRegistrationStatus.ATIVO,
+            SupportRegistration.expires_at > now,
+        )
+        .order_by(SupportRegistration.created_at.desc())
+    ).all()
+
+    def _dias_restantes(reg: SupportRegistration) -> int:
+        exp = reg.expires_at.replace(tzinfo=UTC) if reg.expires_at.tzinfo is None else reg.expires_at
+        delta = exp - now
+        return max(0, delta.days)
+
+    return [
+        MyTicketItem(
+            id=r.id,
+            numero_solicitacao=r.request_number,
+            email_usuario_externo=r.external_user_email,
+            created_at=r.created_at,
+            expires_at=r.expires_at,
+            cadastrado_por=r.registered_by_name,
+            dias_restantes=_dias_restantes(r),
+        )
+        for r in registrations
+    ]
+
+
+class ShareVinculadoItem(BaseModel):
+    id: int
+    name: Optional[str]
+    status: str
+    recipient_email: str
+    created_at: datetime
+    approved_at: Optional[datetime]
+    expiration_hours: int
+
+
+@router.get("/registrations/{registration_id}/shares", response_model=List[ShareVinculadoItem])
+async def listar_shares_vinculados(
+    registration_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token),
+):
+    """
+    Lista os compartilhamentos vinculados a um chamado especifico.
+    Permite que o suporte veja se o chamado foi utilizado em um compartilhamento.
+    """
+    if current_user.type != TypeUser.SUPPORT and not current_user.is_supervisor:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso negado.")
+
+    reg = session.get(SupportRegistration, registration_id)
+    if not reg:
+        raise HTTPException(status_code=404, detail="Chamado nao encontrado.")
+
+    shares = session.exec(
+        select(Share)
+        .where(Share.support_registration_id == registration_id)
+        .order_by(Share.created_at.desc())
+    ).all()
+
+    return [
+        ShareVinculadoItem(
+            id=s.id,
+            name=s.name,
+            status=s.status,
+            recipient_email=s.external_email,
+            created_at=s.created_at,
+            approved_at=s.approved_at,
+            expiration_hours=s.expiration_hours,
+        )
+        for s in shares
+    ]
+
+
+@router.patch("/registrations/{registration_id}/encerrar")
+async def encerrar_chamado(
+    registration_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token),
+):
+    """
+    Encerra (inativa) um chamado apos o compartilhamento ser concluido.
+    Apenas suporte ou supervisor podem encerrar.
+    """
+    if current_user.type != TypeUser.SUPPORT and not current_user.is_supervisor:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso negado.")
+
+    reg = session.get(SupportRegistration, registration_id)
+    if not reg:
+        raise HTTPException(status_code=404, detail="Chamado nao encontrado.")
+
+    if reg.status == SupportRegistrationStatus.INATIVO:
+        raise HTTPException(status_code=400, detail="Chamado ja esta encerrado.")
+
+    reg.status = SupportRegistrationStatus.INATIVO
+    reg.updated_at = datetime.now(UTC)
+    session.add(reg)
+    session.commit()
+    session.refresh(reg)
+
+    return {"id": reg.id, "status": reg.status, "updated_at": reg.updated_at.isoformat()}
 
 
 @router.get("/users")

@@ -12,6 +12,7 @@ from app.models.share import Share, ShareStatus
 from app.models.user import User, TypeUser
 from app.models.share_file import ShareFile
 from app.models.restricted_file import RestrictedFile
+from app.models.support_registration import SupportRegistration
 from app.services.audit_service import log_event
 from app.services.email_service import (
     send_share_approved_external_email,
@@ -19,6 +20,31 @@ from app.services.email_service import (
 )
 
 router = APIRouter(prefix="/supervisor", tags=["Supervisor"])
+
+
+def _horas_pendente(share: Share) -> Optional[float]:
+    """Retorna quantas horas o share esta pendente desde a criacao."""
+    if share.status != ShareStatus.PENDING:
+        return None
+    delta = datetime.now(UTC) - share.created_at.replace(tzinfo=UTC) if share.created_at.tzinfo is None else datetime.now(UTC) - share.created_at
+    return round(delta.total_seconds() / 3600, 1)
+
+
+def _get_chamado_info(session: Session, share: Share) -> Optional[dict]:
+    """Retorna dados do chamado do suporte vinculado ao share, se existir."""
+    if not share.support_registration_id:
+        return None
+    reg = session.get(SupportRegistration, share.support_registration_id)
+    if not reg:
+        return None
+    return {
+        "id": reg.id,
+        "numero_solicitacao": reg.request_number,
+        "email_solicitante": reg.requester_email,
+        "email_usuario_externo": reg.external_user_email,
+        "cadastrado_por": reg.registered_by_name,
+        "status": reg.status,
+    }
 
 
 class ApproveRequest(BaseModel):
@@ -42,6 +68,7 @@ class ExtendRequest(BaseModel):
 def get_pending_files(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
+    sender_email: Optional[str] = Query(None, description="Filtrar por e-mail do remetente"),
     session: Session = Depends(get_session),
     user: User = Depends(require_supervisor),
     request: Request = None,
@@ -61,6 +88,13 @@ def get_pending_files(
             "files": [],
             "pagination": {"current_page": page, "total_pages": 1, "total_items": 0},
         }
+
+    # Filtra supervisionados por e-mail se fornecido
+    if sender_email:
+        supervised_users = [
+            uid for uid in supervised_users
+            if session.get(User, uid) and sender_email.lower() in (session.get(User, uid).email or "").lower()
+        ]
 
     # Query base - shares pendentes dos supervisionados
     query = select(Share).where(
@@ -119,6 +153,8 @@ def get_pending_files(
             "files": files_data,
             "expiration_hours": share.expiration_hours,
             "created_at": share.created_at.isoformat(),
+            "horas_pendente": _horas_pendente(share),
+            "chamado": _get_chamado_info(session, share),
             "workflow": {
                 "current_step": 2,
                 "total_steps": 3,
@@ -508,6 +544,7 @@ async def approve_share_legacy(
 @router.get("/shares")
 def get_supervisor_shares(
     status: Optional[str] = Query(None, description="Filtro: pending | active | rejected"),
+    sender_email: Optional[str] = Query(None, description="Filtrar por e-mail do remetente"),
     page: int = Query(1, ge=1),
     limit: int = Query(100, ge=1, le=200),
     session: Session = Depends(get_session),
@@ -534,6 +571,13 @@ def get_supervisor_shares(
         "approved": ShareStatus.ACTIVE,
         "rejected": ShareStatus.REJECTED,
     }
+
+    # Filtro por e-mail do remetente
+    if sender_email:
+        supervised_users = [
+            uid for uid in supervised_users
+            if session.get(User, uid) and sender_email.lower() in (session.get(User, uid).email or "").lower()
+        ]
 
     base_condition = Share.created_by_id.in_(supervised_users)
     status_condition = None
@@ -611,6 +655,8 @@ def get_supervisor_shares(
             "rejected_at": share.rejected_at.isoformat() if hasattr(share, "rejected_at") and share.rejected_at else None,
             "rejection_reason": share.rejection_reason if hasattr(share, "rejection_reason") else None,
             "expires_at": share.expires_at.isoformat() if share.expires_at else None,
+            "horas_pendente": _horas_pendente(share),
+            "chamado": _get_chamado_info(session, share),
             "workflow": {
                 "current_step": workflow_step,
                 "total_steps": 3,

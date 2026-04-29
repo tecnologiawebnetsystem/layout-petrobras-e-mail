@@ -19,6 +19,8 @@ from app.services.token_service import issue_token_access, TokenError
 from app.schemas.token_schema import TokenRead
 from app.utils.authz import require_internal, get_current_user
 from app.services.audit_service import log_event
+from app.models.token_access import TokenAccess
+from app.models.support_registration import SupportRegistration, SupportRegistrationStatus
 
 router = APIRouter(prefix="/shares", tags=["Shares"])
 
@@ -35,6 +37,7 @@ class ShareCreateRequest(BaseModel):
     file_ids: List[int] = []
     area_id: Optional[int] = None
     consumption_policy: Optional[str] = "after_all"
+    support_registration_id: Optional[int] = None  # Chamado do suporte que originou o share
 
 
 class ShareCancelRequest(BaseModel):
@@ -65,6 +68,7 @@ async def create_share_endpoint(
             area_id=payload.area_id,
             created_by_id=user.id,
             status=ShareStatus.PENDING,
+            support_registration_id=payload.support_registration_id,
         )
         session.add(share)
         session.commit()
@@ -82,12 +86,22 @@ async def create_share_endpoint(
 
         session.commit()
 
+        # Regra de negocio: ao compartilhar, o chamado vinculado e inativado imediatamente.
+        # O chamado cumpriu seu proposito — nao deve permitir novos compartilhamentos.
+        if payload.support_registration_id:
+            reg = session.get(SupportRegistration, payload.support_registration_id)
+            if reg and reg.status == SupportRegistrationStatus.ATIVO:
+                reg.status = SupportRegistrationStatus.INATIVO
+                reg.updated_at = datetime.now(UTC)
+                session.add(reg)
+                session.commit()
+
         log_event(
             session=session,
             action="CRIAR_SHARE",
             user_id=user.id,
             share_id=share.id,
-            detail=f"recipient={payload.recipient_email}, files={len(payload.file_ids)}",
+            detail=f"recipient={payload.recipient_email}, files={len(payload.file_ids)}, ticket={payload.support_registration_id}",
             ip=request.client.host if request else None,
             user_agent=request.headers.get("User-Agent") if request else None
         )
@@ -237,6 +251,71 @@ def list_shares(
             "items_per_page": limit,
         }
     }
+
+
+# =====================================================
+# GET /shares/my-downloads - Downloads do usuario externo
+# =====================================================
+
+@router.get("/my-downloads")
+def list_my_downloads(
+    session: Session = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    """
+    Lista todos os compartilhamentos enviados para o usuario externo autenticado.
+    Retorna status, expiracao, arquivos e se ja foram baixados.
+    """
+    shares = session.exec(
+        select(Share)
+        .where(Share.external_email == user.email)
+        .order_by(Share.created_at.desc())
+    ).all()
+
+    now = datetime.now(UTC)
+    result = []
+    for share in shares:
+        share_files = session.exec(select(ShareFile).where(ShareFile.share_id == share.id)).all()
+        files_data = []
+        for sf in share_files:
+            rfile = session.get(RestrictedFile, sf.file_id)
+            if rfile:
+                files_data.append({
+                    "id": rfile.id,
+                    "name": rfile.name,
+                    "size": rfile.size_bytes,
+                    "downloaded": sf.downloaded,
+                    "downloaded_at": sf.downloaded_at.isoformat() if sf.downloaded_at else None,
+                })
+
+        creator = session.get(User, share.created_by_id)
+
+        # Calcula tempo restante de expiracao
+        horas_restantes = None
+        if share.expires_at:
+            expires = share.expires_at.replace(tzinfo=UTC) if share.expires_at.tzinfo is None else share.expires_at
+            delta = expires - now
+            horas_restantes = round(delta.total_seconds() / 3600, 1) if delta.total_seconds() > 0 else 0
+
+        result.append({
+            "id": share.id,
+            "name": share.name or f"Compartilhamento #{share.id}",
+            "description": share.description,
+            "status": share.status,
+            "sender_name": creator.name if creator else "Usuario Interno",
+            "sender_email": creator.email if creator else None,
+            "expiration_hours": share.expiration_hours,
+            "expires_at": share.expires_at.isoformat() if share.expires_at else None,
+            "horas_restantes": horas_restantes,
+            "created_at": share.created_at.isoformat(),
+            "approved_at": share.approved_at.isoformat() if share.approved_at else None,
+            "files": files_data,
+            "files_count": len(files_data),
+            "downloaded_count": sum(1 for f in files_data if f["downloaded"]),
+            "all_downloaded": len(files_data) > 0 and all(f["downloaded"] for f in files_data),
+        })
+
+    return {"downloads": result, "total": len(result)}
 
 
 # =====================================================

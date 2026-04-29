@@ -26,7 +26,6 @@ import {
   Search, 
   CheckCircle2, 
   AlertCircle, 
-  Clock, 
   Shield,
   Users,
   FileText,
@@ -43,9 +42,22 @@ import {
   Building,
   Phone,
   Copy,
-  ExternalLink
+  ExternalLink,
+  LinkIcon,
+  XCircle,
+  CheckCircle
 } from "lucide-react"
 import { FullPageLoader } from "@/components/ui/full-page-loader"
+
+interface ShareVinculado {
+  id: number
+  name: string | null
+  status: string
+  recipient_email: string
+  created_at: string
+  approved_at: string | null
+  expiration_hours: number
+}
 
 // Tipo para registro de cadastro
 interface CadastroRegistro {
@@ -53,7 +65,7 @@ interface CadastroRegistro {
   numeroSolicitacao: string
   emailSolicitante: string
   emailUsuarioExterno: string
-  status: "pendente" | "ativo" | "inativo" | "erro"
+  status: "ativo" | "inativo" | "erro"
   dataCadastro: string
   cadastradoPor: string
   observacao?: string
@@ -79,10 +91,12 @@ export default function SuportePage() {
   // Estado dos registros
   const [registros, setRegistros] = useState<CadastroRegistro[]>(REGISTROS_INICIAIS)
   const [registrosFiltrados, setRegistrosFiltrados] = useState<CadastroRegistro[]>(REGISTROS_INICIAIS)
-  const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativo" | "pendente" | "inativo" | "hoje">("todos")
+  const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativo" | "inativo" | "hoje">("todos")
   const [activeTab, setActiveTab] = useState("cadastrar")
   const [registroSelecionado, setRegistroSelecionado] = useState<CadastroRegistro | null>(null)
   const [showDetalhesModal, setShowDetalhesModal] = useState(false)
+  const [sharesVinculados, setSharesVinculados] = useState<Record<string, ShareVinculado[]>>({})
+  const [encerrando, setEncerrando] = useState(false)
   
   // Notificacao
   const [notification, setNotification] = useState<{
@@ -104,7 +118,6 @@ export default function SuportePage() {
   const stats = {
     total: registros.length,
     ativos: registros.filter(r => r.status === "ativo").length,
-    pendentes: registros.filter(r => r.status === "pendente").length,
     hoje: registros.filter(r => {
       const hoje = new Date().toDateString()
       return new Date(r.dataCadastro).toDateString() === hoje
@@ -119,7 +132,7 @@ export default function SuportePage() {
   const verificarDuplicidade = (email: string) => {
     return registros.some(
       r => r.emailUsuarioExterno.toLowerCase() === email.toLowerCase() && 
-           (r.status === "ativo" || r.status === "pendente")
+           r.status === "ativo"
     )
   }
 
@@ -149,8 +162,6 @@ export default function SuportePage() {
     // Aplicar filtro de status
     if (filtroStatus === "ativo") {
       filtrados = filtrados.filter(r => r.status === "ativo")
-    } else if (filtroStatus === "pendente") {
-      filtrados = filtrados.filter(r => r.status === "pendente")
     } else if (filtroStatus === "inativo") {
       filtrados = filtrados.filter(r => r.status === "inativo")
     } else if (filtroStatus === "hoje") {
@@ -172,15 +183,53 @@ export default function SuportePage() {
   }, [searchTerm, registros, filtroStatus])
 
   // Funcao para filtrar por status e ir para aba de consulta
-  const handleFiltrarPorStatus = (status: "todos" | "ativo" | "pendente" | "inativo" | "hoje") => {
+  const handleFiltrarPorStatus = (status: "todos" | "ativo" | "inativo" | "hoje") => {
     setFiltroStatus(status)
     setActiveTab("consulta")
   }
 
   // Funcao para visualizar detalhes do registro
-  const handleVisualizarDetalhes = (registro: CadastroRegistro) => {
+  const handleVisualizarDetalhes = async (registro: CadastroRegistro) => {
     setRegistroSelecionado(registro)
     setShowDetalhesModal(true)
+    // Busca shares vinculados se ainda nao foram carregados
+    if (!sharesVinculados[registro.id]) {
+      try {
+        const token = (user as Record<string, unknown>)?.token as string | undefined
+        const res = await fetch(`/api/support/registrations/${registro.id}/shares`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        if (res.ok) {
+          const json = await res.json()
+          setSharesVinculados(prev => ({ ...prev, [registro.id]: json?.data ?? [] }))
+        }
+      } catch {
+        setSharesVinculados(prev => ({ ...prev, [registro.id]: [] }))
+      }
+    }
+  }
+
+  // Encerrar chamado
+  const handleEncerrarChamado = async (registro: CadastroRegistro) => {
+    setEncerrando(true)
+    try {
+      const token = (user as Record<string, unknown>)?.token as string | undefined
+      const res = await fetch(`/api/support/registrations/${registro.id}/encerrar`, {
+        method: "PATCH",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (res.ok) {
+        setRegistros(prev => prev.map(r => r.id === registro.id ? { ...r, status: "inativo" as const } : r))
+        setShowDetalhesModal(false)
+        setNotification({ show: true, type: "success", title: "Chamado encerrado", message: `Chamado ${registro.numeroSolicitacao} encerrado com sucesso.` })
+      } else {
+        setNotification({ show: true, type: "error", title: "Erro", message: "Nao foi possivel encerrar o chamado." })
+      }
+    } catch {
+      setNotification({ show: true, type: "error", title: "Erro", message: "Falha de comunicacao ao encerrar chamado." })
+    } finally {
+      setEncerrando(false)
+    }
   }
 
   // Funcao para copiar texto
@@ -235,7 +284,7 @@ export default function SuportePage() {
         show: true,
         type: "error",
         title: "Cadastro duplicado",
-        message: "Ja existe um cadastro ativo ou pendente para este e-mail de usuario externo.",
+        message: "Ja existe um cadastro ativo para este e-mail de usuario externo.",
       })
       return
     }
@@ -285,7 +334,6 @@ export default function SuportePage() {
   const getStatusBadge = (status: CadastroRegistro["status"]) => {
     const config = {
       ativo: { label: "Ativo", className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
-      pendente: { label: "Pendente", className: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
       inativo: { label: "Inativo", className: "bg-slate-500/10 text-slate-600 border-slate-500/20" },
       erro: { label: "Erro", className: "bg-red-500/10 text-red-600 border-red-500/20" },
     }
@@ -316,7 +364,7 @@ export default function SuportePage() {
 
 
         {/* Metricas - Clicaveis para filtrar */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card 
             className={`bg-gradient-to-br from-card to-card/80 border-border/50 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] ${filtroStatus === "todos" ? "ring-2 ring-[#0047BB]" : ""}`}
             onClick={() => handleFiltrarPorStatus("todos")}
@@ -346,23 +394,6 @@ export default function SuportePage() {
                 <div>
                   <p className="text-2xl font-bold text-foreground">{stats.ativos}</p>
                   <p className="text-sm text-muted-foreground">Usuarios Ativos</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className={`bg-gradient-to-br from-card to-card/80 border-border/50 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] ${filtroStatus === "pendente" ? "ring-2 ring-amber-500" : ""}`}
-            onClick={() => handleFiltrarPorStatus("pendente")}
-          >
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 flex items-center justify-center">
-                  <Clock className="h-6 w-6 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.pendentes}</p>
-                  <p className="text-sm text-muted-foreground">Pendentes</p>
                 </div>
               </div>
             </CardContent>
@@ -543,7 +574,7 @@ export default function SuportePage() {
                   <div className="flex items-center gap-2">
                     {filtroStatus !== "todos" && (
                       <Badge variant="outline" className="bg-[#0047BB]/10 text-[#0047BB] border-[#0047BB]/30 px-3 py-1">
-                        Filtro: {filtroStatus === "ativo" ? "Ativos" : filtroStatus === "pendente" ? "Pendentes" : filtroStatus === "hoje" ? "Hoje" : "Inativos"}
+                        Filtro: {filtroStatus === "ativo" ? "Ativos" : filtroStatus === "hoje" ? "Hoje" : "Inativos"}
                       </Badge>
                     )}
                     <Button
@@ -593,14 +624,6 @@ export default function SuportePage() {
                   >
                     Ativos ({stats.ativos})
                   </Button>
-                  <Button
-                    variant={filtroStatus === "pendente" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFiltroStatus("pendente")}
-                    className={filtroStatus === "pendente" ? "bg-amber-600" : ""}
-                  >
-                    Pendentes ({stats.pendentes})
-                  </Button>
                 </div>
 
                 {/* Contador de resultados */}
@@ -629,6 +652,12 @@ export default function SuportePage() {
                                 {registro.numeroSolicitacao}
                               </span>
                               {getStatusBadge(registro.status)}
+                              {(sharesVinculados[registro.id]?.length ?? 0) > 0 && (
+                                <span className="inline-flex items-center gap-1 text-xs bg-[#0047BB]/10 text-[#0047BB] border border-[#0047BB]/20 px-2 py-0.5 rounded-full font-medium">
+                                  <LinkIcon className="h-3 w-3" />
+                                  {sharesVinculados[registro.id].length} compartilhamento(s)
+                                </span>
+                              )}
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                               <div className="flex items-center gap-2 text-muted-foreground">
@@ -863,8 +892,55 @@ export default function SuportePage() {
                 )}
               </div>
 
+              {/* Shares vinculados */}
+              {registroSelecionado && (() => {
+                const shares = sharesVinculados[registroSelecionado.id]
+                if (!shares) return (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Carregando compartilhamentos...
+                  </div>
+                )
+                if (shares.length === 0) return (
+                  <div className="bg-muted/30 rounded-xl p-4 text-sm text-muted-foreground flex items-center gap-2">
+                    <LinkIcon className="h-4 w-4" />
+                    Nenhum compartilhamento vinculado a este chamado ainda.
+                  </div>
+                )
+                return (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                      <LinkIcon className="h-4 w-4" />
+                      Compartilhamentos vinculados ({shares.length})
+                    </h4>
+                    {shares.map(s => (
+                      <div key={s.id} className="bg-muted/30 rounded-lg p-3 flex items-center justify-between gap-3 text-sm">
+                        <div className="min-w-0">
+                          <p className="font-medium text-foreground truncate">{s.name ?? `Compartilhamento #${s.id}`}</p>
+                          <p className="text-xs text-muted-foreground">{s.recipient_email} &bull; {new Date(s.created_at).toLocaleDateString("pt-BR")}</p>
+                        </div>
+                        <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium border ${s.status === "ativo" || s.status === "aprovado" ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/20" : s.status === "rejeitado" ? "bg-red-500/10 text-red-700 border-red-500/20" : "bg-amber-500/10 text-amber-700 border-amber-500/20"}`}>
+                          {s.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
+
               {/* Acoes */}
               <div className="flex justify-end gap-2 pt-4 border-t">
+                {registroSelecionado?.status === "ativo" && (
+                  <Button
+                    variant="outline"
+                    className="border-red-300 text-red-600 hover:bg-red-50"
+                    disabled={encerrando}
+                    onClick={() => handleEncerrarChamado(registroSelecionado)}
+                  >
+                    {encerrando ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <XCircle className="h-4 w-4 mr-2" />}
+                    Encerrar Chamado
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => setShowDetalhesModal(false)}

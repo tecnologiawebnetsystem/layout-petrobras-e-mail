@@ -14,6 +14,15 @@ export interface ExpirationLog {
   reason?: string
 }
 
+export interface ChamadoInfo {
+  id: number
+  numero_solicitacao: string
+  email_solicitante: string
+  email_usuario_externo: string
+  cadastrado_por: string
+  status: string
+}
+
 export interface FileUpload {
   id: string
   file: {
@@ -64,6 +73,9 @@ export interface FileUpload {
     date?: string
     comments?: string
   }>
+  // Campos de rastreabilidade com chamado do suporte
+  chamado?: ChamadoInfo | null
+  horasPendente?: number | null
 }
 
 /**
@@ -125,6 +137,8 @@ function mapApiToFileUpload(item: Record<string, unknown>): FileUpload {
       title: String(s.name || ""),
       status: mapStepStatus(String(s.status || "pending")),
     })),
+    chamado: (item.chamado as ChamadoInfo) ?? null,
+    horasPendente: item.horas_pendente != null ? Number(item.horas_pendente) : null,
   }
 }
 

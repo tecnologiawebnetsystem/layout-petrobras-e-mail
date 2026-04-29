@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { NotificationModal } from "@/components/shared/notification-modal"
-import { Lock, Send, Sparkles, Clock } from "lucide-react"
+import { Lock, Send, Sparkles, Clock, AlertTriangle, Ticket, CheckCircle2, XCircle, Timer, FileCheck, ChevronRight, History } from "lucide-react"
+import type { MyTicket } from "@/app/api/support/my-tickets/route"
 import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
 import type { FileDetail } from "@/components/dashboard/metric-detail-modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -20,11 +21,21 @@ import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
 import { ScrollToTop } from "@/components/shared/scroll-to-top"
 import { UploadSuccessModal } from "@/components/upload/upload-success-modal"
 import { ProtectedRoute } from "@/components/auth/protected-route"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent } from "@/components/ui/card"
 
 export default function UploadPage() {
   const { user, isAuthenticated } = useAuthStore()
   const { addUpload, uploads, loadUploads } = useWorkflowStore()
   const router = useRouter()
+  // Chamados do suporte vinculados ao usuario interno
+  const [myTickets, setMyTickets] = useState<MyTicket[]>([])
+  const [selectedTicket, setSelectedTicket] = useState<MyTicket | null>(null)
+  const [ticketsLoading, setTicketsLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState("novo")
+  const [supervisorManual, setSupervisorManual] = useState("")
+
 const [recipient, setRecipient] = useState("")
   const [description, setDescription] = useState("")
   const [files, setFiles] = useState<File[]>([])
@@ -63,6 +74,34 @@ useEffect(() => {
     loadUploads()
   }, [])
 
+  // Busca chamados ativos do suporte para o usuario interno logado
+  useEffect(() => {
+    if (!isAuthenticated || user?.userType !== "internal") return
+
+    const fetchTickets = async () => {
+      setTicketsLoading(true)
+      try {
+        const token = (user as Record<string, unknown>)?.token as string | undefined
+        const res = await fetch("/api/support/my-tickets", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        const json = await res.json()
+        const tickets: MyTicket[] = json?.data ?? []
+        setMyTickets(tickets)
+        if (tickets.length === 1) {
+          setSelectedTicket(tickets[0])
+          setRecipient(tickets[0].email_usuario_externo)
+        }
+      } catch {
+        setMyTickets([])
+      } finally {
+        setTicketsLoading(false)
+      }
+    }
+
+    fetchTickets()
+  }, [isAuthenticated, user])
+
 const handleFilesSelected = async (newFiles: File[]) => {
     const dangerousExtensions = [".exe", ".dll", ".bat", ".cmd", ".com", ".msi", ".scr", ".vbs", ".ps1", ".sh"]
     const blockedFiles: string[] = []
@@ -93,6 +132,16 @@ const handleFileRemove = (index: number) => {
 
 const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+  if (myTickets.length === 0 || !selectedTicket) {
+      setNotification({
+        show: true,
+        type: "warning",
+        title: "Chamado obrigatorio",
+        message: "E necessario ter um chamado ativo aberto pelo suporte para realizar o compartilhamento.",
+      })
+      return
+    }
 
   if (!recipient) {
       setNotification({
@@ -150,6 +199,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           type: f.name.split(".").pop()?.toUpperCase() || "FILE",
         })),
         expirationHours,
+        support_registration_id: selectedTicket?.id ?? null,
       }
 
     await new Promise((resolve) => setTimeout(resolve, 2000))
@@ -216,6 +266,54 @@ return (
 
         <MetricsDashboard {...uploadStats} userType="internal" files={uploadFiles} />
 
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full max-w-sm grid-cols-2 h-12 p-1 bg-muted/50">
+            <TabsTrigger value="novo" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <Send className="h-4 w-4" />
+              Novo Envio
+            </TabsTrigger>
+            <TabsTrigger value="historico" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <History className="h-4 w-4" />
+              Meus Envios
+              {uploadStats.pending > 0 && (
+                <Badge className="ml-1 bg-amber-500 text-white text-xs px-1.5">{uploadStats.pending}</Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="novo">
+            {/* Tela de bloqueio total: sem chamado ativo, o usuario nao ve o formulario */}
+            {!ticketsLoading && myTickets.length === 0 && (
+              <div className="flex flex-col items-center justify-center min-h-[480px] bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-10 text-center space-y-6">
+                <div className="h-20 w-20 rounded-full bg-red-500/10 flex items-center justify-center">
+                  <AlertTriangle className="h-10 w-10 text-red-500" />
+                </div>
+                <div className="space-y-2 max-w-md">
+                  <h2 className="text-2xl font-bold text-foreground">Acesso nao autorizado</h2>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Voce nao possui nenhum chamado ativo aberto pelo suporte com o seu e-mail.
+                    Para realizar um compartilhamento de arquivos, e necessario que o suporte abra um chamado com seu e-mail de solicitante.
+                  </p>
+                </div>
+                <div className="bg-muted/40 border border-border rounded-xl p-5 space-y-2 w-full max-w-sm text-left">
+                  <p className="text-sm font-semibold text-foreground">O que fazer?</p>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>Entre em contato com o time de suporte</li>
+                    <li>Informe o numero do seu chamado ou solicitacao</li>
+                    <li>Aguarde o cadastro ser realizado</li>
+                    <li>O acesso e liberado por ate 7 dias por chamado</li>
+                  </ul>
+                </div>
+                <a
+                  href="mailto:suporte@petrobras.com.br"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0047BB] text-white font-semibold text-sm hover:bg-[#003A99] transition-colors"
+                >
+                  Contatar Suporte
+                </a>
+              </div>
+            )}
+
+            {(ticketsLoading || myTickets.length > 0) && (
         <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-10 space-y-8 relative overflow-hidden">
             <div className="relative">
               <div className="flex items-center gap-4 mb-3">
@@ -264,42 +362,98 @@ return (
                 </div>
               )}
             {!user?.manager && (
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-5 space-y-2">
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-5 space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-blue-600 font-bold text-sm">i</span>
+                      <AlertTriangle className="h-4 w-4 text-blue-600" />
                     </div>
                     <div className="space-y-1">
-                      <p className="font-medium text-blue-800 dark:text-blue-500">Supervisor não identificado</p>
+                      <p className="font-medium text-blue-800 dark:text-blue-500">Supervisor nao identificado</p>
                       <p className="text-sm text-blue-700 dark:text-blue-600 leading-relaxed">
-                        Não foi possível identificar seu supervisor no Active Directory. Você pode continuar com o
-                        compartilhamento, mas recomendamos entrar em contato com o RH ou TI para atualizar seu cadastro
-                        hierárquico.
+                        Nao foi possivel identificar seu supervisor no Active Directory. Informe o e-mail do supervisor
+                        manualmente para que o compartilhamento seja encaminhado para aprovacao.
                       </p>
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="supervisor-manual" className="text-sm font-medium text-blue-800 dark:text-blue-400">
+                      E-mail do Supervisor (obrigatorio)
+                    </Label>
+                    <Input
+                      id="supervisor-manual"
+                      type="email"
+                      placeholder="supervisor@petrobras.com.br"
+                      value={supervisorManual}
+                      onChange={(e) => setSupervisorManual(e.target.value)}
+                      className="bg-white/50 border-blue-300"
+                      disabled={isLoading || showSuccess}
+                    />
                   </div>
                 </div>
               )}
 
-            <div className="space-y-3">
-                <Label htmlFor="recipient" className="text-base font-medium flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-[#00A99D]" />
-                  Destinatário Externo
-                </Label>
-                <Input
-                  id="recipient"
-                  type="email"
-                  placeholder="cliente@empresa.com"
-                  value={recipient}
-                  onChange={(e) => setRecipient(e.target.value)}
-                  required
-                  aria-label="E-mail do destinatário"
-                  disabled={isLoading || showSuccess}
-                />
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  O destinatário receberá um email com link seguro para download
-                </p>
-              </div>
+            {/* Bloco de chamados do suporte */}
+              {ticketsLoading ? (
+                <div className="flex items-center gap-3 p-5 rounded-xl border border-border/50 bg-muted/20">
+                  <div className="h-5 w-5 border-2 border-[#0047BB] border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm text-muted-foreground">Verificando chamados ativos...</span>
+                </div>
+              ) : myTickets.length > 0 ? (
+                <div className="space-y-4">
+                  {/* Seletor de chamado */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium flex items-center gap-2">
+                      <Ticket className="h-4 w-4 text-[#0047BB]" />
+                      Chamado do Suporte
+                    </Label>
+                    <Select
+                      value={selectedTicket ? String(selectedTicket.id) : ""}
+                      onValueChange={(val) => {
+                        const ticket = myTickets.find((t) => String(t.id) === val) ?? null
+                        setSelectedTicket(ticket)
+                        setRecipient(ticket?.email_usuario_externo ?? "")
+                      }}
+                      disabled={isLoading || showSuccess}
+                      aria-label="Selecione o chamado do suporte"
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um chamado..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {myTickets.map((t) => (
+                          <SelectItem key={t.id} value={String(t.id)}>
+                            #{t.numero_solicitacao} — {t.email_usuario_externo}
+                            {t.dias_restantes != null && ` (${t.dias_restantes}d restante${t.dias_restantes !== 1 ? "s" : ""})`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Selecione o chamado aberto pelo suporte para este compartilhamento.
+                    </p>
+                  </div>
+
+                  {/* Campo destinatario somente leitura */}
+                  <div className="space-y-3">
+                    <Label htmlFor="recipient" className="text-base font-medium flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-[#00A99D]" />
+                      Destinatario Externo
+                    </Label>
+                    <Input
+                      id="recipient"
+                      type="email"
+                      value={recipient}
+                      readOnly
+                      aria-label="E-mail do destinatario (somente leitura)"
+                      className="bg-muted/40 cursor-not-allowed select-none"
+                      tabIndex={-1}
+                    />
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      O e-mail e preenchido automaticamente a partir do chamado selecionado e nao pode ser alterado.
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="space-y-3">
                 <Label className="text-base font-medium">Anexar Arquivos</Label>
                 <DragDropZone
@@ -355,7 +509,7 @@ return (
               <div className="flex justify-end pt-6">
                 <Button
                   type="submit"
-                  disabled={isLoading || showSuccess}
+                  disabled={isLoading || showSuccess || myTickets.length === 0 || !selectedTicket || ticketsLoading}
                   size="lg"
                   className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:from-[#008A81] hover:to-[#003A99] text-white font-semibold px-10 text-base shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Enviar arquivos para aprovação"
@@ -370,6 +524,72 @@ return (
               </div>
             </form>
           </div>
+            )}
+          </TabsContent>
+
+          {/* Aba: Meus Envios */}
+          <TabsContent value="historico" className="space-y-4">
+            {uploads.length === 0 ? (
+              <Card className="p-12 text-center bg-card/50">
+                <FileCheck className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <p className="text-xl font-medium text-foreground mb-2">Nenhum envio encontrado</p>
+                <p className="text-muted-foreground">Seus compartilhamentos aparecerão aqui.</p>
+              </Card>
+            ) : (
+              uploads.map((u) => {
+                const statusConfig = {
+                  pending: { label: "Pendente", className: "bg-amber-100 text-amber-700 border-amber-200", icon: <Clock className="h-3 w-3 mr-1" /> },
+                  approved: { label: "Aprovado", className: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: <CheckCircle2 className="h-3 w-3 mr-1" /> },
+                  rejected: { label: "Rejeitado", className: "bg-red-100 text-red-700 border-red-200", icon: <XCircle className="h-3 w-3 mr-1" /> },
+                  cancelled: { label: "Cancelado", className: "bg-slate-100 text-slate-600 border-slate-200", icon: null },
+                }
+                const sc = statusConfig[u.status] ?? statusConfig.pending
+                return (
+                  <Card key={u.id} className={`overflow-hidden border-l-4 ${u.status === "pending" ? "border-l-amber-500" : u.status === "approved" ? "border-l-emerald-500" : u.status === "rejected" ? "border-l-red-500" : "border-l-slate-400"}`}>
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-2 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-foreground truncate">{u.name || `Compartilhamento #${u.id}`}</span>
+                            <Badge className={`${sc.className} flex items-center text-xs`}>
+                              {sc.icon}{sc.label}
+                            </Badge>
+                            {u.chamado && (
+                              <span className="inline-flex items-center gap-1 text-xs bg-[#0047BB]/10 text-[#0047BB] border border-[#0047BB]/20 px-2 py-0.5 rounded-full font-medium">
+                                <Ticket className="h-3 w-3" />
+                                #{u.chamado.numero_solicitacao}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground space-y-1">
+                            <p>Destinatario: <span className="text-foreground">{u.recipient}</span></p>
+                            <p>Enviado em: <span className="text-foreground">{u.uploadDate}</span></p>
+                            {u.expiresAt && <p>Expira em: <span className="text-foreground">{u.expiresAt}</span></p>}
+                            {u.status === "pending" && u.horasPendente != null && (
+                              <p className="flex items-center gap-1">
+                                <Timer className="h-3 w-3" />
+                                <span className={u.horasPendente > 24 ? "text-red-600 font-medium" : u.horasPendente > 8 ? "text-amber-600" : "text-emerald-600"}>
+                                  {u.horasPendente}h aguardando aprovacao
+                                </span>
+                              </p>
+                            )}
+                            {u.status === "rejected" && u.rejectionReason && (
+                              <p className="text-red-600">Motivo: {u.rejectionReason}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-xs text-muted-foreground">{u.files?.length ?? 0} arq.</span>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })
+            )}
+          </TabsContent>
+        </Tabs>
         </main>
         <ScrollToTop />
         <NotificationModal
