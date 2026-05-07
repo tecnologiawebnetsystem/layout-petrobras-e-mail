@@ -67,7 +67,7 @@ function getInitials(email: string) {
 // Cor do avatar baseada no email
 function getAvatarColor(email: string) {
   const colors = [
-    "bg-[#0066CC]",
+    "stat-icon-blue",
     "bg-[#00A99D]",
     "bg-violet-600",
     "bg-amber-600",
@@ -247,9 +247,9 @@ export default function SuportePage() {
   const getStatusBadge = (status: CadastroRegistro["status"]) => {
     const config = {
       ativo:    { label: "Ativo",    className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
-      pendente: { label: "Pendente", className: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-      inativo:  { label: "Inativo",  className: "bg-slate-500/10 text-slate-600 border-slate-500/20" },
-      erro:     { label: "Erro",     className: "bg-red-500/10 text-red-600 border-red-500/20" },
+      pendente: { label: "Pendente", className: "stat-card-orange0/10 text-amber-600 border-amber-500/20" },
+      inativo:  { label: "Inativo",  className: "stat-icon-slate/10 text-slate-600 border-slate-500/20" },
+      erro:     { label: "Erro",     className: "stat-card-red0/10 text-red-600 border-red-500/20" },
     }
     const { label, className } = config[status]
     return <Badge variant="outline" className={className}>{label}</Badge>
@@ -281,9 +281,9 @@ export default function SuportePage() {
             tabIndex={0}
             onClick={() => handleFiltrarPorStatus("todos")}
             onKeyDown={(e) => e.key === "Enter" && handleFiltrarPorStatus("todos")}
-            className={`bg-[#EBF3FB] rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${filtroStatus === "todos" ? "ring-2 ring-[#0066CC]" : ""}`}
+            className={`stat-card-blue rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${filtroStatus === "todos" ? "ring-2 ring-[color:var(--card-blue-ring)]" : ""}`}
           >
-            <div className="h-14 w-14 rounded-2xl bg-[#0066CC] flex items-center justify-center">
+            <div className="h-14 w-14 rounded-2xl stat-icon-blue flex items-center justify-center">
               <Users className="h-7 w-7 text-white" />
             </div>
             <div>
@@ -298,16 +298,16 @@ export default function SuportePage() {
             tabIndex={0}
             onClick={() => handleFiltrarPorStatus("ativo")}
             onKeyDown={(e) => e.key === "Enter" && handleFiltrarPorStatus("ativo")}
-            className={`bg-green-50 rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${filtroStatus === "ativo" ? "ring-2 ring-green-500" : ""}`}
+            className={`stat-card-green rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${filtroStatus === "ativo" ? "ring-2 ring-[color:var(--card-green-ring)]" : ""}`}
           >
-            <div className="h-14 w-14 rounded-2xl bg-green-500 flex items-center justify-center">
+            <div className="h-14 w-14 rounded-2xl stat-card-green0 flex items-center justify-center">
               <CheckCircle2 className="h-7 w-7 text-white" />
             </div>
             <div>
               <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.ativos}</p>
               <p className="text-sm text-muted-foreground">Usuarios Ativos</p>
               {stats.total > 0 && (
-                <p className="text-xs text-green-700 mt-1">{pctAtivos}% do total</p>
+                <p className="text-xs text-[color:var(--card-green-icon)] mt-1">{pctAtivos}% do total</p>
               )}
             </div>
           </div>
@@ -318,9 +318,9 @@ export default function SuportePage() {
             tabIndex={0}
             onClick={() => handleFiltrarPorStatus("hoje")}
             onKeyDown={(e) => e.key === "Enter" && handleFiltrarPorStatus("hoje")}
-            className={`bg-orange-50 rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${filtroStatus === "hoje" ? "ring-2 ring-orange-500" : ""}`}
+            className={`stat-card-orange rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${filtroStatus === "hoje" ? "ring-2 ring-[color:var(--card-orange-ring)]" : ""}`}
           >
-            <div className="h-14 w-14 rounded-2xl bg-orange-500 flex items-center justify-center">
+            <div className="h-14 w-14 rounded-2xl stat-card-orange0 flex items-center justify-center">
               <Activity className="h-7 w-7 text-white" />
             </div>
             <div>
@@ -429,7 +429,7 @@ export default function SuportePage() {
                     </div>
 
                     {/* Alerta de rastreabilidade */}
-                    <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-3 flex items-start gap-3">
+                    <div className="stat-card-blue0/5 border border-blue-500/20 rounded-xl p-3 flex items-start gap-3">
                       <Shield className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                       <p className="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">
                         Este cadastro sera registrado com seu usuario{" "}
@@ -480,7 +480,7 @@ export default function SuportePage() {
                         { n: "4", text: "Clique em Cadastrar para registrar e liberar o acesso" },
                       ].map(({ n, text }) => (
                         <div key={n} className="flex items-start gap-3">
-                          <div className="h-6 w-6 rounded-full bg-[#0066CC] flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <div className="h-6 w-6 rounded-full stat-icon-blue flex items-center justify-center flex-shrink-0 mt-0.5">
                             <span className="text-white text-xs font-bold">{n}</span>
                           </div>
                           <p className="text-sm text-muted-foreground leading-relaxed">{text}</p>
@@ -490,7 +490,7 @@ export default function SuportePage() {
                   </Card>
                 ) : (
                   <div className="space-y-4">
-                  <Card className="border-[#0066CC]/20 bg-[#EBF3FB]/50">
+                  <Card className="border-[#0066CC]/20 stat-card-blue/50">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base text-[#0047BB] flex items-center gap-2">
                         <Eye className="h-4 w-4" />
@@ -499,7 +499,7 @@ export default function SuportePage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {/* Numero */}
-                      <div className="flex items-center gap-3 p-3 bg-white/70 dark:bg-background/50 rounded-xl border">
+                      <div className="flex items-center gap-3 p-3 bg-card/70 dark:bg-background/50 rounded-xl border">
                         <Hash className="h-4 w-4 text-[#0047BB] flex-shrink-0" />
                         <div>
                           <p className="text-xs text-muted-foreground">Numero da Solicitacao</p>
@@ -631,7 +631,7 @@ export default function SuportePage() {
                         {/* Info principal */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                            <span className="font-mono text-xs font-semibold text-[#0047BB] bg-[#EBF3FB] px-2 py-0.5 rounded-full">
+                            <span className="font-mono text-xs font-semibold text-[#0047BB] stat-card-blue px-2 py-0.5 rounded-full">
                               {registro.numeroSolicitacao}
                             </span>
                             {getStatusBadge(registro.status)}
@@ -752,7 +752,7 @@ export default function SuportePage() {
           {registroSelecionado && (
             <div className="space-y-4 py-2">
               {/* Header com numero e status */}
-              <div className="flex items-center justify-between p-3 bg-[#EBF3FB] rounded-xl">
+              <div className="flex items-center justify-between p-3 stat-card-blue rounded-xl">
                 <div className="flex items-center gap-2">
                   <Hash className="h-4 w-4 text-[#0047BB]" />
                   <span className="font-mono font-bold text-[#0047BB]">{registroSelecionado.numeroSolicitacao}</span>
@@ -800,7 +800,7 @@ export default function SuportePage() {
               </div>
 
               {registroSelecionado.observacao && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <div className="stat-card-orange border border-amber-200 rounded-xl p-3">
                   <p className="text-xs font-semibold text-amber-700 mb-1">Observacao</p>
                   <p className="text-sm text-amber-700">{registroSelecionado.observacao}</p>
                 </div>

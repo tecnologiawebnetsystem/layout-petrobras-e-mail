@@ -311,9 +311,9 @@ export default function UploadPage() {
               )}
 
               {!user?.manager && (
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-5 space-y-2">
+                <div className="stat-card-blue0/10 border border-blue-500/30 rounded-xl p-5 space-y-2">
                   <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="h-8 w-8 rounded-full stat-card-blue0/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="text-blue-600 font-bold text-sm">i</span>
                     </div>
                     <div className="space-y-1">
@@ -342,7 +342,7 @@ export default function UploadPage() {
                     <span className="text-sm text-muted-foreground">Carregando solicitações...</span>
                   </div>
                 ) : solicitacoesAtivas.length === 0 ? (
-                  <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <div className="flex items-start gap-3 stat-card-orange border border-amber-200 rounded-xl p-4">
                     <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
                     <div className="space-y-1">
                       <p className="font-medium text-amber-800">Nenhuma solicitação ativa</p>
@@ -379,11 +379,11 @@ export default function UploadPage() {
 
               {/* ── STEP 2: Campos preenchidos automaticamente (bloqueados) ── */}
               {solicitacaoSelecionada && (
-                <div className="bg-[#EBF3FB] border border-[#0066CC]/20 rounded-xl p-5 space-y-4">
+                <div className="stat-card-blue border border-[#0066CC]/20 rounded-xl p-5 space-y-4">
                   <div className="flex items-center gap-2 mb-1">
                     <CheckCircle2 className="h-5 w-5 text-[#0066CC]" />
                     <span className="font-semibold text-[#0047BB]">Solicitação {solicitacaoSelecionada.numero_solicitacao}</span>
-                    <span className="ml-auto text-xs bg-[#0066CC]/10 text-[#0047BB] px-2 py-0.5 rounded-full font-medium">
+                    <span className="ml-auto text-xs stat-icon-blue/10 text-[#0047BB] px-2 py-0.5 rounded-full font-medium">
                       Preenchido automaticamente
                     </span>
                   </div>

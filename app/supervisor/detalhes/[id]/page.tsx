@@ -265,7 +265,7 @@ export default function SupervisorDetailsPage({ params }: { params: { id: string
                 </div>
 
                 {uploadData.numeroSolicitacao && (
-                  <div className="flex items-center gap-2 bg-[#EBF3FB] border border-[#0066CC]/20 rounded-xl px-4 py-3">
+                  <div className="flex items-center gap-2 stat-card-blue border border-[#0066CC]/20 rounded-xl px-4 py-3">
                     <FileText className="h-4 w-4 text-[#0047BB] flex-shrink-0" />
                     <div>
                       <p className="text-xs text-muted-foreground">Número da Solicitação</p>
@@ -344,7 +344,7 @@ export default function SupervisorDetailsPage({ params }: { params: { id: string
                   </div>
 
                   {individualApprovalMode && (
-                    <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div className="mb-3 p-3 stat-card-blue dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                       <p className="text-sm text-blue-900 dark:text-blue-100 mb-2">
                         Selecione os arquivos que deseja aprovar ou rejeitar individualmente
                       </p>

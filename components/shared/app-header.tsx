@@ -145,7 +145,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-72 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 shadow-xl"
+                className="w-72 bg-card border-border shadow-xl"
               >
                 <DropdownMenuLabel className="pb-3">
                   <div className="flex items-start gap-3">
@@ -176,7 +176,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
 
                 {user?.manager && (
                   <>
-                    <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
+                    <DropdownMenuSeparator className="bg-border" />
                     <DropdownMenuLabel className="py-2">
                       <div className="flex items-start gap-2">
                         <User className="h-4 w-4 text-muted-foreground mt-0.5" />
@@ -193,30 +193,30 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                   </>
                 )}
 
-                <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
+                <DropdownMenuSeparator className="bg-border" />
 
                 {!isExternalUser && (user?.userType === "internal" || user?.userType === "supervisor") && (
                   <>
                     <DropdownMenuItem
                       onClick={handleViewCompartilhamentos}
-                      className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 hover:text-blue-900 dark:hover:text-blue-100 focus:text-blue-900 dark:focus:text-blue-100 min-h-[44px]"
+                      className="flex items-center gap-2 cursor-pointer text-foreground hover:bg-accent focus:bg-accent min-h-[44px]"
                     >
                       <FolderOpen className="h-4 w-4" />
                       <span>Meus Compartilhamentos</span>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
+                    <DropdownMenuSeparator className="bg-border" />
                   </>
                 )}
                 {!isExternalUser && user?.userType === "supervisor" && (
                   <>
                     <DropdownMenuItem
                       onClick={handleViewLogs}
-                      className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 hover:text-blue-900 dark:hover:text-blue-100 focus:text-blue-900 dark:focus:text-blue-100 min-h-[44px]"
+                      className="flex items-center gap-2 cursor-pointer text-foreground hover:bg-accent focus:bg-accent min-h-[44px]"
                     >
                       <Activity className="h-4 w-4" />
                       <span>Logs e Rastreamento</span>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
+                    <DropdownMenuSeparator className="bg-border" />
                   </>
                 )}
                 <DropdownMenuItem

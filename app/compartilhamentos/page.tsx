@@ -156,7 +156,7 @@ export default function CompartilhamentosPage() {
     switch (status) {
       case "pending":
         return (
-          <Badge className="bg-amber-500/10 text-amber-700 border-amber-500/20 hover:bg-amber-500/20">
+          <Badge className="stat-card-orange0/10 text-amber-700 border-amber-500/20 hover:stat-card-orange0/20">
             <Clock className="w-3 h-3 mr-1" />
             Aguardando
           </Badge>
@@ -170,14 +170,14 @@ export default function CompartilhamentosPage() {
         )
       case "rejected":
         return (
-          <Badge className="bg-red-500/10 text-red-700 border-red-500/20 hover:bg-red-500/20">
+          <Badge className="stat-card-red0/10 text-[color:var(--card-red-icon)] border-red-500/20 hover:stat-card-red0/20">
             <XCircle className="w-3 h-3 mr-1" />
             Rejeitado
           </Badge>
         )
       case "cancelled":
         return (
-          <Badge className="bg-gray-500/10 text-gray-700 border-gray-500/20 hover:bg-gray-500/20">
+          <Badge className="bg-gray-500/10 text-foreground/80 border-gray-500/20 hover:bg-gray-500/20">
             <Ban className="w-3 h-3 mr-1" />
             Cancelado
           </Badge>
@@ -245,12 +245,12 @@ export default function CompartilhamentosPage() {
           {/* Cards de Metricas - Clicaveis */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
             <div
-              className={`bg-[#EBF3FB] rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "todos" ? "ring-2 ring-[#0066CC]" : ""}`}
+              className={`stat-card-blue rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "todos" ? "ring-2 ring-[color:var(--card-blue-ring)]" : ""}`}
               onClick={() => handleFilterByStatus("todos")}
               role="button" tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && handleFilterByStatus("todos")}
             >
-              <div className="h-14 w-14 rounded-2xl bg-[#0066CC] flex items-center justify-center">
+              <div className="h-14 w-14 rounded-2xl stat-icon-blue flex items-center justify-center">
                 <FileText className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -260,12 +260,12 @@ export default function CompartilhamentosPage() {
             </div>
 
             <div
-              className={`bg-orange-50 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "pending" ? "ring-2 ring-orange-500" : ""}`}
+              className={`stat-card-orange rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "pending" ? "ring-2 ring-[color:var(--card-orange-ring)]" : ""}`}
               onClick={() => handleFilterByStatus("pending")}
               role="button" tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && handleFilterByStatus("pending")}
             >
-              <div className="h-14 w-14 rounded-2xl bg-orange-500 flex items-center justify-center">
+              <div className="h-14 w-14 rounded-2xl stat-card-orange0 flex items-center justify-center">
                 <Clock className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -275,12 +275,12 @@ export default function CompartilhamentosPage() {
             </div>
 
             <div
-              className={`bg-green-50 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "approved" ? "ring-2 ring-green-500" : ""}`}
+              className={`stat-card-green rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "approved" ? "ring-2 ring-[color:var(--card-green-ring)]" : ""}`}
               onClick={() => handleFilterByStatus("approved")}
               role="button" tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && handleFilterByStatus("approved")}
             >
-              <div className="h-14 w-14 rounded-2xl bg-green-500 flex items-center justify-center">
+              <div className="h-14 w-14 rounded-2xl stat-card-green0 flex items-center justify-center">
                 <CheckCircle2 className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -290,12 +290,12 @@ export default function CompartilhamentosPage() {
             </div>
 
             <div
-              className={`bg-red-50 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "rejected" ? "ring-2 ring-red-500" : ""}`}
+              className={`stat-card-red rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "rejected" ? "ring-2 ring-[color:var(--card-red-ring)]" : ""}`}
               onClick={() => handleFilterByStatus("rejected")}
               role="button" tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && handleFilterByStatus("rejected")}
             >
-              <div className="h-14 w-14 rounded-2xl bg-red-500 flex items-center justify-center">
+              <div className="h-14 w-14 rounded-2xl stat-card-red0 flex items-center justify-center">
                 <XCircle className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -305,12 +305,12 @@ export default function CompartilhamentosPage() {
             </div>
 
             <div
-              className={`bg-slate-100 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "cancelled" ? "ring-2 ring-slate-500" : ""}`}
+              className={`stat-card-slate rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "cancelled" ? "ring-2 ring-[color:var(--card-slate-ring)]" : ""}`}
               onClick={() => handleFilterByStatus("cancelled")}
               role="button" tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && handleFilterByStatus("cancelled")}
             >
-              <div className="h-14 w-14 rounded-2xl bg-slate-500 flex items-center justify-center">
+              <div className="h-14 w-14 rounded-2xl stat-icon-slate flex items-center justify-center">
                 <Ban className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -415,16 +415,16 @@ export default function CompartilhamentosPage() {
                       {/* Info Principal */}
                       <div className="flex items-start gap-4 flex-1">
                         <div className={`hidden md:flex p-3 rounded-xl ${
-                          upload.status === "pending" ? "bg-amber-500/10" :
+                          upload.status === "pending" ? "stat-card-orange0/10" :
                           upload.status === "approved" ? "bg-emerald-500/10" :
-                          upload.status === "rejected" ? "bg-red-500/10" :
+                          upload.status === "rejected" ? "stat-card-red0/10" :
                           "bg-gray-500/10"
                         }`}>
                           <FileText className={`h-6 w-6 ${
                             upload.status === "pending" ? "text-amber-600" :
                             upload.status === "approved" ? "text-emerald-600" :
                             upload.status === "rejected" ? "text-red-600" :
-                            "text-gray-600"
+                            "text-muted-foreground"
                           }`} />
                         </div>
 
@@ -458,7 +458,7 @@ export default function CompartilhamentosPage() {
 
                           {/* Info adicional baseada no status */}
                           {upload.status === "pending" && (
-                            <div className="flex items-center gap-2 p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg">
+                            <div className="flex items-center gap-2 p-3 stat-card-orange0/5 border border-amber-500/20 rounded-lg">
                               <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
                               <p className="text-sm text-amber-700">
                                 Aguardando aprovacao do supervisor
@@ -477,9 +477,9 @@ export default function CompartilhamentosPage() {
                           )}
 
                           {upload.status === "rejected" && upload.rejectionReason && (
-                            <div className="flex items-start gap-2 p-3 bg-red-500/5 border border-red-500/20 rounded-lg">
+                            <div className="flex items-start gap-2 p-3 stat-card-red0/5 border border-red-500/20 rounded-lg">
                               <XCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
-                              <p className="text-sm text-red-700">
+                              <p className="text-sm text-[color:var(--card-red-icon)]">
                                 <span className="font-medium">Motivo:</span> {upload.rejectionReason}
                               </p>
                             </div>
@@ -487,8 +487,8 @@ export default function CompartilhamentosPage() {
 
                           {upload.status === "cancelled" && (
                             <div className="flex items-start gap-2 p-3 bg-gray-500/5 border border-gray-500/20 rounded-lg">
-                              <Ban className="h-4 w-4 text-gray-600 flex-shrink-0 mt-0.5" />
-                              <div className="text-sm text-gray-700">
+                              <Ban className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                              <div className="text-sm text-foreground/80">
                                 <p>Cancelado por <span className="font-medium">{upload.cancelledBy}</span>
                                 {upload.cancellationDate && ` em ${upload.cancellationDate}`}</p>
                                 {upload.cancellationReason && (
@@ -529,7 +529,7 @@ export default function CompartilhamentosPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleCancelClick(upload.id)}
-                            className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-500/10"
+                            className="gap-2 text-red-600 hover:text-[color:var(--card-red-icon)] hover:stat-card-red0/10"
                           >
                             <Ban className="h-4 w-4" />
                             <span className="hidden sm:inline">Cancelar</span>
@@ -549,7 +549,7 @@ export default function CompartilhamentosPage() {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-xl stat-card-red0/10 flex items-center justify-center">
                   <Ban className="h-5 w-5 text-red-600" />
                 </div>
                 Cancelar Compartilhamento

@@ -102,7 +102,7 @@ export default function SupervisorPage() {
         )
       case "rejected":
         return (
-          <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100">
+          <Badge className="bg-red-100 text-[color:var(--card-red-icon)] border-red-200 hover:bg-red-100">
             <XCircle className="h-3 w-3 mr-1" />
             Rejeitado
           </Badge>
@@ -156,13 +156,13 @@ export default function SupervisorPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {/* Total */}
           <div
-            className={`bg-[#EBF3FB] rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "all" ? "ring-2 ring-[#0066CC]" : ""}`}
+            className={`stat-card-blue rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "all" ? "ring-2 ring-[color:var(--card-blue-ring)]" : ""}`}
             onClick={() => { setStatusFilter("all"); setActiveTab("aprovacoes") }}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && (setStatusFilter("all"), setActiveTab("aprovacoes"))}
           >
-            <div className="h-14 w-14 rounded-2xl bg-[#0066CC] flex items-center justify-center">
+            <div className="h-14 w-14 rounded-2xl stat-icon-blue flex items-center justify-center">
               <BarChart3 className="h-7 w-7 text-white" />
             </div>
             <div>
@@ -173,13 +173,13 @@ export default function SupervisorPage() {
 
           {/* Aguardando */}
           <div
-            className={`bg-orange-50 rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "pending" ? "ring-2 ring-orange-500" : ""}`}
+            className={`stat-card-orange rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "pending" ? "ring-2 ring-[color:var(--card-orange-ring)]" : ""}`}
             onClick={() => { setStatusFilter("pending"); setActiveTab("aprovacoes") }}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && (setStatusFilter("pending"), setActiveTab("aprovacoes"))}
           >
-            <div className="h-14 w-14 rounded-2xl bg-orange-500 flex items-center justify-center">
+            <div className="h-14 w-14 rounded-2xl stat-card-orange0 flex items-center justify-center">
               <Clock className="h-7 w-7 text-white" />
             </div>
             <div>
@@ -190,13 +190,13 @@ export default function SupervisorPage() {
 
           {/* Aprovados */}
           <div
-            className={`bg-green-50 rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "approved" ? "ring-2 ring-green-500" : ""}`}
+            className={`stat-card-green rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "approved" ? "ring-2 ring-[color:var(--card-green-ring)]" : ""}`}
             onClick={() => { setStatusFilter("approved"); setActiveTab("aprovacoes") }}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && (setStatusFilter("approved"), setActiveTab("aprovacoes"))}
           >
-            <div className="h-14 w-14 rounded-2xl bg-green-500 flex items-center justify-center">
+            <div className="h-14 w-14 rounded-2xl stat-card-green0 flex items-center justify-center">
               <CheckCircle className="h-7 w-7 text-white" />
             </div>
             <div>
@@ -207,13 +207,13 @@ export default function SupervisorPage() {
 
           {/* Rejeitados */}
           <div
-            className={`bg-red-50 rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "rejected" ? "ring-2 ring-red-500" : ""}`}
+            className={`stat-card-red rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "rejected" ? "ring-2 ring-[color:var(--card-red-ring)]" : ""}`}
             onClick={() => { setStatusFilter("rejected"); setActiveTab("aprovacoes") }}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && (setStatusFilter("rejected"), setActiveTab("aprovacoes"))}
           >
-            <div className="h-14 w-14 rounded-2xl bg-red-500 flex items-center justify-center">
+            <div className="h-14 w-14 rounded-2xl stat-card-red0 flex items-center justify-center">
               <XCircle className="h-7 w-7 text-white" />
             </div>
             <div>
@@ -230,7 +230,7 @@ export default function SupervisorPage() {
               <ClipboardCheck className="h-5 w-5" />
               Aprovacoes
               {pendingCount > 0 && (
-                <Badge className="ml-1 bg-amber-500 text-white text-xs px-2">
+                <Badge className="ml-1 stat-card-orange0 text-white text-xs px-2">
                   {pendingCount}
                 </Badge>
               )}
@@ -341,7 +341,7 @@ export default function SupervisorPage() {
                               <h3 className="text-lg font-semibold text-foreground truncate">{upload.name}</h3>
                               {getStatusBadge(upload.status)}
                               {upload.numeroSolicitacao && (
-                                <span className="inline-flex items-center gap-1 text-xs font-mono bg-[#EBF3FB] text-[#0047BB] px-2 py-0.5 rounded-full border border-[#0066CC]/20">
+                                <span className="inline-flex items-center gap-1 text-xs font-mono stat-card-blue text-[#0047BB] px-2 py-0.5 rounded-full border border-[#0066CC]/20">
                                   <FileText className="h-3 w-3" />
                                   {upload.numeroSolicitacao}
                                 </span>

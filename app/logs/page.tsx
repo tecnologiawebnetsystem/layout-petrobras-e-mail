@@ -103,17 +103,17 @@ const LEVEL_BORDER: Record<string, string> = {
 }
 
 const LEVEL_BADGE: Record<string, string> = {
-  success: "bg-green-50 text-green-700 border-green-200",
-  error: "bg-red-50 text-red-700 border-red-200",
-  warning: "bg-orange-50 text-orange-700 border-orange-200",
-  info: "bg-[#EBF3FB] text-[#0047BB] border-[#0066CC]/20",
+  success: "stat-card-green text-[color:var(--card-green-icon)] border-green-200",
+  error: "stat-card-red text-[color:var(--card-red-icon)] border-red-200",
+  warning: "stat-card-orange text-[color:var(--card-orange-icon)] border-orange-200",
+  info: "stat-card-blue text-[#0047BB] border-[#0066CC]/20",
 }
 
 const LEVEL_ICON_BG: Record<string, string> = {
-  success: "bg-green-50 text-green-700",
-  error: "bg-red-50 text-red-700",
-  warning: "bg-orange-50 text-orange-700",
-  info: "bg-[#EBF3FB] text-[#0047BB]",
+  success: "stat-card-green text-[color:var(--card-green-icon)]",
+  error: "stat-card-red text-[color:var(--card-red-icon)]",
+  warning: "stat-card-orange text-[color:var(--card-orange-icon)]",
+  info: "stat-card-blue text-[#0047BB]",
 }
 
 export default function LogsPage() {
@@ -211,12 +211,12 @@ export default function LogsPage() {
           {/* Cards de Estatísticas */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
             <div
-              className={`bg-[#EBF3FB] rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${logFilter === "all" ? "ring-2 ring-[#0066CC]" : ""}`}
+              className={`stat-card-blue rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${logFilter === "all" ? "ring-2 ring-[color:var(--card-blue-ring)]" : ""}`}
               onClick={() => setLogFilter("all")}
               role="button" tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && setLogFilter("all")}
             >
-              <div className="h-14 w-14 rounded-2xl bg-[#0066CC] flex items-center justify-center">
+              <div className="h-14 w-14 rounded-2xl stat-icon-blue flex items-center justify-center">
                 <History className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -228,12 +228,12 @@ export default function LogsPage() {
             </div>
 
             <div
-              className={`bg-green-50 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${logFilter === "success" ? "ring-2 ring-green-500" : ""}`}
+              className={`stat-card-green rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${logFilter === "success" ? "ring-2 ring-[color:var(--card-green-ring)]" : ""}`}
               onClick={() => setLogFilter("success")}
               role="button" tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && setLogFilter("success")}
             >
-              <div className="h-14 w-14 rounded-2xl bg-green-500 flex items-center justify-center">
+              <div className="h-14 w-14 rounded-2xl stat-card-green0 flex items-center justify-center">
                 <CheckCircle className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -243,12 +243,12 @@ export default function LogsPage() {
             </div>
 
             <div
-              className={`bg-red-50 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${logFilter === "error" ? "ring-2 ring-red-500" : ""}`}
+              className={`stat-card-red rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${logFilter === "error" ? "ring-2 ring-[color:var(--card-red-ring)]" : ""}`}
               onClick={() => setLogFilter("error")}
               role="button" tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && setLogFilter("error")}
             >
-              <div className="h-14 w-14 rounded-2xl bg-red-500 flex items-center justify-center">
+              <div className="h-14 w-14 rounded-2xl stat-card-red0 flex items-center justify-center">
                 <XCircle className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -258,12 +258,12 @@ export default function LogsPage() {
             </div>
 
             <div
-              className={`bg-orange-50 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${logFilter === "warning" ? "ring-2 ring-orange-500" : ""}`}
+              className={`stat-card-orange rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${logFilter === "warning" ? "ring-2 ring-[color:var(--card-orange-ring)]" : ""}`}
               onClick={() => setLogFilter("warning")}
               role="button" tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && setLogFilter("warning")}
             >
-              <div className="h-14 w-14 rounded-2xl bg-orange-500 flex items-center justify-center">
+              <div className="h-14 w-14 rounded-2xl stat-card-orange0 flex items-center justify-center">
                 <AlertTriangle className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -273,12 +273,12 @@ export default function LogsPage() {
             </div>
 
             <div
-              className={`bg-[#EBF3FB] rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${logFilter === "info" ? "ring-2 ring-[#0066CC]" : ""}`}
+              className={`stat-card-blue rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${logFilter === "info" ? "ring-2 ring-[color:var(--card-blue-ring)]" : ""}`}
               onClick={() => setLogFilter("info")}
               role="button" tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && setLogFilter("info")}
             >
-              <div className="h-14 w-14 rounded-2xl bg-[#0066CC] flex items-center justify-center">
+              <div className="h-14 w-14 rounded-2xl stat-icon-blue flex items-center justify-center">
                 <Activity className="h-7 w-7 text-white" />
               </div>
               <div>

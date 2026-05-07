@@ -61,10 +61,10 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType,
   }
 
   const CARD_STYLES = {
-    total:    { iconBg: "bg-[#0066CC]",    cardBg: "bg-[#EBF3FB]" },
-    pending:  { iconBg: "bg-orange-500",   cardBg: "bg-orange-50"  },
-    approved: { iconBg: "bg-green-500",    cardBg: "bg-green-50"   },
-    rejected: { iconBg: "bg-red-500",      cardBg: "bg-red-50"     },
+    total:    { iconBg: "stat-icon-blue",    cardBg: "stat-card-blue" },
+    pending:  { iconBg: "stat-card-orange0",   cardBg: "stat-card-orange"  },
+    approved: { iconBg: "stat-card-green0",    cardBg: "stat-card-green"   },
+    rejected: { iconBg: "stat-card-red0",      cardBg: "stat-card-red"     },
   }
 
   const getMetrics = () => {

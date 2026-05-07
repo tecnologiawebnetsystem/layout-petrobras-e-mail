@@ -106,14 +106,14 @@ export default function HistoricoPage() {
         )
       case "rejected":
         return (
-          <Badge className="bg-red-500/10 text-red-700 border-red-500/20">
+          <Badge className="stat-card-red0/10 text-[color:var(--card-red-icon)] border-red-500/20">
             <XCircle className="w-3 h-3 mr-1" />
             Rejeitado
           </Badge>
         )
       case "cancelled":
         return (
-          <Badge className="bg-gray-500/10 text-gray-700 border-gray-500/20">
+          <Badge className="bg-gray-500/10 text-foreground/80 border-gray-500/20">
             <Ban className="w-3 h-3 mr-1" />
             Cancelado
           </Badge>
@@ -180,12 +180,12 @@ export default function HistoricoPage() {
           {/* Cards de Estatisticas */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div
-              className={`bg-[#EBF3FB] rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "all" ? "ring-2 ring-[#0066CC]" : ""}`}
+              className={`stat-card-blue rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "all" ? "ring-2 ring-[color:var(--card-blue-ring)]" : ""}`}
               onClick={() => setStatusFilter("all")}
               role="button" tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && setStatusFilter("all")}
             >
-              <div className="h-14 w-14 rounded-2xl bg-[#0066CC] flex items-center justify-center">
+              <div className="h-14 w-14 rounded-2xl stat-icon-blue flex items-center justify-center">
                 <History className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -195,12 +195,12 @@ export default function HistoricoPage() {
             </div>
 
             <div
-              className={`bg-green-50 rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "approved" ? "ring-2 ring-green-500" : ""}`}
+              className={`stat-card-green rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "approved" ? "ring-2 ring-[color:var(--card-green-ring)]" : ""}`}
               onClick={() => setStatusFilter("approved")}
               role="button" tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && setStatusFilter("approved")}
             >
-              <div className="h-14 w-14 rounded-2xl bg-green-500 flex items-center justify-center">
+              <div className="h-14 w-14 rounded-2xl stat-card-green0 flex items-center justify-center">
                 <CheckCircle2 className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -210,12 +210,12 @@ export default function HistoricoPage() {
             </div>
 
             <div
-              className={`bg-red-50 rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "rejected" ? "ring-2 ring-red-500" : ""}`}
+              className={`stat-card-red rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "rejected" ? "ring-2 ring-[color:var(--card-red-ring)]" : ""}`}
               onClick={() => setStatusFilter("rejected")}
               role="button" tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && setStatusFilter("rejected")}
             >
-              <div className="h-14 w-14 rounded-2xl bg-red-500 flex items-center justify-center">
+              <div className="h-14 w-14 rounded-2xl stat-card-red0 flex items-center justify-center">
                 <XCircle className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -225,12 +225,12 @@ export default function HistoricoPage() {
             </div>
 
             <div
-              className={`bg-slate-100 rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "cancelled" ? "ring-2 ring-slate-500" : ""}`}
+              className={`stat-card-slate rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "cancelled" ? "ring-2 ring-[color:var(--card-slate-ring)]" : ""}`}
               onClick={() => setStatusFilter("cancelled")}
               role="button" tabIndex={0}
               onKeyDown={(e) => e.key === "Enter" && setStatusFilter("cancelled")}
             >
-              <div className="h-14 w-14 rounded-2xl bg-slate-500 flex items-center justify-center">
+              <div className="h-14 w-14 rounded-2xl stat-icon-slate flex items-center justify-center">
                 <Ban className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -328,12 +328,12 @@ export default function HistoricoPage() {
                         <div className={`p-3 rounded-xl ${
                           upload.status === "approved" ? "bg-emerald-100" :
                           upload.status === "rejected" ? "bg-red-100" :
-                          "bg-gray-100"
+                          "bg-muted/50"
                         }`}>
                           <FileText className={`h-6 w-6 ${
                             upload.status === "approved" ? "text-emerald-600" :
                             upload.status === "rejected" ? "text-red-600" :
-                            "text-gray-600"
+                            "text-muted-foreground"
                           }`} />
                         </div>
                         <div className="flex-1 min-w-0">

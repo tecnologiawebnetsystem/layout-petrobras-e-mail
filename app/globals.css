@@ -5,6 +5,27 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  /* ── Tokens para cards de status (adaptam-se ao dark mode) ── */
+  --card-blue-bg:   #EBF3FB;
+  --card-blue-icon: #0066CC;
+  --card-blue-ring: #0066CC;
+
+  --card-green-bg:   #f0fdf4;
+  --card-green-icon: #22c55e;
+  --card-green-ring: #22c55e;
+
+  --card-orange-bg:   #fff7ed;
+  --card-orange-icon: #f97316;
+  --card-orange-ring: #f97316;
+
+  --card-red-bg:   #fef2f2;
+  --card-red-icon: #ef4444;
+  --card-red-ring: #ef4444;
+
+  --card-slate-bg:   #f8fafc;
+  --card-slate-icon: #64748b;
+  --card-slate-ring: #64748b;
+
   /* Cores institucionais oficiais da Petrobras */
   --petrobras-green: #00a859;
   --petrobras-green-dark: #008a48;
@@ -52,6 +73,27 @@
 }
 
 .dark {
+  /* ── Tokens de cards de status no dark mode ── */
+  --card-blue-bg:   #0c1e35;
+  --card-blue-icon: #3b82f6;
+  --card-blue-ring: #3b82f6;
+
+  --card-green-bg:   #052e16;
+  --card-green-icon: #4ade80;
+  --card-green-ring: #4ade80;
+
+  --card-orange-bg:   #2d1600;
+  --card-orange-icon: #fb923c;
+  --card-orange-ring: #fb923c;
+
+  --card-red-bg:   #2d0b0b;
+  --card-red-icon: #f87171;
+  --card-red-ring: #f87171;
+
+  --card-slate-bg:   #1e293b;
+  --card-slate-icon: #94a3b8;
+  --card-slate-ring: #94a3b8;
+
   --background: oklch(0.1 0 0);
   --foreground: oklch(0.98 0 0);
   --card: oklch(0.13 0 0);
@@ -172,6 +214,25 @@
 }
 
 @layer utilities {
+  /* ── Utilitários semânticos para cards de status ── */
+  .stat-card-blue   { background-color: var(--card-blue-bg);   }
+  .stat-card-green  { background-color: var(--card-green-bg);  }
+  .stat-card-orange { background-color: var(--card-orange-bg); }
+  .stat-card-red    { background-color: var(--card-red-bg);    }
+  .stat-card-slate  { background-color: var(--card-slate-bg);  }
+
+  .stat-icon-blue   { background-color: var(--card-blue-icon);   }
+  .stat-icon-green  { background-color: var(--card-green-icon);  }
+  .stat-icon-orange { background-color: var(--card-orange-icon); }
+  .stat-icon-red    { background-color: var(--card-red-icon);    }
+  .stat-icon-slate  { background-color: var(--card-slate-icon);  }
+
+  .stat-ring-blue   { --tw-ring-color: var(--card-blue-ring);   }
+  .stat-ring-green  { --tw-ring-color: var(--card-green-ring);  }
+  .stat-ring-orange { --tw-ring-color: var(--card-orange-ring); }
+  .stat-ring-red    { --tw-ring-color: var(--card-red-ring);    }
+  .stat-ring-slate  { --tw-ring-color: var(--card-slate-ring);  }
+
   @keyframes confetti-explosion {
     0% {
       transform: translateY(0) scale(1) rotate(0deg);
