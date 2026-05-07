@@ -13,11 +13,13 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { NotificationModal } from "@/components/shared/notification-modal"
-import { Lock, Send, Sparkles, Clock, AlertTriangle, CheckCircle2, Hash, Loader2 } from "lucide-react"
+import { Lock, Send, Sparkles, Clock, AlertTriangle, CheckCircle2, Hash, Loader2, ArrowRight } from "lucide-react"
 import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
 import type { FileDetail } from "@/components/dashboard/metric-detail-modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
+import { SolicitacaoPickerModal } from "@/components/upload/solicitacao-picker-modal"
+import type { SolicitacaoItem } from "@/components/upload/solicitacao-picker-modal"
 import { ScrollToTop } from "@/components/shared/scroll-to-top"
 import { UploadSuccessModal } from "@/components/upload/upload-success-modal"
 import { ProtectedRoute } from "@/components/auth/protected-route"
@@ -60,6 +62,7 @@ export default function UploadPage() {
   const [expirationHours, setExpirationHours] = useState<number>(168)
   const [isLoading, setIsLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [showPickerModal, setShowPickerModal] = useState(false)
   const [notification, setNotification] = useState<{
     show: boolean
     type: "success" | "error" | "warning" | "info"
@@ -85,25 +88,23 @@ export default function UploadPage() {
     loadUploads()
   }, [])
 
-  // Quando o usuário seleciona uma solicitação, preenche os campos automaticamente
-  const handleSolicitacaoChange = (id: string) => {
-    setSolicitacaoId(id)
-
-    const sol = solicitacoesAtivas.find((s) => s.id === id)
-    if (!sol) {
-      setRecipient("")
-      setRecipientName("")
-      setSenderEmail("")
-      setSenderName("")
-      setNumeroSolicitacao("")
-      return
-    }
-
+  // Preenche os campos automaticamente a partir da solicitação selecionada no modal
+  const handleSolicitacaoSelect = (sol: SolicitacaoItem) => {
+    setSolicitacaoId(sol.id)
     setRecipient(sol.email_usuario_externo)
     setRecipientName(sol.email_usuario_externo)
     setSenderEmail(sol.email_solicitante)
     setSenderName(user?.name || sol.email_solicitante)
     setNumeroSolicitacao(sol.numero_solicitacao)
+  }
+
+  const handleClearSolicitacao = () => {
+    setSolicitacaoId("")
+    setRecipient("")
+    setRecipientName("")
+    setSenderEmail("")
+    setSenderName("")
+    setNumeroSolicitacao("")
   }
 
   const handleFilesSelected = async (newFiles: File[]) => {
@@ -203,12 +204,7 @@ export default function UploadPage() {
       setShowSuccess(true)
 
       setTimeout(() => {
-        setSolicitacaoId("")
-        setRecipient("")
-        setRecipientName("")
-        setSenderEmail("")
-        setSenderName("")
-        setNumeroSolicitacao("")
+        handleClearSolicitacao()
         setDescription("")
         setFiles([])
         setExpirationHours(168)
@@ -330,7 +326,7 @@ export default function UploadPage() {
 
               {/* ── STEP 1: Selecionar número da solicitação ── */}
               <div className="space-y-3">
-                <Label htmlFor="solicitacao" className="text-base font-medium flex items-center gap-2">
+                <Label className="text-base font-medium flex items-center gap-2">
                   <Hash className="h-4 w-4 text-[#0047BB]" />
                   Número da Solicitação
                   <span className="text-red-500 ml-0.5">*</span>
@@ -352,29 +348,60 @@ export default function UploadPage() {
                       </p>
                     </div>
                   </div>
+                ) : solicitacaoSelecionada ? (
+                  /* Card da solicitacao selecionada — com botao para trocar */
+                  <div className="border border-[#0047BB] rounded-xl bg-[#EBF3FB] dark:bg-[#0c1e35] p-4 flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-full bg-[#0047BB] flex items-center justify-center flex-shrink-0">
+                      <CheckCircle2 className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-mono font-bold text-[#0047BB] text-base leading-tight">
+                        {solicitacaoSelecionada.numero_solicitacao}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        Destinatário: {solicitacaoSelecionada.email_usuario_externo}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowPickerModal(true)}
+                      disabled={isLoading || showSuccess}
+                      className="rounded-lg flex-shrink-0 text-xs"
+                    >
+                      Trocar
+                    </Button>
+                  </div>
                 ) : (
-                  <Select
-                    value={solicitacaoId}
-                    onValueChange={handleSolicitacaoChange}
+                  /* Botao para abrir o modal de selecao */
+                  <button
+                    type="button"
+                    onClick={() => setShowPickerModal(true)}
                     disabled={isLoading || showSuccess}
+                    className="w-full flex items-center gap-4 border-2 border-dashed border-border hover:border-[#0047BB] hover:bg-[#EBF3FB]/50 dark:hover:bg-[#0c1e35]/50 rounded-xl p-4 transition-all group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0047BB]"
+                    aria-label="Abrir seletor de solicitação"
                   >
-                    <SelectTrigger id="solicitacao" aria-label="Selecionar número da solicitação">
-                      <SelectValue placeholder="Selecione o número da solicitação..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {solicitacoesAtivas.map((sol) => (
-                        <SelectItem key={sol.id} value={sol.id}>
-                          <span className="font-mono font-semibold">{sol.numero_solicitacao}</span>
-                          <span className="text-muted-foreground ml-2 text-sm">— {sol.email_usuario_externo}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <div className="h-12 w-12 rounded-xl bg-muted group-hover:bg-[#0047BB]/10 flex items-center justify-center flex-shrink-0 transition-colors">
+                      <Hash className="h-6 w-6 text-muted-foreground group-hover:text-[#0047BB] transition-colors" />
+                    </div>
+                    <div className="text-left flex-1">
+                      <p className="font-medium text-foreground group-hover:text-[#0047BB] transition-colors text-sm">
+                        Clique para selecionar uma solicitação
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {solicitacoesAtivas.length} solicitaç{solicitacoesAtivas.length === 1 ? "ão disponível" : "oes disponíveis"} vinculadas ao seu e-mail
+                      </p>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-[#0047BB] transition-colors flex-shrink-0" />
+                  </button>
                 )}
 
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Selecione o número da solicitação criada pelo Suporte. Destinatário e remetente serão preenchidos automaticamente.
-                </p>
+                {!solicitacaoSelecionada && !loadingSolicitacoes && solicitacoesAtivas.length > 0 && (
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Selecione o chamado criado pelo Suporte. Destinatário e remetente serão preenchidos automaticamente.
+                  </p>
+                )}
               </div>
 
               {/* ── STEP 2: Campos preenchidos automaticamente (bloqueados) ── */}
@@ -504,7 +531,17 @@ export default function UploadPage() {
         </main>
 
         <ScrollToTop />
-        <NotificationModal
+        {/* Modal de selecao de solicitacao */}
+      <SolicitacaoPickerModal
+        open={showPickerModal}
+        onClose={() => setShowPickerModal(false)}
+        solicitacoes={solicitacoesAtivas}
+        loading={loadingSolicitacoes}
+        onSelect={handleSolicitacaoSelect}
+        selectedId={solicitacaoId}
+      />
+
+      <NotificationModal
           open={notification.show}
           onOpenChange={(show) => setNotification({ ...notification, show })}
           type={notification.type}
