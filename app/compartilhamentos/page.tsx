@@ -207,15 +207,17 @@ export default function CompartilhamentosPage() {
     )
   }
 
+  const dashboardLink = user?.userType === "supervisor" ? "/supervisor" : "/upload"
+
   return (
-    <ProtectedRoute allowedUserTypes={["internal"]}>
+    <ProtectedRoute allowedUserTypes={["internal", "supervisor"]}>
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <AppHeader subtitle="Meus Compartilhamentos" />
 
         <main className="container mx-auto px-4 md:px-6 py-6 md:py-8 max-w-7xl">
           <BreadcrumbNav
-            items={[{ label: "Inicio", href: "/upload" }, { label: "Meus Compartilhamentos" }]}
-            dashboardLink="/upload"
+            items={[{ label: "Inicio", href: dashboardLink }, { label: "Meus Compartilhamentos" }]}
+            dashboardLink={dashboardLink}
           />
 
           {/* Header com titulo e acao */}
@@ -232,7 +234,7 @@ export default function CompartilhamentosPage() {
               </p>
             </div>
             <Button
-              onClick={() => router.push("/upload")}
+              onClick={() => router.push(user?.userType === "supervisor" ? "/supervisor?tab=compartilhar" : "/upload")}
               className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:opacity-90 text-white shadow-lg gap-2"
             >
               <Plus className="h-4 w-4" />
@@ -393,7 +395,7 @@ export default function CompartilhamentosPage() {
               </p>
               {!searchTerm && activeTab === "todos" && (
                 <Button 
-                  onClick={() => router.push("/upload")}
+                  onClick={() => router.push(user?.userType === "supervisor" ? "/supervisor?tab=compartilhar" : "/upload")}
                   className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:opacity-90 text-white"
                 >
                   <Plus className="h-4 w-4 mr-2" />
