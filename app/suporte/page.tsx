@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
+import { useSolicitacoesStore } from "@/lib/stores/solicitacoes-store"
 import { AppHeader } from "@/components/shared/app-header"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -64,6 +65,7 @@ const REGISTROS_INICIAIS: CadastroRegistro[] = []
 
 export default function SuportePage() {
   const { user, isAuthenticated, setAuth } = useAuthStore()
+  const { addSolicitacao } = useSolicitacoesStore()
   const router = useRouter()
   
   // Estado de carregamento inicial da pagina
@@ -257,6 +259,19 @@ export default function SuportePage() {
       }
 
       setRegistros(prev => [novoRegistro, ...prev])
+
+      // Sincroniza com o store global para que o usuario interno
+      // consiga selecionar esta solicitação ao criar um compartilhamento
+      addSolicitacao({
+        id: novoRegistro.id,
+        numeroSolicitacao: novoRegistro.numeroSolicitacao,
+        emailSolicitante: novoRegistro.emailSolicitante,
+        nomeSolicitante: novoRegistro.emailSolicitante, // será enriquecido depois se disponível
+        emailUsuarioExterno: novoRegistro.emailUsuarioExterno,
+        status: "ativo",
+        dataCadastro: novoRegistro.dataCadastro,
+        cadastradoPor: novoRegistro.cadastradoPor,
+      })
 
       setNotification({
         show: true,
