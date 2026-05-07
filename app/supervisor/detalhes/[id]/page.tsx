@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -264,7 +264,17 @@ export default function SupervisorDetailsPage({ params }: { params: { id: string
                   <p className="font-semibold text-foreground text-lg">{uploadData.name}</p>
                 </div>
 
-                <div className="flex gap-6">
+                {uploadData.numeroSolicitacao && (
+                  <div className="flex items-center gap-2 bg-[#EBF3FB] border border-[#0066CC]/20 rounded-xl px-4 py-3">
+                    <FileText className="h-4 w-4 text-[#0047BB] flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Número da Solicitação</p>
+                      <p className="font-mono font-semibold text-[#0047BB]">{uploadData.numeroSolicitacao}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-6 flex-wrap">
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Remetente</p>
                     <p className="font-medium text-foreground">{sender.name}</p>

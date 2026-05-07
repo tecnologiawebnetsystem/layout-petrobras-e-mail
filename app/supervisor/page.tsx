@@ -337,9 +337,15 @@ export default function SupervisorPage() {
                             }`} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 mb-2">
+                            <div className="flex items-center gap-3 mb-2 flex-wrap">
                               <h3 className="text-lg font-semibold text-foreground truncate">{upload.name}</h3>
                               {getStatusBadge(upload.status)}
+                              {upload.numeroSolicitacao && (
+                                <span className="inline-flex items-center gap-1 text-xs font-mono bg-[#EBF3FB] text-[#0047BB] px-2 py-0.5 rounded-full border border-[#0066CC]/20">
+                                  <FileText className="h-3 w-3" />
+                                  {upload.numeroSolicitacao}
+                                </span>
+                              )}
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                               <div className="flex items-center gap-2 text-muted-foreground">

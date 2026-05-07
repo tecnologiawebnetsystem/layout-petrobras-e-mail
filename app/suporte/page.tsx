@@ -245,28 +245,51 @@ export default function SuportePage() {
     setIsLoading(true)
 
     try {
-      // Simular chamada API
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Persiste no banco Neon via API
+      const apiResponse = await fetch("/api/support/solicitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          numero_solicitacao: numeroSolicitacao,
+          email_solicitante: emailSolicitante,
+          email_usuario_externo: emailUsuarioExterno,
+          created_by: user?.name || "Suporte",
+        }),
+      })
+
+      const apiData = await apiResponse.json()
+
+      if (!apiResponse.ok) {
+        if (apiResponse.status === 409) {
+          setNotification({
+            show: true,
+            type: "error",
+            title: "Número duplicado",
+            message: "Já existe uma solicitação cadastrada com este número.",
+          })
+          return
+        }
+        throw new Error(apiData?.error?.message || "Erro ao cadastrar")
+      }
 
       const novoRegistro: CadastroRegistro = {
-        id: String(Date.now()),
+        id: apiData.data?.id ?? String(Date.now()),
         numeroSolicitacao,
         emailSolicitante,
         emailUsuarioExterno,
         status: "ativo",
-        dataCadastro: new Date().toISOString(),
+        dataCadastro: apiData.data?.created_at ?? new Date().toISOString(),
         cadastradoPor: user?.name || "Suporte",
       }
 
       setRegistros(prev => [novoRegistro, ...prev])
 
-      // Sincroniza com o store global para que o usuario interno
-      // consiga selecionar esta solicitação ao criar um compartilhamento
+      // Sincroniza com o store local (para uso sem refresh)
       addSolicitacao({
         id: novoRegistro.id,
         numeroSolicitacao: novoRegistro.numeroSolicitacao,
         emailSolicitante: novoRegistro.emailSolicitante,
-        nomeSolicitante: novoRegistro.emailSolicitante, // será enriquecido depois se disponível
+        nomeSolicitante: novoRegistro.emailSolicitante,
         emailUsuarioExterno: novoRegistro.emailUsuarioExterno,
         status: "ativo",
         dataCadastro: novoRegistro.dataCadastro,

@@ -3,9 +3,9 @@
 import type React from "react"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import useSWR from "swr"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useWorkflowStore } from "@/lib/stores/workflow-store"
-import { useSolicitacoesStore } from "@/lib/stores/solicitacoes-store"
 import { AppHeader } from "@/components/shared/app-header"
 import { DragDropZone } from "@/components/upload/drag-drop-zone"
 import { Input } from "@/components/ui/input"
@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { NotificationModal } from "@/components/shared/notification-modal"
-import { Lock, Send, Sparkles, Clock, AlertTriangle, CheckCircle2, Hash } from "lucide-react"
+import { Lock, Send, Sparkles, Clock, AlertTriangle, CheckCircle2, Hash, Loader2 } from "lucide-react"
 import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
 import type { FileDetail } from "@/components/dashboard/metric-detail-modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -22,11 +22,29 @@ import { ScrollToTop } from "@/components/shared/scroll-to-top"
 import { UploadSuccessModal } from "@/components/upload/upload-success-modal"
 import { ProtectedRoute } from "@/components/auth/protected-route"
 
+interface SolicitacaoAPI {
+  id: string
+  numero_solicitacao: string
+  email_solicitante: string
+  email_usuario_externo: string
+  status: string
+  created_at: string
+  created_by: string | null
+}
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json())
+
 export default function UploadPage() {
   const { user, isAuthenticated } = useAuthStore()
   const { addUpload, uploads, loadUploads } = useWorkflowStore()
-  const { getSolicitacoesPorEmail } = useSolicitacoesStore()
   const router = useRouter()
+
+  // Busca solicitações ativas da API (Neon) para o e-mail do usuário logado
+  const { data: solicitacoesData, isLoading: loadingSolicitacoes } = useSWR<{ success: boolean; data: SolicitacaoAPI[] }>(
+    user?.email ? `/api/support/solicitations?email=${encodeURIComponent(user.email)}` : null,
+    fetcher
+  )
+  const solicitacoesAtivas: SolicitacaoAPI[] = solicitacoesData?.data ?? []
 
   // Solicitação selecionada
   const [solicitacaoId, setSolicitacaoId] = useState<string>("")
@@ -57,11 +75,6 @@ export default function UploadPage() {
     senderEmail: string
   } | null>(null)
 
-  // Solicitações ativas para o usuário logado
-  const solicitacoesAtivas = user?.email
-    ? getSolicitacoesPorEmail(user.email)
-    : []
-
   useEffect(() => {
     if (!isAuthenticated || user?.userType !== "internal") {
       router.push("/")
@@ -86,11 +99,11 @@ export default function UploadPage() {
       return
     }
 
-    setRecipient(sol.emailUsuarioExterno)
-    setRecipientName(sol.emailUsuarioExterno)
-    setSenderEmail(sol.emailSolicitante)
-    setSenderName(user?.name || sol.emailSolicitante)
-    setNumeroSolicitacao(sol.numeroSolicitacao)
+    setRecipient(sol.email_usuario_externo)
+    setRecipientName(sol.email_usuario_externo)
+    setSenderEmail(sol.email_solicitante)
+    setSenderName(user?.name || sol.email_solicitante)
+    setNumeroSolicitacao(sol.numero_solicitacao)
   }
 
   const handleFilesSelected = async (newFiles: File[]) => {
@@ -166,6 +179,7 @@ export default function UploadPage() {
         },
         recipient,
         description,
+        numeroSolicitacao,
         files: files.map((f) => ({
           name: f.name,
           size: `${(f.size / (1024 * 1024)).toFixed(2)} MB`,
@@ -230,7 +244,7 @@ export default function UploadPage() {
     }))
   )
 
-  const solicitacaoSelecionada = solicitacoesAtivas.find((s) => s.id === solicitacaoId)
+  const solicitacaoSelecionada = solicitacoesAtivas.find((s) => s.id === solicitacaoId) ?? null
 
   return (
     <ProtectedRoute allowedUserTypes={["internal"]}>
@@ -322,7 +336,12 @@ export default function UploadPage() {
                   <span className="text-red-500 ml-0.5">*</span>
                 </Label>
 
-                {solicitacoesAtivas.length === 0 ? (
+                {loadingSolicitacoes ? (
+                  <div className="flex items-center gap-3 p-4 border rounded-xl bg-muted/30">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Carregando solicitações...</span>
+                  </div>
+                ) : solicitacoesAtivas.length === 0 ? (
                   <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
                     <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
                     <div className="space-y-1">
@@ -345,8 +364,8 @@ export default function UploadPage() {
                     <SelectContent>
                       {solicitacoesAtivas.map((sol) => (
                         <SelectItem key={sol.id} value={sol.id}>
-                          <span className="font-mono font-semibold">{sol.numeroSolicitacao}</span>
-                          <span className="text-muted-foreground ml-2 text-sm">— {sol.emailUsuarioExterno}</span>
+                          <span className="font-mono font-semibold">{sol.numero_solicitacao}</span>
+                          <span className="text-muted-foreground ml-2 text-sm">— {sol.email_usuario_externo}</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -363,7 +382,7 @@ export default function UploadPage() {
                 <div className="bg-[#EBF3FB] border border-[#0066CC]/20 rounded-xl p-5 space-y-4">
                   <div className="flex items-center gap-2 mb-1">
                     <CheckCircle2 className="h-5 w-5 text-[#0066CC]" />
-                    <span className="font-semibold text-[#0047BB]">Solicitação {solicitacaoSelecionada.numeroSolicitacao}</span>
+                    <span className="font-semibold text-[#0047BB]">Solicitação {solicitacaoSelecionada.numero_solicitacao}</span>
                     <span className="ml-auto text-xs bg-[#0066CC]/10 text-[#0047BB] px-2 py-0.5 rounded-full font-medium">
                       Preenchido automaticamente
                     </span>
