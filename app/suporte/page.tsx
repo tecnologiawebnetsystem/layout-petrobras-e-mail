@@ -272,50 +272,44 @@ export default function SuportePage() {
           dashboardLink="/suporte"
         />
 
-        {/* ── Cards de Metricas (3 cards, sem Pendentes) ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        {/* ── Cards de Metricas (3 cards lado a lado) ── */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
 
-          {/* Total */}
+          {/* Total de Cadastros */}
           <div
             role="button"
             tabIndex={0}
             onClick={() => handleFiltrarPorStatus("todos")}
             onKeyDown={(e) => e.key === "Enter" && handleFiltrarPorStatus("todos")}
-            className={`bg-[#EBF3FB] rounded-2xl p-6 cursor-pointer hover:shadow-md transition-all group ${filtroStatus === "todos" ? "ring-2 ring-[#0066CC]" : ""}`}
+            className={`bg-[#EBF3FB] rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${filtroStatus === "todos" ? "ring-2 ring-[#0066CC]" : ""}`}
           >
-            <div className="flex items-start justify-between mb-6">
-              <div className="h-13 w-13 rounded-2xl bg-[#0066CC] flex items-center justify-center p-3">
-                <Users className="h-6 w-6 text-white" />
-              </div>
-              <ArrowUpRight className="h-4 w-4 text-[#0066CC] opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="h-14 w-14 rounded-2xl bg-[#0066CC] flex items-center justify-center">
+              <Users className="h-7 w-7 text-white" />
             </div>
-            <p className="text-4xl font-bold text-foreground leading-none mb-1">{stats.total}</p>
-            <p className="text-sm text-muted-foreground mb-4">Total de Cadastros</p>
-            <div className="h-1.5 w-full bg-[#0066CC]/15 rounded-full overflow-hidden">
-              <div className="h-full bg-[#0066CC] rounded-full" style={{ width: "100%" }} />
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.total}</p>
+              <p className="text-sm text-muted-foreground">Total de Cadastros</p>
             </div>
           </div>
 
-          {/* Ativos */}
+          {/* Usuarios Ativos */}
           <div
             role="button"
             tabIndex={0}
             onClick={() => handleFiltrarPorStatus("ativo")}
             onKeyDown={(e) => e.key === "Enter" && handleFiltrarPorStatus("ativo")}
-            className={`bg-green-50 rounded-2xl p-6 cursor-pointer hover:shadow-md transition-all group ${filtroStatus === "ativo" ? "ring-2 ring-green-500" : ""}`}
+            className={`bg-green-50 rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${filtroStatus === "ativo" ? "ring-2 ring-green-500" : ""}`}
           >
-            <div className="flex items-start justify-between mb-6">
-              <div className="h-13 w-13 rounded-2xl bg-green-500 flex items-center justify-center p-3">
-                <CheckCircle2 className="h-6 w-6 text-white" />
-              </div>
-              <ArrowUpRight className="h-4 w-4 text-green-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="h-14 w-14 rounded-2xl bg-green-500 flex items-center justify-center">
+              <CheckCircle2 className="h-7 w-7 text-white" />
             </div>
-            <p className="text-4xl font-bold text-foreground leading-none mb-1">{stats.ativos}</p>
-            <p className="text-sm text-muted-foreground mb-4">Usuarios Ativos</p>
-            <div className="h-1.5 w-full bg-green-500/15 rounded-full overflow-hidden">
-              <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${pctAtivos}%` }} />
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.ativos}</p>
+              <p className="text-sm text-muted-foreground">Usuarios Ativos</p>
+              {stats.total > 0 && (
+                <p className="text-xs text-green-700 mt-1">{pctAtivos}% do total</p>
+              )}
             </div>
-            <p className="text-xs text-green-700 mt-1.5">{pctAtivos}% do total</p>
           </div>
 
           {/* Cadastros Hoje */}
@@ -324,21 +318,14 @@ export default function SuportePage() {
             tabIndex={0}
             onClick={() => handleFiltrarPorStatus("hoje")}
             onKeyDown={(e) => e.key === "Enter" && handleFiltrarPorStatus("hoje")}
-            className={`bg-[#EBF3FB] rounded-2xl p-6 cursor-pointer hover:shadow-md transition-all group ${filtroStatus === "hoje" ? "ring-2 ring-[#0066CC]" : ""}`}
+            className={`bg-orange-50 rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${filtroStatus === "hoje" ? "ring-2 ring-orange-500" : ""}`}
           >
-            <div className="flex items-start justify-between mb-6">
-              <div className="h-13 w-13 rounded-2xl bg-[#00A99D] flex items-center justify-center p-3">
-                <Activity className="h-6 w-6 text-white" />
-              </div>
-              <ArrowUpRight className="h-4 w-4 text-[#00A99D] opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="h-14 w-14 rounded-2xl bg-orange-500 flex items-center justify-center">
+              <Activity className="h-7 w-7 text-white" />
             </div>
-            <p className="text-4xl font-bold text-foreground leading-none mb-1">{stats.hoje}</p>
-            <p className="text-sm text-muted-foreground mb-4">Cadastros Hoje</p>
-            <div className="h-1.5 w-full bg-[#00A99D]/15 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[#00A99D] rounded-full"
-                style={{ width: stats.total > 0 ? `${Math.round((stats.hoje / stats.total) * 100)}%` : "0%" }}
-              />
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.hoje}</p>
+              <p className="text-sm text-muted-foreground">Cadastros Hoje</p>
             </div>
           </div>
         </div>
@@ -362,10 +349,10 @@ export default function SuportePage() {
 
           {/* ── Tab: Novo Cadastro ── */}
           <TabsContent value="cadastrar">
-            <div className={`grid gap-6 ${formCompleto ? "lg:grid-cols-5" : "grid-cols-1 max-w-2xl"}`}>
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
               {/* Formulario */}
-              <Card className={`bg-card/50 backdrop-blur-sm border shadow-sm ${formCompleto ? "lg:col-span-3" : ""}`}>
+              <Card className="lg:col-span-3 bg-card border shadow-sm">
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
@@ -475,9 +462,34 @@ export default function SuportePage() {
                 </CardContent>
               </Card>
 
-              {/* Preview lateral — aparece apenas quando formulario esta completo */}
-              {formCompleto && (
-                <div className="lg:col-span-2 space-y-4">
+              {/* Painel lateral — dicas ou preview do cadastro */}
+              <div className="lg:col-span-2 space-y-4">
+                {!formCompleto ? (
+                  <Card className="border bg-muted/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-[#0047BB]" />
+                        Como funciona
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {[
+                        { n: "1", text: "Informe o numero do chamado aberto no sistema" },
+                        { n: "2", text: "Adicione o e-mail do colaborador Petrobras que solicitou" },
+                        { n: "3", text: "Adicione o e-mail do usuario externo que recebera os arquivos" },
+                        { n: "4", text: "Clique em Cadastrar para registrar e liberar o acesso" },
+                      ].map(({ n, text }) => (
+                        <div key={n} className="flex items-start gap-3">
+                          <div className="h-6 w-6 rounded-full bg-[#0066CC] flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-white text-xs font-bold">{n}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground leading-relaxed">{text}</p>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
                   <Card className="border-[#0066CC]/20 bg-[#EBF3FB]/50">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base text-[#0047BB] flex items-center gap-2">
@@ -529,8 +541,9 @@ export default function SuportePage() {
                       </Badge>
                     </CardContent>
                   </Card>
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
           </TabsContent>
 
