@@ -212,6 +212,52 @@ async def cadastrar_usuario_externo(
     )
 
 
+@router.get("/solicitations")
+async def listar_solicitacoes(
+    email: Optional[str] = None,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token),
+):
+    """
+    Retorna SupportRegistrations ativas.
+
+    - Com ?email=xxx@petrobras.com.br  → filtra pelo requester_email (uso do interno no upload)
+    - Sem ?email                        → retorna todas (uso administrativo do suporte)
+    """
+    if current_user.type != TypeUser.SUPPORT and not current_user.is_supervisor and current_user.type.value != "internal":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado.",
+        )
+
+    query = select(SupportRegistration).where(
+        SupportRegistration.status == SupportRegistrationStatus.ATIVO
+    )
+
+    if email:
+        query = query.where(
+            SupportRegistration.requester_email == email.lower().strip()
+        )
+
+    query = query.order_by(SupportRegistration.created_at.desc())
+    rows = session.exec(query).all()
+
+    return {
+        "success": True,
+        "data": [
+            {
+                "id": str(r.id),
+                "numero_solicitacao": r.request_number,
+                "email_solicitante": r.requester_email,
+                "email_usuario_externo": r.external_user_email,
+                "status": r.status.value,
+                "created_at": r.created_at.isoformat(),
+            }
+            for r in rows
+        ],
+    }
+
+
 @router.get("/users")
 async def listar_usuarios_cadastrados(
     search: Optional[str] = None,
