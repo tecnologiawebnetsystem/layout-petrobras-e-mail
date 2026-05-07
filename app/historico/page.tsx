@@ -106,14 +106,14 @@ export default function HistoricoPage() {
         )
       case "rejected":
         return (
-          <Badge className="bg-red-500/10 text-red-700 border-red-500/20">
+          <Badge className="stat-card-red0/10 text-[color:var(--card-red-icon)] border-red-500/20">
             <XCircle className="w-3 h-3 mr-1" />
             Rejeitado
           </Badge>
         )
       case "cancelled":
         return (
-          <Badge className="bg-gray-500/10 text-gray-700 border-gray-500/20">
+          <Badge className="bg-gray-500/10 text-foreground/80 border-gray-500/20">
             <Ban className="w-3 h-3 mr-1" />
             Cancelado
           </Badge>
@@ -179,73 +179,65 @@ export default function HistoricoPage() {
 
           {/* Cards de Estatisticas */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <Card 
-              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${statusFilter === "all" ? "ring-2 ring-[#0047BB]" : ""}`}
+            <div
+              className={`stat-card-blue rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "all" ? "ring-2 ring-[color:var(--card-blue-ring)]" : ""}`}
               onClick={() => setStatusFilter("all")}
+              role="button" tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && setStatusFilter("all")}
             >
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0047BB]/10 to-[#0047BB]/5 flex items-center justify-center">
-                    <History className="h-6 w-6 text-[#0047BB]" />
-                  </div>
-                  <div className="text-right">
-                    <p className="text-3xl font-bold text-foreground">{stats.total}</p>
-                    <p className="text-sm text-muted-foreground">Total</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="h-14 w-14 rounded-2xl stat-icon-blue flex items-center justify-center">
+                <History className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.total}</p>
+                <p className="text-sm text-muted-foreground">Total</p>
+              </div>
+            </div>
 
-            <Card 
-              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg border-l-4 border-l-emerald-500 ${statusFilter === "approved" ? "ring-2 ring-emerald-500" : ""}`}
+            <div
+              className={`stat-card-green rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "approved" ? "ring-2 ring-[color:var(--card-green-ring)]" : ""}`}
               onClick={() => setStatusFilter("approved")}
+              role="button" tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && setStatusFilter("approved")}
             >
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center">
-                    <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  <div className="text-right">
-                    <p className="text-3xl font-bold text-emerald-600">{stats.approved}</p>
-                    <p className="text-sm text-muted-foreground">Aprovados</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="h-14 w-14 rounded-2xl stat-card-green0 flex items-center justify-center">
+                <CheckCircle2 className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.approved}</p>
+                <p className="text-sm text-muted-foreground">Aprovados</p>
+              </div>
+            </div>
 
-            <Card 
-              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg border-l-4 border-l-red-500 ${statusFilter === "rejected" ? "ring-2 ring-red-500" : ""}`}
+            <div
+              className={`stat-card-red rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "rejected" ? "ring-2 ring-[color:var(--card-red-ring)]" : ""}`}
               onClick={() => setStatusFilter("rejected")}
+              role="button" tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && setStatusFilter("rejected")}
             >
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className="h-12 w-12 rounded-xl bg-red-100 flex items-center justify-center">
-                    <XCircle className="h-6 w-6 text-red-600" />
-                  </div>
-                  <div className="text-right">
-                    <p className="text-3xl font-bold text-red-600">{stats.rejected}</p>
-                    <p className="text-sm text-muted-foreground">Rejeitados</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="h-14 w-14 rounded-2xl stat-card-red0 flex items-center justify-center">
+                <XCircle className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.rejected}</p>
+                <p className="text-sm text-muted-foreground">Rejeitados</p>
+              </div>
+            </div>
 
-            <Card 
-              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg border-l-4 border-l-gray-400 ${statusFilter === "cancelled" ? "ring-2 ring-gray-500" : ""}`}
+            <div
+              className={`stat-card-slate rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "cancelled" ? "ring-2 ring-[color:var(--card-slate-ring)]" : ""}`}
               onClick={() => setStatusFilter("cancelled")}
+              role="button" tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && setStatusFilter("cancelled")}
             >
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className="h-12 w-12 rounded-xl bg-gray-100 flex items-center justify-center">
-                    <Ban className="h-6 w-6 text-gray-600" />
-                  </div>
-                  <div className="text-right">
-                    <p className="text-3xl font-bold text-gray-600">{stats.cancelled}</p>
-                    <p className="text-sm text-muted-foreground">Cancelados</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="h-14 w-14 rounded-2xl stat-icon-slate flex items-center justify-center">
+                <Ban className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.cancelled}</p>
+                <p className="text-sm text-muted-foreground">Cancelados</p>
+              </div>
+            </div>
           </div>
 
           {/* Barra de Busca e Filtros */}
@@ -336,12 +328,12 @@ export default function HistoricoPage() {
                         <div className={`p-3 rounded-xl ${
                           upload.status === "approved" ? "bg-emerald-100" :
                           upload.status === "rejected" ? "bg-red-100" :
-                          "bg-gray-100"
+                          "bg-muted/50"
                         }`}>
                           <FileText className={`h-6 w-6 ${
                             upload.status === "approved" ? "text-emerald-600" :
                             upload.status === "rejected" ? "text-red-600" :
-                            "text-gray-600"
+                            "text-muted-foreground"
                           }`} />
                         </div>
                         <div className="flex-1 min-w-0">

@@ -3,7 +3,6 @@
 import { useState } from "react"
 import type { ReactNode } from "react"
 
-import { Card } from "@/components/ui/card"
 import { FileText, Clock, CheckCircle, XCircle } from "lucide-react"
 import { MetricDetailModal } from "./metric-detail-modal"
 import type { FileDetail } from "./metric-detail-modal"
@@ -12,22 +11,28 @@ interface MetricCardProps {
   title: string
   value: string | number
   icon: ReactNode
-  gradient: string
+  iconBg: string
+  cardBg: string
   onClick?: () => void
 }
 
-function MetricCard({ title, value, icon, gradient, onClick }: MetricCardProps) {
+function MetricCard({ title, value, icon, iconBg, cardBg, onClick }: MetricCardProps) {
   return (
-    <Card className={`p-6 relative overflow-hidden card-hover ${onClick ? "cursor-pointer" : ""}`} onClick={onClick}>
-      <div className={`absolute inset-0 ${gradient} opacity-5`} />
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-4">
-          <div className={`h-12 w-12 rounded-xl ${gradient} flex items-center justify-center`}>{icon}</div>
-        </div>
-        <p className="text-2xl font-bold text-foreground mb-1">{value}</p>
-        <p className="text-sm text-muted-foreground">{title}</p>
+    <div
+      className={`${cardBg} rounded-2xl p-6 flex flex-col gap-4 border border-transparent ${onClick ? "cursor-pointer hover:shadow-md transition-shadow" : ""}`}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}
+    >
+      <div className={`h-14 w-14 rounded-2xl ${iconBg} flex items-center justify-center`}>
+        {icon}
       </div>
-    </Card>
+      <div>
+        <p className="text-3xl font-bold text-foreground leading-none mb-1">{value}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed">{title}</p>
+      </div>
+    </div>
   )
 }
 
@@ -55,112 +60,53 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType,
     return []
   }
 
+  const CARD_STYLES = {
+    total:    { iconBg: "stat-icon-blue",    cardBg: "stat-card-blue" },
+    pending:  { iconBg: "stat-card-orange0",   cardBg: "stat-card-orange"  },
+    approved: { iconBg: "stat-card-green0",    cardBg: "stat-card-green"   },
+    rejected: { iconBg: "stat-card-red0",      cardBg: "stat-card-red"     },
+  }
+
   const getMetrics = () => {
-    if (userType === "internal") {
-      return [
-        {
-          type: "total" as const,
-          title: "Total Enviados",
-          value: total,
-          icon: <FileText className="h-6 w-6 text-white" />,
-          gradient: "bg-gradient-to-br from-[#00A99D] to-[#0047BB]",
-          onClick: () => setSelectedMetric("total"),
-        },
-        {
-          type: "pending" as const,
-          title: "Aguardando Aprovação",
-          value: pending,
-          icon: <Clock className="h-6 w-6 text-white" />,
-          gradient: "bg-gradient-to-br from-yellow-500 to-orange-500",
-          onClick: () => setSelectedMetric("pending"),
-        },
-        {
-          type: "approved" as const,
-          title: "Aprovados",
-          value: approved,
-          icon: <CheckCircle className="h-6 w-6 text-white" />,
-          gradient: "bg-gradient-to-br from-green-500 to-emerald-500",
-          onClick: () => setSelectedMetric("approved"),
-        },
-        {
-          type: "rejected" as const,
-          title: "Rejeitados",
-          value: rejected,
-          icon: <XCircle className="h-6 w-6 text-white" />,
-          gradient: "bg-gradient-to-br from-red-500 to-rose-500",
-          onClick: () => setSelectedMetric("rejected"),
-        },
-      ]
+    const labels = {
+      internal: { total: "Total Enviados",      pending: "Aguardando Aprovação", approved: "Aprovados",  rejected: "Rejeitados" },
+      external: { total: "Total Recebidos",     pending: "Pendentes",            approved: "Baixados",   rejected: "Expirados"  },
+      supervisor:{ total: "Total para Análise", pending: "Pendentes",            approved: "Aprovados",  rejected: "Rejeitados" },
     }
 
-    if (userType === "external") {
-      return [
-        {
-          type: "total" as const,
-          title: "Total Recebidos",
-          value: total,
-          icon: <FileText className="h-6 w-6 text-white" />,
-          gradient: "bg-gradient-to-br from-[#00A99D] to-[#0047BB]",
-          onClick: () => setSelectedMetric("total"),
-        },
-        {
-          type: "pending" as const,
-          title: "Pendentes",
-          value: pending,
-          icon: <Clock className="h-6 w-6 text-white" />,
-          gradient: "bg-gradient-to-br from-yellow-500 to-orange-500",
-          onClick: () => setSelectedMetric("pending"),
-        },
-        {
-          type: "approved" as const,
-          title: "Baixados",
-          value: approved,
-          icon: <CheckCircle className="h-6 w-6 text-white" />,
-          gradient: "bg-gradient-to-br from-green-500 to-emerald-500",
-          onClick: () => setSelectedMetric("approved"),
-        },
-        {
-          type: "rejected" as const,
-          title: "Expirados",
-          value: rejected,
-          icon: <XCircle className="h-6 w-6 text-white" />,
-          gradient: "bg-gradient-to-br from-red-500 to-rose-500",
-          onClick: () => setSelectedMetric("rejected"),
-        },
-      ]
-    }
+    const l = labels[userType] ?? labels.internal
 
     return [
       {
         type: "total" as const,
-        title: "Total para Análise",
+        title: l.total,
         value: total,
-        icon: <FileText className="h-6 w-6 text-white" />,
-        gradient: "bg-gradient-to-br from-[#00A99D] to-[#0047BB]",
+        icon: <FileText className="h-7 w-7 text-white" />,
+        ...CARD_STYLES.total,
         onClick: () => setSelectedMetric("total"),
       },
       {
         type: "pending" as const,
-        title: "Pendentes",
+        title: l.pending,
         value: pending,
-        icon: <Clock className="h-6 w-6 text-white" />,
-        gradient: "bg-gradient-to-br from-yellow-500 to-orange-500",
+        icon: <Clock className="h-7 w-7 text-white" />,
+        ...CARD_STYLES.pending,
         onClick: () => setSelectedMetric("pending"),
       },
-        {
-          type: "approved" as const,
-          title: "Aprovados",
-          value: approved,
-          icon: <CheckCircle className="h-6 w-6 text-white" />,
-          gradient: "bg-gradient-to-br from-green-500 to-emerald-500",
-          onClick: () => setSelectedMetric("approved"),
-        },
+      {
+        type: "approved" as const,
+        title: l.approved,
+        value: approved,
+        icon: <CheckCircle className="h-7 w-7 text-white" />,
+        ...CARD_STYLES.approved,
+        onClick: () => setSelectedMetric("approved"),
+      },
       {
         type: "rejected" as const,
-        title: "Rejeitados",
+        title: l.rejected,
         value: rejected,
-        icon: <XCircle className="h-6 w-6 text-white" />,
-        gradient: "bg-gradient-to-br from-red-500 to-rose-500",
+        icon: <XCircle className="h-7 w-7 text-white" />,
+        ...CARD_STYLES.rejected,
         onClick: () => setSelectedMetric("rejected"),
       },
     ]
@@ -171,7 +117,7 @@ export function MetricsDashboard({ total, pending, approved, rejected, userType,
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {metrics.map((metric, index) => (
           <MetricCard key={index} {...metric} />
         ))}

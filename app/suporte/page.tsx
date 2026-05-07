@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
+import { useSolicitacoesStore } from "@/lib/stores/solicitacoes-store"
 import { AppHeader } from "@/components/shared/app-header"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,12 +22,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { 
-  UserPlus, 
-  Search, 
-  CheckCircle2, 
-  AlertCircle, 
-  Clock, 
+import {
+  UserPlus,
+  Search,
+  CheckCircle2,
+  AlertCircle,
   Shield,
   Users,
   FileText,
@@ -38,16 +38,13 @@ import {
   Loader2,
   History,
   Eye,
-  X,
   Calendar,
-  Building,
-  Phone,
   Copy,
-  ExternalLink
+  ChevronRight,
+  ArrowUpRight,
 } from "lucide-react"
 import { FullPageLoader } from "@/components/ui/full-page-loader"
 
-// Tipo para registro de cadastro
 interface CadastroRegistro {
   id: string
   numeroSolicitacao: string
@@ -59,106 +56,91 @@ interface CadastroRegistro {
   observacao?: string
 }
 
-// Dados iniciais (vazios - serao carregados da API)
 const REGISTROS_INICIAIS: CadastroRegistro[] = []
 
+// Gera iniciais para o avatar
+function getInitials(email: string) {
+  const name = email.split("@")[0]
+  return name.slice(0, 2).toUpperCase()
+}
+
+// Cor do avatar baseada no email
+function getAvatarColor(email: string) {
+  const colors = [
+    "stat-icon-blue",
+    "bg-[#00A99D]",
+    "bg-violet-600",
+    "bg-amber-600",
+    "bg-rose-600",
+  ]
+  let hash = 0
+  for (let i = 0; i < email.length; i++) hash = email.charCodeAt(i) + ((hash << 5) - hash)
+  return colors[Math.abs(hash) % colors.length]
+}
+
 export default function SuportePage() {
-  const { user, isAuthenticated, setAuth } = useAuthStore()
+  const { user, isAuthenticated } = useAuthStore()
+  const { addSolicitacao } = useSolicitacoesStore()
   const router = useRouter()
-  
-  // Estado de carregamento inicial da pagina
+
   const [pageLoading, setPageLoading] = useState(true)
-  
-  // Estado do formulario
   const [numeroSolicitacao, setNumeroSolicitacao] = useState("")
   const [emailSolicitante, setEmailSolicitante] = useState("")
   const [emailUsuarioExterno, setEmailUsuarioExterno] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  
-  // Estado dos registros
   const [registros, setRegistros] = useState<CadastroRegistro[]>(REGISTROS_INICIAIS)
   const [registrosFiltrados, setRegistrosFiltrados] = useState<CadastroRegistro[]>(REGISTROS_INICIAIS)
   const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativo" | "pendente" | "inativo" | "hoje">("todos")
   const [activeTab, setActiveTab] = useState("cadastrar")
   const [registroSelecionado, setRegistroSelecionado] = useState<CadastroRegistro | null>(null)
   const [showDetalhesModal, setShowDetalhesModal] = useState(false)
-  
-  // Notificacao
+
   const [notification, setNotification] = useState<{
     show: boolean
     type: "success" | "error" | "warning" | "info"
     title: string
     message: string
-  }>({
-    show: false,
-    type: "info",
-    title: "",
-    message: "",
-  })
+  }>({ show: false, type: "info", title: "", message: "" })
 
-  // Verifica se usuario tem permissao de suporte
   const hasSuportAccess = user?.userType === "support" || user?.userType === "supervisor"
 
-  // Estatisticas
   const stats = {
     total: registros.length,
     ativos: registros.filter(r => r.status === "ativo").length,
-    pendentes: registros.filter(r => r.status === "pendente").length,
     hoje: registros.filter(r => {
       const hoje = new Date().toDateString()
       return new Date(r.dataCadastro).toDateString() === hoje
     }).length,
   }
 
-  // Validacao de email
-  const isValidEmail = (email: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  // Percentual de ativos em relação ao total
+  const pctAtivos = stats.total > 0 ? Math.round((stats.ativos / stats.total) * 100) : 0
 
-  // Verificar duplicidade
-  const verificarDuplicidade = (email: string) => {
-    return registros.some(
-      r => r.emailUsuarioExterno.toLowerCase() === email.toLowerCase() && 
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+
+  const verificarDuplicidade = (email: string) =>
+    registros.some(
+      r => r.emailUsuarioExterno.toLowerCase() === email.toLowerCase() &&
            (r.status === "ativo" || r.status === "pendente")
     )
-  }
 
-  // Simular carregamento inicial da pagina
   useEffect(() => {
-    // Verifica autenticacao e permissao
-    if (!isAuthenticated) {
-      router.push("/")
-      return
-    }
-    
-    if (!hasSuportAccess) {
-      router.push("/")
-      return
-    }
-    
-    const timer = setTimeout(() => {
-      setPageLoading(false)
-    }, 1500) // 1.5 segundos de carregamento
+    if (!isAuthenticated) { router.push("/"); return }
+    if (!hasSuportAccess) { router.push("/"); return }
+    const timer = setTimeout(() => setPageLoading(false), 1000)
     return () => clearTimeout(timer)
   }, [isAuthenticated, hasSuportAccess, router])
 
-  // Handler de busca e filtro
   useEffect(() => {
     let filtrados = registros
-
-    // Aplicar filtro de status
-    if (filtroStatus === "ativo") {
-      filtrados = filtrados.filter(r => r.status === "ativo")
-    } else if (filtroStatus === "pendente") {
-      filtrados = filtrados.filter(r => r.status === "pendente")
-    } else if (filtroStatus === "inativo") {
-      filtrados = filtrados.filter(r => r.status === "inativo")
-    } else if (filtroStatus === "hoje") {
+    if (filtroStatus === "ativo") filtrados = filtrados.filter(r => r.status === "ativo")
+    else if (filtroStatus === "pendente") filtrados = filtrados.filter(r => r.status === "pendente")
+    else if (filtroStatus === "inativo") filtrados = filtrados.filter(r => r.status === "inativo")
+    else if (filtroStatus === "hoje") {
       const hoje = new Date().toDateString()
       filtrados = filtrados.filter(r => new Date(r.dataCadastro).toDateString() === hoje)
     }
-
-    // Aplicar busca por termo
     if (searchTerm.trim()) {
       const termo = searchTerm.toLowerCase()
       filtrados = filtrados.filter(r =>
@@ -167,116 +149,96 @@ export default function SuportePage() {
         r.emailUsuarioExterno.toLowerCase().includes(termo)
       )
     }
-    
     setRegistrosFiltrados(filtrados)
   }, [searchTerm, registros, filtroStatus])
 
-  // Funcao para filtrar por status e ir para aba de consulta
   const handleFiltrarPorStatus = (status: "todos" | "ativo" | "pendente" | "inativo" | "hoje") => {
     setFiltroStatus(status)
     setActiveTab("consulta")
   }
 
-  // Funcao para visualizar detalhes do registro
   const handleVisualizarDetalhes = (registro: CadastroRegistro) => {
     setRegistroSelecionado(registro)
     setShowDetalhesModal(true)
   }
 
-  // Funcao para copiar texto
   const handleCopiar = (texto: string) => {
     navigator.clipboard.writeText(texto)
-    setNotification({
-      show: true,
-      type: "success",
-      title: "Copiado",
-      message: "Texto copiado para a area de transferencia",
-    })
+    setNotification({ show: true, type: "success", title: "Copiado", message: "Texto copiado para a area de transferencia" })
   }
 
-  // Handler de submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Validacoes
     if (!numeroSolicitacao.trim()) {
-      setNotification({
-        show: true,
-        type: "warning",
-        title: "Campo obrigatorio",
-        message: "Por favor, informe o numero da solicitacao.",
-      })
+      setNotification({ show: true, type: "warning", title: "Campo obrigatorio", message: "Por favor, informe o numero da solicitacao." })
       return
     }
-
     if (!emailSolicitante.trim() || !isValidEmail(emailSolicitante)) {
-      setNotification({
-        show: true,
-        type: "warning",
-        title: "E-mail invalido",
-        message: "Por favor, informe um e-mail de solicitante valido.",
-      })
+      setNotification({ show: true, type: "warning", title: "E-mail invalido", message: "Por favor, informe um e-mail de solicitante valido." })
       return
     }
-
     if (!emailUsuarioExterno.trim() || !isValidEmail(emailUsuarioExterno)) {
-      setNotification({
-        show: true,
-        type: "warning",
-        title: "E-mail invalido",
-        message: "Por favor, informe um e-mail de usuario externo valido.",
-      })
+      setNotification({ show: true, type: "warning", title: "E-mail invalido", message: "Por favor, informe um e-mail de usuario externo valido." })
       return
     }
-
-    // Verificar duplicidade
     if (verificarDuplicidade(emailUsuarioExterno)) {
-      setNotification({
-        show: true,
-        type: "error",
-        title: "Cadastro duplicado",
-        message: "Ja existe um cadastro ativo ou pendente para este e-mail de usuario externo.",
-      })
+      setNotification({ show: true, type: "error", title: "Cadastro duplicado", message: "Ja existe um cadastro ativo ou pendente para este e-mail." })
       return
     }
 
     setIsLoading(true)
-
     try {
-      // Simular chamada API
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      const apiResponse = await fetch("/api/support/solicitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          numero_solicitacao: numeroSolicitacao,
+          email_solicitante: emailSolicitante,
+          email_usuario_externo: emailUsuarioExterno,
+          created_by: user?.name || "Suporte",
+        }),
+      })
+
+      const apiData = await apiResponse.json()
+
+      if (!apiResponse.ok) {
+        if (apiResponse.status === 409) {
+          setNotification({ show: true, type: "error", title: "Numero duplicado", message: "Ja existe uma solicitacao cadastrada com este numero." })
+          return
+        }
+        throw new Error(apiData?.error?.message || "Erro ao cadastrar")
+      }
 
       const novoRegistro: CadastroRegistro = {
-        id: String(Date.now()),
+        id: apiData.data?.id ?? String(Date.now()),
         numeroSolicitacao,
         emailSolicitante,
         emailUsuarioExterno,
         status: "ativo",
-        dataCadastro: new Date().toISOString(),
+        dataCadastro: apiData.data?.created_at ?? new Date().toISOString(),
         cadastradoPor: user?.name || "Suporte",
       }
 
       setRegistros(prev => [novoRegistro, ...prev])
-
-      setNotification({
-        show: true,
-        type: "success",
-        title: "Cadastro realizado com sucesso",
-        message: `Usuario externo ${emailUsuarioExterno} foi cadastrado e ja pode receber compartilhamentos.`,
+      addSolicitacao({
+        id: novoRegistro.id,
+        numeroSolicitacao: novoRegistro.numeroSolicitacao,
+        emailSolicitante: novoRegistro.emailSolicitante,
+        nomeSolicitante: novoRegistro.emailSolicitante,
+        emailUsuarioExterno: novoRegistro.emailUsuarioExterno,
+        status: "ativo",
+        dataCadastro: novoRegistro.dataCadastro,
+        cadastradoPor: novoRegistro.cadastradoPor,
       })
 
-      // Limpar formulario
+      setNotification({ show: true, type: "success", title: "Cadastro realizado", message: `${emailUsuarioExterno} cadastrado com sucesso.` })
       setNumeroSolicitacao("")
       setEmailSolicitante("")
       setEmailUsuarioExterno("")
 
     } catch {
-      setNotification({
-        show: true,
-        type: "error",
-        title: "Erro ao cadastrar",
-        message: "Ocorreu um erro ao realizar o cadastro. Tente novamente.",
-      })
+      setNotification({ show: true, type: "error", title: "Erro ao cadastrar", message: "Ocorreu um erro. Tente novamente." })
     } finally {
       setIsLoading(false)
     }
@@ -284,379 +246,408 @@ export default function SuportePage() {
 
   const getStatusBadge = (status: CadastroRegistro["status"]) => {
     const config = {
-      ativo: { label: "Ativo", className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
-      pendente: { label: "Pendente", className: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-      inativo: { label: "Inativo", className: "bg-slate-500/10 text-slate-600 border-slate-500/20" },
-      erro: { label: "Erro", className: "bg-red-500/10 text-red-600 border-red-500/20" },
+      ativo:    { label: "Ativo",    className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
+      pendente: { label: "Pendente", className: "stat-card-orange0/10 text-amber-600 border-amber-500/20" },
+      inativo:  { label: "Inativo",  className: "stat-icon-slate/10 text-slate-600 border-slate-500/20" },
+      erro:     { label: "Erro",     className: "stat-card-red0/10 text-red-600 border-red-500/20" },
     }
     const { label, className } = config[status]
     return <Badge variant="outline" className={className}>{label}</Badge>
   }
 
-  // Mostra loader enquanto a pagina carrega
   if (pageLoading) {
-    return (
-      <FullPageLoader
-        message="Carregando painel de suporte..."
-        subMessage="Preparando recursos e dados"
-      />
-    )
+    return <FullPageLoader message="Carregando painel de suporte..." subMessage="Preparando recursos e dados" />
   }
+
+  // Formulario preenchido parcialmente — mostra preview lateral quando todos os 3 campos tiverem valor
+  const formCompleto = numeroSolicitacao.trim() && emailSolicitante.trim() && emailUsuarioExterno.trim()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <AppHeader subtitle="Painel de Suporte - Cadastro de Usuarios" />
+      <AppHeader subtitle="Painel de Suporte" />
 
-      <main className="container max-w-7xl mx-auto px-6 py-10 pb-20">
+      <main className="container max-w-7xl mx-auto px-4 md:px-6 py-8 pb-20">
         <BreadcrumbNav
-          items={[{ label: "Inicio", href: "/" }, { label: "Suporte" }, { label: "Cadastro de Usuarios" }]}
+          items={[{ label: "Inicio", href: "/" }, { label: "Suporte" }]}
           dashboardLink="/suporte"
         />
 
+        {/* ── Cards de Metricas (3 cards lado a lado) ── */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
 
-
-        {/* Metricas - Clicaveis para filtrar */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card 
-            className={`bg-gradient-to-br from-card to-card/80 border-border/50 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] ${filtroStatus === "todos" ? "ring-2 ring-[#0047BB]" : ""}`}
+          {/* Total de Cadastros */}
+          <div
+            role="button"
+            tabIndex={0}
             onClick={() => handleFiltrarPorStatus("todos")}
+            onKeyDown={(e) => e.key === "Enter" && handleFiltrarPorStatus("todos")}
+            className={`stat-card-blue rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${filtroStatus === "todos" ? "ring-2 ring-[color:var(--card-blue-ring)]" : ""}`}
           >
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0047BB]/10 to-[#0047BB]/5 flex items-center justify-center">
-                  <Users className="h-6 w-6 text-[#0047BB]" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-                  <p className="text-sm text-muted-foreground">Total Cadastros</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="h-14 w-14 rounded-2xl stat-icon-blue flex items-center justify-center">
+              <Users className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.total}</p>
+              <p className="text-sm text-muted-foreground">Total de Cadastros</p>
+            </div>
+          </div>
 
-          <Card 
-            className={`bg-gradient-to-br from-card to-card/80 border-border/50 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] ${filtroStatus === "ativo" ? "ring-2 ring-emerald-500" : ""}`}
+          {/* Usuarios Ativos */}
+          <div
+            role="button"
+            tabIndex={0}
             onClick={() => handleFiltrarPorStatus("ativo")}
+            onKeyDown={(e) => e.key === "Enter" && handleFiltrarPorStatus("ativo")}
+            className={`stat-card-green rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${filtroStatus === "ativo" ? "ring-2 ring-[color:var(--card-green-ring)]" : ""}`}
           >
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 flex items-center justify-center">
-                  <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.ativos}</p>
-                  <p className="text-sm text-muted-foreground">Usuarios Ativos</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="h-14 w-14 rounded-2xl stat-card-green0 flex items-center justify-center">
+              <CheckCircle2 className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.ativos}</p>
+              <p className="text-sm text-muted-foreground">Usuarios Ativos</p>
+              {stats.total > 0 && (
+                <p className="text-xs text-[color:var(--card-green-icon)] mt-1">{pctAtivos}% do total</p>
+              )}
+            </div>
+          </div>
 
-          <Card 
-            className={`bg-gradient-to-br from-card to-card/80 border-border/50 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] ${filtroStatus === "pendente" ? "ring-2 ring-amber-500" : ""}`}
-            onClick={() => handleFiltrarPorStatus("pendente")}
-          >
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 flex items-center justify-center">
-                  <Clock className="h-6 w-6 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.pendentes}</p>
-                  <p className="text-sm text-muted-foreground">Pendentes</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className={`bg-gradient-to-br from-card to-card/80 border-border/50 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] ${filtroStatus === "hoje" ? "ring-2 ring-[#00A99D]" : ""}`}
+          {/* Cadastros Hoje */}
+          <div
+            role="button"
+            tabIndex={0}
             onClick={() => handleFiltrarPorStatus("hoje")}
+            onKeyDown={(e) => e.key === "Enter" && handleFiltrarPorStatus("hoje")}
+            className={`stat-card-orange rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${filtroStatus === "hoje" ? "ring-2 ring-[color:var(--card-orange-ring)]" : ""}`}
           >
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#00A99D]/10 to-[#00A99D]/5 flex items-center justify-center">
-                  <Activity className="h-6 w-6 text-[#00A99D]" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.hoje}</p>
-                  <p className="text-sm text-muted-foreground">Cadastros Hoje</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="h-14 w-14 rounded-2xl stat-card-orange0 flex items-center justify-center">
+              <Activity className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.hoje}</p>
+              <p className="text-sm text-muted-foreground">Cadastros Hoje</p>
+            </div>
+          </div>
         </div>
 
-        {/* Tabs principais */}
+        {/* ── Tabs ── */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-xl grid-cols-3 h-12">
-            <TabsTrigger value="cadastrar" className="gap-2 text-base">
+          <TabsList className="grid w-full max-w-md grid-cols-3 h-11">
+            <TabsTrigger value="cadastrar" className="gap-2">
               <UserPlus className="h-4 w-4" />
               Novo Cadastro
             </TabsTrigger>
-            <TabsTrigger value="consulta" className="gap-2 text-base">
+            <TabsTrigger value="consulta" className="gap-2">
               <Search className="h-4 w-4" />
               Consulta
             </TabsTrigger>
-            <TabsTrigger value="historico" className="gap-2 text-base">
+            <TabsTrigger value="historico" className="gap-2">
               <History className="h-4 w-4" />
               Historico
             </TabsTrigger>
           </TabsList>
 
-          {/* Tab: Novo Cadastro */}
-          <TabsContent value="cadastrar" className="space-y-6">
-            <Card className="bg-card/50 backdrop-blur-sm border shadow-xl">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-4">
-                  <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center shadow-lg">
-                    <UserPlus className="h-7 w-7 text-white" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-2xl">Cadastro de Usuario</CardTitle>
-                    <CardDescription className="text-base">
-                      Registre novos usuarios para receber compartilhamentos
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Numero da Solicitacao */}
-                  <div className="space-y-2">
-                    <Label htmlFor="numeroSolicitacao" className="text-base font-medium flex items-center gap-2">
-                      <Hash className="h-4 w-4 text-[#0047BB]" />
-                      Numero da Solicitacao
-                      <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="numeroSolicitacao"
-                      type="text"
-                      placeholder="Ex: SOL-2024-001234"
-                      value={numeroSolicitacao}
-                      onChange={(e) => setNumeroSolicitacao(e.target.value)}
-                      className="h-12 text-base"
-                      disabled={isLoading}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Informe o numero do chamado ou solicitacao que originou este cadastro
-                    </p>
-                  </div>
+          {/* ── Tab: Novo Cadastro ── */}
+          <TabsContent value="cadastrar">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
-                  {/* E-mail do Solicitante */}
-                  <div className="space-y-2">
-                    <Label htmlFor="emailSolicitante" className="text-base font-medium flex items-center gap-2">
-                      <User className="h-4 w-4 text-[#00A99D]" />
-                      E-mail do Solicitante
-                      <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="emailSolicitante"
-                      type="email"
-                      placeholder="colaborador@petrobras.com.br"
-                      value={emailSolicitante}
-                      onChange={(e) => setEmailSolicitante(e.target.value)}
-                      className="h-12 text-base"
-                      disabled={isLoading}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      E-mail do colaborador Petrobras que solicitou o cadastro
-                    </p>
-                  </div>
-
-                  {/* E-mail do Usuario */}
-                  <div className="space-y-2">
-                    <Label htmlFor="emailUsuarioExterno" className="text-base font-medium flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-[#FDB913]" />
-                      E-mail do Usuario
-                      <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="emailUsuarioExterno"
-                      type="email"
-                      placeholder="usuario@empresa.com.br"
-                      value={emailUsuarioExterno}
-                      onChange={(e) => setEmailUsuarioExterno(e.target.value)}
-                      className="h-12 text-base"
-                      disabled={isLoading}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      E-mail do usuario que tera acesso aos compartilhamentos
-                    </p>
-                  </div>
-
-                  {/* Alerta de seguranca */}
-                  <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-4">
-                    <div className="flex items-start gap-3">
-                      <Shield className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <div className="space-y-1">
-                        <p className="font-medium text-blue-800 dark:text-blue-400">Rastreabilidade</p>
-                        <p className="text-sm text-blue-700 dark:text-blue-500">
-                          Este cadastro sera registrado com seu usuario ({user?.email || "suporte@petrobras.com.br"}) para fins de auditoria e rastreabilidade.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Botao Submit */}
-                  <div className="flex justify-end pt-4">
-                    <Button
-                      type="submit"
-                      disabled={isLoading}
-                      size="lg"
-                      className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:from-[#008A81] hover:to-[#003A99] text-white font-semibold px-8 text-base shadow-lg hover:shadow-xl min-w-[200px]"
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                          Cadastrando...
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus className="h-5 w-5 mr-2" />
-                          Cadastrar Usuario
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Tab: Consulta */}
-          <TabsContent value="consulta" className="space-y-6">
-            <Card className="bg-card/50 backdrop-blur-sm border shadow-xl">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center shadow-lg">
-                      <Search className="h-7 w-7 text-white" />
+              {/* Formulario */}
+              <Card className="lg:col-span-3 bg-card border shadow-sm">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
+                      <UserPlus className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <CardTitle className="text-2xl">Consulta de Usuarios</CardTitle>
-                      <CardDescription className="text-base">
-                        Visualize todos os usuarios cadastrados no sistema
-                      </CardDescription>
+                      <CardTitle className="text-xl">Cadastro de Usuario</CardTitle>
+                      <CardDescription>Registre novos usuarios para receber compartilhamentos</CardDescription>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {filtroStatus !== "todos" && (
-                      <Badge variant="outline" className="bg-[#0047BB]/10 text-[#0047BB] border-[#0047BB]/30 px-3 py-1">
-                        Filtro: {filtroStatus === "ativo" ? "Ativos" : filtroStatus === "pendente" ? "Pendentes" : filtroStatus === "hoje" ? "Hoje" : "Inativos"}
+                </CardHeader>
+
+                <CardContent>
+                  <form onSubmit={handleSubmit} className="space-y-5 pt-2">
+
+                    {/* Numero da Solicitacao */}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="numeroSolicitacao" className="font-medium flex items-center gap-2">
+                        <Hash className="h-4 w-4 text-[#0047BB]" />
+                        Numero da Solicitacao
+                        <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="numeroSolicitacao"
+                        type="text"
+                        placeholder="Ex: SOL-2024-001234"
+                        value={numeroSolicitacao}
+                        onChange={(e) => setNumeroSolicitacao(e.target.value)}
+                        className="h-11"
+                        disabled={isLoading}
+                      />
+                      <p className="text-xs text-muted-foreground">Numero do chamado que originou este cadastro</p>
+                    </div>
+
+                    {/* Grid dos dois emails */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* E-mail Solicitante */}
+                      <div className="space-y-1.5">
+                        <Label htmlFor="emailSolicitante" className="font-medium flex items-center gap-2">
+                          <User className="h-4 w-4 text-[#00A99D]" />
+                          E-mail do Solicitante
+                          <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="emailSolicitante"
+                          type="email"
+                          placeholder="colaborador@petrobras.com.br"
+                          value={emailSolicitante}
+                          onChange={(e) => setEmailSolicitante(e.target.value)}
+                          className="h-11"
+                          disabled={isLoading}
+                        />
+                        <p className="text-xs text-muted-foreground">Colaborador Petrobras que solicitou</p>
+                      </div>
+
+                      {/* E-mail Usuario Externo */}
+                      <div className="space-y-1.5">
+                        <Label htmlFor="emailUsuarioExterno" className="font-medium flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-[#FDB913]" />
+                          E-mail do Usuario Externo
+                          <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="emailUsuarioExterno"
+                          type="email"
+                          placeholder="usuario@empresa.com.br"
+                          value={emailUsuarioExterno}
+                          onChange={(e) => setEmailUsuarioExterno(e.target.value)}
+                          className="h-11"
+                          disabled={isLoading}
+                        />
+                        <p className="text-xs text-muted-foreground">Quem tera acesso aos compartilhamentos</p>
+                      </div>
+                    </div>
+
+                    {/* Alerta de rastreabilidade */}
+                    <div className="stat-card-blue0/5 border border-blue-500/20 rounded-xl p-3 flex items-start gap-3">
+                      <Shield className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">
+                        Este cadastro sera registrado com seu usuario{" "}
+                        <span className="font-medium">({user?.email || "suporte@petrobras.com.br"})</span>{" "}
+                        para fins de auditoria e rastreabilidade.
+                      </p>
+                    </div>
+
+                    {/* Botao */}
+                    <div className="flex justify-end pt-1">
+                      <Button
+                        type="submit"
+                        disabled={isLoading}
+                        className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:from-[#008A81] hover:to-[#003A99] text-white font-semibold px-8 shadow-md min-w-[180px]"
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Cadastrando...
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="h-4 w-4 mr-2" />
+                            Cadastrar Usuario
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* Painel lateral — dicas ou preview do cadastro */}
+              <div className="lg:col-span-2 space-y-4">
+                {!formCompleto ? (
+                  <Card className="border bg-muted/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-[#0047BB]" />
+                        Como funciona
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {[
+                        { n: "1", text: "Informe o numero do chamado aberto no sistema" },
+                        { n: "2", text: "Adicione o e-mail do colaborador Petrobras que solicitou" },
+                        { n: "3", text: "Adicione o e-mail do usuario externo que recebera os arquivos" },
+                        { n: "4", text: "Clique em Cadastrar para registrar e liberar o acesso" },
+                      ].map(({ n, text }) => (
+                        <div key={n} className="flex items-start gap-3">
+                          <div className="h-6 w-6 rounded-full stat-icon-blue flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-white text-xs font-bold">{n}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground leading-relaxed">{text}</p>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                  <Card className="border-[#0066CC]/20 stat-card-blue/50">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base text-[#0047BB] flex items-center gap-2">
+                        <Eye className="h-4 w-4" />
+                        Pre-visualizacao do Cadastro
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Numero */}
+                      <div className="flex items-center gap-3 p-3 bg-card/70 dark:bg-background/50 rounded-xl border">
+                        <Hash className="h-4 w-4 text-[#0047BB] flex-shrink-0" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Numero da Solicitacao</p>
+                          <p className="font-mono font-semibold text-[#0047BB] text-sm">{numeroSolicitacao}</p>
+                        </div>
+                      </div>
+
+                      {/* Solicitante */}
+                      {emailSolicitante && (
+                        <div className="flex items-center gap-3">
+                          <div className={`h-9 w-9 rounded-full ${getAvatarColor(emailSolicitante)} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
+                            {getInitials(emailSolicitante)}
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Solicitante (interno)</p>
+                            <p className="text-sm font-medium text-foreground truncate">{emailSolicitante}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      <ChevronRight className="h-4 w-4 text-muted-foreground mx-auto" />
+
+                      {/* Externo */}
+                      {emailUsuarioExterno && (
+                        <div className="flex items-center gap-3">
+                          <div className={`h-9 w-9 rounded-full ${getAvatarColor(emailUsuarioExterno)} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
+                            {getInitials(emailUsuarioExterno)}
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Usuario externo</p>
+                            <p className="text-sm font-medium text-foreground truncate">{emailUsuarioExterno}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      <Badge className="w-full justify-center bg-emerald-500/10 text-emerald-700 border-emerald-500/20 hover:bg-emerald-500/10" variant="outline">
+                        <CheckCircle2 className="h-3 w-3 mr-1.5" />
+                        Sera cadastrado como Ativo
                       </Badge>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setFiltroStatus("todos")
-                        setSearchTerm("")
-                      }}
-                      className="gap-2"
-                    >
-                      <RefreshCcw className="h-4 w-4" />
-                      Limpar Filtros
-                    </Button>
+                    </CardContent>
+                  </Card>
                   </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* ── Tab: Consulta ── */}
+          <TabsContent value="consulta" className="space-y-4">
+            <Card className="bg-card/50 backdrop-blur-sm border shadow-sm">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
+                      <Search className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl">Consulta de Usuarios</CardTitle>
+                      <CardDescription>Visualize todos os usuarios cadastrados</CardDescription>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setFiltroStatus("todos"); setSearchTerm("") }}
+                    className="gap-2"
+                  >
+                    <RefreshCcw className="h-4 w-4" />
+                    Limpar Filtros
+                  </Button>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="space-y-4">
                 {/* Barra de busca */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="text"
-                    placeholder="Buscar por solicitacao, e-mail do solicitante ou usuario..."
+                    placeholder="Buscar por solicitacao ou e-mail..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 h-12 text-base"
+                    className="pl-9 h-11"
                   />
                 </div>
 
                 {/* Filtros rapidos */}
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant={filtroStatus === "todos" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFiltroStatus("todos")}
-                    className={filtroStatus === "todos" ? "bg-[#0047BB]" : ""}
-                  >
-                    Todos ({stats.total})
-                  </Button>
-                  <Button
-                    variant={filtroStatus === "ativo" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFiltroStatus("ativo")}
-                    className={filtroStatus === "ativo" ? "bg-emerald-600" : ""}
-                  >
-                    Ativos ({stats.ativos})
-                  </Button>
-                  <Button
-                    variant={filtroStatus === "pendente" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFiltroStatus("pendente")}
-                    className={filtroStatus === "pendente" ? "bg-amber-600" : ""}
-                  >
-                    Pendentes ({stats.pendentes})
-                  </Button>
+                  {[
+                    { key: "todos",   label: `Todos (${stats.total})` },
+                    { key: "ativo",   label: `Ativos (${stats.ativos})` },
+                  ].map(({ key, label }) => (
+                    <Button
+                      key={key}
+                      variant={filtroStatus === key ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setFiltroStatus(key as typeof filtroStatus)}
+                      className={filtroStatus === key ? "bg-[#0047BB] hover:bg-[#003A99]" : ""}
+                    >
+                      {label}
+                    </Button>
+                  ))}
                 </div>
 
-                {/* Contador de resultados */}
-                <div className="text-sm text-muted-foreground">
-                  Exibindo {registrosFiltrados.length} de {registros.length} usuarios
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  Exibindo {registrosFiltrados.length} de {registros.length} registros
+                </p>
 
-                {/* Lista de usuarios */}
-                <div className="space-y-3">
+                {/* Lista */}
+                <div className="space-y-2">
                   {registrosFiltrados.length === 0 ? (
-                    <div className="text-center py-12">
-                      <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-lg font-medium text-muted-foreground">Nenhum usuario encontrado</p>
+                    <div className="text-center py-16">
+                      <AlertCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                      <p className="font-medium text-muted-foreground">Nenhum usuario encontrado</p>
                       <p className="text-sm text-muted-foreground mt-1">Tente ajustar os filtros de busca</p>
                     </div>
                   ) : (
                     registrosFiltrados.map((registro) => (
                       <div
                         key={registro.id}
-                        className="bg-background/50 border rounded-xl p-4 hover:bg-background/80 transition-colors"
+                        className="flex items-center gap-4 p-4 bg-background/50 border rounded-xl hover:bg-background/80 hover:shadow-sm transition-all cursor-pointer group"
+                        onClick={() => handleVisualizarDetalhes(registro)}
                       >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 space-y-2">
-                            <div className="flex items-center gap-3 flex-wrap">
-                              <span className="font-mono text-sm font-semibold text-[#0047BB]">
-                                {registro.numeroSolicitacao}
-                              </span>
-                              {getStatusBadge(registro.status)}
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                              <div className="flex items-center gap-2 text-muted-foreground">
-                                <User className="h-4 w-4 flex-shrink-0" />
-                                <span className="flex-shrink-0">Solicitante: </span>
-                                <span className="text-foreground truncate">{registro.emailSolicitante}</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-muted-foreground">
-                                <Mail className="h-4 w-4 flex-shrink-0" />
-                                <span className="flex-shrink-0">Usuario: </span>
-                                <span className="text-foreground truncate">{registro.emailUsuarioExterno}</span>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <span>Cadastrado por: {registro.cadastradoPor}</span>
-                              <span>|</span>
-                              <span>{new Date(registro.dataCadastro).toLocaleString("pt-BR")}</span>
-                            </div>
+                        {/* Avatar */}
+                        <div className={`h-10 w-10 rounded-full ${getAvatarColor(registro.emailUsuarioExterno)} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
+                          {getInitials(registro.emailUsuarioExterno)}
+                        </div>
+
+                        {/* Info principal */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                            <span className="font-mono text-xs font-semibold text-[#0047BB] stat-card-blue px-2 py-0.5 rounded-full">
+                              {registro.numeroSolicitacao}
+                            </span>
+                            {getStatusBadge(registro.status)}
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="flex-shrink-0 hover:bg-[#0047BB]/10"
-                            onClick={() => handleVisualizarDetalhes(registro)}
-                            title="Ver detalhes"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <p className="text-sm font-medium text-foreground truncate">{registro.emailUsuarioExterno}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            Solicitante: {registro.emailSolicitante}
+                          </p>
+                        </div>
+
+                        {/* Data + seta */}
+                        <div className="hidden sm:flex flex-col items-end gap-0.5 flex-shrink-0">
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(registro.dataCadastro).toLocaleDateString("pt-BR")}
+                          </span>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
                       </div>
                     ))
@@ -666,75 +657,69 @@ export default function SuportePage() {
             </Card>
           </TabsContent>
 
-          {/* Tab: Historico */}
-          <TabsContent value="historico" className="space-y-6">
-            <Card className="bg-card/50 backdrop-blur-sm border shadow-xl">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center shadow-lg">
-                      <FileText className="h-7 w-7 text-white" />
+          {/* ── Tab: Historico ── */}
+          <TabsContent value="historico" className="space-y-4">
+            <Card className="bg-card/50 backdrop-blur-sm border shadow-sm">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center">
+                      <FileText className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <CardTitle className="text-2xl">Historico de Cadastros</CardTitle>
-                      <CardDescription className="text-base">
-                        Registro de atividades e alteracoes
-                      </CardDescription>
+                      <CardTitle className="text-xl">Historico de Cadastros</CardTitle>
+                      <CardDescription>Registro cronologico de atividades</CardDescription>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setFiltroStatus("todos")
-                      setSearchTerm("")
-                    }}
-                    className="gap-2"
-                  >
+                  <Button variant="outline" size="sm" className="gap-2">
                     <RefreshCcw className="h-4 w-4" />
                     Atualizar
                   </Button>
                 </div>
               </CardHeader>
-              
-              <CardContent className="space-y-4">
-                {/* Lista de historico/atividades */}
-                <div className="space-y-3">
-                  {registros.length === 0 ? (
-                    <div className="text-center py-12">
-                      <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-lg font-medium text-muted-foreground">Nenhum historico encontrado</p>
-                    </div>
-                  ) : (
-                    registros.map((registro) => (
-                      <div
-                        key={registro.id}
-                        className="bg-background/50 border rounded-xl p-4 hover:bg-background/80 transition-colors"
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#00A99D]/20 to-[#0047BB]/20 flex items-center justify-center flex-shrink-0">
-                            <UserPlus className="h-5 w-5 text-[#0047BB]" />
-                          </div>
-                          <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-medium text-foreground">Novo cadastro realizado</span>
-                              {getStatusBadge(registro.status)}
+
+              <CardContent>
+                {registros.length === 0 ? (
+                  <div className="text-center py-16">
+                    <AlertCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                    <p className="font-medium text-muted-foreground">Nenhum historico encontrado</p>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    {/* Linha vertical da timeline */}
+                    <div className="absolute left-5 top-0 bottom-0 w-px bg-border" aria-hidden />
+
+                    <div className="space-y-0">
+                      {registros.map((registro, index) => (
+                        <div key={registro.id} className="relative flex gap-4 pb-6 last:pb-0">
+                          {/* Icone da timeline */}
+                          <div className="relative z-10 flex-shrink-0">
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#00A99D]/20 to-[#0047BB]/20 border-2 border-background flex items-center justify-center shadow-sm">
+                              <UserPlus className="h-4 w-4 text-[#0047BB]" />
                             </div>
-                            <p className="text-sm text-muted-foreground">
-                              Usuario <span className="font-medium text-foreground">{registro.emailUsuarioExterno}</span> foi cadastrado por{" "}
-                              <span className="font-medium text-foreground">{registro.cadastradoPor}</span>
+                          </div>
+
+                          {/* Conteudo */}
+                          <div className="flex-1 min-w-0 pt-1.5 pb-2 bg-background/40 border rounded-xl px-4 hover:bg-background/70 transition-colors">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="font-medium text-sm text-foreground">Novo cadastro</span>
+                              {getStatusBadge(registro.status)}
+                              <span className="font-mono text-xs text-[#0047BB]">{registro.numeroSolicitacao}</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              <span className="font-medium text-foreground">{registro.emailUsuarioExterno}</span>{" "}
+                              cadastrado por <span className="font-medium text-foreground">{registro.cadastradoPor}</span>
                             </p>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                              <span className="font-mono">{registro.numeroSolicitacao}</span>
-                              <span>|</span>
+                            <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                              <Calendar className="h-3 w-3" />
                               <span>{new Date(registro.dataCadastro).toLocaleString("pt-BR")}</span>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -742,7 +727,7 @@ export default function SuportePage() {
       </main>
 
       <ScrollToTop />
-      
+
       <NotificationModal
         open={notification.show}
         onOpenChange={(show) => setNotification({ ...notification, show })}
@@ -751,126 +736,78 @@ export default function SuportePage() {
         message={notification.message}
       />
 
-      {/* Modal de Detalhes do Usuario */}
+      {/* Modal de Detalhes */}
       <Dialog open={showDetalhesModal} onOpenChange={setShowDetalhesModal}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center">
-                <User className="h-5 w-5 text-white" />
+              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center">
+                <User className="h-4 w-4 text-white" />
               </div>
               Detalhes do Usuario
             </DialogTitle>
-            <DialogDescription>
-              Informacoes completas do cadastro
-            </DialogDescription>
+            <DialogDescription>Informacoes completas do cadastro</DialogDescription>
           </DialogHeader>
 
           {registroSelecionado && (
-            <div className="space-y-6 py-4">
-              {/* Status e Numero da Solicitacao */}
-              <div className="flex items-center justify-between">
+            <div className="space-y-4 py-2">
+              {/* Header com numero e status */}
+              <div className="flex items-center justify-between p-3 stat-card-blue rounded-xl">
                 <div className="flex items-center gap-2">
-                  <Hash className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-mono text-lg font-semibold text-[#0047BB]">
-                    {registroSelecionado.numeroSolicitacao}
-                  </span>
+                  <Hash className="h-4 w-4 text-[#0047BB]" />
+                  <span className="font-mono font-bold text-[#0047BB]">{registroSelecionado.numeroSolicitacao}</span>
                 </div>
                 {getStatusBadge(registroSelecionado.status)}
               </div>
 
-              {/* Informacoes do Usuario */}
-              <div className="space-y-4">
-                <div className="bg-muted/50 rounded-xl p-4 space-y-3">
-                  <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                    Usuario Cadastrado
-                  </h4>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Mail className="h-5 w-5 text-[#00A99D]" />
-                      <span className="text-foreground font-medium">
-                        {registroSelecionado.emailUsuarioExterno}
-                      </span>
+              {/* Usuarios */}
+              <div className="space-y-3">
+                {[
+                  { label: "Usuario Externo", value: registroSelecionado.emailUsuarioExterno, icon: Mail, color: "text-[#00A99D]" },
+                  { label: "Solicitante", value: registroSelecionado.emailSolicitante, icon: User, color: "text-[#0047BB]" },
+                ].map(({ label, value, icon: Icon, color }) => (
+                  <div key={label} className="flex items-center justify-between gap-3 bg-muted/40 rounded-xl p-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Icon className={`h-4 w-4 ${color} flex-shrink-0`} />
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">{label}</p>
+                        <p className="text-sm font-medium text-foreground truncate">{value}</p>
+                      </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleCopiar(registroSelecionado.emailUsuarioExterno)}
-                      className="h-8 w-8"
-                    >
-                      <Copy className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={() => handleCopiar(value)}>
+                      <Copy className="h-3.5 w-3.5" />
                     </Button>
                   </div>
-                </div>
-
-                <div className="bg-muted/50 rounded-xl p-4 space-y-3">
-                  <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                    Solicitante
-                  </h4>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <User className="h-5 w-5 text-[#0047BB]" />
-                      <span className="text-foreground font-medium">
-                        {registroSelecionado.emailSolicitante}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleCopiar(registroSelecionado.emailSolicitante)}
-                      className="h-8 w-8"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-muted/50 rounded-xl p-4 space-y-2">
-                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                      Cadastrado por
-                    </h4>
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-amber-600" />
-                      <span className="text-foreground text-sm font-medium">
-                        {registroSelecionado.cadastradoPor}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="bg-muted/50 rounded-xl p-4 space-y-2">
-                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                      Data de Cadastro
-                    </h4>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-foreground text-sm font-medium">
-                        {new Date(registroSelecionado.dataCadastro).toLocaleDateString("pt-BR")}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {registroSelecionado.observacao && (
-                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 space-y-2">
-                    <h4 className="text-sm font-semibold text-amber-800 dark:text-amber-200 uppercase tracking-wide">
-                      Observacao
-                    </h4>
-                    <p className="text-sm text-amber-700 dark:text-amber-300">
-                      {registroSelecionado.observacao}
-                    </p>
-                  </div>
-                )}
+                ))}
               </div>
 
-              {/* Acoes */}
-              <div className="flex justify-end gap-2 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowDetalhesModal(false)}
-                >
-                  Fechar
-                </Button>
+              {/* Meta */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-muted/40 rounded-xl p-3 space-y-1">
+                  <p className="text-xs text-muted-foreground">Cadastrado por</p>
+                  <div className="flex items-center gap-1.5">
+                    <Shield className="h-3.5 w-3.5 text-amber-600" />
+                    <span className="text-sm font-medium truncate">{registroSelecionado.cadastradoPor}</span>
+                  </div>
+                </div>
+                <div className="bg-muted/40 rounded-xl p-3 space-y-1">
+                  <p className="text-xs text-muted-foreground">Data de Cadastro</p>
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-sm font-medium">{new Date(registroSelecionado.dataCadastro).toLocaleDateString("pt-BR")}</span>
+                  </div>
+                </div>
+              </div>
+
+              {registroSelecionado.observacao && (
+                <div className="stat-card-orange border border-amber-200 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-amber-700 mb-1">Observacao</p>
+                  <p className="text-sm text-amber-700">{registroSelecionado.observacao}</p>
+                </div>
+              )}
+
+              <div className="flex justify-end pt-2 border-t">
+                <Button variant="outline" onClick={() => setShowDetalhesModal(false)}>Fechar</Button>
               </div>
             </div>
           )}

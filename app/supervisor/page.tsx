@@ -27,8 +27,6 @@ import {
   FileCheck,
   ChevronRight,
   BarChart3,
-  ArrowUpRight,
-  ArrowDownRight,
   User,
   Mail,
   Calendar
@@ -104,7 +102,7 @@ export default function SupervisorPage() {
         )
       case "rejected":
         return (
-          <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100">
+          <Badge className="bg-red-100 text-[color:var(--card-red-icon)] border-red-200 hover:bg-red-100">
             <XCircle className="h-3 w-3 mr-1" />
             Rejeitado
           </Badge>
@@ -156,87 +154,73 @@ export default function SupervisorPage() {
 
         {/* Cards de Metricas */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card 
-            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] ${statusFilter === "all" ? "ring-2 ring-[#0047BB]" : ""}`}
+          {/* Total */}
+          <div
+            className={`stat-card-blue rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "all" ? "ring-2 ring-[color:var(--card-blue-ring)]" : ""}`}
             onClick={() => { setStatusFilter("all"); setActiveTab("aprovacoes") }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && (setStatusFilter("all"), setActiveTab("aprovacoes"))}
           >
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0047BB]/10 to-[#0047BB]/5 flex items-center justify-center">
-                  <BarChart3 className="h-6 w-6 text-[#0047BB]" />
-                </div>
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-foreground">{totalCount}</p>
-                  <p className="text-sm text-muted-foreground">Total</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="h-14 w-14 rounded-2xl stat-icon-blue flex items-center justify-center">
+              <BarChart3 className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{totalCount}</p>
+              <p className="text-sm text-muted-foreground">Total</p>
+            </div>
+          </div>
 
-          <Card 
-            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] border-l-4 border-l-amber-500 ${statusFilter === "pending" ? "ring-2 ring-amber-500" : ""}`}
+          {/* Aguardando */}
+          <div
+            className={`stat-card-orange rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "pending" ? "ring-2 ring-[color:var(--card-orange-ring)]" : ""}`}
             onClick={() => { setStatusFilter("pending"); setActiveTab("aprovacoes") }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && (setStatusFilter("pending"), setActiveTab("aprovacoes"))}
           >
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="h-12 w-12 rounded-xl bg-amber-100 flex items-center justify-center">
-                  <Clock className="h-6 w-6 text-amber-600" />
-                </div>
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-amber-600">{pendingCount}</p>
-                  <p className="text-sm text-muted-foreground">Pendentes</p>
-                </div>
-              </div>
-              {pendingCount > 0 && (
-                <div className="mt-3 flex items-center gap-1 text-amber-600 text-sm">
-                  <AlertTriangle className="h-4 w-4" />
-                  <span>Requer atencao</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            <div className="h-14 w-14 rounded-2xl stat-card-orange0 flex items-center justify-center">
+              <Clock className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{pendingCount}</p>
+              <p className="text-sm text-muted-foreground">Aguardando Aprovação</p>
+            </div>
+          </div>
 
-          <Card 
-            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] border-l-4 border-l-emerald-500 ${statusFilter === "approved" ? "ring-2 ring-emerald-500" : ""}`}
+          {/* Aprovados */}
+          <div
+            className={`stat-card-green rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "approved" ? "ring-2 ring-[color:var(--card-green-ring)]" : ""}`}
             onClick={() => { setStatusFilter("approved"); setActiveTab("aprovacoes") }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && (setStatusFilter("approved"), setActiveTab("aprovacoes"))}
           >
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center">
-                  <CheckCircle className="h-6 w-6 text-emerald-600" />
-                </div>
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-emerald-600">{approvedCount}</p>
-                  <p className="text-sm text-muted-foreground">Aprovados</p>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center gap-1 text-emerald-600 text-sm">
-                <ArrowUpRight className="h-4 w-4" />
-                <span>Ultimos 30 dias</span>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="h-14 w-14 rounded-2xl stat-card-green0 flex items-center justify-center">
+              <CheckCircle className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{approvedCount}</p>
+              <p className="text-sm text-muted-foreground">Aprovados</p>
+            </div>
+          </div>
 
-          <Card 
-            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] border-l-4 border-l-red-500 ${statusFilter === "rejected" ? "ring-2 ring-red-500" : ""}`}
+          {/* Rejeitados */}
+          <div
+            className={`stat-card-red rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${statusFilter === "rejected" ? "ring-2 ring-[color:var(--card-red-ring)]" : ""}`}
             onClick={() => { setStatusFilter("rejected"); setActiveTab("aprovacoes") }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && (setStatusFilter("rejected"), setActiveTab("aprovacoes"))}
           >
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="h-12 w-12 rounded-xl bg-red-100 flex items-center justify-center">
-                  <XCircle className="h-6 w-6 text-red-600" />
-                </div>
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-red-600">{rejectedCount}</p>
-                  <p className="text-sm text-muted-foreground">Rejeitados</p>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center gap-1 text-red-600 text-sm">
-                <ArrowDownRight className="h-4 w-4" />
-                <span>Ultimos 30 dias</span>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="h-14 w-14 rounded-2xl stat-card-red0 flex items-center justify-center">
+              <XCircle className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{rejectedCount}</p>
+              <p className="text-sm text-muted-foreground">Rejeitados</p>
+            </div>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -246,7 +230,7 @@ export default function SupervisorPage() {
               <ClipboardCheck className="h-5 w-5" />
               Aprovacoes
               {pendingCount > 0 && (
-                <Badge className="ml-1 bg-amber-500 text-white text-xs px-2">
+                <Badge className="ml-1 stat-card-orange0 text-white text-xs px-2">
                   {pendingCount}
                 </Badge>
               )}
@@ -353,9 +337,15 @@ export default function SupervisorPage() {
                             }`} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 mb-2">
+                            <div className="flex items-center gap-3 mb-2 flex-wrap">
                               <h3 className="text-lg font-semibold text-foreground truncate">{upload.name}</h3>
                               {getStatusBadge(upload.status)}
+                              {upload.numeroSolicitacao && (
+                                <span className="inline-flex items-center gap-1 text-xs font-mono stat-card-blue text-[#0047BB] px-2 py-0.5 rounded-full border border-[#0066CC]/20">
+                                  <FileText className="h-3 w-3" />
+                                  {upload.numeroSolicitacao}
+                                </span>
+                              )}
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                               <div className="flex items-center gap-2 text-muted-foreground">

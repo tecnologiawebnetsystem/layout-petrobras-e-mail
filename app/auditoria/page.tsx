@@ -78,9 +78,8 @@ const levelColors: Record<LogLevel, string> = {
 export default function AuditoriaPage() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
-  const { logs, exportLogs, getLogsByAction, loadLogs } = useAuditLogStore()
+  const { logs, exportLogs, getLogsByAction, loadLogs, isLoadingLogs } = useAuditLogStore()
   const [searchTerm, setSearchTerm] = useState("")
-  const [pageLoading, setPageLoading] = useState(true)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -88,11 +87,6 @@ export default function AuditoriaPage() {
       return
     }
     loadLogs()
-    // Simular carregamento inicial
-    const timer = setTimeout(() => {
-      setPageLoading(false)
-    }, 1200)
-    return () => clearTimeout(timer)
   }, [loadLogs, isAuthenticated, router])
   const [filterAction, setFilterAction] = useState<LogAction | "all">("all")
   const [filterLevel, setFilterLevel] = useState<LogLevel | "all">("all")
@@ -141,11 +135,11 @@ export default function AuditoriaPage() {
     return null
   }
 
-  if (pageLoading) {
+  if (isLoadingLogs && logs.length === 0) {
     return (
       <FullPageLoader
         message="Carregando auditoria..."
-        subMessage="Preparando logs do sistema"
+        subMessage="Buscando registros na API Python"
       />
     )
   }

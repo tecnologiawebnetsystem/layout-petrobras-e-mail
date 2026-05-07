@@ -52,6 +52,8 @@ export interface FileUpload {
   cancellationDate?: string
   cancelledBy?: string
   cancellationReason?: string
+  /** Número da solicitação cadastrada pelo Suporte que originou este compartilhamento */
+  numeroSolicitacao?: string
   expirationHours: number
   expiresAt?: string
   expiresIn?: number
@@ -118,6 +120,7 @@ function mapApiToFileUpload(item: Record<string, unknown>): FileUpload {
     expiresAt: item.expires_at
       ? new Date(String(item.expires_at)).toLocaleString("pt-BR")
       : undefined,
+    numeroSolicitacao: item.solicitation_number ? String(item.solicitation_number) : undefined,
     expirationLogs: [],
     currentStep: Number(workflow.current_step || 1),
     totalSteps: Number(workflow.total_steps || 3),
@@ -315,6 +318,9 @@ export const useWorkflowStore = create<WorkflowState>()(
         formData.append("recipientEmail", upload.recipient)
         formData.append("description", upload.description || "")
         formData.append("expirationHours", String(upload.expirationHours))
+        if (upload.numeroSolicitacao) {
+          formData.append("solicitationNumber", upload.numeroSolicitacao)
+        }
 
         // Adiciona os arquivos reais ao FormData
         if (upload.rawFiles && upload.rawFiles.length > 0) {

@@ -156,7 +156,7 @@ export default function CompartilhamentosPage() {
     switch (status) {
       case "pending":
         return (
-          <Badge className="bg-amber-500/10 text-amber-700 border-amber-500/20 hover:bg-amber-500/20">
+          <Badge className="stat-card-orange0/10 text-amber-700 border-amber-500/20 hover:stat-card-orange0/20">
             <Clock className="w-3 h-3 mr-1" />
             Aguardando
           </Badge>
@@ -170,14 +170,14 @@ export default function CompartilhamentosPage() {
         )
       case "rejected":
         return (
-          <Badge className="bg-red-500/10 text-red-700 border-red-500/20 hover:bg-red-500/20">
+          <Badge className="stat-card-red0/10 text-[color:var(--card-red-icon)] border-red-500/20 hover:stat-card-red0/20">
             <XCircle className="w-3 h-3 mr-1" />
             Rejeitado
           </Badge>
         )
       case "cancelled":
         return (
-          <Badge className="bg-gray-500/10 text-gray-700 border-gray-500/20 hover:bg-gray-500/20">
+          <Badge className="bg-gray-500/10 text-foreground/80 border-gray-500/20 hover:bg-gray-500/20">
             <Ban className="w-3 h-3 mr-1" />
             Cancelado
           </Badge>
@@ -207,15 +207,17 @@ export default function CompartilhamentosPage() {
     )
   }
 
+  const dashboardLink = user?.userType === "supervisor" ? "/supervisor" : "/upload"
+
   return (
-    <ProtectedRoute allowedUserTypes={["internal"]}>
+    <ProtectedRoute allowedUserTypes={["internal", "supervisor"]}>
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <AppHeader subtitle="Meus Compartilhamentos" />
 
         <main className="container mx-auto px-4 md:px-6 py-6 md:py-8 max-w-7xl">
           <BreadcrumbNav
-            items={[{ label: "Inicio", href: "/upload" }, { label: "Meus Compartilhamentos" }]}
-            dashboardLink="/upload"
+            items={[{ label: "Inicio", href: dashboardLink }, { label: "Meus Compartilhamentos" }]}
+            dashboardLink={dashboardLink}
           />
 
           {/* Header com titulo e acao */}
@@ -232,7 +234,7 @@ export default function CompartilhamentosPage() {
               </p>
             </div>
             <Button
-              onClick={() => router.push("/upload")}
+              onClick={() => router.push(user?.userType === "supervisor" ? "/supervisor?tab=compartilhar" : "/upload")}
               className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:opacity-90 text-white shadow-lg gap-2"
             >
               <Plus className="h-4 w-4" />
@@ -242,90 +244,80 @@ export default function CompartilhamentosPage() {
 
           {/* Cards de Metricas - Clicaveis */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            <Card 
-              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${activeTab === "todos" ? "ring-2 ring-[#0047BB] shadow-lg" : ""}`}
+            <div
+              className={`stat-card-blue rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "todos" ? "ring-2 ring-[color:var(--card-blue-ring)]" : ""}`}
               onClick={() => handleFilterByStatus("todos")}
+              role="button" tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && handleFilterByStatus("todos")}
             >
-              <CardContent className="p-4 md:p-5">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0047BB]/10 to-[#0047BB]/5 flex items-center justify-center">
-                    <FileText className="h-6 w-6 text-[#0047BB]" />
-                  </div>
-                  <div>
-                    <p className="text-2xl md:text-3xl font-bold text-foreground">{stats.total}</p>
-                    <p className="text-sm text-muted-foreground">Total</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="h-14 w-14 rounded-2xl stat-icon-blue flex items-center justify-center">
+                <FileText className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.total}</p>
+                <p className="text-sm text-muted-foreground">Total</p>
+              </div>
+            </div>
 
-            <Card 
-              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${activeTab === "pending" ? "ring-2 ring-amber-500 shadow-lg" : ""}`}
+            <div
+              className={`stat-card-orange rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "pending" ? "ring-2 ring-[color:var(--card-orange-ring)]" : ""}`}
               onClick={() => handleFilterByStatus("pending")}
+              role="button" tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && handleFilterByStatus("pending")}
             >
-              <CardContent className="p-4 md:p-5">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 flex items-center justify-center">
-                    <Clock className="h-6 w-6 text-amber-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl md:text-3xl font-bold text-foreground">{stats.pending}</p>
-                    <p className="text-sm text-muted-foreground">Aguardando</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="h-14 w-14 rounded-2xl stat-card-orange0 flex items-center justify-center">
+                <Clock className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.pending}</p>
+                <p className="text-sm text-muted-foreground">Aguardando</p>
+              </div>
+            </div>
 
-            <Card 
-              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${activeTab === "approved" ? "ring-2 ring-emerald-500 shadow-lg" : ""}`}
+            <div
+              className={`stat-card-green rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "approved" ? "ring-2 ring-[color:var(--card-green-ring)]" : ""}`}
               onClick={() => handleFilterByStatus("approved")}
+              role="button" tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && handleFilterByStatus("approved")}
             >
-              <CardContent className="p-4 md:p-5">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 flex items-center justify-center">
-                    <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl md:text-3xl font-bold text-foreground">{stats.approved}</p>
-                    <p className="text-sm text-muted-foreground">Aprovados</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="h-14 w-14 rounded-2xl stat-card-green0 flex items-center justify-center">
+                <CheckCircle2 className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.approved}</p>
+                <p className="text-sm text-muted-foreground">Aprovados</p>
+              </div>
+            </div>
 
-            <Card 
-              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${activeTab === "rejected" ? "ring-2 ring-red-500 shadow-lg" : ""}`}
+            <div
+              className={`stat-card-red rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "rejected" ? "ring-2 ring-[color:var(--card-red-ring)]" : ""}`}
               onClick={() => handleFilterByStatus("rejected")}
+              role="button" tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && handleFilterByStatus("rejected")}
             >
-              <CardContent className="p-4 md:p-5">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-red-500/10 to-red-500/5 flex items-center justify-center">
-                    <XCircle className="h-6 w-6 text-red-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl md:text-3xl font-bold text-foreground">{stats.rejected}</p>
-                    <p className="text-sm text-muted-foreground">Rejeitados</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="h-14 w-14 rounded-2xl stat-card-red0 flex items-center justify-center">
+                <XCircle className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.rejected}</p>
+                <p className="text-sm text-muted-foreground">Rejeitados</p>
+              </div>
+            </div>
 
-            <Card 
-              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${activeTab === "cancelled" ? "ring-2 ring-gray-500 shadow-lg" : ""}`}
+            <div
+              className={`stat-card-slate rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "cancelled" ? "ring-2 ring-[color:var(--card-slate-ring)]" : ""}`}
               onClick={() => handleFilterByStatus("cancelled")}
+              role="button" tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && handleFilterByStatus("cancelled")}
             >
-              <CardContent className="p-4 md:p-5">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-gray-500/10 to-gray-500/5 flex items-center justify-center">
-                    <Ban className="h-6 w-6 text-gray-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl md:text-3xl font-bold text-foreground">{stats.cancelled}</p>
-                    <p className="text-sm text-muted-foreground">Cancelados</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="h-14 w-14 rounded-2xl stat-icon-slate flex items-center justify-center">
+                <Ban className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.cancelled}</p>
+                <p className="text-sm text-muted-foreground">Cancelados</p>
+              </div>
+            </div>
           </div>
 
           {/* Barra de busca e filtros */}
@@ -403,7 +395,7 @@ export default function CompartilhamentosPage() {
               </p>
               {!searchTerm && activeTab === "todos" && (
                 <Button 
-                  onClick={() => router.push("/upload")}
+                  onClick={() => router.push(user?.userType === "supervisor" ? "/supervisor?tab=compartilhar" : "/upload")}
                   className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:opacity-90 text-white"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -423,16 +415,16 @@ export default function CompartilhamentosPage() {
                       {/* Info Principal */}
                       <div className="flex items-start gap-4 flex-1">
                         <div className={`hidden md:flex p-3 rounded-xl ${
-                          upload.status === "pending" ? "bg-amber-500/10" :
+                          upload.status === "pending" ? "stat-card-orange0/10" :
                           upload.status === "approved" ? "bg-emerald-500/10" :
-                          upload.status === "rejected" ? "bg-red-500/10" :
+                          upload.status === "rejected" ? "stat-card-red0/10" :
                           "bg-gray-500/10"
                         }`}>
                           <FileText className={`h-6 w-6 ${
                             upload.status === "pending" ? "text-amber-600" :
                             upload.status === "approved" ? "text-emerald-600" :
                             upload.status === "rejected" ? "text-red-600" :
-                            "text-gray-600"
+                            "text-muted-foreground"
                           }`} />
                         </div>
 
@@ -466,7 +458,7 @@ export default function CompartilhamentosPage() {
 
                           {/* Info adicional baseada no status */}
                           {upload.status === "pending" && (
-                            <div className="flex items-center gap-2 p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg">
+                            <div className="flex items-center gap-2 p-3 stat-card-orange0/5 border border-amber-500/20 rounded-lg">
                               <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
                               <p className="text-sm text-amber-700">
                                 Aguardando aprovacao do supervisor
@@ -485,9 +477,9 @@ export default function CompartilhamentosPage() {
                           )}
 
                           {upload.status === "rejected" && upload.rejectionReason && (
-                            <div className="flex items-start gap-2 p-3 bg-red-500/5 border border-red-500/20 rounded-lg">
+                            <div className="flex items-start gap-2 p-3 stat-card-red0/5 border border-red-500/20 rounded-lg">
                               <XCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
-                              <p className="text-sm text-red-700">
+                              <p className="text-sm text-[color:var(--card-red-icon)]">
                                 <span className="font-medium">Motivo:</span> {upload.rejectionReason}
                               </p>
                             </div>
@@ -495,8 +487,8 @@ export default function CompartilhamentosPage() {
 
                           {upload.status === "cancelled" && (
                             <div className="flex items-start gap-2 p-3 bg-gray-500/5 border border-gray-500/20 rounded-lg">
-                              <Ban className="h-4 w-4 text-gray-600 flex-shrink-0 mt-0.5" />
-                              <div className="text-sm text-gray-700">
+                              <Ban className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                              <div className="text-sm text-foreground/80">
                                 <p>Cancelado por <span className="font-medium">{upload.cancelledBy}</span>
                                 {upload.cancellationDate && ` em ${upload.cancellationDate}`}</p>
                                 {upload.cancellationReason && (
@@ -537,7 +529,7 @@ export default function CompartilhamentosPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleCancelClick(upload.id)}
-                            className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-500/10"
+                            className="gap-2 text-red-600 hover:text-[color:var(--card-red-icon)] hover:stat-card-red0/10"
                           >
                             <Ban className="h-4 w-4" />
                             <span className="hidden sm:inline">Cancelar</span>
@@ -557,7 +549,7 @@ export default function CompartilhamentosPage() {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-xl stat-card-red0/10 flex items-center justify-center">
                   <Ban className="h-5 w-5 text-red-600" />
                 </div>
                 Cancelar Compartilhamento

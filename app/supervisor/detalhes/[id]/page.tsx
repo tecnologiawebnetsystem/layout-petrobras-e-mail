@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -264,7 +264,17 @@ export default function SupervisorDetailsPage({ params }: { params: { id: string
                   <p className="font-semibold text-foreground text-lg">{uploadData.name}</p>
                 </div>
 
-                <div className="flex gap-6">
+                {uploadData.numeroSolicitacao && (
+                  <div className="flex items-center gap-2 stat-card-blue border border-[#0066CC]/20 rounded-xl px-4 py-3">
+                    <FileText className="h-4 w-4 text-[#0047BB] flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Número da Solicitação</p>
+                      <p className="font-mono font-semibold text-[#0047BB]">{uploadData.numeroSolicitacao}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-6 flex-wrap">
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Remetente</p>
                     <p className="font-medium text-foreground">{sender.name}</p>
@@ -334,7 +344,7 @@ export default function SupervisorDetailsPage({ params }: { params: { id: string
                   </div>
 
                   {individualApprovalMode && (
-                    <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div className="mb-3 p-3 stat-card-blue dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                       <p className="text-sm text-blue-900 dark:text-blue-100 mb-2">
                         Selecione os arquivos que deseja aprovar ou rejeitar individualmente
                       </p>

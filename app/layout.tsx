@@ -141,7 +141,7 @@ export default function RootLayout({
   }
 
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning className="bg-background">
       <head>
         {/* Script síncrono no <head>: executa antes do bundle React */}
         <script
