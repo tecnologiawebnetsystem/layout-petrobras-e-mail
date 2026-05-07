@@ -317,73 +317,73 @@ export default function SuportePage() {
 
         {/* Metricas - Clicaveis para filtrar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card 
-            className={`bg-gradient-to-br from-card to-card/80 border-border/50 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] ${filtroStatus === "todos" ? "ring-2 ring-[#0047BB]" : ""}`}
+          {/* Total Cadastros */}
+          <div
+            className={`bg-[#EBF3FB] rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${filtroStatus === "todos" ? "ring-2 ring-[#0066CC]" : ""}`}
             onClick={() => handleFiltrarPorStatus("todos")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && handleFiltrarPorStatus("todos")}
           >
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0047BB]/10 to-[#0047BB]/5 flex items-center justify-center">
-                  <Users className="h-6 w-6 text-[#0047BB]" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-                  <p className="text-sm text-muted-foreground">Total Cadastros</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="h-14 w-14 rounded-2xl bg-[#0066CC] flex items-center justify-center">
+              <Users className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.total}</p>
+              <p className="text-sm text-muted-foreground">Total Cadastros</p>
+            </div>
+          </div>
 
-          <Card 
-            className={`bg-gradient-to-br from-card to-card/80 border-border/50 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] ${filtroStatus === "ativo" ? "ring-2 ring-emerald-500" : ""}`}
+          {/* Usuarios Ativos */}
+          <div
+            className={`bg-green-50 rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${filtroStatus === "ativo" ? "ring-2 ring-green-500" : ""}`}
             onClick={() => handleFiltrarPorStatus("ativo")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && handleFiltrarPorStatus("ativo")}
           >
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 flex items-center justify-center">
-                  <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.ativos}</p>
-                  <p className="text-sm text-muted-foreground">Usuarios Ativos</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="h-14 w-14 rounded-2xl bg-green-500 flex items-center justify-center">
+              <CheckCircle2 className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.ativos}</p>
+              <p className="text-sm text-muted-foreground">Usuarios Ativos</p>
+            </div>
+          </div>
 
-          <Card 
-            className={`bg-gradient-to-br from-card to-card/80 border-border/50 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] ${filtroStatus === "pendente" ? "ring-2 ring-amber-500" : ""}`}
+          {/* Pendentes */}
+          <div
+            className={`bg-orange-50 rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${filtroStatus === "pendente" ? "ring-2 ring-orange-500" : ""}`}
             onClick={() => handleFiltrarPorStatus("pendente")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && handleFiltrarPorStatus("pendente")}
           >
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 flex items-center justify-center">
-                  <Clock className="h-6 w-6 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.pendentes}</p>
-                  <p className="text-sm text-muted-foreground">Pendentes</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="h-14 w-14 rounded-2xl bg-orange-500 flex items-center justify-center">
+              <Clock className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.pendentes}</p>
+              <p className="text-sm text-muted-foreground">Pendentes</p>
+            </div>
+          </div>
 
-          <Card 
-            className={`bg-gradient-to-br from-card to-card/80 border-border/50 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] ${filtroStatus === "hoje" ? "ring-2 ring-[#00A99D]" : ""}`}
+          {/* Cadastros Hoje */}
+          <div
+            className={`bg-red-50 rounded-2xl p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${filtroStatus === "hoje" ? "ring-2 ring-red-500" : ""}`}
             onClick={() => handleFiltrarPorStatus("hoje")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && handleFiltrarPorStatus("hoje")}
           >
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#00A99D]/10 to-[#00A99D]/5 flex items-center justify-center">
-                  <Activity className="h-6 w-6 text-[#00A99D]" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.hoje}</p>
-                  <p className="text-sm text-muted-foreground">Cadastros Hoje</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="h-14 w-14 rounded-2xl bg-red-500 flex items-center justify-center">
+              <Activity className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.hoje}</p>
+              <p className="text-sm text-muted-foreground">Cadastros Hoje</p>
+            </div>
+          </div>
         </div>
 
         {/* Tabs principais */}

@@ -257,90 +257,80 @@ export default function LogsPage() {
 
         {/* Cards de Estatisticas */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-          <Card 
-            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] ${logFilter === "all" ? "ring-2 ring-[#0047BB]" : ""}`}
+          <div
+            className={`bg-[#EBF3FB] rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${logFilter === "all" ? "ring-2 ring-[#0066CC]" : ""}`}
             onClick={() => setLogFilter("all")}
+            role="button" tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setLogFilter("all")}
           >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0047BB]/10 to-[#0047BB]/5 flex items-center justify-center">
-                  <History className="h-5 w-5 text-[#0047BB]" />
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-                  <p className="text-xs text-muted-foreground">Total</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="h-14 w-14 rounded-2xl bg-[#0066CC] flex items-center justify-center">
+              <History className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.total}</p>
+              <p className="text-sm text-muted-foreground">Total</p>
+            </div>
+          </div>
 
-          <Card 
-            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] border-l-4 border-l-emerald-500 ${logFilter === "success" ? "ring-2 ring-emerald-500" : ""}`}
+          <div
+            className={`bg-green-50 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${logFilter === "success" ? "ring-2 ring-green-500" : ""}`}
             onClick={() => setLogFilter("success")}
+            role="button" tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setLogFilter("success")}
           >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="h-10 w-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                  <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.success}</p>
-                  <p className="text-xs text-muted-foreground">Sucesso</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="h-14 w-14 rounded-2xl bg-green-500 flex items-center justify-center">
+              <CheckCircle className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.success}</p>
+              <p className="text-sm text-muted-foreground">Sucesso</p>
+            </div>
+          </div>
 
-          <Card 
-            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] border-l-4 border-l-red-500 ${logFilter === "error" ? "ring-2 ring-red-500" : ""}`}
+          <div
+            className={`bg-red-50 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${logFilter === "error" ? "ring-2 ring-red-500" : ""}`}
             onClick={() => setLogFilter("error")}
+            role="button" tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setLogFilter("error")}
           >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="h-10 w-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                  <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.error}</p>
-                  <p className="text-xs text-muted-foreground">Erro</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="h-14 w-14 rounded-2xl bg-red-500 flex items-center justify-center">
+              <XCircle className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.error}</p>
+              <p className="text-sm text-muted-foreground">Erro</p>
+            </div>
+          </div>
 
-          <Card 
-            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] border-l-4 border-l-amber-500 ${logFilter === "warning" ? "ring-2 ring-amber-500" : ""}`}
+          <div
+            className={`bg-orange-50 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${logFilter === "warning" ? "ring-2 ring-orange-500" : ""}`}
             onClick={() => setLogFilter("warning")}
+            role="button" tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setLogFilter("warning")}
           >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="h-10 w-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                  <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.warning}</p>
-                  <p className="text-xs text-muted-foreground">Aviso</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="h-14 w-14 rounded-2xl bg-orange-500 flex items-center justify-center">
+              <AlertTriangle className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.warning}</p>
+              <p className="text-sm text-muted-foreground">Aviso</p>
+            </div>
+          </div>
 
-          <Card 
-            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] border-l-4 border-l-blue-500 ${logFilter === "info" ? "ring-2 ring-blue-500" : ""}`}
+          <div
+            className={`bg-[#EBF3FB] rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${logFilter === "info" ? "ring-2 ring-[#0066CC]" : ""}`}
             onClick={() => setLogFilter("info")}
+            role="button" tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setLogFilter("info")}
           >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="h-10 w-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                  <Activity className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.info}</p>
-                  <p className="text-xs text-muted-foreground">Info</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="h-14 w-14 rounded-2xl bg-[#0066CC] flex items-center justify-center">
+              <Activity className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.info}</p>
+              <p className="text-sm text-muted-foreground">Info</p>
+            </div>
+          </div>
         </div>
 
         {/* Card Principal */}

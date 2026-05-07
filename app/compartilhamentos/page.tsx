@@ -242,90 +242,80 @@ export default function CompartilhamentosPage() {
 
           {/* Cards de Metricas - Clicaveis */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            <Card 
-              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${activeTab === "todos" ? "ring-2 ring-[#0047BB] shadow-lg" : ""}`}
+            <div
+              className={`bg-[#EBF3FB] rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "todos" ? "ring-2 ring-[#0066CC]" : ""}`}
               onClick={() => handleFilterByStatus("todos")}
+              role="button" tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && handleFilterByStatus("todos")}
             >
-              <CardContent className="p-4 md:p-5">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0047BB]/10 to-[#0047BB]/5 flex items-center justify-center">
-                    <FileText className="h-6 w-6 text-[#0047BB]" />
-                  </div>
-                  <div>
-                    <p className="text-2xl md:text-3xl font-bold text-foreground">{stats.total}</p>
-                    <p className="text-sm text-muted-foreground">Total</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="h-14 w-14 rounded-2xl bg-[#0066CC] flex items-center justify-center">
+                <FileText className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.total}</p>
+                <p className="text-sm text-muted-foreground">Total</p>
+              </div>
+            </div>
 
-            <Card 
-              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${activeTab === "pending" ? "ring-2 ring-amber-500 shadow-lg" : ""}`}
+            <div
+              className={`bg-orange-50 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "pending" ? "ring-2 ring-orange-500" : ""}`}
               onClick={() => handleFilterByStatus("pending")}
+              role="button" tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && handleFilterByStatus("pending")}
             >
-              <CardContent className="p-4 md:p-5">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 flex items-center justify-center">
-                    <Clock className="h-6 w-6 text-amber-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl md:text-3xl font-bold text-foreground">{stats.pending}</p>
-                    <p className="text-sm text-muted-foreground">Aguardando</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="h-14 w-14 rounded-2xl bg-orange-500 flex items-center justify-center">
+                <Clock className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.pending}</p>
+                <p className="text-sm text-muted-foreground">Aguardando</p>
+              </div>
+            </div>
 
-            <Card 
-              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${activeTab === "approved" ? "ring-2 ring-emerald-500 shadow-lg" : ""}`}
+            <div
+              className={`bg-green-50 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "approved" ? "ring-2 ring-green-500" : ""}`}
               onClick={() => handleFilterByStatus("approved")}
+              role="button" tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && handleFilterByStatus("approved")}
             >
-              <CardContent className="p-4 md:p-5">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 flex items-center justify-center">
-                    <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl md:text-3xl font-bold text-foreground">{stats.approved}</p>
-                    <p className="text-sm text-muted-foreground">Aprovados</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="h-14 w-14 rounded-2xl bg-green-500 flex items-center justify-center">
+                <CheckCircle2 className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.approved}</p>
+                <p className="text-sm text-muted-foreground">Aprovados</p>
+              </div>
+            </div>
 
-            <Card 
-              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${activeTab === "rejected" ? "ring-2 ring-red-500 shadow-lg" : ""}`}
+            <div
+              className={`bg-red-50 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "rejected" ? "ring-2 ring-red-500" : ""}`}
               onClick={() => handleFilterByStatus("rejected")}
+              role="button" tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && handleFilterByStatus("rejected")}
             >
-              <CardContent className="p-4 md:p-5">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-red-500/10 to-red-500/5 flex items-center justify-center">
-                    <XCircle className="h-6 w-6 text-red-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl md:text-3xl font-bold text-foreground">{stats.rejected}</p>
-                    <p className="text-sm text-muted-foreground">Rejeitados</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="h-14 w-14 rounded-2xl bg-red-500 flex items-center justify-center">
+                <XCircle className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.rejected}</p>
+                <p className="text-sm text-muted-foreground">Rejeitados</p>
+              </div>
+            </div>
 
-            <Card 
-              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${activeTab === "cancelled" ? "ring-2 ring-gray-500 shadow-lg" : ""}`}
+            <div
+              className={`bg-slate-100 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow ${activeTab === "cancelled" ? "ring-2 ring-slate-500" : ""}`}
               onClick={() => handleFilterByStatus("cancelled")}
+              role="button" tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && handleFilterByStatus("cancelled")}
             >
-              <CardContent className="p-4 md:p-5">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-gray-500/10 to-gray-500/5 flex items-center justify-center">
-                    <Ban className="h-6 w-6 text-gray-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl md:text-3xl font-bold text-foreground">{stats.cancelled}</p>
-                    <p className="text-sm text-muted-foreground">Cancelados</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="h-14 w-14 rounded-2xl bg-slate-500 flex items-center justify-center">
+                <Ban className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-foreground leading-none mb-1">{stats.cancelled}</p>
+                <p className="text-sm text-muted-foreground">Cancelados</p>
+              </div>
+            </div>
           </div>
 
           {/* Barra de busca e filtros */}
