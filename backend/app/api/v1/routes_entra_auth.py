@@ -31,6 +31,11 @@ from app.models.session_token import SessionToken, TokenType
 from app.services.audit_service import log_event
 from app.utils.session_jwt import create_session_jwt, decode_app_jwt
 from app.core.config import settings
+from app.services.group_sync_service import (
+    check_user_in_group,
+    sync_user_from_group,
+    bulk_sync_group_members,
+)
 
 router = APIRouter(prefix="/auth/entra", tags=["Auth / Entra ID"])
 
@@ -45,7 +50,8 @@ _JWKS_URI = f"{_AUTHORITY}/discovery/v2.0/keys"
 _LOGOUT_URL = f"{_AUTHORITY}/oauth2/v2.0/logout"
 
 # Scopes solicitados ao Microsoft
-_SCOPES = "openid profile email User.Read"
+# GroupMember.Read.All: necessario para verificar membership no grupo obrigatorio
+_SCOPES = "openid profile email User.Read GroupMember.Read.All"
 
 # Cargos que concedem is_supervisor=True (provisorio ate integracao ServiceNow)
 _SUPERVISOR_TITLES = [
@@ -360,8 +366,74 @@ def callback(
     # Enriquecer com Graph API (usa ms_access_token)
     graph_info = _enrich_from_graph(ms_access_token) if ms_access_token else {}
 
-    # Criar/atualizar usuario
-    user = _sync_user(session, email, name, claims, graph_info)
+    # -----------------------------------------------------------------------
+    # Verificar membership no grupo obrigatorio ANTES de criar/emitir tokens
+    # -----------------------------------------------------------------------
+    is_in_group = True  # default: permitir se grupo nao configurado
+    group_name = settings.entra_required_group_name
+    group_id = settings.entra_required_group_id
+
+    if group_id and ms_access_token:
+        is_in_group = check_user_in_group(ms_access_token)
+
+    if not is_in_group:
+        strategy = settings.entra_group_sync_strategy
+        # Log de bloqueio
+        log_event(
+            session=session,
+            action="LOGIN_BLOCKED_NOT_IN_GROUP",
+            user_id=None,
+            detail=f"email={email}, group={group_name}, group_id={group_id}, strategy={strategy}",
+            ip=request.client.host if request else None,
+            user_agent=request.headers.get("User-Agent") if request else None,
+        )
+
+        if strategy == "deactivate":
+            # Desativa usuario se existir
+            try:
+                sync_user_from_group(
+                    session=session,
+                    email=email,
+                    name=name,
+                    claims=claims,
+                    graph_info=graph_info,
+                    is_in_group=False,
+                    request_ip=request.client.host if request else None,
+                    request_ua=request.headers.get("User-Agent") if request else None,
+                )
+            except ValueError:
+                pass  # usuario nao existe e nao sera criado
+
+        # Redirecionar com erro
+        frontend_url = settings.frontend_external_portal_url
+        err_msg = urllib.parse.quote(
+            f"Acesso negado. Voce nao pertence ao grupo autorizado: {group_name}. "
+            f"Solicite acesso ao seu gestor."
+        )
+        return RedirectResponse(
+            url=f"{frontend_url}/auth/entra-callback?error={err_msg}",
+            status_code=302,
+        )
+
+    # Criar/atualizar usuario via group sync (garante status=True)
+    try:
+        user = sync_user_from_group(
+            session=session,
+            email=email,
+            name=name,
+            claims=claims,
+            graph_info=graph_info,
+            is_in_group=True,
+            request_ip=request.client.host if request else None,
+            request_ua=request.headers.get("User-Agent") if request else None,
+        )
+    except ValueError as e:
+        frontend_url = settings.frontend_external_portal_url
+        err_msg = urllib.parse.quote(str(e))
+        return RedirectResponse(
+            url=f"{frontend_url}/auth/entra-callback?error={err_msg}",
+            status_code=302,
+        )
 
     # Verificar se usuario esta ativo
     if not user.status:
@@ -650,4 +722,108 @@ def session_check(
         "email": user.email,
         "role": "supervisor" if user.is_supervisor else (user.type.value if hasattr(user.type, "value") else str(user.type)),
         "expires_in": expires_in,
+    }
+
+
+# ---------------------------------------------------------------------------
+# 7. POST /auth/entra/sync-group
+# ---------------------------------------------------------------------------
+
+@router.post("/sync-group")
+def sync_group(
+    request: Request,
+    session: Session = Depends(get_session),
+):
+    """
+    Endpoint administrativo: sincroniza todos os membros do grupo Entra ID
+    com o banco de dados local.
+
+    Requer autenticacao como supervisor.
+    Requer um ms_access_token com permissao GroupMember.Read.All
+    passado no header X-MS-Access-Token.
+
+    Acoes executadas:
+    - Cria usuarios que estao no grupo mas nao no banco
+    - Atualiza dados de usuarios existentes
+    - Desativa usuarios internos que NAO estao mais no grupo
+
+    Retorna relatorio detalhado da sincronizacao.
+    """
+    from app.utils.authz import get_current_user
+
+    # Autenticar supervisor
+    try:
+        user = get_current_user(request, session)
+    except HTTPException:
+        raise HTTPException(status_code=401, detail="Nao autenticado.")
+
+    if not user.is_supervisor:
+        raise HTTPException(status_code=403, detail="Acesso restrito a supervisores.")
+
+    # Obter ms_access_token do header
+    ms_token = request.headers.get("X-MS-Access-Token", "")
+    if not ms_token:
+        raise HTTPException(
+            status_code=400,
+            detail="Header X-MS-Access-Token obrigatorio com token Microsoft Graph.",
+        )
+
+    # Verificar grupo configurado
+    if not settings.entra_required_group_id:
+        raise HTTPException(
+            status_code=503,
+            detail="ENTRA_REQUIRED_GROUP_ID nao configurado no servidor.",
+        )
+
+    # Executar sync
+    result = bulk_sync_group_members(
+        session=session,
+        admin_access_token=ms_token,
+        request_ip=request.client.host if request else None,
+        request_ua=request.headers.get("User-Agent") if request else None,
+    )
+
+    if "error" in result:
+        raise HTTPException(status_code=502, detail=result["error"])
+
+    # Log de auditoria
+    log_event(
+        session=session,
+        action="BULK_GROUP_SYNC",
+        user_id=user.id,
+        detail=(
+            f"group={result['group_name']}, "
+            f"created={result['created']}, "
+            f"updated={result['updated']}, "
+            f"reactivated={result['reactivated']}, "
+            f"deactivated={result['deactivated']}"
+        ),
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None,
+    )
+
+    return {
+        "message": "Sincronizacao concluida com sucesso.",
+        **result,
+    }
+
+
+# ---------------------------------------------------------------------------
+# 8. GET /auth/entra/group-info
+# ---------------------------------------------------------------------------
+
+@router.get("/group-info")
+def group_info(
+    request: Request,
+    session: Session = Depends(get_session),
+):
+    """
+    Retorna informacoes sobre o grupo obrigatorio configurado.
+    Endpoint publico (sem autenticacao) para exibir na tela de login/erro.
+    """
+    return {
+        "group_id": settings.entra_required_group_id or None,
+        "group_name": settings.entra_required_group_name,
+        "sync_strategy": settings.entra_group_sync_strategy,
+        "configured": bool(settings.entra_required_group_id),
     }

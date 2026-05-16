@@ -64,6 +64,14 @@ class Settings(BaseSettings):
     entra_redirect_uri: str = "http://localhost:8080/api/v1/auth/internal/callback"
     entra_supervisor_group_ids: List[str] = []
 
+    # Grupo obrigatorio para acesso — sincronizacao de usuarios
+    # ENTRA_REQUIRED_GROUP_ID: Object ID (UUID) do grupo no Entra ID
+    # ENTRA_REQUIRED_GROUP_NAME: nome human-readable (para logs e mensagens de erro)
+    # ENTRA_GROUP_SYNC_STRATEGY: "deactivate" (desativa user.status=False) | "block_login" (bloqueia sem desativar)
+    entra_required_group_id: str | None = None
+    entra_required_group_name: str = "GN_CLOUD_AWS_SCAC_USERS"
+    entra_group_sync_strategy: str = "deactivate"  # "deactivate" | "block_login"
+
     @field_validator("entra_supervisor_group_ids", mode="before")
     @classmethod
     def _parse_group_ids(cls, v):
