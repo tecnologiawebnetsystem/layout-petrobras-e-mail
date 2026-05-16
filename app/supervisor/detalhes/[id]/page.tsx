@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -16,8 +16,6 @@ import {
   RefreshCcw,
   SendHorizonal,
   Loader2,
-  Eye,
-  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -74,7 +72,6 @@ export default function SupervisorDetailsPage({
   const [individualApprovalMode, setIndividualApprovalMode] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set());
   const [removingFileId, setRemovingFileId] = useState<number | null>(null);
-  const [previewingFileId, setPreviewingFileId] = useState<number | null>(null);
 
   // Email log state
   const [emailLogs, setEmailLogs] = useState<
@@ -233,45 +230,6 @@ export default function SupervisorDetailsPage({
       });
     } finally {
       setIsDownloading(false);
-    }
-  };
-
-  // Preview individual de arquivo via presigned URL
-  const handlePreviewFile = async (fileId: number) => {
-    if (!id) return;
-    setPreviewingFileId(fileId);
-    try {
-      const token = useAuthStore.getState().accessToken;
-      const res = await fetch(
-        `/api/supervisor/shares/${id}/files/${fileId}/preview-url`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      if (!res.ok) {
-        let msg = "Falha ao gerar URL de preview.";
-        try {
-          const err = await res.json();
-          msg = err.detail || msg;
-        } catch {}
-        toast({
-          title: "Erro",
-          description: msg,
-          variant: "destructive",
-        });
-        return;
-      }
-      const data = await res.json();
-      // Abre a presigned URL em nova aba
-      window.open(data.preview_url, "_blank", "noopener,noreferrer");
-    } catch {
-      toast({
-        title: "Erro",
-        description: "Nao foi possivel visualizar o arquivo.",
-        variant: "destructive",
-      });
-    } finally {
-      setPreviewingFileId(null);
     }
   };
 
@@ -843,26 +801,6 @@ export default function SupervisorDetailsPage({
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            {/* Botão preview individual (presigned URL) */}
-                            {file.file_id && !id.startsWith("upload-") && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="gap-1"
-                                disabled={previewingFileId === file.file_id}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handlePreviewFile(file.file_id);
-                                }}
-                              >
-                                {previewingFileId === file.file_id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Eye className="h-4 w-4" />
-                                )}
-                                Visualizar
-                              </Button>
-                            )}
                             {isZip && file.url && (
                               <Button
                                 size="sm"

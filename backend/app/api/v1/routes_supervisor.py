@@ -575,10 +575,6 @@ async def approve_share_legacy(
 def get_supervisor_shares(
     status: Optional[str] = Query(
         None, description="Filtro: pending | active | rejected"),
-    start_date: Optional[str] = Query(
-        None, description="Data inicio (ISO 8601, ex: 2024-01-01)"),
-    end_date: Optional[str] = Query(
-        None, description="Data fim (ISO 8601, ex: 2024-12-31)"),
     page: int = Query(1, ge=1),
     limit: int = Query(100, ge=1, le=200),
     session: Session = Depends(get_session),
@@ -587,7 +583,7 @@ def get_supervisor_shares(
 ):
     """
     Lista todos os compartilhamentos dos supervisionados deste supervisor.
-    Suporta filtro por status e por periodo (start_date / end_date).
+    Suporta filtro por status. Sem filtro → retorna todos (pending + active + rejected).
     """
     supervised_users = session.exec(
         select(User.id).where(User.manager_id == user.id)
@@ -611,28 +607,9 @@ def get_supervisor_shares(
     if status and status.lower() in status_map:
         status_condition = Share.status == status_map[status.lower()]
 
-    # Filtro por periodo
-    date_conditions = []
-    if start_date:
-        try:
-            sd = datetime.fromisoformat(start_date)
-            date_conditions.append(Share.created_at >= sd)
-        except ValueError:
-            pass
-    if end_date:
-        try:
-            ed = datetime.fromisoformat(end_date)
-            # Inclui o dia inteiro
-            ed = ed.replace(hour=23, minute=59, second=59)
-            date_conditions.append(Share.created_at <= ed)
-        except ValueError:
-            pass
-
     count_query = select(func.count()).select_from(Share).where(base_condition)
     if status_condition is not None:
         count_query = count_query.where(status_condition)
-    for dc in date_conditions:
-        count_query = count_query.where(dc)
     total_items = session.exec(count_query).one()
     total_pages = (total_items + limit - 1) // limit if total_items > 0 else 1
 
@@ -640,8 +617,6 @@ def get_supervisor_shares(
     query = select(Share).where(base_condition)
     if status_condition is not None:
         query = query.where(status_condition)
-    for dc in date_conditions:
-        query = query.where(dc)
     query = query.order_by(Share.created_at.desc()).offset(offset).limit(limit)
     shares = session.exec(query).all()
 
@@ -1071,216 +1046,3 @@ def download_share_zip(
             "Content-Disposition": f'attachment; filename="{share_name_safe}.zip"',
         },
     )
-
-
-# =====================================================
-# GET /supervisor/subordinates - Lista subordinados
-# =====================================================
-
-@router.get("/subordinates")
-def get_subordinates(
-    session: Session = Depends(get_session),
-    user: User = Depends(require_supervisor),
-    request: Request = None,
-):
-    """
-    Lista todos os usuarios cujo manager_id aponta para o supervisor atual.
-    Inclui metricas de compartilhamentos por subordinado.
-    """
-    subordinates = session.exec(
-        select(User).where(
-            User.manager_id == user.id,
-            User.type == TypeUser.INTERNAL,
-        ).order_by(User.name)
-    ).all()
-
-    result = []
-    for sub in subordinates:
-        # Conta shares por status
-        total_shares = session.exec(
-            select(func.count()).select_from(Share).where(Share.created_by_id == sub.id)
-        ).one()
-        pending_shares = session.exec(
-            select(func.count()).select_from(Share).where(
-                Share.created_by_id == sub.id,
-                Share.status == ShareStatus.PENDING,
-            )
-        ).one()
-        active_shares = session.exec(
-            select(func.count()).select_from(Share).where(
-                Share.created_by_id == sub.id,
-                Share.status.in_([ShareStatus.ACTIVE, ShareStatus.APPROVED]),
-            )
-        ).one()
-        rejected_shares = session.exec(
-            select(func.count()).select_from(Share).where(
-                Share.created_by_id == sub.id,
-                Share.status == ShareStatus.REJECTED,
-            )
-        ).one()
-
-        result.append({
-            "id": sub.id,
-            "name": sub.name,
-            "email": sub.email,
-            "department": sub.department,
-            "job_title": sub.job_title,
-            "employee_id": sub.employee_id,
-            "status": sub.status,
-            "last_login": sub.last_login.isoformat() if sub.last_login else None,
-            "shares": {
-                "total": total_shares,
-                "pending": pending_shares,
-                "active": active_shares,
-                "rejected": rejected_shares,
-            },
-        })
-
-    log_event(
-        session=session,
-        action="VER_SUBORDINADOS",
-        user_id=user.id,
-        detail=f"total_subordinates={len(result)}",
-        ip=request.client.host if request else None,
-        user_agent=request.headers.get("User-Agent") if request else None,
-    )
-
-    return {
-        "subordinates": result,
-        "total": len(result),
-    }
-
-
-# =====================================================
-# GET /supervisor/shares/{share_id}/files/{file_id}/preview-url
-# Gera presigned URL para visualizacao individual de arquivo
-# =====================================================
-
-@router.get("/shares/{share_id}/files/{file_id}/preview-url")
-def get_file_preview_url(
-    share_id: int,
-    file_id: int,
-    session: Session = Depends(get_session),
-    user: User = Depends(require_supervisor),
-    request: Request = None,
-):
-    """
-    Gera uma URL pre-assinada (presigned) para o supervisor visualizar
-    um arquivo individual sem precisar baixar o ZIP inteiro.
-    URL valida por 15 minutos.
-    """
-    share = session.get(Share, share_id)
-    if not share:
-        raise HTTPException(
-            status_code=404, detail="Compartilhamento nao encontrado.")
-
-    creator = session.get(User, share.created_by_id)
-    if not creator or creator.manager_id != user.id:
-        raise HTTPException(status_code=403, detail="Acesso negado.")
-
-    # Busca o arquivo pelo share_file
-    sf = session.exec(
-        select(ShareFile).where(
-            ShareFile.share_id == share_id,
-            ShareFile.file_id == file_id,
-        )
-    ).first()
-    if not sf:
-        raise HTTPException(
-            status_code=404, detail="Arquivo nao encontrado neste compartilhamento.")
-
-    rfile = session.get(RestrictedFile, file_id)
-    if not rfile:
-        raise HTTPException(status_code=404, detail="Arquivo nao encontrado.")
-
-    if not rfile.key_s3:
-        raise HTTPException(
-            status_code=400, detail="Arquivo sem chave S3. Storage local nao suporta preview.")
-
-    try:
-        presigned_url = generate_presigned_get(
-            key=rfile.key_s3,
-            expires_in=900,
-            filename=rfile.name,
-        )
-    except S3ServiceError as e:
-        raise HTTPException(status_code=502, detail=f"Erro ao gerar URL: {e}")
-
-    log_event(
-        session=session,
-        action="SUPERVISOR_PREVIEW_ARQUIVO",
-        user_id=user.id,
-        share_id=share.id,
-        detail=f"file_id={file_id}, file_name={rfile.name}",
-        ip=request.client.host if request else None,
-        user_agent=request.headers.get("User-Agent") if request else None,
-    )
-
-    return {
-        "file_id": file_id,
-        "file_name": rfile.name,
-        "mime_type": rfile.mime_type,
-        "size_bytes": rfile.size_bytes,
-        "preview_url": presigned_url,
-        "expires_in_seconds": 900,
-    }
-
-
-# =====================================================
-# GET /supervisor/metrics - Metricas do supervisor
-# =====================================================
-
-@router.get("/metrics")
-def get_supervisor_metrics(
-    session: Session = Depends(get_session),
-    user: User = Depends(require_supervisor),
-):
-    """
-    Retorna metricas agregadas do supervisor:
-    total de subordinados, shares por status, etc.
-    """
-    supervised_ids = session.exec(
-        select(User.id).where(User.manager_id == user.id)
-    ).all()
-
-    if not supervised_ids:
-        return {
-            "subordinates_count": 0,
-            "shares": {"pending": 0, "active": 0, "rejected": 0, "expired": 0, "total": 0},
-        }
-
-    total = session.exec(
-        select(func.count()).select_from(Share).where(Share.created_by_id.in_(supervised_ids))
-    ).one()
-    pending = session.exec(
-        select(func.count()).select_from(Share).where(
-            Share.created_by_id.in_(supervised_ids), Share.status == ShareStatus.PENDING
-        )
-    ).one()
-    active = session.exec(
-        select(func.count()).select_from(Share).where(
-            Share.created_by_id.in_(supervised_ids),
-            Share.status.in_([ShareStatus.ACTIVE, ShareStatus.APPROVED]),
-        )
-    ).one()
-    rejected = session.exec(
-        select(func.count()).select_from(Share).where(
-            Share.created_by_id.in_(supervised_ids), Share.status == ShareStatus.REJECTED
-        )
-    ).one()
-    expired = session.exec(
-        select(func.count()).select_from(Share).where(
-            Share.created_by_id.in_(supervised_ids), Share.status == ShareStatus.EXPIRED
-        )
-    ).one()
-
-    return {
-        "subordinates_count": len(supervised_ids),
-        "shares": {
-            "pending": pending,
-            "active": active,
-            "rejected": rejected,
-            "expired": expired,
-            "total": total,
-        },
-    }

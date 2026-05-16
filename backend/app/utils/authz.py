@@ -3,11 +3,12 @@ from fastapi import HTTPException, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlmodel import Session, select
 from typing import Optional
+from datetime import datetime, UTC
 from app.db.session import get_session
 from app.models.user import User, TypeUser
 from app.utils.session_jwt import decode_app_jwt
 
-# Security scheme para Bearer token (opcional para documentacao)
+# Security scheme para Bearer token (obrigatorio)
 security = HTTPBearer(auto_error=False)
 
 
@@ -17,38 +18,64 @@ def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ) -> User:
     """
-    Obtem o usuario atual a partir do cookie de sessao ou Bearer token.
-    Suporta ambos os metodos de autenticacao.
+    Obtem o usuario atual a partir do Bearer token (JWT interno).
+
+    Validacoes:
+    - Token DEVE estar presente no header Authorization: Bearer <token>
+    - Token DEVE ser um JWT valido emitido por este backend (issuer: secure-share)
+    - Token NAO pode estar expirado
+    - Usuario DEVE existir e estar ativo no banco
+
+    NAO aceita:
+    - Cookies de sessao (removido — era fallback inseguro)
+    - Tokens fake/mock
+    - Tokens de outro issuer
     """
     token = None
-    
-    # 1. Tenta obter do Bearer token (header Authorization)
+
+    # 1. Obter do Bearer token (header Authorization)
     if credentials and credentials.credentials:
         token = credentials.credentials
-    
-    # 2. Fallback para cookie de sessao
-    if not token:
-        token = request.cookies.get("app_session")
-    
-    # 3. Tenta header Authorization manualmente (caso HTTPBearer nao capture)
+
+    # 2. Fallback manual para header Authorization (caso HTTPBearer nao capture)
     if not token:
         auth_header = request.headers.get("Authorization", "")
         if auth_header.startswith("Bearer "):
             token = auth_header[7:]
-    
+
     if not token:
-        raise HTTPException(status_code=401, detail="Nao autenticado.")
-    
+        raise HTTPException(status_code=401, detail="Nao autenticado. Token Bearer obrigatorio.")
+
     # Decodifica o token
     data = decode_app_jwt(token)
     if not data:
         raise HTTPException(status_code=401, detail="Token invalido ou expirado.")
-    
+
+    # Verificar issuer (impede tokens fake/de outro sistema)
+    if data.get("iss") != "secure-share":
+        raise HTTPException(status_code=401, detail="Token com issuer invalido.")
+
+    # Verificar expiracao explicita
+    exp = data.get("exp")
+    if exp and datetime.fromtimestamp(exp, tz=UTC) < datetime.now(UTC):
+        raise HTTPException(status_code=401, detail="Token expirado.")
+
     # Busca usuario
-    user = session.exec(select(User).where(User.email == data.get("email"))).first()
-    if not user or not user.status:
-        raise HTTPException(status_code=401, detail="Sessao invalida ou usuario inativo.")
-    
+    user_id = data.get("user_id")
+    email = data.get("email")
+
+    user = None
+    if user_id:
+        user = session.get(User, user_id)
+    if not user and email:
+        user = session.exec(select(User).where(User.email == email)).first()
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Usuario nao encontrado.")
+
+    if not user.status:
+        raise HTTPException(status_code=403, detail="Usuario desativado.")
+
     return user
 
 

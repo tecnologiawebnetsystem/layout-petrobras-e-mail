@@ -78,7 +78,7 @@ const levelColors: Record<LogLevel, string> = {
 export default function AuditoriaPage() {
   const router = useRouter()
   const { user, isAuthenticated, _hasHydrated } = useAuthStore()
-  const { logs, metrics, exportLogs, getLogsByAction, loadLogs, loadMetrics, isLoadingLogs } = useAuditLogStore()
+  const { logs, exportLogs, getLogsByAction, loadLogs } = useAuditLogStore()
   const [searchTerm, setSearchTerm] = useState("")
   const [pageLoading, setPageLoading] = useState(true)
 
@@ -90,7 +90,6 @@ export default function AuditoriaPage() {
       return
     }
     loadLogs()
-    loadMetrics("30d")
     // Simular carregamento inicial
     const timer = setTimeout(() => {
       setPageLoading(false)
@@ -130,29 +129,15 @@ export default function AuditoriaPage() {
   }
 
   const stats = useMemo(() => {
-    if (metrics) {
-      return {
-        total: metrics.total_uploads || logs.length,
-        logins: getLogsByAction("login").length,
-        uploads: metrics.total_uploads || getLogsByAction("upload").length,
-        approvals: metrics.approved_files || getLogsByAction("approve").length,
-        downloads: metrics.total_downloads || getLogsByAction("download").length,
-        fileExpired: metrics.expired_files || getLogsByAction("file_expired").length,
-        pending: metrics.pending_approvals || 0,
-        rejected: metrics.rejected_files || 0,
-      }
-    }
     return {
       total: logs.length,
       logins: getLogsByAction("login").length,
       uploads: getLogsByAction("upload").length,
       approvals: getLogsByAction("approve").length,
       downloads: getLogsByAction("download").length,
-      fileExpired: getLogsByAction("file_expired").length,
-      pending: 0,
-      rejected: 0,
+      fileExpired: getLogsByAction("file_expired").length, // Adicionado stat para arquivos expirados
     }
-  }, [logs, metrics, getLogsByAction])
+  }, [logs, getLogsByAction])
 
   if (!_hasHydrated || !isAuthenticated) {
     return null

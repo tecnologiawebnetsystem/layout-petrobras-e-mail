@@ -46,8 +46,9 @@ class Settings(BaseSettings):
     # Presigned TTL
     presigned_ttl_seconds_default: int = 300
 
-    # Auth provider
-    auth_mode: str = "local"  # 'local' | 'entra'
+    # Auth provider — PRODUCAO deve ser sempre "entra".
+    # "local" permitido apenas quando DEV_MODE=true (desenvolvimento isolado).
+    auth_mode: str = "entra"  # 'entra' (producao) | 'local' (dev apenas)
 
     # Microsoft Entra ID (Azure AD)
     # Desenvolvimento local: preencher no .env
