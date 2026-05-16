@@ -1,0 +1,930 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  Stack CloudFormation para criacao das tabelas DynamoDB do sistema
+  Petrobras File Transfer (PFT).
+  
+  Uso:
+    aws cloudformation create-stack \
+      --stack-name pft-dynamodb \
+      --template-body file://cloudformation-dynamodb.yaml \
+      --parameters ParameterKey=Environment,ParameterValue=production \
+      --region sa-east-1
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues:
+      - development
+      - staging
+      - production
+    Description: Ambiente de deploy
+
+  BillingMode:
+    Type: String
+    Default: PROVISIONED
+    AllowedValues:
+      - PROVISIONED
+      - PAY_PER_REQUEST
+    Description: Modo de cobranca das tabelas
+
+  DefaultReadCapacity:
+    Type: Number
+    Default: 10
+    MinValue: 1
+    MaxValue: 40000
+    Description: Capacidade de leitura padrao (ignorado se PAY_PER_REQUEST)
+
+  DefaultWriteCapacity:
+    Type: Number
+    Default: 10
+    MinValue: 1
+    MaxValue: 40000
+    Description: Capacidade de escrita padrao (ignorado se PAY_PER_REQUEST)
+
+Conditions:
+  IsProvisioned: !Equals [!Ref BillingMode, PROVISIONED]
+
+Resources:
+  # ============================================================
+  # Tabela: Users
+  # ============================================================
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'pft_users_${Environment}'
+      BillingMode: !Ref BillingMode
+      ProvisionedThroughput:
+        !If
+          - IsProvisioned
+          - ReadCapacityUnits: !Ref DefaultReadCapacity
+            WriteCapacityUnits: !Ref DefaultWriteCapacity
+          - !Ref AWS::NoValue
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: email
+          AttributeType: S
+        - AttributeName: type
+          AttributeType: S
+        - AttributeName: gsi1pk
+          AttributeType: S
+        - AttributeName: gsi1sk
+          AttributeType: S
+      GlobalSecondaryIndexes:
+        - IndexName: email-index
+          KeySchema:
+            - AttributeName: email
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: type-index
+          KeySchema:
+            - AttributeName: type
+              KeyType: HASH
+            - AttributeName: sk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: gsi1-index
+          KeySchema:
+            - AttributeName: gsi1pk
+              KeyType: HASH
+            - AttributeName: gsi1sk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+      Tags:
+        - Key: Project
+          Value: PetrobrasFileTransfer
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ============================================================
+  # Tabela: Shares
+  # ============================================================
+  SharesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'pft_shares_${Environment}'
+      BillingMode: !Ref BillingMode
+      ProvisionedThroughput:
+        !If
+          - IsProvisioned
+          - ReadCapacityUnits: 20
+            WriteCapacityUnits: 10
+          - !Ref AWS::NoValue
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+        - AttributeName: created_by_id
+          AttributeType: S
+        - AttributeName: external_email
+          AttributeType: S
+        - AttributeName: area_id
+          AttributeType: S
+        - AttributeName: created_at
+          AttributeType: S
+        - AttributeName: expires_at
+          AttributeType: S
+      GlobalSecondaryIndexes:
+        - IndexName: status-created-index
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 10
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: creator-index
+          KeySchema:
+            - AttributeName: created_by_id
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: external-email-index
+          KeySchema:
+            - AttributeName: external_email
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: area-index
+          KeySchema:
+            - AttributeName: area_id
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: expiration-index
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+            - AttributeName: expires_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: KEYS_ONLY
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+      Tags:
+        - Key: Project
+          Value: PetrobrasFileTransfer
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ============================================================
+  # Tabela: Files
+  # ============================================================
+  FilesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'pft_files_${Environment}'
+      BillingMode: !Ref BillingMode
+      ProvisionedThroughput:
+        !If
+          - IsProvisioned
+          - ReadCapacityUnits: !Ref DefaultReadCapacity
+            WriteCapacityUnits: !Ref DefaultWriteCapacity
+          - !Ref AWS::NoValue
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: area_id
+          AttributeType: S
+        - AttributeName: upload_by_id
+          AttributeType: S
+        - AttributeName: hash_sha256
+          AttributeType: S
+        - AttributeName: created_at
+          AttributeType: S
+      GlobalSecondaryIndexes:
+        - IndexName: area-index
+          KeySchema:
+            - AttributeName: area_id
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: uploader-index
+          KeySchema:
+            - AttributeName: upload_by_id
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: hash-index
+          KeySchema:
+            - AttributeName: hash_sha256
+              KeyType: HASH
+          Projection:
+            ProjectionType: KEYS_ONLY
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+      Tags:
+        - Key: Project
+          Value: PetrobrasFileTransfer
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ============================================================
+  # Tabela: Areas
+  # ============================================================
+  AreasTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'pft_areas_${Environment}'
+      BillingMode: !Ref BillingMode
+      ProvisionedThroughput:
+        !If
+          - IsProvisioned
+          - ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+          - !Ref AWS::NoValue
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: name
+          AttributeType: S
+        - AttributeName: applicant_id
+          AttributeType: S
+      GlobalSecondaryIndexes:
+        - IndexName: name-index
+          KeySchema:
+            - AttributeName: name
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: applicant-index
+          KeySchema:
+            - AttributeName: applicant_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+      Tags:
+        - Key: Project
+          Value: PetrobrasFileTransfer
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ============================================================
+  # Tabela: Tokens
+  # ============================================================
+  TokensTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'pft_tokens_${Environment}'
+      BillingMode: !Ref BillingMode
+      ProvisionedThroughput:
+        !If
+          - IsProvisioned
+          - ReadCapacityUnits: !Ref DefaultReadCapacity
+            WriteCapacityUnits: !Ref DefaultWriteCapacity
+          - !Ref AWS::NoValue
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: user_id
+          AttributeType: S
+        - AttributeName: share_id
+          AttributeType: S
+        - AttributeName: expires_at
+          AttributeType: S
+      GlobalSecondaryIndexes:
+        - IndexName: user-index
+          KeySchema:
+            - AttributeName: user_id
+              KeyType: HASH
+            - AttributeName: expires_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: share-index
+          KeySchema:
+            - AttributeName: share_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+      TimeToLiveSpecification:
+        Enabled: true
+        AttributeName: ttl
+      Tags:
+        - Key: Project
+          Value: PetrobrasFileTransfer
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ============================================================
+  # Tabela: Audit
+  # ============================================================
+  AuditTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'pft_audit_${Environment}'
+      BillingMode: !Ref BillingMode
+      ProvisionedThroughput:
+        !If
+          - IsProvisioned
+          - ReadCapacityUnits: 20
+            WriteCapacityUnits: 20
+          - !Ref AWS::NoValue
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: user_id
+          AttributeType: S
+        - AttributeName: action
+          AttributeType: S
+        - AttributeName: level
+          AttributeType: S
+        - AttributeName: created_at
+          AttributeType: S
+      GlobalSecondaryIndexes:
+        - IndexName: user-action-index
+          KeySchema:
+            - AttributeName: user_id
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 10
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: action-index
+          KeySchema:
+            - AttributeName: action
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: level-index
+          KeySchema:
+            - AttributeName: level
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: KEYS_ONLY
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+      Tags:
+        - Key: Project
+          Value: PetrobrasFileTransfer
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ============================================================
+  # Tabela: Notifications
+  # ============================================================
+  NotificationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'pft_notifications_${Environment}'
+      BillingMode: !Ref BillingMode
+      ProvisionedThroughput:
+        !If
+          - IsProvisioned
+          - ReadCapacityUnits: !Ref DefaultReadCapacity
+            WriteCapacityUnits: !Ref DefaultWriteCapacity
+          - !Ref AWS::NoValue
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: read
+          AttributeType: S
+        - AttributeName: type
+          AttributeType: S
+      GlobalSecondaryIndexes:
+        - IndexName: unread-index
+          KeySchema:
+            - AttributeName: pk
+              KeyType: HASH
+            - AttributeName: read
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 10
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: type-index
+          KeySchema:
+            - AttributeName: type
+              KeyType: HASH
+            - AttributeName: sk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+      TimeToLiveSpecification:
+        Enabled: true
+        AttributeName: ttl
+      Tags:
+        - Key: Project
+          Value: PetrobrasFileTransfer
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ============================================================
+  # Tabela: Credentials
+  # ============================================================
+  CredentialsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'pft_credentials_${Environment}'
+      BillingMode: !Ref BillingMode
+      ProvisionedThroughput:
+        !If
+          - IsProvisioned
+          - ReadCapacityUnits: !Ref DefaultReadCapacity
+            WriteCapacityUnits: 5
+          - !Ref AWS::NoValue
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: user_id
+          AttributeType: S
+      GlobalSecondaryIndexes:
+        - IndexName: user-index
+          KeySchema:
+            - AttributeName: user_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+      Tags:
+        - Key: Project
+          Value: PetrobrasFileTransfer
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ============================================================
+  # Tabela: Email Logs
+  # ============================================================
+  EmailLogsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'pft_email_logs_${Environment}'
+      BillingMode: !Ref BillingMode
+      ProvisionedThroughput:
+        !If
+          - IsProvisioned
+          - ReadCapacityUnits: !Ref DefaultReadCapacity
+            WriteCapacityUnits: 10
+          - !Ref AWS::NoValue
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: to_email
+          AttributeType: S
+        - AttributeName: email_type
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+        - AttributeName: user_id
+          AttributeType: S
+        - AttributeName: share_id
+          AttributeType: S
+        - AttributeName: created_at
+          AttributeType: S
+      GlobalSecondaryIndexes:
+        - IndexName: recipient-index
+          KeySchema:
+            - AttributeName: to_email
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: type-index
+          KeySchema:
+            - AttributeName: email_type
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: status-index
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: KEYS_ONLY
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: user-index
+          KeySchema:
+            - AttributeName: user_id
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: share-index
+          KeySchema:
+            - AttributeName: share_id
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+      Tags:
+        - Key: Project
+          Value: PetrobrasFileTransfer
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ============================================================
+  # Tabela: Share Files (relacionamento share-arquivo)
+  # ============================================================
+  ShareFilesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'pft_share_files_${Environment}'
+      BillingMode: !Ref BillingMode
+      ProvisionedThroughput:
+        !If
+          - IsProvisioned
+          - ReadCapacityUnits: !Ref DefaultReadCapacity
+            WriteCapacityUnits: 10
+          - !Ref AWS::NoValue
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: file_id
+          AttributeType: S
+        - AttributeName: downloaded
+          AttributeType: S
+      GlobalSecondaryIndexes:
+        - IndexName: file-index
+          KeySchema:
+            - AttributeName: file_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+        - IndexName: downloaded-index
+          KeySchema:
+            - AttributeName: downloaded
+              KeyType: HASH
+            - AttributeName: pk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: KEYS_ONLY
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+              - !Ref AWS::NoValue
+      Tags:
+        - Key: Project
+          Value: PetrobrasFileTransfer
+        - Key: Environment
+          Value: !Ref Environment
+
+Outputs:
+  UsersTableName:
+    Description: Nome da tabela de usuarios
+    Value: !Ref UsersTable
+    Export:
+      Name: !Sub '${AWS::StackName}-UsersTable'
+
+  UsersTableArn:
+    Description: ARN da tabela de usuarios
+    Value: !GetAtt UsersTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-UsersTableArn'
+
+  SharesTableName:
+    Description: Nome da tabela de compartilhamentos
+    Value: !Ref SharesTable
+    Export:
+      Name: !Sub '${AWS::StackName}-SharesTable'
+
+  SharesTableArn:
+    Description: ARN da tabela de compartilhamentos
+    Value: !GetAtt SharesTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-SharesTableArn'
+
+  FilesTableName:
+    Description: Nome da tabela de arquivos
+    Value: !Ref FilesTable
+    Export:
+      Name: !Sub '${AWS::StackName}-FilesTable'
+
+  FilesTableArn:
+    Description: ARN da tabela de arquivos
+    Value: !GetAtt FilesTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-FilesTableArn'
+
+  AreasTableName:
+    Description: Nome da tabela de areas
+    Value: !Ref AreasTable
+    Export:
+      Name: !Sub '${AWS::StackName}-AreasTable'
+
+  AreasTableArn:
+    Description: ARN da tabela de areas
+    Value: !GetAtt AreasTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-AreasTableArn'
+
+  TokensTableName:
+    Description: Nome da tabela de tokens
+    Value: !Ref TokensTable
+    Export:
+      Name: !Sub '${AWS::StackName}-TokensTable'
+
+  TokensTableArn:
+    Description: ARN da tabela de tokens
+    Value: !GetAtt TokensTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-TokensTableArn'
+
+  AuditTableName:
+    Description: Nome da tabela de auditoria
+    Value: !Ref AuditTable
+    Export:
+      Name: !Sub '${AWS::StackName}-AuditTable'
+
+  AuditTableArn:
+    Description: ARN da tabela de auditoria
+    Value: !GetAtt AuditTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-AuditTableArn'
+
+  NotificationsTableName:
+    Description: Nome da tabela de notificacoes
+    Value: !Ref NotificationsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-NotificationsTable'
+
+  NotificationsTableArn:
+    Description: ARN da tabela de notificacoes
+    Value: !GetAtt NotificationsTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-NotificationsTableArn'
+
+  CredentialsTableName:
+    Description: Nome da tabela de credenciais
+    Value: !Ref CredentialsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-CredentialsTable'
+
+  CredentialsTableArn:
+    Description: ARN da tabela de credenciais
+    Value: !GetAtt CredentialsTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-CredentialsTableArn'
+
+  EmailLogsTableName:
+    Description: Nome da tabela de logs de email
+    Value: !Ref EmailLogsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-EmailLogsTable'
+
+  EmailLogsTableArn:
+    Description: ARN da tabela de logs de email
+    Value: !GetAtt EmailLogsTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-EmailLogsTableArn'
+
+  ShareFilesTableName:
+    Description: Nome da tabela de arquivos por compartilhamento
+    Value: !Ref ShareFilesTable
+    Export:
+      Name: !Sub '${AWS::StackName}-ShareFilesTable'
+
+  ShareFilesTableArn:
+    Description: ARN da tabela de arquivos por compartilhamento
+    Value: !GetAtt ShareFilesTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ShareFilesTableArn'

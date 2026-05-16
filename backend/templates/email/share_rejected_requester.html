@@ -1,0 +1,20 @@
+{% extends "email/base.html" %}
+{% block content %}
+<h2>Compartilhamento rejeitado</h2>
+<p>Olá, {{ requester_name }}.</p>
+<p>Seu compartilhamento de arquivos foi <strong>rejeitado</strong> pelo supervisor <strong>{{ supervisor_name }}</strong>.</p>
+<table style="border-collapse:collapse; width:100%; margin:16px 0;">
+  <tr>
+    <td style="padding:6px 12px; border:1px solid #e5e7eb; background:#f9fafb; font-weight:600; white-space:nowrap;">Título</td>
+    <td style="padding:6px 12px; border:1px solid #e5e7eb;">{{ share_name }}</td>
+  </tr>
+  <tr>
+    <td style="padding:6px 12px; border:1px solid #e5e7eb; background:#f9fafb; font-weight:600; white-space:nowrap;">Motivo da rejeição</td>
+    <td style="padding:6px 12px; border:1px solid #e5e7eb;">{{ rejection_reason }}</td>
+  </tr>
+</table>
+<p>Caso necessário, você pode criar um novo compartilhamento após revisar o motivo informado.</p>
+<p style="margin-top:24px;">
+  <a href="{{ details_url }}" class="btn">Ver detalhes do compartilhamento</a>
+</p>
+{% endblock %}

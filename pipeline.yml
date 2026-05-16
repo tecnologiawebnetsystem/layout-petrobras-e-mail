@@ -1,0 +1,23 @@
+env:
+  Repository: a12022
+  Name: frontend
+
+build:
+  node:
+    Name: "frontend"
+    NodeVersion: "20"
+    NodeSourcePath: "."
+    PackageManager: "npm"
+    SkipTests: true
+    SonarSources: app,components,hooks,lib,types
+
+  docker:
+    RegistryName: ecr
+    Dockerfile: ./Dockerfile
+      
+upload:
+  docker:
+
+deploy:
+  SnapshotEnvs: DSV,TST
+  StartReleaseEnvs: HMG

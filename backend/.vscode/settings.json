@@ -1,0 +1,7 @@
+{
+  "python-envs.pythonProjects": [],
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportMissingTypeStubs": "none",
+    "reportUndefinedVariable": "none"
+  }
+}

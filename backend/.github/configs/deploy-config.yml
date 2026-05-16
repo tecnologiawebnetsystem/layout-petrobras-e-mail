@@ -1,0 +1,54 @@
+# Para mais informações sobre a configuração do arquivo deploy-config.yml,
+# acesse https://rigs.petrobras.com.br/docs/default/component/d9i3-templates/deploy-config-yml
+################################################################################################
+serverType: aws
+
+artifacts:
+# Exemplo de artefato para deploy de container na AWS
+# Ver todos parâmetros disponíveis em https://rigs.petrobras.com.br/docs/default/component/xrl2-cdk-ecs-task
+######################################################################################
+  backend:
+    CdkStack: ecs-task
+    CdkAppServiceName: backend
+    CdkAppServiceImageName: scac
+    CdkAppServiceRule: /api/v1/*
+    CdkAppServiceContainerPort: 8080
+    CdkAppServiceTaskCpu: 1024
+    CdkAppServiceTaskMemory: 2048
+    CdkAppServiceHealthCheckPath: /api/v1
+    CdkBucketName: a12022-s3 
+    CdkBucketPermissions: '["READ","WRITE"]'
+    
+
+# Exemplo de artefato para deploy de lambda na AWS
+# Ver todos parâmetros disponíveis em https://rigs.petrobras.com.br/docs/default/component/xrl2-cdk-lambda
+####################################################################################
+#  backendlbd:
+#    CdkStack: lambda
+#    CdkAppServiceName: backend
+#    CdkAppServiceRule: /*
+#    CdkAppServiceRulePriority: 20
+#    CdkArtifactName: backend-lambda
+#    CdkAppCodeRuntime: python3.12
+
+envs:
+  DSV:
+    backend:
+      CdkAppServiceRulePriority: 11
+    CdkTimeout: 4000
+      
+  TST:
+    backend:
+      CdkAppServiceRulePriority: 12
+    CdkTimeout: 4000
+      
+  HMG:
+    backend:
+      CdkAppServiceRulePriority: 13
+    CdkTimeout: 4000
+      
+  PRD:
+    backend:
+      CdkAppServiceRulePriority: 13
+    #  reviewers: a12022_maintain_team 
+

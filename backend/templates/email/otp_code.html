@@ -1,0 +1,10 @@
+
+{% extends "email/base.html" %}
+{% block content %}
+<h2>Código de acesso</h2>
+<p>Olá,</p>
+<p>Use o código abaixo para acessar seus arquivos:</p>
+<p class="code">{{ code }}</p>
+<p>Este código expira em {{ expires_at }}.</p>
+<p><a target="_blank" href="{{ portal_url }}">Abrir portal</a></p>
+{% endblock %}

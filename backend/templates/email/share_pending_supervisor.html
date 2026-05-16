@@ -1,0 +1,28 @@
+{% extends "email/base.html" %}
+{% block content %}
+<h2>Novo compartilhamento aguardando aprovação</h2>
+<p>Olá, {{ supervisor_name }}.</p>
+<p>O colaborador <strong>{{ requester_name }}</strong> ({{ requester_email }}) criou um compartilhamento de arquivos que requer sua aprovação.</p>
+<table style="border-collapse:collapse; width:100%; margin:16px 0;">
+  <tr>
+    <td style="padding:6px 12px; border:1px solid #e5e7eb; background:#f9fafb; font-weight:600; white-space:nowrap;">Título</td>
+    <td style="padding:6px 12px; border:1px solid #e5e7eb;">{{ share_name }}</td>
+  </tr>
+  <tr>
+    <td style="padding:6px 12px; border:1px solid #e5e7eb; background:#f9fafb; font-weight:600; white-space:nowrap;">Destinatário externo</td>
+    <td style="padding:6px 12px; border:1px solid #e5e7eb;">{{ recipient_email }}</td>
+  </tr>
+  <tr>
+    <td style="padding:6px 12px; border:1px solid #e5e7eb; background:#f9fafb; font-weight:600; white-space:nowrap;">Arquivos</td>
+    <td style="padding:6px 12px; border:1px solid #e5e7eb;">{{ files_count }} arquivo(s)</td>
+  </tr>
+  <tr>
+    <td style="padding:6px 12px; border:1px solid #e5e7eb; background:#f9fafb; font-weight:600; white-space:nowrap;">Prazo solicitado</td>
+    <td style="padding:6px 12px; border:1px solid #e5e7eb;">{{ expiration_hours }} hora(s) após aprovação</td>
+  </tr>
+</table>
+<p>O prazo de expiração <strong>começa a contar somente a partir da sua aprovação</strong>.</p>
+<p style="margin-top:24px;">
+  <a href="{{ pending_url }}" class="btn">Revisar e aprovar no painel</a>
+</p>
+{% endblock %}

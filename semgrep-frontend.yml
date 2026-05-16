@@ -1,0 +1,48 @@
+rules:
+  - id: no-console-log
+    message: Evite console.log em produção
+    severity: WARNING
+    languages: [javascript, typescript]
+    pattern: console.log(...)
+
+  - id: no-eval
+    message: Evite eval
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern: eval(...)
+
+  - id: no-innerhtml
+    message: Uso de innerHTML pode gerar XSS
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern: $X.innerHTML = $Y
+
+  - id: no-dangerously-set-inner-html
+    message: dangerouslySetInnerHTML pode gerar XSS
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern: dangerouslySetInnerHTML
+
+  - id: no-json-parse
+    message: JSON.parse sem validação pode quebrar fluxo
+    severity: WARNING
+    languages: [javascript, typescript]
+    pattern: JSON.parse(...)
+
+  - id: no-localstorage
+    message: Cuidado ao usar localStorage para dados sensíveis
+    severity: WARNING
+    languages: [javascript, typescript]
+    pattern: localStorage.setItem(...)
+
+  - id: no-http-fetch
+    message: Evite chamadas HTTP sem TLS
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern: fetch("http://")
+
+  - id: no-redirect
+    message: Redirect pode permitir open redirect se não validado
+    severity: WARNING
+    languages: [javascript, typescript]
+    pattern: redirect(...)
