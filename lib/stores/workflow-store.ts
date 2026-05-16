@@ -176,7 +176,20 @@ interface WorkflowState {
 
   // API actions
   loadUploads: (statusFilter?: string) => Promise<void>;
-  loadAllSupervisorShares: () => Promise<void>;
+  loadAllSupervisorShares: (params?: {
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  }) => Promise<void>;
+
+  // Paginacao
+  supervisorPagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+  };
 
   // Local + API actions
   initializeMockZip: () => Promise<void>;
@@ -202,6 +215,11 @@ export const useWorkflowStore = create<WorkflowState>()(
       isLoadingUploads: false,
       mockZipUrl: null,
       mockZipBlob: null,
+      supervisorPagination: {
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: 0,
+      },
 
       /**
        * Carrega uploads do backend Python.
@@ -241,17 +259,58 @@ export const useWorkflowStore = create<WorkflowState>()(
        * Carrega TODOS os compartilhamentos do supervisor (pending + active + rejected).
        * GET /api/supervisor/shares
        * Usa o backend como fonte de verdade — sem dependência de estado local.
+       * Suporta filtros por status, período e paginação.
        */
-      loadAllSupervisorShares: async () => {
+      loadAllSupervisorShares: async (params?: {
+        status?: string;
+        startDate?: string;
+        endDate?: string;
+        page?: number;
+        limit?: number;
+      }) => {
         set({ isLoadingUploads: true });
         try {
-          const data = await apiFetch<{ files: Record<string, unknown>[] }>(
-            "/supervisor/shares?limit=200",
-          );
+          const searchParams = new URLSearchParams();
+          const page = params?.page || 1;
+          const limit = params?.limit || 50;
+          searchParams.set("page", String(page));
+          searchParams.set("limit", String(limit));
+          if (params?.status && params.status !== "all") {
+            searchParams.set("status", params.status);
+          }
+          if (params?.startDate) {
+            searchParams.set("start_date", params.startDate);
+          }
+          if (params?.endDate) {
+            searchParams.set("end_date", params.endDate);
+          }
+
+          const data = await apiFetch<{
+            files: Record<string, unknown>[];
+            pagination?: {
+              current_page: number;
+              total_pages: number;
+              total_items: number;
+            };
+          }>(`/supervisor/shares?${searchParams.toString()}`);
+
           const allUploads = (data.files || []).map(mapApiToFileUpload);
-          set({ uploads: allUploads, isLoadingUploads: false });
+          set({
+            uploads: allUploads,
+            isLoadingUploads: false,
+            supervisorPagination: data.pagination
+              ? {
+                  currentPage: data.pagination.current_page,
+                  totalPages: data.pagination.total_pages,
+                  totalItems: data.pagination.total_items,
+                }
+              : {
+                  currentPage: page,
+                  totalPages: 1,
+                  totalItems: allUploads.length,
+                },
+          });
         } catch (err) {
-          // console.error(" Erro ao carregar shares do supervisor:", err)
           set({ isLoadingUploads: false });
         }
       },

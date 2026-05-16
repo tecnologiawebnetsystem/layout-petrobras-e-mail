@@ -25,29 +25,35 @@ import {
   Shield,
   FileCheck,
   ChevronRight,
+  ChevronLeft,
   User,
   Mail,
-  Calendar
+  Calendar,
+  Users,
 } from "lucide-react"
 import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
 import { ScrollToTop } from "@/components/shared/scroll-to-top"
 import { SupervisorUploadForm } from "@/components/supervisor/supervisor-upload-form"
+import { SubordinatesList } from "@/components/supervisor/subordinates-list"
 import { FullPageLoader } from "@/components/ui/full-page-loader"
 
 export default function SupervisorPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, isAuthenticated } = useAuthStore()
-  const { uploads, loadAllSupervisorShares } = useWorkflowStore()
+  const { uploads, loadAllSupervisorShares, supervisorPagination } = useWorkflowStore()
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [startDate, setStartDate] = useState("")
+  const [endDate, setEndDate] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("aprovacoes")
 
   // Verifica parametro tab na URL
   useEffect(() => {
     const tabParam = searchParams.get("tab")
-    if (tabParam && ["aprovacoes", "compartilhar"].includes(tabParam)) {
+    if (tabParam && ["aprovacoes", "compartilhar", "subordinados"].includes(tabParam)) {
       setActiveTab(tabParam)
     }
   }, [searchParams])
@@ -57,13 +63,48 @@ export default function SupervisorPage() {
       if (!isAuthenticated || user?.userType !== "supervisor") {
         router.push("/")
       } else {
-        loadAllSupervisorShares()
+        loadAllSupervisorShares({ page: 1, limit: 50 })
         setIsLoading(false)
       }
     }, 1500)
 
     return () => clearTimeout(timer)
   }, [isAuthenticated, user, router, loadAllSupervisorShares])
+
+  // Recarrega quando filtros de periodo ou pagina mudam
+  const handleFilterChange = (newStatus?: string, newPage?: number) => {
+    const st = newStatus !== undefined ? newStatus : statusFilter
+    const pg = newPage !== undefined ? newPage : currentPage
+    if (newStatus !== undefined) setStatusFilter(st)
+    if (newPage !== undefined) setCurrentPage(pg)
+    loadAllSupervisorShares({
+      status: st === "all" ? undefined : st,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      page: pg,
+      limit: 50,
+    })
+  }
+
+  const handleApplyDateFilter = () => {
+    setCurrentPage(1)
+    loadAllSupervisorShares({
+      status: statusFilter === "all" ? undefined : statusFilter,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      page: 1,
+      limit: 50,
+    })
+  }
+
+  const handleClearAllFilters = () => {
+    setSearchQuery("")
+    setStatusFilter("all")
+    setStartDate("")
+    setEndDate("")
+    setCurrentPage(1)
+    loadAllSupervisorShares({ page: 1, limit: 50 })
+  }
 
   const pendingCount = uploads.filter((u) => u.status === "pending").length
   const approvedCount = uploads.filter((u) => u.status === "approved").length
@@ -154,7 +195,7 @@ export default function SupervisorPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card
             className={`p-6 relative overflow-hidden card-hover cursor-pointer ${statusFilter === "all" ? "ring-2 ring-[#0047BB]" : ""}`}
-            onClick={() => { setStatusFilter("all"); setActiveTab("aprovacoes") }}
+            onClick={() => { handleFilterChange("all", 1); setActiveTab("aprovacoes") }}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-[#00A99D] to-[#0047BB] opacity-5" />
             <div className="relative z-10">
@@ -170,7 +211,7 @@ export default function SupervisorPage() {
 
           <Card
             className={`p-6 relative overflow-hidden card-hover cursor-pointer ${statusFilter === "pending" ? "ring-2 ring-yellow-500" : ""}`}
-            onClick={() => { setStatusFilter("pending"); setActiveTab("aprovacoes") }}
+            onClick={() => { handleFilterChange("pending", 1); setActiveTab("aprovacoes") }}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-500 to-orange-500 opacity-5" />
             <div className="relative z-10">
@@ -186,7 +227,7 @@ export default function SupervisorPage() {
 
           <Card
             className={`p-6 relative overflow-hidden card-hover cursor-pointer ${statusFilter === "approved" ? "ring-2 ring-green-500" : ""}`}
-            onClick={() => { setStatusFilter("approved"); setActiveTab("aprovacoes") }}
+            onClick={() => { handleFilterChange("approved", 1); setActiveTab("aprovacoes") }}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-500 opacity-5" />
             <div className="relative z-10">
@@ -202,7 +243,7 @@ export default function SupervisorPage() {
 
           <Card
             className={`p-6 relative overflow-hidden card-hover cursor-pointer ${statusFilter === "rejected" ? "ring-2 ring-red-500" : ""}`}
-            onClick={() => { setStatusFilter("rejected"); setActiveTab("aprovacoes") }}
+            onClick={() => { handleFilterChange("rejected", 1); setActiveTab("aprovacoes") }}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-rose-500 opacity-5" />
             <div className="relative z-10">
@@ -219,7 +260,7 @@ export default function SupervisorPage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2 h-14 p-1 bg-muted/50">
+          <TabsList className="grid w-full max-w-lg grid-cols-3 h-14 p-1 bg-muted/50">
             <TabsTrigger value="aprovacoes" className="gap-2 text-base data-[state=active]:bg-background data-[state=active]:shadow-sm">
               <ClipboardCheck className="h-5 w-5" />
               Aprovacoes
@@ -228,6 +269,10 @@ export default function SupervisorPage() {
                   {pendingCount}
                 </Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="subordinados" className="gap-2 text-base data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <User className="h-5 w-5" />
+              Equipe
             </TabsTrigger>
             <TabsTrigger value="compartilhar" className="gap-2 text-base data-[state=active]:bg-background data-[state=active]:shadow-sm">
               <Upload className="h-5 w-5" />
@@ -251,7 +296,7 @@ export default function SupervisorPage() {
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <Select value={statusFilter} onValueChange={(v) => handleFilterChange(v, 1)}>
                       <SelectTrigger className="w-full md:w-[180px] h-12">
                         <Filter className="h-4 w-4 mr-2" />
                         <SelectValue placeholder="Status" />
@@ -267,15 +312,44 @@ export default function SupervisorPage() {
                       variant="outline" 
                       size="icon" 
                       className="h-12 w-12"
-                      onClick={() => { setSearchQuery(""); setStatusFilter("all") }}
+                      onClick={handleClearAllFilters}
                     >
                       <RefreshCcw className="h-5 w-5" />
                     </Button>
                   </div>
                 </div>
 
+                {/* Filtros por periodo */}
+                <div className="flex flex-col md:flex-row gap-3 mt-4 pt-4 border-t">
+                  <div className="flex items-center gap-2 flex-1">
+                    <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">De:</span>
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="h-10"
+                    />
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">Ate:</span>
+                    <Input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="h-10"
+                    />
+                    <Button 
+                      variant="secondary" 
+                      size="sm"
+                      className="h-10 px-4 whitespace-nowrap"
+                      onClick={handleApplyDateFilter}
+                    >
+                      Filtrar
+                    </Button>
+                  </div>
+                </div>
+
                 {/* Indicadores de filtro ativo */}
-                {(searchQuery || statusFilter !== "all") && (
+                {(searchQuery || statusFilter !== "all" || startDate || endDate) && (
                   <div className="flex items-center gap-2 mt-4 pt-4 border-t">
                     <span className="text-sm text-muted-foreground">Filtros ativos:</span>
                     {searchQuery && (
@@ -287,7 +361,19 @@ export default function SupervisorPage() {
                     {statusFilter !== "all" && (
                       <Badge variant="secondary" className="gap-1">
                         Status: {statusFilter === "pending" ? "Pendentes" : statusFilter === "approved" ? "Aprovados" : "Rejeitados"}
-                        <button onClick={() => setStatusFilter("all")} className="ml-1 hover:text-destructive">x</button>
+                        <button onClick={() => handleFilterChange("all", 1)} className="ml-1 hover:text-destructive">x</button>
+                      </Badge>
+                    )}
+                    {startDate && (
+                      <Badge variant="secondary" className="gap-1">
+                        De: {startDate}
+                        <button onClick={() => { setStartDate(""); handleApplyDateFilter() }} className="ml-1 hover:text-destructive">x</button>
+                      </Badge>
+                    )}
+                    {endDate && (
+                      <Badge variant="secondary" className="gap-1">
+                        Ate: {endDate}
+                        <button onClick={() => { setEndDate(""); handleApplyDateFilter() }} className="ml-1 hover:text-destructive">x</button>
                       </Badge>
                     )}
                   </div>
@@ -302,7 +388,7 @@ export default function SupervisorPage() {
                   <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
                   <p className="text-xl font-medium text-foreground mb-2">Nenhum documento encontrado</p>
                   <p className="text-muted-foreground mb-6">Tente ajustar os filtros de busca</p>
-                  <Button variant="outline" onClick={() => { setSearchQuery(""); setStatusFilter("all") }}>
+                  <Button variant="outline" onClick={handleClearAllFilters}>
                     Limpar Filtros
                   </Button>
                 </Card>
@@ -378,6 +464,54 @@ export default function SupervisorPage() {
                 ))
               )}
             </div>
+
+            {/* Paginacao */}
+            {supervisorPagination.totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4">
+                <p className="text-sm text-muted-foreground">
+                  Pagina {supervisorPagination.currentPage} de {supervisorPagination.totalPages} ({supervisorPagination.totalItems} itens)
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage <= 1}
+                    onClick={() => handleFilterChange(undefined, currentPage - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Anterior
+                  </Button>
+                  {Array.from({ length: Math.min(5, supervisorPagination.totalPages) }, (_, i) => {
+                    const start = Math.max(1, currentPage - 2)
+                    const page = start + i
+                    if (page > supervisorPagination.totalPages) return null
+                    return (
+                      <Button
+                        key={page}
+                        variant={page === currentPage ? "default" : "outline"}
+                        size="sm"
+                        className={page === currentPage ? "bg-[#0047BB]" : ""}
+                        onClick={() => handleFilterChange(undefined, page)}
+                      >
+                        {page}
+                      </Button>
+                    )
+                  })}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage >= supervisorPagination.totalPages}
+                    onClick={() => handleFilterChange(undefined, currentPage + 1)}
+                  >
+                    Proximo
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+          <TabsContent value="subordinados" className="space-y-6">
+            <SubordinatesList />
           </TabsContent>
 
           {/* Tab Compartilhar */}

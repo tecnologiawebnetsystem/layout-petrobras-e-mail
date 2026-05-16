@@ -135,6 +135,39 @@ app.include_router(routes_internal_auth.router, prefix=prefix_v1)
 # Diagnóstico de variáveis de ambiente
 app.include_router(routes_diagnostico.router, prefix=prefix_v1)
 
+
+# =====================================================
+# Endpoint de Scheduler (Cron Jobs)
+# =====================================================
+
+@app.post(f"{prefix_v1}/scheduler/run", tags=["Scheduler"])
+def run_scheduler_jobs():
+    """
+    Executa os jobs do scheduler manualmente.
+    Em producao, este endpoint deve ser chamado por um cron externo
+    (ex: CloudWatch Events, Vercel Cron, ou crontab).
+    Proteger com API key ou IP whitelist em producao.
+    """
+    from app.core.scheduler import run_all_jobs
+    result = run_all_jobs()
+    return {"status": "ok", "result": result}
+
+
+@app.post(f"{prefix_v1}/scheduler/expire-shares", tags=["Scheduler"])
+def run_expire_shares():
+    """Executa apenas o job de expiracao de shares."""
+    from app.core.scheduler import expire_shares
+    expired = expire_shares()
+    return {"status": "ok", "expired_count": expired}
+
+
+@app.post(f"{prefix_v1}/scheduler/notify-expiring", tags=["Scheduler"])
+def run_notify_expiring():
+    """Executa apenas o job de notificacao de shares prestes a expirar."""
+    from app.core.scheduler import notify_expiring_shares
+    notified = notify_expiring_shares()
+    return {"status": "ok", "notified_count": notified}
+
 # Rotas MOCK (sem AWS): integradas com core/aws_utils.py
 @app.get("/mock/upload/{key}")
 def mock_upload(key: str, expires_in: int = 3600):

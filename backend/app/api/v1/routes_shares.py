@@ -55,12 +55,15 @@ class ShareCancelRequest(BaseModel):
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_share_endpoint(
     payload: ShareCreateRequest,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_internal),
     request: Request = None,
 ):
     """
     Cria um novo compartilhamento de arquivos.
+    Apenas usuarios internos podem criar compartilhamentos.
+    Notifica automaticamente o supervisor via e-mail.
     """
     try:
         # Cria o share
@@ -98,6 +101,24 @@ async def create_share_endpoint(
             ip=request.client.host if request else None,
             user_agent=request.headers.get("User-Agent") if request else None
         )
+
+        # Notifica supervisor via e-mail (background — nao bloqueia resposta)
+        if user.manager_id:
+            supervisor = session.get(User, user.manager_id)
+            if supervisor:
+                background_tasks.add_task(
+                    send_supervisor_approval_request_email,
+                    supervisor_email=supervisor.email,
+                    supervisor_name=supervisor.name,
+                    requester_name=user.name,
+                    requester_email=user.email,
+                    recipient_email=payload.recipient_email,
+                    files_count=len(payload.file_ids),
+                    expiration_hours=payload.expiration_hours,
+                    share_name=payload.name,
+                    share_id=share.id,
+                    supervisor_user_id=supervisor.id,
+                )
 
         return {
             "id": share.id,

@@ -1,0 +1,12 @@
+{% extends "email/base.html" %}
+{% block content %}
+<h2>Alerta: Compartilhamento expira em breve</h2>
+<p>Olá, {{ user_name }},</p>
+<p>O compartilhamento <b>{{ share_name }}</b> destinado a <b>{{ external_email }}</b> expira em breve.</p>
+<ul>
+  <li><b>Quantidade de arquivos:</b> {{ files_count }}</li>
+  <li><b>Expira em:</b> {{ expires_at }}</li>
+</ul>
+<p>Se o destinatário ainda não baixou os arquivos, considere estender o prazo ou entrar em contato.</p>
+<p><a class="btn" href="{{ details_url }}">Ver detalhes</a></p>
+{% endblock %}
