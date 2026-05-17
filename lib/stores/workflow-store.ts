@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useNotificationStore } from "./notification-store";
 import { useAuditLogStore } from "./audit-log-store";
+import { useAuthStore } from "./auth-store";
 import { showAlert } from "./alert-store";
 import { apiFetch } from "@/lib/services/api-fetch";
 
@@ -328,13 +329,15 @@ export const useWorkflowStore = create<WorkflowState>()(
         // O backend envia e-mail de aprovação via background task.
         // O externo deve solicitar o OTP separadamente via POST /download/verify.
 
+        // Usar dados do usuario logado para auditoria
+        const currentUser = useAuthStore.getState().user;
         useAuditLogStore.getState().addLog({
           action: "approve",
           level: "success",
           user: {
-            id: "supervisor-id",
+            id: currentUser?.id || "unknown",
             name: approvedBy,
-            email: "supervisor@petrobras.com.br",
+            email: currentUser?.email || "unknown@petrobras.com.br",
             type: "supervisor",
           },
           details: {
@@ -399,13 +402,15 @@ export const useWorkflowStore = create<WorkflowState>()(
           showAlert.error("Erro", "Nao foi possivel rejeitar no servidor");
         });
 
+        // Usar dados do usuario logado para auditoria
+        const currentUser = useAuthStore.getState().user;
         useAuditLogStore.getState().addLog({
           action: "reject",
           level: "warning",
           user: {
-            id: "supervisor-id",
+            id: currentUser?.id || "unknown",
             name: rejectedBy,
-            email: "supervisor@petrobras.com.br",
+            email: currentUser?.email || "unknown@petrobras.com.br",
             type: "supervisor",
           },
           details: {
@@ -551,13 +556,15 @@ export const useWorkflowStore = create<WorkflowState>()(
           });
         }
 
+        // Usar dados do usuario logado para auditoria
+        const currentUser = useAuthStore.getState().user;
         useAuditLogStore.getState().addLog({
           action: "expiration_change",
           level: "info",
           user: {
-            id: "supervisor-id",
+            id: currentUser?.id || "unknown",
             name: changedBy,
-            email: "supervisor@petrobras.com.br",
+            email: currentUser?.email || "unknown@petrobras.com.br",
             type: "supervisor",
           },
           details: {
