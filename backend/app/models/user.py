@@ -36,6 +36,7 @@ class User(SQLModel, table=True):
     photo_url: Optional[str] = Field(default=None, max_length=500)
     manager_id: Optional[int] = Field(default=None, foreign_key="user.id")
     is_supervisor: bool = Field(default=False)  # True = pode aprovar/rejeitar shares da sua área
+    is_admin: bool = Field(default=False)  # True = super administrador global (ve tudo)
     status: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     last_login: Optional[datetime] = Field(default=None)

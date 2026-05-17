@@ -58,16 +58,32 @@ INTERNAL_USERS: list[tuple[str, str]] = [
     ("kleber.goncalves.prestserv@petrobras.com.br", "Kleber Goncalves"),
 ]
 
+# Super Administrador Global (pode ver TUDO)
+ADMIN_USER = ("admin.global@petrobras.com.br", "Admin Global", "admin@global123")
+
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 def _upsert_user(session: Session, email: str, name: str,
                  user_type: TypeUser, password: str,
-                 is_supervisor: bool = False) -> tuple[User, bool]:
+                 is_supervisor: bool = False,
+                 is_admin: bool = False) -> tuple[User, bool]:
     user = session.exec(select(User).where(User.email == email)).first()
     if user:
+        # Atualizar flags se necessario
+        changed = False
+        if is_supervisor and not user.is_supervisor:
+            user.is_supervisor = True
+            changed = True
+        if is_admin and not user.is_admin:
+            user.is_admin = True
+            changed = True
+        if changed:
+            session.add(user)
+            session.commit()
+            session.refresh(user)
         return user, False
-    user = User(name=name, email=email, type=user_type, is_supervisor=is_supervisor, status=True)
+    user = User(name=name, email=email, type=user_type, is_supervisor=is_supervisor, is_admin=is_admin, status=True)
     session.add(user)
     session.commit()
     session.refresh(user)
@@ -274,6 +290,20 @@ def main() -> None:
         print(f"[seed] supervisor  id={supervisor.id}  email={supervisor.email}"
               + ("  ← CRIADO" if sc else "  ← já existia"))
 
+        # ── Admin Global (pode ver TUDO) ─────────────────────────────────────
+        admin_email, admin_name, admin_pass = ADMIN_USER
+        admin, ac = _upsert_user(
+            session,
+            email=admin_email,
+            name=admin_name,
+            user_type=TypeUser.INTERNAL,
+            password=admin_pass,
+            is_supervisor=True,
+            is_admin=True,
+        )
+        print(f"[seed] admin       id={admin.id}  email={admin.email}"
+              + ("  ← CRIADO" if ac else "  ← já existia"))
+
         sep = "─" * 60
         print(f"\n[seed] {sep}")
 
@@ -302,24 +332,35 @@ def main() -> None:
         print(f"[seed]     POST /api/v1/auth/login")
         print(f'[seed]     {{"email":"supervisor@petrobras.com.br","password":"supervisor@123"}}')
         print(f"[seed] ")
-        print(f"[seed]  2) Listar pendentes:")
+        print(f"[seed]  2) Login como ADMIN GLOBAL (ve TUDO):")
+        print(f"[seed]     POST /api/v1/auth/login")
+        print(f'[seed]     {{"email":"admin.global@petrobras.com.br","password":"admin@global123"}}')
+        print(f"[seed] ")
+        print(f"[seed]  3) Endpoints do Admin:")
+        print(f"[seed]     GET /api/v1/admin/dashboard   — Metricas globais")
+        print(f"[seed]     GET /api/v1/admin/users       — TODOS os usuarios")
+        print(f"[seed]     GET /api/v1/admin/shares      — TODOS os compartilhamentos")
+        print(f"[seed]     GET /api/v1/admin/logs        — TODOS os logs")
+        print(f"[seed]     GET /api/v1/admin/tracking/1  — Rastreamento de usuario")
+        print(f"[seed] ")
+        print(f"[seed]  4) Listar pendentes (supervisor):")
         print(f"[seed]     GET /api/v1/supervisor/pending")
         print(f"[seed]     Authorization: Bearer <token_supervisor>")
         print(f"[seed] ")
-        print(f"[seed]  3) Aprovar um share:")
+        print(f"[seed]  5) Aprovar um share:")
         print(f"[seed]     POST /api/v1/supervisor/approve/<share_id>")
         print(f"[seed]     Authorization: Bearer <token_supervisor>")
         print(f'[seed]     {{"message":"Aprovado!"}}')
         print(f"[seed] ")
-        print(f"[seed]  4) Externo solicita OTP:")
+        print(f"[seed]  6) Externo solicita OTP:")
         print(f"[seed]     POST /api/v1/download/verify")
         print(f'[seed]     {{"email":"{EXTERNAL_EMAIL}"}}')
         print(f"[seed] ")
-        print(f"[seed]  5) Externo autentica com OTP (código no log do servidor):")
+        print(f"[seed]  7) Externo autentica com OTP (código no log do servidor):")
         print(f"[seed]     POST /api/v1/download/authenticate")
         print(f'[seed]     {{"email":"{EXTERNAL_EMAIL}","code":"<otp>"}}')
         print(f"[seed] ")
-        print(f"[seed]  6) Externo lista/baixa arquivos (servidos do disco local):")
+        print(f"[seed]  8) Externo lista/baixa arquivos (servidos do disco local):")
         print(f"[seed]     GET /api/v1/download/files")
         print(f"[seed]     Authorization: Bearer <access_token>")
         print(f"[seed] {sep}\n")

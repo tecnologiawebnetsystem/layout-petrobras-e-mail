@@ -23,6 +23,7 @@ from app.api.v1 import (
     routes_emails,
     routes_diagnostico,
     routes_entra_auth,
+    routes_admin,
 )
 
 app = FastAPI(
@@ -132,6 +133,9 @@ app.include_router(routes_entra_auth.router, prefix=prefix_v1, tags=["Auth / Ent
 
 # Rotas de emails
 app.include_router(routes_emails.router, prefix=prefix_v1, tags=["Emails"])
+
+# Rotas de administrador global
+app.include_router(routes_admin.router, prefix=prefix_v1, tags=["Admin"])
 
 # Rotas de Login (legado - auth local e interno)
 app.include_router(routes_internal_auth.router, prefix=prefix_v1)
