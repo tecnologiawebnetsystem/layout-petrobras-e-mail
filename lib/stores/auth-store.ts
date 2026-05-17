@@ -14,7 +14,8 @@ interface User {
   id: string
   email: string
   name: string
-  userType: "internal" | "external" | "supervisor" | "support"
+  userType: "internal" | "external" | "supervisor" | "support" | "admin"
+  isAdmin?: boolean
   jobTitle?: string
   department?: string
   officeLocation?: string
@@ -32,10 +33,14 @@ interface User {
 
 /**
  * Mapeia o campo `role` do backend Python para `userType` do frontend.
- * O Python retorna: "internal", "external", "supervisor", "support" (ou TypeUser enum).
+ * O Python retorna: "internal", "external", "supervisor", "support", "admin" (ou TypeUser enum).
  */
-function mapRoleToUserType(role: string): "internal" | "external" | "supervisor" | "support" {
+function mapRoleToUserType(role: string, isAdmin?: boolean): "internal" | "external" | "supervisor" | "support" | "admin" {
+  // Se e admin, sempre retorna admin
+  if (isAdmin === true) return "admin"
+  
   const normalized = role?.toLowerCase().replace("typeuser.", "") || "external"
+  if (normalized.includes("admin")) return "admin"
   if (normalized.includes("support") || normalized.includes("suporte") || normalized.includes("atendimento")) return "support"
   if (normalized.includes("supervisor")) return "supervisor"
   if (normalized.includes("internal") || normalized.includes("interno")) return "internal"

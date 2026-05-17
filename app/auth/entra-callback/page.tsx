@@ -51,18 +51,26 @@ function CallbackContent() {
     try {
       const userInfo = JSON.parse(decodeURIComponent(userInfoRaw))
 
+      // Verifica se e admin (flag do backend)
+      const isAdmin = userInfo.is_admin === true
+
       // Mapeia role do backend para userType do frontend
-      let userType: "internal" | "external" | "supervisor" | "support" = "internal"
-      const role = (userInfo.role || "").toLowerCase()
-      if (role.includes("supervisor")) userType = "supervisor"
-      else if (role.includes("support") || role.includes("suporte")) userType = "support"
-      else if (role.includes("external") || role.includes("externo")) userType = "external"
+      let userType: "internal" | "external" | "supervisor" | "support" | "admin" = "internal"
+      if (isAdmin) {
+        userType = "admin"
+      } else {
+        const role = (userInfo.role || "").toLowerCase()
+        if (role.includes("supervisor")) userType = "supervisor"
+        else if (role.includes("support") || role.includes("suporte")) userType = "support"
+        else if (role.includes("external") || role.includes("externo")) userType = "external"
+      }
 
       const user = {
         id: String(userInfo.id),
         email: userInfo.email || "",
         name: userInfo.name || "",
         userType,
+        isAdmin,
         jobTitle: userInfo.job_title || undefined,
         department: userInfo.department || undefined,
         employeeId: userInfo.employee_id || undefined,
@@ -72,8 +80,12 @@ function CallbackContent() {
       // Salva no auth store (Zustand + persist)
       setAuth(user, accessToken, refreshToken)
 
-      // Redireciona para dashboard
-      router.replace("/dashboard")
+      // Redireciona para pagina apropriada
+      if (isAdmin) {
+        router.replace("/admin")
+      } else {
+        router.replace("/dashboard")
+      }
     } catch (parseError) {
       console.error("[EntraCallback] Erro ao parsear user_info:", parseError)
       router.replace("/?error=auth_failed")

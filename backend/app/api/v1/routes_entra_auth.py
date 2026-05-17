@@ -483,7 +483,7 @@ def callback(
 
     # Redirecionar para o frontend com tokens
     frontend_url = settings.frontend_external_portal_url
-    display_type = "supervisor" if user.is_supervisor else "internal"
+    display_type = "admin" if user.is_admin else ("supervisor" if user.is_supervisor else "internal")
 
     # Montar user_info para o frontend
     user_info = {
@@ -492,6 +492,7 @@ def callback(
         "email": user.email,
         "role": display_type,
         "is_supervisor": user.is_supervisor,
+        "is_admin": user.is_admin,
         "department": user.department or "",
         "job_title": user.job_title or "",
         "employee_id": user.employee_id or "",

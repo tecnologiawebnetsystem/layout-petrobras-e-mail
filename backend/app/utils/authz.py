@@ -101,3 +101,13 @@ def require_supervisor(user: User = Depends(get_current_user)) -> User:
     if user.type != TypeUser.INTERNAL or not user.is_supervisor:
         raise HTTPException(status_code=403, detail="Acesso restrito a supervisores.")
     return user
+
+
+def require_admin(user: User = Depends(get_current_user)) -> User:
+    """
+    Exige que o usuario seja um Super Administrador Global.
+    Admins podem ver TODOS os logs, usuarios e compartilhamentos do sistema.
+    """
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Acesso restrito a administradores.")
+    return user

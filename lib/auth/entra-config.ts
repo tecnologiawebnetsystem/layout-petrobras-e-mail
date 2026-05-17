@@ -9,42 +9,49 @@
 import { getClientEnv } from "@/lib/env"
 
 /**
- * Tipos de usuário baseados no email
+ * Tipos de usuario baseados no email e cargo.
  *
- * @param email Email do usuário autenticado
- * @param jobTitle Cargo do usuário (opcional) - usado para identificar supervisores
- * @returns 'internal' se for @petrobras, 'supervisor' se tiver cargo de gerente, 'external' caso contrário
+ * IMPORTANTE: A deteccao real de supervisor e feita pelo BACKEND via:
+ * - Grupo Entra ID (entra_supervisor_group_ids)
+ * - Cargo (jobTitle) contendo termos como "gerente", "coordenador", etc.
+ * - Flag is_supervisor no banco de dados
+ *
+ * Esta funcao e apenas um fallback para UI antes da autenticacao completa.
+ * O tipo real do usuario vem do backend apos o login.
+ *
+ * @param email Email do usuario autenticado
+ * @param jobTitle Cargo do usuario (opcional)
+ * @param isSupervisor Flag do backend indicando se e supervisor (opcional)
+ * @returns 'supervisor' se flag true ou cargo de gerencia, 'internal' se @petrobras, 'external' caso contrario
  */
-export function getUserTypeFromEmail(email: string, jobTitle?: string): "internal" | "supervisor" | "external" {
+export function getUserTypeFromEmail(
+  email: string,
+  jobTitle?: string,
+  isSupervisor?: boolean
+): "internal" | "supervisor" | "external" {
   const emailLower = email.toLowerCase()
 
-  // Usuários externos (não Petrobras)
+  // Usuarios externos (nao Petrobras)
   if (!emailLower.includes("@petrobras")) {
     return "external"
   }
 
-  // Supervisores: lista específica de emails OU cargo de gerente/coordenador
-  const supervisorEmails = [
-    "wagner.brazil@petrobras.com.br",
-    "sabrina.araujo@petrobras.com.br",
-    // Adicionar outros supervisores aqui
-  ]
-
-  if (supervisorEmails.includes(emailLower)) {
+  // Se o backend ja informou que e supervisor, usar essa informacao
+  if (isSupervisor === true) {
     return "supervisor"
   }
 
-  // Identificar supervisor pelo cargo (se disponível)
+  // Identificar supervisor pelo cargo (se disponivel)
   if (jobTitle) {
     const jobTitleLower = jobTitle.toLowerCase()
-    const supervisorTitles = ["gerente", "coordenador", "diretor", "superintendente", "chefe", "líder", "supervisor"]
+    const supervisorTitles = ["gerente", "coordenador", "diretor", "superintendente", "chefe", "lider", "supervisor"]
     
     if (supervisorTitles.some(title => jobTitleLower.includes(title))) {
       return "supervisor"
     }
   }
 
-  // Usuários internos: domínio @petrobras sem cargo de gerência
+  // Usuarios internos: dominio @petrobras sem cargo de gerencia
   return "internal"
 }
 
