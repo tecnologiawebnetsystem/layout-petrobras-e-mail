@@ -36,6 +36,7 @@ from app.services.group_sync_service import (
     sync_user_from_group,
     bulk_sync_group_members,
 )
+from app.services.supervisor_sync_service import resolve_and_link_supervisor
 
 router = APIRouter(prefix="/auth/entra", tags=["Auth / Entra ID"])
 
@@ -115,7 +116,14 @@ def _validate_id_token(token: str) -> dict:
 
 
 def _enrich_from_graph(access_token: str) -> dict:
-    """Busca dados complementares do Microsoft Graph API."""
+    """
+    Busca dados complementares do Microsoft Graph API.
+
+    Coleta:
+    - Perfil do usuario (/me): jobTitle, department, employeeId
+    - Manager do usuario (/me/manager): mail, displayName, jobTitle, department, employeeId
+    - Foto do usuario (/me/photo/$value): base64 data URI
+    """
     info: dict = {}
     headers = {"Authorization": f"Bearer {access_token}"}
     try:
@@ -127,12 +135,19 @@ def _enrich_from_graph(access_token: str) -> dict:
                 info["job_title"] = prof.get("jobTitle")
                 info["department"] = prof.get("department")
                 info["employee_id"] = prof.get("employeeId")
-            # Manager
-            mgr_resp = client.get("https://graph.microsoft.com/v1.0/me/manager", headers=headers)
+            # Manager — coletar dados completos
+            mgr_resp = client.get(
+                "https://graph.microsoft.com/v1.0/me/manager"
+                "?$select=displayName,mail,jobTitle,department,employeeId",
+                headers=headers,
+            )
             if mgr_resp.status_code == 200:
                 mgr = mgr_resp.json()
                 info["manager_email"] = mgr.get("mail")
                 info["manager_name"] = mgr.get("displayName")
+                info["manager_job_title"] = mgr.get("jobTitle")
+                info["manager_department"] = mgr.get("department")
+                info["manager_employee_id"] = mgr.get("employeeId")
             # Foto
             photo_resp = client.get(
                 "https://graph.microsoft.com/v1.0/me/photo/$value", headers=headers
@@ -146,8 +161,22 @@ def _enrich_from_graph(access_token: str) -> dict:
     return info
 
 
-def _sync_user(session: Session, email: str, name: str, claims: dict, graph_info: dict) -> User:
-    """Cria ou atualiza usuario no banco local a partir dos dados Entra + Graph."""
+def _sync_user(
+    session: Session,
+    email: str,
+    name: str,
+    claims: dict,
+    graph_info: dict,
+    ms_access_token: Optional[str] = None,
+    request_ip: Optional[str] = None,
+    request_ua: Optional[str] = None,
+) -> User:
+    """
+    Cria ou atualiza usuario no banco local a partir dos dados Entra + Graph.
+
+    Apos criar/atualizar o usuario, chama resolve_and_link_supervisor()
+    para auto-criar o supervisor caso nao exista na base e vincular via manager_id.
+    """
     groups = set(claims.get("groups", []))
     sup_groups = set(settings.entra_supervisor_group_ids or [])
     is_supervisor = bool(groups.intersection(sup_groups))
@@ -189,15 +218,15 @@ def _sync_user(session: Session, email: str, name: str, claims: dict, graph_info
         session.commit()
         session.refresh(user)
 
-    # Vincular gestor se informado e nao existente
-    if graph_info.get("manager_email") and user.manager_id is None:
-        manager = session.exec(
-            select(User).where(User.email == graph_info["manager_email"])
-        ).first()
-        if manager:
-            user.manager_id = manager.id
-            session.add(user)
-            session.commit()
+    # Auto-criar e vincular supervisor (se Graph retornou manager)
+    resolve_and_link_supervisor(
+        session=session,
+        user=user,
+        graph_info=graph_info,
+        ms_access_token=ms_access_token,
+        request_ip=request_ip,
+        request_ua=request_ua,
+    )
 
     return user
 

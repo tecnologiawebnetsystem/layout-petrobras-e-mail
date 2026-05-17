@@ -21,6 +21,7 @@ from typing import Optional
 from app.core.config import settings
 from app.models.user import User, TypeUser
 from app.services.audit_service import log_event
+from app.services.supervisor_sync_service import resolve_and_link_supervisor
 
 logger = logging.getLogger(__name__)
 
@@ -210,15 +211,14 @@ def sync_user_from_group(
                 )
                 logger.info(f"Usuario reativado via group sync: {email}")
 
-        # Vincular gestor
-        if graph_info.get("manager_email") and user.manager_id is None:
-            manager = session.exec(
-                select(User).where(User.email == graph_info["manager_email"])
-            ).first()
-            if manager:
-                user.manager_id = manager.id
-                session.add(user)
-                session.commit()
+        # Auto-criar e vincular supervisor
+        resolve_and_link_supervisor(
+            session=session,
+            user=user,
+            graph_info=graph_info,
+            request_ip=request_ip,
+            request_ua=request_ua,
+        )
 
         return user
 
