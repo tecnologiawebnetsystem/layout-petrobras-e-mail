@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { AppHeader } from "@/components/shared/app-header"
@@ -25,172 +25,189 @@ import {
   AlertTriangle,
   FileText,
   Calendar,
-  ArrowLeft
+  ArrowLeft,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  Upload
 } from "lucide-react"
 import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
 import { ScrollToTop } from "@/components/shared/scroll-to-top"
 import { FullPageLoader } from "@/components/ui/full-page-loader"
 
-// Dados de demonstracao para logs
-const DEMO_LOGS = [
-  {
-    id: "1",
-    action: "APROVACAO",
-    description: "Compartilhamento aprovado",
-    details: "Arquivo 'Relatorio_Q4_2024.pdf' aprovado para destinatario@empresa.com",
-    user: "Wagner Silva",
-    userEmail: "wagner@petrobras.com.br",
-    timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-    status: "success",
-    ip: "10.0.0.45",
-    shareId: "SOL-2024-001234"
-  },
-  {
-    id: "2",
-    action: "REJEICAO",
-    description: "Compartilhamento rejeitado",
-    details: "Arquivo 'Dados_Confidenciais.xlsx' rejeitado - Motivo: Dados sensiveis nao autorizados",
-    user: "Wagner Silva",
-    userEmail: "wagner@petrobras.com.br",
-    timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    status: "error",
-    ip: "10.0.0.45",
-    shareId: "SOL-2024-001233"
-  },
-  {
-    id: "3",
-    action: "DOWNLOAD",
-    description: "Arquivo baixado",
-    details: "Destinatario cliente@parceiro.com baixou 'Contrato_2024.pdf'",
-    user: "cliente@parceiro.com",
-    userEmail: "cliente@parceiro.com",
-    timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-    status: "info",
-    ip: "189.45.123.78",
-    shareId: "SOL-2024-001230"
-  },
-  {
-    id: "4",
-    action: "ENVIO_CODIGO",
-    description: "Codigo OTP enviado",
-    details: "Codigo de verificacao enviado para fornecedor@empresa.com.br",
-    user: "Sistema",
-    userEmail: "sistema@petrobras.com.br",
-    timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-    status: "info",
-    ip: "10.0.0.1",
-    shareId: "SOL-2024-001228"
-  },
-  {
-    id: "5",
-    action: "EXPIRACAO",
-    description: "Link expirado",
-    details: "Link de compartilhamento expirou automaticamente apos 72 horas",
-    user: "Sistema",
-    userEmail: "sistema@petrobras.com.br",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-    status: "warning",
-    ip: "10.0.0.1",
-    shareId: "SOL-2024-001200"
-  },
-  {
-    id: "6",
-    action: "CADASTRO",
-    description: "Usuario externo cadastrado",
-    details: "Novo usuario 'parceiro@empresa.com' cadastrado pelo suporte",
-    user: "Suporte Demo",
-    userEmail: "suporte@petrobras.com.br",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
-    status: "success",
-    ip: "10.0.0.50",
-    shareId: null
-  },
-  {
-    id: "7",
-    action: "LOGIN",
-    description: "Login realizado",
-    details: "Usuario supervisor@petrobras.com.br realizou login no sistema",
-    user: "Supervisor Demo",
-    userEmail: "supervisor@petrobras.com.br",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(),
-    status: "info",
-    ip: "10.0.0.45",
-    shareId: null
-  },
-  {
-    id: "8",
-    action: "UPLOAD",
-    description: "Arquivo enviado",
-    details: "Arquivo 'Proposta_Comercial.pdf' enviado para aprovacao",
-    user: "Maria Santos",
-    userEmail: "maria@petrobras.com.br",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-    status: "info",
-    ip: "10.0.0.55",
-    shareId: "SOL-2024-001250"
-  },
-]
+interface AuditLog {
+  id: number
+  timestamp: string
+  action: string
+  level: string
+  user: {
+    id: number
+    name: string
+    email: string
+    type: string
+    employee_id?: string
+  } | null
+  details: {
+    target_id: number | null
+    target_name: string | null
+    description: string | null
+    ip_address: string | null
+    metadata: Record<string, unknown> | null
+  }
+}
+
+interface AuditResponse {
+  logs: AuditLog[]
+  pagination: {
+    current_page: number
+    total_pages: number
+    total_items: number
+    items_per_page: number
+  }
+}
 
 export default function LogsPage() {
   const router = useRouter()
-  const { user, isAuthenticated, _hasHydrated } = useAuthStore()
+  const { user, isAuthenticated, _hasHydrated, accessToken } = useAuthStore()
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false)
+  const [logs, setLogs] = useState<AuditLog[]>([])
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_pages: 1,
+    total_items: 0,
+    items_per_page: 50
+  })
   const [logFilter, setLogFilter] = useState("all")
   const [logSearch, setLogSearch] = useState("")
   const [dateFilter, setDateFilter] = useState("all")
+  const [actionFilter, setActionFilter] = useState("all")
+
+  // Carregar logs da API
+  const fetchLogs = useCallback(async (page: number = 1) => {
+    if (!accessToken) return
+
+    setIsLoadingLogs(true)
+    try {
+      const params = new URLSearchParams()
+      params.set("page", String(page))
+      params.set("limit", "50")
+      
+      if (logFilter !== "all") {
+        params.set("level", logFilter)
+      }
+      
+      if (actionFilter !== "all") {
+        params.set("action", actionFilter)
+      }
+
+      // Filtro de data
+      if (dateFilter !== "all") {
+        const now = new Date()
+        let startDate: Date
+        
+        if (dateFilter === "today") {
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        } else if (dateFilter === "week") {
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        } else if (dateFilter === "month") {
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        } else {
+          startDate = new Date(0)
+        }
+        
+        params.set("start_date", startDate.toISOString())
+      }
+
+      const res = await fetch(`/api/audit/logs?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+
+      if (res.ok) {
+        const data: AuditResponse = await res.json()
+        setLogs(data.logs)
+        setPagination(data.pagination)
+      }
+    } catch (error) {
+      console.error("[v0] Erro ao carregar logs:", error)
+    } finally {
+      setIsLoadingLogs(false)
+    }
+  }, [accessToken, logFilter, actionFilter, dateFilter])
 
   useEffect(() => {
     if (!_hasHydrated) return
 
     const timer = setTimeout(() => {
-      if (!isAuthenticated || user?.userType !== "supervisor") {
+      if (!isAuthenticated || (user?.userType !== "supervisor" && user?.userType !== "admin")) {
         router.push("/")
       } else {
         setIsLoading(false)
+        fetchLogs(1)
       }
-    }, 1200)
+    }, 500)
 
     return () => clearTimeout(timer)
-  }, [_hasHydrated, isAuthenticated, user, router])
+  }, [_hasHydrated, isAuthenticated, user, router, fetchLogs])
 
-  // Filtrar logs
-  const filteredLogs = DEMO_LOGS.filter((log) => {
-    const matchesSearch = 
-      log.description.toLowerCase().includes(logSearch.toLowerCase()) ||
-      log.details.toLowerCase().includes(logSearch.toLowerCase()) ||
-      log.user.toLowerCase().includes(logSearch.toLowerCase()) ||
-      (log.shareId?.toLowerCase().includes(logSearch.toLowerCase()) ?? false)
+  // Recarregar quando filtros mudarem
+  useEffect(() => {
+    if (!isLoading && accessToken) {
+      fetchLogs(1)
+    }
+  }, [logFilter, actionFilter, dateFilter])
 
-    const matchesFilter = logFilter === "all" || log.status === logFilter
-
-    return matchesSearch && matchesFilter
+  // Filtrar logs localmente pela busca
+  const filteredLogs = logs.filter((log) => {
+    if (!logSearch) return true
+    
+    const searchLower = logSearch.toLowerCase()
+    return (
+      log.action.toLowerCase().includes(searchLower) ||
+      log.details?.description?.toLowerCase().includes(searchLower) ||
+      log.user?.name?.toLowerCase().includes(searchLower) ||
+      log.user?.email?.toLowerCase().includes(searchLower) ||
+      String(log.details?.target_id || "").includes(searchLower)
+    )
   })
 
-  // Estatisticas
+  // Estatisticas (baseadas nos logs carregados)
   const stats = {
-    total: DEMO_LOGS.length,
-    success: DEMO_LOGS.filter(l => l.status === "success").length,
-    error: DEMO_LOGS.filter(l => l.status === "error").length,
-    warning: DEMO_LOGS.filter(l => l.status === "warning").length,
-    info: DEMO_LOGS.filter(l => l.status === "info").length,
+    total: pagination.total_items,
+    success: logs.filter(l => l.level === "success" || l.level === "INFO").length,
+    error: logs.filter(l => l.level === "error" || l.level === "ERROR").length,
+    warning: logs.filter(l => l.level === "warning" || l.level === "WARNING").length,
+    info: logs.filter(l => l.level === "info" || l.level === "INFO" || !l.level).length,
   }
 
   const getLogIcon = (action: string) => {
-    switch (action) {
-      case "APROVACAO": return <CheckCircle className="h-4 w-4" />
-      case "REJEICAO": return <XCircle className="h-4 w-4" />
-      case "DOWNLOAD": return <Download className="h-4 w-4" />
-      case "ENVIO_CODIGO": return <Mail className="h-4 w-4" />
-      case "EXPIRACAO": return <Clock className="h-4 w-4" />
-      case "CADASTRO": return <User className="h-4 w-4" />
-      case "LOGIN": return <Shield className="h-4 w-4" />
-      case "UPLOAD": return <FileText className="h-4 w-4" />
-      default: return <Activity className="h-4 w-4" />
-    }
+    const actionUpper = action.toUpperCase()
+    if (actionUpper.includes("APROVAR") || actionUpper.includes("APPROVE")) return <CheckCircle className="h-4 w-4" />
+    if (actionUpper.includes("REJEITAR") || actionUpper.includes("REJECT")) return <XCircle className="h-4 w-4" />
+    if (actionUpper.includes("DOWNLOAD") || actionUpper.includes("BAIXAR")) return <Download className="h-4 w-4" />
+    if (actionUpper.includes("EMAIL") || actionUpper.includes("OTP") || actionUpper.includes("CODIGO")) return <Mail className="h-4 w-4" />
+    if (actionUpper.includes("EXPIR")) return <Clock className="h-4 w-4" />
+    if (actionUpper.includes("CADASTR") || actionUpper.includes("CRIAR")) return <User className="h-4 w-4" />
+    if (actionUpper.includes("LOGIN") || actionUpper.includes("AUTH")) return <Shield className="h-4 w-4" />
+    if (actionUpper.includes("UPLOAD") || actionUpper.includes("ENVIAR")) return <Upload className="h-4 w-4" />
+    if (actionUpper.includes("VER") || actionUpper.includes("VIEW")) return <FileText className="h-4 w-4" />
+    return <Activity className="h-4 w-4" />
   }
 
-  const getLogStatusColor = (status: string) => {
-    switch (status) {
+  const getLogLevel = (log: AuditLog): string => {
+    const level = log.level?.toLowerCase() || "info"
+    const action = log.action.toUpperCase()
+    
+    if (level === "success" || action.includes("APROVAR") || action.includes("APPROVE")) return "success"
+    if (level === "error" || action.includes("REJEITAR") || action.includes("REJECT") || action.includes("ERRO")) return "error"
+    if (level === "warning" || action.includes("EXPIR") || action.includes("ALERT")) return "warning"
+    return "info"
+  }
+
+  const getLogStatusColor = (level: string) => {
+    switch (level) {
       case "success": return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
       case "error": return "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
       case "warning": return "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
@@ -198,13 +215,21 @@ export default function LogsPage() {
     }
   }
 
-  const getLogBorderColor = (status: string) => {
-    switch (status) {
+  const getLogBorderColor = (level: string) => {
+    switch (level) {
       case "success": return "border-l-emerald-500"
       case "error": return "border-l-red-500"
       case "warning": return "border-l-amber-500"
       default: return "border-l-blue-500"
     }
+  }
+
+  const formatAction = (action: string): string => {
+    return action
+      .replace(/_/g, " ")
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ")
   }
 
   if (isLoading) {
@@ -216,7 +241,7 @@ export default function LogsPage() {
     )
   }
 
-  if (!_hasHydrated || !isAuthenticated || user?.userType !== "supervisor") {
+  if (!_hasHydrated || !isAuthenticated || (user?.userType !== "supervisor" && user?.userType !== "admin")) {
     return null
   }
 
@@ -246,14 +271,26 @@ export default function LogsPage() {
                 <p className="text-muted-foreground">Historico completo de acoes e eventos do sistema</p>
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={() => router.push("/supervisor")}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar ao Painel
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => fetchLogs(pagination.current_page)}
+                disabled={isLoadingLogs}
+                className="gap-2"
+              >
+                <RefreshCcw className={`h-4 w-4 ${isLoadingLogs ? "animate-spin" : ""}`} />
+                Atualizar
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => router.push("/supervisor")}
+                className="gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Voltar ao Painel
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -352,7 +389,7 @@ export default function LogsPage() {
               <div>
                 <CardTitle className="text-xl">Registros de Atividade</CardTitle>
                 <CardDescription>
-                  Exibindo {filteredLogs.length} de {DEMO_LOGS.length} registros
+                  Exibindo {filteredLogs.length} de {pagination.total_items} registros
                 </CardDescription>
               </div>
               <Button 
@@ -362,6 +399,8 @@ export default function LogsPage() {
                 onClick={() => {
                   setLogFilter("all")
                   setLogSearch("")
+                  setDateFilter("all")
+                  setActionFilter("all")
                 }}
               >
                 <RefreshCcw className="h-4 w-4" />
@@ -382,17 +421,19 @@ export default function LogsPage() {
                   className="pl-11 h-12"
                 />
               </div>
-              <Select value={logFilter} onValueChange={setLogFilter}>
+              <Select value={actionFilter} onValueChange={setActionFilter}>
                 <SelectTrigger className="w-full md:w-[180px] h-12">
                   <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Tipo" />
+                  <SelectValue placeholder="Acao" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os Tipos</SelectItem>
-                  <SelectItem value="success">Sucesso</SelectItem>
-                  <SelectItem value="error">Erro</SelectItem>
-                  <SelectItem value="warning">Aviso</SelectItem>
-                  <SelectItem value="info">Info</SelectItem>
+                  <SelectItem value="all">Todas as Acoes</SelectItem>
+                  <SelectItem value="APROVAR">Aprovacoes</SelectItem>
+                  <SelectItem value="REJEITAR">Rejeicoes</SelectItem>
+                  <SelectItem value="UPLOAD">Uploads</SelectItem>
+                  <SelectItem value="DOWNLOAD">Downloads</SelectItem>
+                  <SelectItem value="LOGIN">Logins</SelectItem>
+                  <SelectItem value="EMAIL">E-mails</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={dateFilter} onValueChange={setDateFilter}>
@@ -410,8 +451,8 @@ export default function LogsPage() {
             </div>
 
             {/* Indicadores de filtro ativo */}
-            {(logSearch || logFilter !== "all") && (
-              <div className="flex items-center gap-2 pt-2">
+            {(logSearch || logFilter !== "all" || actionFilter !== "all" || dateFilter !== "all") && (
+              <div className="flex items-center gap-2 pt-2 flex-wrap">
                 <span className="text-sm text-muted-foreground">Filtros ativos:</span>
                 {logSearch && (
                   <Badge variant="secondary" className="gap-1">
@@ -421,63 +462,121 @@ export default function LogsPage() {
                 )}
                 {logFilter !== "all" && (
                   <Badge variant="secondary" className="gap-1">
-                    Tipo: {logFilter === "success" ? "Sucesso" : logFilter === "error" ? "Erro" : logFilter === "warning" ? "Aviso" : "Info"}
+                    Nivel: {logFilter}
                     <button onClick={() => setLogFilter("all")} className="ml-1 hover:text-destructive">x</button>
+                  </Badge>
+                )}
+                {actionFilter !== "all" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Acao: {actionFilter}
+                    <button onClick={() => setActionFilter("all")} className="ml-1 hover:text-destructive">x</button>
+                  </Badge>
+                )}
+                {dateFilter !== "all" && (
+                  <Badge variant="secondary" className="gap-1">
+                    Periodo: {dateFilter === "today" ? "Hoje" : dateFilter === "week" ? "7 dias" : "30 dias"}
+                    <button onClick={() => setDateFilter("all")} className="ml-1 hover:text-destructive">x</button>
                   </Badge>
                 )}
               </div>
             )}
 
+            {/* Loading */}
+            {isLoadingLogs && (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-3 text-muted-foreground">Carregando logs...</span>
+              </div>
+            )}
+
             {/* Timeline de logs */}
-            <div className="space-y-3 mt-6">
-              {filteredLogs.length === 0 ? (
-                <div className="text-center py-12">
-                  <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg font-medium text-muted-foreground">Nenhum log encontrado</p>
-                  <p className="text-sm text-muted-foreground mt-1">Tente ajustar os filtros de busca</p>
-                </div>
-              ) : (
-                filteredLogs.map((log) => (
-                  <div
-                    key={log.id}
-                    className={`bg-background/50 border border-l-4 ${getLogBorderColor(log.status)} rounded-xl p-4 hover:bg-background/80 transition-colors`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className={`p-2.5 rounded-xl ${getLogStatusColor(log.status)}`}>
-                        {getLogIcon(log.action)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="font-semibold text-foreground">{log.description}</span>
-                          <Badge variant="outline" className={`text-xs ${getLogStatusColor(log.status)}`}>
-                            {log.action}
-                          </Badge>
-                          {log.shareId && (
-                            <Badge variant="outline" className="text-xs font-mono">
-                              {log.shareId}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">{log.details}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
-                          <span className="flex items-center gap-1">
-                            <User className="h-3 w-3" />
-                            {log.user}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {new Date(log.timestamp).toLocaleString("pt-BR")}
-                          </span>
-                          <span className="flex items-center gap-1 font-mono">
-                            IP: {log.ip}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+            {!isLoadingLogs && (
+              <div className="space-y-3 mt-6">
+                {filteredLogs.length === 0 ? (
+                  <div className="text-center py-12">
+                    <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-lg font-medium text-muted-foreground">Nenhum log encontrado</p>
+                    <p className="text-sm text-muted-foreground mt-1">Tente ajustar os filtros de busca</p>
                   </div>
-                ))
-              )}
-            </div>
+                ) : (
+                  filteredLogs.map((log) => {
+                    const level = getLogLevel(log)
+                    return (
+                      <div
+                        key={log.id}
+                        className={`bg-background/50 border border-l-4 ${getLogBorderColor(level)} rounded-xl p-4 hover:bg-background/80 transition-colors`}
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className={`p-2.5 rounded-xl ${getLogStatusColor(level)}`}>
+                            {getLogIcon(log.action)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <span className="font-semibold text-foreground">{formatAction(log.action)}</span>
+                              <Badge variant="outline" className={`text-xs ${getLogStatusColor(level)}`}>
+                                {log.action}
+                              </Badge>
+                              {log.details?.target_id && (
+                                <Badge variant="outline" className="text-xs font-mono">
+                                  ID: {log.details.target_id}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2">
+                              {log.details?.description || "Sem descricao"}
+                            </p>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+                              <span className="flex items-center gap-1">
+                                <User className="h-3 w-3" />
+                                {log.user?.name || log.user?.email || "Sistema"}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {new Date(log.timestamp).toLocaleString("pt-BR")}
+                              </span>
+                              {log.details?.ip_address && (
+                                <span className="flex items-center gap-1 font-mono">
+                                  IP: {log.details.ip_address}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            )}
+
+            {/* Paginacao */}
+            {pagination.total_pages > 1 && (
+              <div className="flex items-center justify-between pt-6 border-t">
+                <p className="text-sm text-muted-foreground">
+                  Pagina {pagination.current_page} de {pagination.total_pages}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchLogs(pagination.current_page - 1)}
+                    disabled={pagination.current_page <= 1 || isLoadingLogs}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Anterior
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchLogs(pagination.current_page + 1)}
+                    disabled={pagination.current_page >= pagination.total_pages || isLoadingLogs}
+                  >
+                    Proximo
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>
