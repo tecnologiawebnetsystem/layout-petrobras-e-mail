@@ -169,7 +169,7 @@ export default function AuditoriaPage() {
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4 mb-8 mt-4">
           <div className="flex items-center gap-4">
-            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center shadow-lg">
+            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
               <Activity className="h-7 w-7 text-white" />
             </div>
             <div>
@@ -188,7 +188,7 @@ export default function AuditoriaPage() {
               <ArrowLeft className="h-4 w-4" />
               Voltar
             </Button>
-            <Button onClick={handleExport} className="bg-[#00A99D] hover:bg-[#008A81] text-white gap-2">
+            <Button onClick={handleExport} className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white gap-2">
               <Download className="h-4 w-4" />
               Exportar Logs
             </Button>
@@ -287,40 +287,38 @@ export default function AuditoriaPage() {
                   return (
                     <Card
                       key={log.id}
-                      className="p-4 hover:shadow-md transition-all duration-200 border-l-4"
-                      style={{
-                        borderLeftColor:
-                          log.level === "success"
-                            ? "#00A859"
-                            : log.level === "error"
-                              ? "#ef4444"
-                              : log.level === "warning"
-                                ? "#FDB913"
-                                : "#3b82f6",
-                      }}
+                      className={`p-4 hover:shadow-md transition-all duration-200 border-l-4 ${
+                        log.level === "success"
+                          ? "border-l-primary"
+                          : log.level === "error"
+                            ? "border-l-destructive"
+                            : log.level === "warning"
+                              ? "border-l-accent"
+                              : "border-l-secondary"
+                      }`}
                     >
                       <div className="flex items-start gap-4">
                         <div className="flex-shrink-0">
                           <div
                             className={`p-3 rounded-lg ${
                               log.level === "success"
-                                ? "bg-petrobras-green-light"
+                                ? "bg-primary/10"
                                 : log.level === "error"
-                                  ? "bg-red-100"
+                                  ? "bg-destructive/10"
                                   : log.level === "warning"
-                                    ? "bg-petrobras-yellow-light"
-                                    : "bg-blue-100"
+                                    ? "bg-accent/20"
+                                    : "bg-secondary/10"
                             }`}
                           >
                             <Icon
                               className={`h-5 w-5 ${
                                 log.level === "success"
-                                  ? "text-petrobras-green-dark"
+                                  ? "text-primary"
                                   : log.level === "error"
-                                    ? "text-red-600"
+                                    ? "text-destructive"
                                     : log.level === "warning"
-                                      ? "text-amber-700"
-                                      : "text-blue-600"
+                                      ? "text-accent"
+                                      : "text-secondary"
                               }`}
                             />
                           </div>

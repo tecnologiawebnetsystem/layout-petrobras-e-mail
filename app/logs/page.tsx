@@ -238,7 +238,7 @@ export default function LogsPage() {
         <div className="mb-8 mt-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center shadow-lg">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-secondary to-primary flex items-center justify-center shadow-lg">
                 <Activity className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -260,13 +260,13 @@ export default function LogsPage() {
         {/* Cards de Estatisticas */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <Card 
-            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] ${logFilter === "all" ? "ring-2 ring-[#0047BB]" : ""}`}
+            className={`cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] ${logFilter === "all" ? "ring-2 ring-secondary" : ""}`}
             onClick={() => setLogFilter("all")}
           >
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0047BB]/10 to-[#0047BB]/5 flex items-center justify-center">
-                  <History className="h-5 w-5 text-[#0047BB]" />
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-secondary/10 to-secondary/5 flex items-center justify-center">
+                  <History className="h-5 w-5 text-secondary" />
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-foreground">{stats.total}</p>

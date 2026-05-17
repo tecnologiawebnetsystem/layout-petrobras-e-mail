@@ -25,7 +25,7 @@ const wikiCategories: WikiCategory[] = [
     description: "Aprenda a usar o sistema de compartilhamento de arquivos",
     icon: Book,
     articles: 5,
-    color: "text-[#00A859] bg-[#00A859]/10",
+    color: "text-primary bg-primary/10",
   },
   {
     id: "upload",
@@ -33,7 +33,7 @@ const wikiCategories: WikiCategory[] = [
     description: "Como fazer upload e compartilhar documentos com externos",
     icon: Upload,
     articles: 6,
-    color: "text-[#003F7F] bg-[#003F7F]/10",
+    color: "text-secondary bg-secondary/10",
   },
   {
     id: "download",
@@ -41,7 +41,7 @@ const wikiCategories: WikiCategory[] = [
     description: "Acesse e baixe arquivos compartilhados com você",
     icon: Download,
     articles: 4,
-    color: "text-[#FDB913] bg-[#FDB913]/20",
+    color: "text-accent bg-accent/20",
   },
   {
     id: "approval",
@@ -49,7 +49,7 @@ const wikiCategories: WikiCategory[] = [
     description: "Como supervisores aprovam ou rejeitam documentos",
     icon: CheckSquare,
     articles: 5,
-    color: "text-[#00A859] bg-[#00A859]/10",
+    color: "text-primary bg-primary/10",
   },
   {
     id: "historico",
@@ -57,7 +57,7 @@ const wikiCategories: WikiCategory[] = [
     description: "Acompanhe todas as ações e movimentações",
     icon: Clock,
     articles: 4,
-    color: "text-[#003F7F] bg-[#003F7F]/10",
+    color: "text-secondary bg-secondary/10",
   },
   {
     id: "settings",
@@ -65,7 +65,7 @@ const wikiCategories: WikiCategory[] = [
     description: "Personalize sua conta e preferências do sistema",
     icon: Settings,
     articles: 3,
-    color: "text-[#FDB913] bg-[#FDB913]/20",
+    color: "text-accent bg-accent/20",
   },
   {
     id: "faq",
@@ -73,7 +73,7 @@ const wikiCategories: WikiCategory[] = [
     description: "Dúvidas comuns e suas respostas",
     icon: HelpCircle,
     articles: 8,
-    color: "text-[#00A859] bg-[#00A859]/10",
+    color: "text-primary bg-primary/10",
   },
 ]
 
@@ -101,16 +101,16 @@ export default function WikiPage() {
   const totalArticles = wikiCategories.reduce((acc, cat) => acc + cat.articles, 0)
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-background">
       <AppHeader subtitle="Wiki e Documentação" />
 
       <main className="container max-w-7xl mx-auto px-6 py-8">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#00A99D] mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary mb-4">
             <Book className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">Central de Conhecimento</h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          <h1 className="text-4xl font-bold text-foreground mb-3">Central de Conhecimento</h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Bem-vindo à Wiki do sistema de compartilhamento de arquivos Petrobras. Encontre guias, tutoriais e respostas
             para suas dúvidas.
           </p>
@@ -118,7 +118,7 @@ export default function WikiPage() {
 
         <div className="max-w-2xl mx-auto mb-12">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               placeholder="Buscar artigos, tutoriais, perguntas..."
               value={searchQuery}
@@ -129,22 +129,22 @@ export default function WikiPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
-          <Card className="p-6 border-l-4 border-l-[#00A859]">
+          <Card className="p-6 border-l-4 border-l-primary">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total de Artigos</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{totalArticles}</p>
+                <p className="text-sm text-muted-foreground mb-1">Total de Artigos</p>
+                <p className="text-3xl font-bold text-foreground">{totalArticles}</p>
               </div>
-              <Book className="h-12 w-12 text-[#00A859]" />
+              <Book className="h-12 w-12 text-primary" />
             </div>
           </Card>
-          <Card className="p-6 border-l-4 border-l-[#003F7F]">
+          <Card className="p-6 border-l-4 border-l-secondary">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Categorias</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{wikiCategories.length}</p>
+                <p className="text-sm text-muted-foreground mb-1">Categorias</p>
+                <p className="text-3xl font-bold text-foreground">{wikiCategories.length}</p>
               </div>
-              <Clock className="h-12 w-12 text-[#003F7F]" />
+              <Clock className="h-12 w-12 text-secondary" />
             </div>
           </Card>
         </div>
@@ -166,12 +166,12 @@ export default function WikiPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-[#00A859] transition-colors">
+                      <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
                         {category.title}
                       </h3>
-                      <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-[#00A859] transition-colors" />
+                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{category.description}</p>
+                    <p className="text-sm text-muted-foreground mb-3">{category.description}</p>
                     <Badge variant="secondary" className="text-xs">
                       {category.articles} artigos
                     </Badge>
@@ -184,9 +184,9 @@ export default function WikiPage() {
 
         {filteredCategories.length === 0 && (
           <div className="text-center py-12">
-            <Search className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Nenhuma categoria encontrada</h3>
-            <p className="text-gray-600 dark:text-gray-400">Tente ajustar sua busca</p>
+            <Search className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-xl font-semibold text-foreground mb-2">Nenhuma categoria encontrada</h3>
+            <p className="text-muted-foreground">Tente ajustar sua busca</p>
           </div>
         )}
       </main>

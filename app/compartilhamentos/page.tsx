@@ -337,7 +337,7 @@ export default function CompartilhamentosPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2 flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center shadow-lg">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
                   <Share2 className="h-6 w-6 text-white" />
                 </div>
                 Meus Compartilhamentos
@@ -348,7 +348,7 @@ export default function CompartilhamentosPage() {
             </div>
             <Button
               onClick={() => router.push("/upload")}
-              className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:opacity-90 text-white shadow-lg gap-2"
+              className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white shadow-lg gap-2"
             >
               <Plus className="h-4 w-4" />
               Novo Compartilhamento
@@ -358,13 +358,13 @@ export default function CompartilhamentosPage() {
           {/* Cards de Metricas - Clicaveis */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
             <Card
-              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${activeTab === "todos" ? "ring-2 ring-[#0047BB] shadow-lg" : ""}`}
+              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${activeTab === "todos" ? "ring-2 ring-secondary shadow-lg" : ""}`}
               onClick={() => handleFilterByStatus("todos")}
             >
               <CardContent className="p-4 md:p-5">
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0047BB]/10 to-[#0047BB]/5 flex items-center justify-center">
-                    <FileText className="h-6 w-6 text-[#0047BB]" />
+                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-secondary/10 to-secondary/5 flex items-center justify-center">
+                    <FileText className="h-6 w-6 text-secondary" />
                   </div>
                   <div>
                     <p className="text-2xl md:text-3xl font-bold text-foreground">
@@ -557,7 +557,7 @@ export default function CompartilhamentosPage() {
               {!searchTerm && activeTab === "todos" && (
                 <Button
                   onClick={() => router.push("/upload")}
-                  className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:opacity-90 text-white"
+                  className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Fazer Primeiro Compartilhamento
@@ -602,7 +602,7 @@ export default function CompartilhamentosPage() {
                         <div className="flex-1 space-y-3">
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <h3 className="font-semibold text-lg text-foreground group-hover:text-[#0047BB] transition-colors">
+                              <h3 className="font-semibold text-lg text-foreground group-hover:text-secondary transition-colors">
                                 {upload.name}
                               </h3>
                               {upload.description && (
@@ -658,7 +658,7 @@ export default function CompartilhamentosPage() {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="h-7 text-xs gap-1 text-[#0047BB] hover:bg-[#0047BB]/10"
+                                      className="h-7 text-xs gap-1 text-secondary hover:bg-secondary/10"
                                       disabled={resendingId === upload.id}
                                       onClick={() =>
                                         handleResendNotification(upload.id)
@@ -688,7 +688,7 @@ export default function CompartilhamentosPage() {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="h-7 text-xs gap-1 text-muted-foreground hover:text-[#0047BB]"
+                                      className="h-7 text-xs gap-1 text-muted-foreground hover:text-secondary"
                                       disabled={resendingId === upload.id}
                                       onClick={() =>
                                         handleResendNotification(upload.id)
@@ -795,7 +795,7 @@ export default function CompartilhamentosPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleViewDetails(upload)}
-                          className="gap-2 hover:bg-[#0047BB]/10"
+                          className="gap-2 hover:bg-secondary/10"
                         >
                           <Eye className="h-4 w-4" />
                           <span className="hidden sm:inline">Detalhes</span>
@@ -806,7 +806,7 @@ export default function CompartilhamentosPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleCopyLink(upload.id)}
-                            className="gap-2 hover:bg-[#00A99D]/10"
+                            className="gap-2 hover:bg-primary/10"
                           >
                             <Copy className="h-4 w-4" />
                             <span className="hidden sm:inline">
@@ -895,7 +895,7 @@ export default function CompartilhamentosPage() {
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                   <FileText className="h-5 w-5 text-white" />
                 </div>
                 Detalhes do Compartilhamento
@@ -927,7 +927,7 @@ export default function CompartilhamentosPage() {
                     </h4>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <Mail className="h-5 w-5 text-[#00A99D]" />
+                        <Mail className="h-5 w-5 text-primary" />
                         <span className="font-medium">
                           {selectedUpload.recipient}
                         </span>
@@ -993,7 +993,7 @@ export default function CompartilhamentosPage() {
                             className="flex items-center justify-between p-2 bg-background rounded-lg"
                           >
                             <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-[#0047BB]" />
+                              <FileText className="h-4 w-4 text-secondary" />
                               <span className="text-sm">{file.name}</span>
                             </div>
                             <span className="text-xs text-muted-foreground">
@@ -1017,7 +1017,7 @@ export default function CompartilhamentosPage() {
                   {selectedUpload.status === "approved" && (
                     <Button
                       onClick={() => handleCopyLink(selectedUpload.id)}
-                      className="gap-2 bg-gradient-to-r from-[#00A99D] to-[#0047BB] text-white"
+                      className="gap-2 bg-gradient-to-r from-primary to-secondary text-white"
                     >
                       <Copy className="h-4 w-4" />
                       Copiar Link
