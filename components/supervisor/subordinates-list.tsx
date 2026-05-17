@@ -81,7 +81,7 @@ export function SubordinatesList() {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-muted border-t-[#0047BB]" />
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-muted border-t-secondary" />
           <p className="text-muted-foreground">Carregando subordinados...</p>
         </div>
       </div>
@@ -106,8 +106,8 @@ export function SubordinatesList() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-[#0047BB]/10 flex items-center justify-center">
-              <Users className="h-5 w-5 text-[#0047BB]" />
+            <div className="h-10 w-10 rounded-lg bg-secondary/10 flex items-center justify-center">
+              <Users className="h-5 w-5 text-secondary" />
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">{subordinates.length}</p>
@@ -168,7 +168,7 @@ export function SubordinatesList() {
               <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4 flex-1">
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-secondary to-primary flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
                       {sub.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">

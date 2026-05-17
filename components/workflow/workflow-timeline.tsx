@@ -71,20 +71,20 @@ export function WorkflowTimeline({ steps, currentStep }: WorkflowTimelineProps) 
               <div
                 className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${getStepColor(
                   step.status,
-                )} ${isActive ? "ring-4 ring-[#00A99D]/20" : ""}`}
+                )} ${isActive ? "ring-4 ring-primary/20" : ""}`}
               >
                 {getStepIcon(step.status)}
               </div>
 
               {/* Conteúdo do passo */}
               <div
-                className={`flex-1 ${isActive ? "bg-teal-50 dark:bg-teal-900/10 p-4 rounded-lg border-2 border-[#00A99D]" : ""}`}
+                className={`flex-1 ${isActive ? "bg-teal-50 dark:bg-teal-900/10 p-4 rounded-lg border-2 border-primary" : ""}`}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div>
                     <h4 className="font-semibold text-gray-900 dark:text-white">
                       {step.name}
-                      {isActive && <span className="ml-2 text-[#00A99D]">(Atual)</span>}
+                      {isActive && <span className="ml-2 text-primary">(Atual)</span>}
                     </h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {step.approver} - {step.role}

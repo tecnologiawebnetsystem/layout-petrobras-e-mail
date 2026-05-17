@@ -33,7 +33,7 @@ export function ExpirationEditorModal({ open, onOpenChange, currentHours, onUpda
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-[#FDB913]" />
+            <Clock className="h-5 w-5 text-accent" />
             Alterar Tempo de Validade
           </DialogTitle>
           <DialogDescription>
@@ -98,7 +98,7 @@ export function ExpirationEditorModal({ open, onOpenChange, currentHours, onUpda
           <Button
             onClick={handleUpdate}
             disabled={!reason.trim() || newHours === currentHours}
-            className="bg-[#FDB913] hover:bg-[#FDB913]/90 text-black"
+            className="bg-accent hover:bg-accent/90 text-black"
           >
             <Clock className="h-4 w-4 mr-2" />
             Atualizar Tempo

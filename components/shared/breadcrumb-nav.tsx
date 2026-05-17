@@ -16,7 +16,7 @@ export function BreadcrumbNav({ items, dashboardLink }: BreadcrumbNavProps) {
       <div className="flex items-center gap-2.5 text-sm">
         <button
           onClick={() => router.push(dashboardLink)}
-          className="text-[#0047BB] hover:text-[#003A99] hover:bg-blue-50 dark:hover:bg-blue-950/20 p-1.5 rounded-md transition-all"
+          className="text-secondary hover:text-secondary/90 hover:bg-blue-50 dark:hover:bg-blue-950/20 p-1.5 rounded-md transition-all"
           aria-label="Ir para Início"
         >
           <Home className="h-4 w-4" />
@@ -28,7 +28,7 @@ export function BreadcrumbNav({ items, dashboardLink }: BreadcrumbNavProps) {
             {item.href ? (
               <button
                 onClick={() => router.push(item.href!)}
-                className="text-[#0047BB] hover:text-[#003A99] hover:underline font-medium transition-colors text-base"
+                className="text-secondary hover:text-secondary/90 hover:underline font-medium transition-colors text-base"
               >
                 {item.label}
               </button>

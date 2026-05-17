@@ -237,7 +237,7 @@ export function SupervisorUploadForm() {
   return (
     <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-8 space-y-6">
       <div className="flex items-center gap-4 mb-3">
-        <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
+        <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
           <Sparkles className="h-7 w-7 text-white" />
         </div>
         <div>
@@ -255,7 +255,7 @@ export function SupervisorUploadForm() {
         {supervisorDoSupervisor ? (
           <div className="bg-muted/30 border border-border/50 rounded-xl p-5 space-y-3">
             <Label className="text-base font-medium flex items-center gap-2">
-              <Lock className="h-4 w-4 text-[#0047BB]" />
+              <Lock className="h-4 w-4 text-secondary" />
               Aprovador Automático
             </Label>
             <div className="bg-background/50 rounded-lg p-4 space-y-2">
@@ -274,7 +274,7 @@ export function SupervisorUploadForm() {
                     </p>
                   )}
                 </div>
-                <div className="px-3 py-1.5 bg-[#0047BB]/10 text-[#0047BB] rounded-full text-xs font-medium">
+                <div className="px-3 py-1.5 bg-secondary/10 text-secondary rounded-full text-xs font-medium">
                   Seu Superior
                 </div>
               </div>
@@ -309,7 +309,7 @@ export function SupervisorUploadForm() {
             htmlFor="recipient"
             className="text-base font-medium flex items-center gap-2"
           >
-            <Lock className="h-4 w-4 text-[#00A99D]" />
+            <Lock className="h-4 w-4 text-primary" />
             Destinatário Externo
           </Label>
           <Input
@@ -339,7 +339,7 @@ export function SupervisorUploadForm() {
             htmlFor="expiration"
             className="text-base font-medium flex items-center gap-2"
           >
-            <Clock className="h-4 w-4 text-[#FDB913]" />
+            <Clock className="h-4 w-4 text-accent" />
             Tempo de Disponibilidade
           </Label>
           <Select
@@ -380,7 +380,7 @@ export function SupervisorUploadForm() {
             type="submit"
             disabled={isLoading || showSuccess}
             size="lg"
-            className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:from-[#008A81] hover:to-[#003A99] text-white font-semibold px-10 text-base shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-semibold px-10 text-base shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading && (
               <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />

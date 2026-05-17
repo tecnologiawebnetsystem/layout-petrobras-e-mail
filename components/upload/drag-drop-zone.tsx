@@ -204,8 +204,8 @@ export function DragDropZone({ onFilesSelected, selectedFiles, onRemoveFile, dis
           relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-500
           ${
             isDragging
-              ? "border-[#00A99D] bg-gradient-to-br from-[#00A99D]/10 to-[#0047BB]/10 scale-[1.02] shadow-2xl"
-              : "border-border hover:border-[#00A99D]/50 hover:bg-muted/30 hover:shadow-lg"
+              ? "border-primary bg-gradient-to-br from-primary/10 to-secondary/10 scale-[1.02] shadow-2xl"
+              : "border-border hover:border-primary/50 hover:bg-muted/30 hover:shadow-lg"
           }
           ${validatingZip || disabled ? "pointer-events-none opacity-50" : ""}
         `}
@@ -222,7 +222,7 @@ export function DragDropZone({ onFilesSelected, selectedFiles, onRemoveFile, dis
           <div className="pointer-events-none space-y-4">
             {validatingZip ? (
               <div className="space-y-4">
-                <div className="mx-auto w-24 h-24 rounded-2xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
+                <div className="mx-auto w-24 h-24 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                   <Shield className="h-12 w-12 text-white animate-pulse" />
                 </div>
                 <div>
@@ -235,11 +235,11 @@ export function DragDropZone({ onFilesSelected, selectedFiles, onRemoveFile, dis
                 <div
                   className={`
                   mx-auto w-24 h-24 rounded-2xl flex items-center justify-center transition-all duration-500
-                  ${isDragging ? "bg-gradient-to-br from-[#00A99D] to-[#0047BB] scale-110 shadow-xl rotate-6" : "bg-gradient-to-br from-[#00A99D]/20 to-[#0047BB]/20"}
+                  ${isDragging ? "bg-gradient-to-br from-primary to-secondary scale-110 shadow-xl rotate-6" : "bg-gradient-to-br from-primary/20 to-secondary/20"}
                 `}
                 >
                   <Upload
-                    className={`h-12 w-12 transition-all duration-500 ${isDragging ? "text-white scale-125 -rotate-6" : "text-[#00A99D]"}`}
+                    className={`h-12 w-12 transition-all duration-500 ${isDragging ? "text-white scale-125 -rotate-6" : "text-primary"}`}
                   />
                 </div>
 
@@ -267,7 +267,7 @@ export function DragDropZone({ onFilesSelected, selectedFiles, onRemoveFile, dis
                 <Button
                   type="button"
                   size="lg"
-                  className="pointer-events-auto bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:from-[#008A81] hover:to-[#003A99] text-white shadow-lg"
+                  className="pointer-events-auto bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white shadow-lg"
                   onClick={() => document.getElementById("file-upload")?.click()}
                 >
                   <Upload className="h-5 w-5 mr-2" />
@@ -302,7 +302,7 @@ export function DragDropZone({ onFilesSelected, selectedFiles, onRemoveFile, dis
                     key={index}
                     className="flex items-center gap-4 p-4 bg-gradient-to-r from-card to-card/50 border rounded-xl hover:shadow-lg transition-all duration-300 group card-hover"
                   >
-                    <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-[#00A99D]/20 to-[#0047BB]/20 flex items-center justify-center">
+                    <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
                       {getFileIcon(file.name)}
                     </div>
 

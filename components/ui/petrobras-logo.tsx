@@ -29,7 +29,7 @@ export function PetrobrasLogo({ size = "md", showText = false }: PetrobrasLogoPr
       </div>
       {showText && (
         <span
-          className={`font-bold ${currentSize.text} bg-gradient-to-r from-[#00A859] to-[#003F7F] bg-clip-text text-transparent`}
+          className={`font-bold ${currentSize.text} bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent`}
         >
           Petrobras
         </span>

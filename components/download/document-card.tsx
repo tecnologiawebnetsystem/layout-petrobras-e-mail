@@ -56,7 +56,7 @@ export function DocumentCard({ document, isSelected, onSelect, onDownload }: Doc
       className={cn(
         "relative bg-card rounded-lg border p-4 space-y-4 transition-all",
         !isDisabled && "hover:shadow-md",
-        isSelected && "ring-2 ring-[#0047BB]",
+        isSelected && "ring-2 ring-secondary",
         isDisabled && "opacity-60",
       )}
     >
@@ -132,7 +132,7 @@ export function DocumentCard({ document, isSelected, onSelect, onDownload }: Doc
         disabled={isDisabled}
         className={cn(
           "w-full",
-          !isDisabled && "bg-blue-50 hover:bg-blue-100 text-[#0047BB] dark:bg-blue-950/20 dark:hover:bg-blue-950/40",
+          !isDisabled && "bg-blue-50 hover:bg-blue-100 text-secondary dark:bg-blue-950/20 dark:hover:bg-blue-950/40",
         )}
       >
         <Download className="h-4 w-4 mr-2" />

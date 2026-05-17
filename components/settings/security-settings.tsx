@@ -160,7 +160,7 @@ export function SecuritySettings() {
             <Button
               onClick={handleSave}
               disabled={!isPasswordValid || !passwordsMatch || !currentPassword}
-              className="bg-[#0047BB] hover:bg-[#003a99]"
+              className="bg-secondary hover:bg-[#003a99]"
             >
               <Save className="h-4 w-4 mr-2" />
               Alterar senha

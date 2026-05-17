@@ -25,17 +25,17 @@ export function NotificationModal({ open, onOpenChange, type, title, message }: 
   }, [open, type, onOpenChange])
 
   const icons = {
-    success: <CheckCircle2 className="h-16 w-16 text-[#00A859]" />,
+    success: <CheckCircle2 className="h-16 w-16 text-primary" />,
     error: <XCircle className="h-16 w-16 text-red-500" />,
-    warning: <AlertCircle className="h-16 w-16 text-[#FDB913]" />,
-    info: <Info className="h-16 w-16 text-[#003F7F]" />,
+    warning: <AlertCircle className="h-16 w-16 text-accent" />,
+    info: <Info className="h-16 w-16 text-secondary" />,
   }
 
   const backgrounds = {
-    success: "bg-[#00A859]/10 dark:bg-[#00A859]/20",
+    success: "bg-primary/10 dark:bg-primary/20",
     error: "bg-red-50 dark:bg-red-950/20",
-    warning: "bg-[#FDB913]/10 dark:bg-[#FDB913]/20",
-    info: "bg-[#003F7F]/10 dark:bg-[#003F7F]/20",
+    warning: "bg-accent/10 dark:bg-accent/20",
+    info: "bg-secondary/10 dark:bg-secondary/20",
   }
 
   return (

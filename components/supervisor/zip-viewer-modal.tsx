@@ -84,7 +84,7 @@ export function ZipViewerModal({ isOpen, onClose, fileName, fileUrl, fileBlob }:
       <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-[#00A99D]" />
+            <FileText className="h-5 w-5 text-primary" />
             Conteúdo do arquivo ZIP
           </DialogTitle>
           <p className="text-sm text-muted-foreground">{fileName}</p>
@@ -93,7 +93,7 @@ export function ZipViewerModal({ isOpen, onClose, fileName, fileUrl, fileBlob }:
         <div className="flex-1 overflow-hidden">
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-[#00A99D]" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <span className="ml-3 text-muted-foreground">Lendo conteúdo do ZIP...</span>
             </div>
           )}
@@ -125,7 +125,7 @@ export function ZipViewerModal({ isOpen, onClose, fileName, fileUrl, fileBlob }:
                     {file.isFolder ? (
                       <Folder className="h-5 w-5 text-amber-500 flex-shrink-0" />
                     ) : (
-                      <FileText className="h-5 w-5 text-[#00A99D] flex-shrink-0" />
+                      <FileText className="h-5 w-5 text-primary flex-shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{file.name}</p>

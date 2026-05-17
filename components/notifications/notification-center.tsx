@@ -35,8 +35,8 @@ const notificationColors: Record<NotificationType, string> = {
   approval_approved: "text-green-600 bg-green-100 dark:bg-green-900/30",
   approval_rejected: "text-red-600 bg-red-100 dark:bg-red-900/30",
   security_alert: "text-red-600 bg-red-100 dark:bg-red-900/30",
-  new_file: "text-[#00A99D] bg-teal-100 dark:bg-teal-900/30",
-  file_shared: "text-[#0047BB] bg-blue-100 dark:bg-blue-900/30",
+  new_file: "text-primary bg-teal-100 dark:bg-teal-900/30",
+  file_shared: "text-secondary bg-blue-100 dark:bg-blue-900/30",
 }
 
 export function NotificationCenter() {
@@ -82,7 +82,7 @@ export function NotificationCenter() {
               variant="ghost"
               size="sm"
               onClick={markAllAsRead}
-              className="text-xs text-[#00A99D] hover:text-[#008a82]"
+              className="text-xs text-primary hover:text-primary/90"
             >
               <CheckCheck className="h-4 w-4 mr-1" />
               Marcar todas como lidas
@@ -139,7 +139,7 @@ export function NotificationCenter() {
                           })}
                         </span>
                         {!notification.read && (
-                          <Badge variant="secondary" className="text-xs px-2 py-0 bg-[#00A99D]/10 text-[#00A99D]">
+                          <Badge variant="secondary" className="text-xs px-2 py-0 bg-primary/10 text-primary">
                             Nova
                           </Badge>
                         )}
