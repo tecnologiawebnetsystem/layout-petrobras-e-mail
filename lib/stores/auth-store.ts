@@ -1,6 +1,9 @@
 /**
  * Auth Store using Zustand for state management.
  * Integrado com backend Python via /api/auth/* proxy.
+ *
+ * IMPORTANTE: Autenticacao exclusiva via Entra ID (backend-driven).
+ * Nao ha login local, mocks, tokens fake, ou bypass.
  */
 
 import { create } from "zustand"
@@ -39,26 +42,6 @@ function mapRoleToUserType(role: string): "internal" | "external" | "supervisor"
   return "external"
 }
 
-interface LoginResponse {
-  access_token: string
-  refresh_token: string
-  token_type: string
-  expires_in: number
-  user: {
-    id: number | string
-    name: string
-    email: string
-    role: string
-    department?: string
-    employee_id?: string
-    manager?: {
-      id: number | string
-      name: string
-      email: string
-    } | null
-  }
-}
-
 interface AuthState {
   user: User | null
   accessToken: string | null
@@ -67,7 +50,7 @@ interface AuthState {
   isLoading: boolean
   /**
    * Indica que o persist middleware terminou de hidratar o store a partir
-   * do localStorage. Nunca e persistido — começa false em todo carregamento
+   * do localStorage. Nunca e persistido — comeca false em todo carregamento
    * e e setado para true pelo onRehydrateStorage.
    */
   _hasHydrated: boolean
@@ -81,7 +64,7 @@ interface AuthState {
   setHasHydrated: (value: boolean) => void
 
   // Acoes de API
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  validateSession: () => Promise<boolean>
   logout: () => Promise<void>
   refreshSession: () => Promise<boolean>
 }
@@ -127,64 +110,60 @@ export const useAuthStore = create<AuthState>()(
         })),
 
       /**
-       * Login real via backend Python.
-       * POST /api/auth/login -> { access_token, refresh_token, user }
+       * Valida a sessao com o backend (GET /auth/entra/session-check).
+       * Se invalida, limpa o state e redireciona para login.
+       * Retorna true se sessao e valida, false caso contrario.
        */
-      login: async (email: string, password: string) => {
-        set({ isLoading: true })
+      validateSession: async () => {
+        const { accessToken } = get()
+        if (!accessToken) {
+          get().clearAuth()
+          return false
+        }
+
         try {
-          const data = await apiFetch<LoginResponse>("/auth/login", {
-            method: "POST",
-            body: { email, password },
-            skipAuth: true,
-          })
+          const data = await apiFetch<{
+            valid: boolean
+            user_id: number
+            email: string
+            role: string
+            expires_in: number
+          }>("/auth/entra/session-check")
 
-          const userType = mapRoleToUserType(data.user.role)
-
-          const user: User = {
-            id: String(data.user.id),
-            email: data.user.email,
-            name: data.user.name,
-            userType,
-            department: data.user.department,
-            employeeId: data.user.employee_id,
-            manager: data.user.manager
-              ? {
-                  id: String(data.user.manager.id),
-                  name: data.user.manager.name,
-                  email: data.user.manager.email,
-                }
-              : undefined,
+          if (!data.valid) {
+            get().clearAuth()
+            return false
           }
 
-          set({
-            user,
-            accessToken: data.access_token,
-            refreshToken: data.refresh_token,
-            isAuthenticated: true,
-            isLoading: false,
-          })
-
-          return { success: true }
-        } catch (err) {
-          set({ isLoading: false })
-          if (err instanceof ApiRequestError) {
-            return { success: false, error: err.detail }
+          // Se a sessao esta perto de expirar (< 5 min), tenta refresh
+          if (data.expires_in < 300) {
+            const refreshed = await get().refreshSession()
+            return refreshed
           }
-          return { success: false, error: "Erro de conexao com o servidor" }
+
+          return true
+        } catch {
+          // Token invalido/expirado — tenta refresh antes de deslogar
+          const { refreshToken: currentRefreshToken } = get()
+          if (currentRefreshToken) {
+            const refreshed = await get().refreshSession()
+            return refreshed
+          }
+          get().clearAuth()
+          return false
         }
       },
 
       /**
-       * Logout via backend Python.
-       * POST /api/auth/logout
+       * Logout via backend (POST /auth/entra/logout).
+       * Revoga todos refresh tokens e redireciona para logout Microsoft.
        */
       logout: async () => {
         try {
-          await apiFetch("/auth/logout", { method: "POST" })
-        } catch {
-          // Ignora erros de logout -- limpa o state de qualquer forma
-        } finally {
+          const data = await apiFetch<{ ms_logout_url?: string }>("/auth/entra/logout", {
+            method: "POST",
+          })
+          // Limpa state local
           set({
             user: null,
             accessToken: null,
@@ -192,30 +171,67 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
             isLoading: false,
           })
+          // Redireciona para logout Microsoft (limpa sessao SSO)
+          if (data?.ms_logout_url) {
+            window.location.href = data.ms_logout_url
+            return
+          }
+        } catch {
+          // Ignora erros de logout — limpa o state de qualquer forma
         }
+        set({
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+          isAuthenticated: false,
+          isLoading: false,
+        })
       },
 
       /**
-       * Refresh do token via backend Python.
-       * POST /api/auth/refresh -> { access_token, refresh_token }
+       * Refresh do token via backend (POST /auth/entra/refresh).
+       * Usa header X-Refresh-Token conforme esperado pelo backend.
        */
       refreshSession: async () => {
         const { refreshToken: currentRefreshToken } = get()
         if (!currentRefreshToken) return false
 
         try {
-          const data = await apiFetch<{
-            access_token: string
-            refresh_token: string
-          }>("/auth/refresh", {
+          const response = await fetch("/api/auth/entra/refresh", {
             method: "POST",
-            body: { refresh_token: currentRefreshToken },
-            skipAuth: true,
+            headers: {
+              "X-Refresh-Token": currentRefreshToken,
+            },
           })
+
+          if (!response.ok) {
+            set({
+              user: null,
+              accessToken: null,
+              refreshToken: null,
+              isAuthenticated: false,
+            })
+            return false
+          }
+
+          const data = await response.json()
+
+          // Atualizar user se retornado
+          const currentUser = get().user
+          const updatedUser = data.user
+            ? {
+                ...currentUser,
+                id: String(data.user.id),
+                name: data.user.name,
+                email: data.user.email,
+                userType: mapRoleToUserType(data.user.role),
+              }
+            : currentUser
 
           set({
             accessToken: data.access_token,
             refreshToken: data.refresh_token,
+            user: updatedUser as User,
           })
           return true
         } catch {
@@ -231,8 +247,6 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "petrobras-auth-storage",
-      // Exclui _hasHydrated e setHasHydrated da persistencia —
-      // _hasHydrated e sempre false ao iniciar e setado pelo callback abaixo.
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,

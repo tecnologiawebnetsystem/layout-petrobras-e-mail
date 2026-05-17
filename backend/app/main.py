@@ -22,6 +22,7 @@ from app.api.v1 import (
     routes_auth,
     routes_emails,
     routes_diagnostico,
+    routes_entra_auth,
 )
 
 app = FastAPI(
@@ -125,6 +126,9 @@ app.include_router(routes_external_auth.router, prefix=prefix_v1, tags=["Auth / 
 
 # Rotas de autenticacao unificadas
 app.include_router(routes_auth.router, prefix=prefix_v1, tags=["Auth"])
+
+# Rotas de autenticacao Entra ID (backend-driven, OAuth2 Authorization Code)
+app.include_router(routes_entra_auth.router, prefix=prefix_v1, tags=["Auth / Entra ID"])
 
 # Rotas de emails
 app.include_router(routes_emails.router, prefix=prefix_v1, tags=["Emails"])

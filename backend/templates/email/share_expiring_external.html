@@ -1,0 +1,9 @@
+{% extends "email/base.html" %}
+{% block content %}
+<h2>Lembrete: Seus arquivos expiram em breve</h2>
+<p>Olá,</p>
+<p>Os arquivos compartilhados com você estarão disponíveis apenas até <b>{{ expires_at }}</b>.</p>
+<p>Caso ainda não tenha feito o download, acesse o portal agora:</p>
+<p><a class="btn" href="{{ portal_url }}">Acessar portal de download</a></p>
+<p>Após a data de expiração, os arquivos não estarão mais disponíveis.</p>
+{% endblock %}
