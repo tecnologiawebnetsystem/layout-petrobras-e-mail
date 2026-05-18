@@ -438,6 +438,121 @@ def admin_list_logs(
 
 
 # ---------------------------------------------------------------------------
+# GET /admin/tracking/by-email — Rastreamento completo de um usuario por email
+# ---------------------------------------------------------------------------
+
+@router.get("/tracking/by-email")
+def admin_tracking_user_by_email(
+    email: str = Query(..., description="Email do usuario para rastrear"),
+    session: Session = Depends(get_session),
+    user: User = Depends(require_admin),
+    request: Request = None,
+):
+    """
+    Retorna rastreamento completo de um usuario especifico por email:
+    - Dados do usuario
+    - Todos os compartilhamentos criados
+    - Todos os compartilhamentos aprovados (se supervisor)
+    - Todos os logs de auditoria
+    - Historico de downloads
+    """
+    target = session.exec(select(User).where(User.email == email)).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Usuario nao encontrado com este email.")
+
+    # Shares criados pelo usuario
+    shares_created = session.exec(
+        select(Share).where(Share.created_by_id == target.id).order_by(Share.created_at.desc())
+    ).all()
+
+    # Shares aprovados pelo usuario (se supervisor)
+    shares_approved = session.exec(
+        select(Share).where(Share.approver_id == target.id).order_by(Share.approved_at.desc())
+    ).all()
+
+    # Logs do usuario
+    logs = session.exec(
+        select(AuditLog).where(AuditLog.user_id == target.id).order_by(AuditLog.created_at.desc()).limit(100)
+    ).all()
+
+    # Arquivos enviados pelo usuario
+    files_uploaded = session.exec(
+        select(RestrictedFile).where(RestrictedFile.upload_id == target.id).order_by(RestrictedFile.created_at.desc())
+    ).all()
+
+    log_event(
+        session=session,
+        action="ADMIN_TRACKING_USER",
+        user_id=user.id,
+        detail=f"Rastreou usuario email={target.email}",
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None,
+    )
+
+    return {
+        "user": {
+            "id": target.id,
+            "name": target.name,
+            "email": target.email,
+            "type": target.type.value if hasattr(target.type, "value") else str(target.type),
+            "department": target.department,
+            "job_title": target.job_title,
+            "is_supervisor": target.is_supervisor,
+            "is_admin": target.is_admin,
+            "status": target.status,
+            "created_at": target.created_at.isoformat() if target.created_at else None,
+            "last_login": target.last_login.isoformat() if target.last_login else None,
+            "manager_id": target.manager_id,
+        },
+        "shares_created": [
+            {
+                "id": s.id,
+                "name": s.name,
+                "external_email": s.external_email,
+                "status": s.status.value if hasattr(s.status, "value") else str(s.status),
+                "created_at": s.created_at.isoformat() if s.created_at else None,
+            }
+            for s in shares_created
+        ],
+        "shares_approved": [
+            {
+                "id": s.id,
+                "name": s.name,
+                "external_email": s.external_email,
+                "status": s.status.value if hasattr(s.status, "value") else str(s.status),
+                "approved_at": s.approved_at.isoformat() if s.approved_at else None,
+            }
+            for s in shares_approved
+        ],
+        "files_uploaded": [
+            {
+                "id": f.id,
+                "name": f.name,
+                "size_bytes": f.size_bytes,
+                "mime_type": f.mime_type,
+                "created_at": f.created_at.isoformat() if f.created_at else None,
+            }
+            for f in files_uploaded
+        ],
+        "recent_logs": [
+            {
+                "id": log.id,
+                "action": log.action,
+                "detail": log.detail,
+                "created_at": log.created_at.isoformat() if log.created_at else None,
+            }
+            for log in logs[:50]
+        ],
+        "stats": {
+            "total_shares_created": len(shares_created),
+            "total_shares_approved": len(shares_approved),
+            "total_files_uploaded": len(files_uploaded),
+            "total_logs": len(logs),
+        },
+    }
+
+
+# ---------------------------------------------------------------------------
 # GET /admin/tracking/{user_id} — Rastreamento completo de um usuario
 # ---------------------------------------------------------------------------
 

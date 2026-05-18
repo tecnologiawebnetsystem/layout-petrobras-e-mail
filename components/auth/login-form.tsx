@@ -14,7 +14,6 @@ import { useAuthStore } from "@/lib/stores/auth-store"
 import { useRouter } from "next/navigation"
 import { isBackendAvailable } from "@/lib/services/api-fetch"
 
-
 export function LoginForm() {
   const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)

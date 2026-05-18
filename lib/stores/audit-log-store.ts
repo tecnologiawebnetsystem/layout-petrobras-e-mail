@@ -31,7 +31,7 @@ export interface AuditLog {
     id: string
     name: string
     email: string
-    type: "internal" | "external" | "supervisor" | "support"
+    type: "internal" | "external" | "supervisor" | "support" | "admin"
     employeeId?: string
   }
   details: {
