@@ -203,10 +203,10 @@ function AdminContent() {
   const [availableActions, setAvailableActions] = useState<string[]>([])
 
   // Tracking state
-  const [trackingUserId, setTrackingUserId] = useState("")
-  const [trackingData, setTrackingData] = useState<TrackingData | null>(null)
-  const [trackingLoading, setTrackingLoading] = useState(false)
-  const [trackingError, setTrackingError] = useState("")
+const [trackingUserEmail, setTrackingUserEmail] = useState("")
+const [trackingData, setTrackingData] = useState<TrackingData | null>(null)
+const [trackingLoading, setTrackingLoading] = useState(false)
+const [trackingError, setTrackingError] = useState("")
 
   // Initial load
   useEffect(() => {
@@ -309,18 +309,18 @@ function AdminContent() {
 
   // Load tracking data
   const loadTracking = async () => {
-    if (!trackingUserId) {
-      setTrackingError("Digite o ID do usuario")
+    if (!trackingUserEmail || !trackingUserEmail.includes("@")) {
+      setTrackingError("Digite um email valido")
       return
     }
     setTrackingLoading(true)
     setTrackingError("")
     setTrackingData(null)
     try {
-      const data = await apiFetch<TrackingData>(`/admin/tracking/${trackingUserId}`)
+      const data = await apiFetch<TrackingData>(`/admin/tracking/by-email?email=${encodeURIComponent(trackingUserEmail)}`)
       setTrackingData(data)
     } catch (error: any) {
-      setTrackingError(error?.message || "Usuario nao encontrado")
+      setTrackingError(error?.message || "Usuario nao encontrado com este email")
     } finally {
       setTrackingLoading(false)
     }
@@ -716,9 +716,8 @@ function AdminContent() {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                setTrackingUserId(String(u.id))
+                                setTrackingUserEmail(u.email)
                                 setActiveTab("tracking")
-                                loadTracking()
                               }}
                             >
                               <Eye className="h-4 w-4" />
@@ -1010,16 +1009,17 @@ function AdminContent() {
               <CardHeader>
                 <CardTitle>Rastreamento de Usuario</CardTitle>
                 <CardDescription>
-                  Digite o ID do usuario para ver todo o historico de atividades
+                  Digite o email do usuario para ver todo o historico de atividades
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex gap-4">
                   <Input
-                    placeholder="ID do usuario (ex: 1)"
-                    value={trackingUserId}
-                    onChange={(e) => setTrackingUserId(e.target.value)}
-                    className="max-w-[200px]"
+                    placeholder="Email do usuario (ex: usuario@petrobras.com.br)"
+                    value={trackingUserEmail}
+                    onChange={(e) => setTrackingUserEmail(e.target.value)}
+                    className="max-w-[400px]"
+                    type="email"
                   />
                   <Button onClick={loadTracking} disabled={trackingLoading}>
                     {trackingLoading ? (

@@ -293,3 +293,22 @@ Sistema de Compartilhamento de Arquivos Corporativos (Petrobras)
 | user | session_token | 1:N | Sessões do usuário |
 | user | email_log | 1:N | Emails enviados para o usuário |
 | support_registration | support_audit | 1:N | Histórico do registro |
+
+---
+
+## Rastreamento de Usuarios
+
+O sistema permite rastreamento completo de usuarios atraves do **email** (campo UNIQUE na tabela `user`).
+
+**Endpoint:** `GET /admin/tracking/by-email?email=usuario@email.com`
+
+**Dados retornados:**
+- Informacoes do usuario (nome, email, tipo, departamento, cargo, status)
+- Compartilhamentos criados pelo usuario
+- Compartilhamentos aprovados (se supervisor)
+- Arquivos enviados
+- Logs de auditoria recentes
+- Estatisticas consolidadas
+
+**Observacao:** O campo `email` na tabela `user` possui constraint UNIQUE, garantindo que a busca por email sempre retornara no maximo um usuario.
+
