@@ -10,7 +10,7 @@ import { showAlert } from "@/lib/stores/alert-store"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
-  allowedUserTypes: Array<"internal" | "external" | "supervisor" | "admin">
+  allowedUserTypes: Array<"internal" | "external" | "supervisor" | "admin" | "support">
 }
 
 export function ProtectedRoute({ children, allowedUserTypes }: ProtectedRouteProps) {

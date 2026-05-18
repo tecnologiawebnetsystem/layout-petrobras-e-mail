@@ -1,6 +1,7 @@
+import { NextRequest } from "next/server"
 import { proxyGET } from "@/lib/api/route-handler-utils"
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const email = searchParams.get("email")
   
