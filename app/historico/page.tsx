@@ -159,7 +159,7 @@ export default function HistoricoPage() {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 mt-4">
             <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center shadow-lg">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
                 <History className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -180,13 +180,13 @@ export default function HistoricoPage() {
           {/* Cards de Estatisticas */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <Card 
-              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${statusFilter === "all" ? "ring-2 ring-[#0047BB]" : ""}`}
+              className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${statusFilter === "all" ? "ring-2 ring-secondary" : ""}`}
               onClick={() => setStatusFilter("all")}
             >
               <CardContent className="p-5">
                 <div className="flex items-center justify-between">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0047BB]/10 to-[#0047BB]/5 flex items-center justify-center">
-                    <History className="h-6 w-6 text-[#0047BB]" />
+                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-secondary/10 to-secondary/5 flex items-center justify-center">
+                    <History className="h-6 w-6 text-secondary" />
                   </div>
                   <div className="text-right">
                     <p className="text-3xl font-bold text-foreground">{stats.total}</p>
@@ -390,7 +390,7 @@ export default function HistoricoPage() {
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                   <FileText className="h-5 w-5 text-white" />
                 </div>
                 Detalhes do Compartilhamento
@@ -435,7 +435,7 @@ export default function HistoricoPage() {
                         {selectedUpload.files.map((file, idx) => (
                           <div key={idx} className="flex items-center justify-between p-2 bg-background rounded-lg">
                             <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-[#0047BB]" />
+                              <FileText className="h-4 w-4 text-secondary" />
                               <span className="text-sm font-medium truncate">{file.name}</span>
                             </div>
                             <span className="text-xs text-muted-foreground">{file.size}</span>

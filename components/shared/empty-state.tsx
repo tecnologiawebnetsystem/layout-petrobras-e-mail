@@ -18,7 +18,7 @@ export function EmptyState({ type, onAction, actionLabel }: EmptyStateProps) {
         "Não há arquivos para visualizar no momento. Quando novos arquivos forem adicionados, eles aparecerão aqui.",
       illustration: (
         <div className="relative w-48 h-48 mx-auto mb-8">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#00A859]/10 to-[#003F7F]/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-full blur-3xl animate-pulse" />
           <FileX className="w-full h-full text-muted-foreground/20" />
         </div>
       ),
@@ -29,7 +29,7 @@ export function EmptyState({ type, onAction, actionLabel }: EmptyStateProps) {
       description: "Ótimas notícias! Não há arquivos aguardando aprovação. Você está em dia com suas atividades.",
       illustration: (
         <div className="relative w-48 h-48 mx-auto mb-8">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#00A859]/10 to-[#FDB913]/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 rounded-full blur-3xl animate-pulse" />
           <Upload className="w-full h-full text-muted-foreground/20" />
         </div>
       ),
@@ -41,7 +41,7 @@ export function EmptyState({ type, onAction, actionLabel }: EmptyStateProps) {
         "Você ainda não possui arquivos aprovados. Assim que novos documentos forem compartilhados com você e aprovados pelo supervisor, eles aparecerão aqui para download.",
       illustration: (
         <div className="relative w-48 h-48 mx-auto mb-8">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#003F7F]/10 to-[#00A859]/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 to-primary/10 rounded-full blur-3xl animate-pulse" />
           <Download className="w-full h-full text-muted-foreground/20" />
         </div>
       ),
@@ -59,14 +59,14 @@ export function EmptyState({ type, onAction, actionLabel }: EmptyStateProps) {
       ),
     },
     "all-approved": {
-      icon: <CheckCircle className="w-24 h-24 text-[#00A859]/60" />,
+      icon: <CheckCircle className="w-24 h-24 text-primary/60" />,
       title: "Parabéns! Tudo processado",
       description:
         "Todos os envios foram revisados e processados com sucesso. Continue o excelente trabalho mantendo o fluxo em dia.",
       illustration: (
         <div className="relative w-48 h-48 mx-auto mb-8">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#00A859]/20 to-[#FDB913]/10 rounded-full blur-3xl animate-pulse" />
-          <CheckCircle className="w-full h-full text-[#00A859]/30" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/10 rounded-full blur-3xl animate-pulse" />
+          <CheckCircle className="w-full h-full text-primary/30" />
         </div>
       ),
     },
@@ -85,7 +85,7 @@ export function EmptyState({ type, onAction, actionLabel }: EmptyStateProps) {
         <Button
           onClick={onAction}
           size="lg"
-          className="bg-gradient-to-r from-[#00A859] to-[#003F7F] hover:from-[#008A48] hover:to-[#00305D] transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl min-h-[44px] px-8"
+          className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl min-h-[44px] px-8"
         >
           {actionLabel}
         </Button>

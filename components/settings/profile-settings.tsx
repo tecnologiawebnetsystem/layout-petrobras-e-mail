@@ -47,13 +47,13 @@ export function ProfileSettings() {
         <div className="flex items-center gap-6">
           <div className="relative">
             <Avatar className="h-24 w-24">
-              <AvatarFallback className="bg-[#0047BB] text-white text-2xl">
+              <AvatarFallback className="bg-secondary text-white text-2xl">
                 {user?.name ? getInitials(user.name) : "U"}
               </AvatarFallback>
             </Avatar>
             <Button
               size="icon"
-              className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-[#00A99D] hover:bg-[#008a82]"
+              className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary hover:bg-primary/90"
             >
               <Camera className="h-4 w-4" />
             </Button>
@@ -108,7 +108,7 @@ export function ProfileSettings() {
 
         <div className="flex justify-end gap-3 pt-4 border-t">
           <Button variant="outline">Cancelar</Button>
-          <Button onClick={handleSave} className="bg-[#0047BB] hover:bg-[#003a99]">
+          <Button onClick={handleSave} className="bg-secondary hover:bg-[#003a99]">
             <Save className="h-4 w-4 mr-2" />
             Salvar alterações
           </Button>

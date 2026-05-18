@@ -18,8 +18,8 @@ export function DownloadStats({ stats }: DownloadStatsProps) {
       label: "Total Recebidos",
       value: stats.totalReceived,
       icon: FileCheck,
-      color: "text-[#00A99D]",
-      bgColor: "bg-[#00A99D]/10",
+      color: "text-primary",
+      bgColor: "bg-primary/10",
     },
     {
       label: "Baixados",

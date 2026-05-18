@@ -51,13 +51,13 @@ export function FileUploadZone({ onFilesSelected }: FileUploadZoneProps) {
       className={cn(
         "relative border-2 border-dashed rounded-lg p-12 transition-all duration-200",
         isDragging
-          ? "border-[#0047BB] bg-blue-50 dark:bg-blue-950/20 scale-[1.02]"
+          ? "border-secondary bg-blue-50 dark:bg-blue-950/20 scale-[1.02]"
           : "border-border bg-muted/30 hover:border-muted-foreground/50",
       )}
     >
       <div className="flex flex-col items-center justify-center gap-4 text-center">
-        <div className={cn("p-4 rounded-full transition-colors", isDragging ? "bg-[#0047BB]/10" : "bg-background")}>
-          <FileUp className={cn("h-12 w-12", isDragging ? "text-[#0047BB]" : "text-[#0047BB]")} />
+        <div className={cn("p-4 rounded-full transition-colors", isDragging ? "bg-secondary/10" : "bg-background")}>
+          <FileUp className={cn("h-12 w-12", isDragging ? "text-secondary" : "text-secondary")} />
         </div>
 
         <div className="space-y-2">
@@ -74,7 +74,7 @@ export function FileUploadZone({ onFilesSelected }: FileUploadZoneProps) {
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
 
-        <Button type="button" variant="default" className="bg-[#0047BB] hover:bg-[#003A99] pointer-events-none">
+        <Button type="button" variant="default" className="bg-secondary hover:bg-secondary/90 pointer-events-none">
           <Upload className="h-4 w-4 mr-2" />
           Selecionar Arquivos
         </Button>

@@ -34,7 +34,7 @@ export function ExpirationEditorModal({ open, onOpenChange, currentHours, onUpda
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Clock className="h-6 w-6 text-[#00A99D]" />
+            <Clock className="h-6 w-6 text-primary" />
             Ajustar Tempo de Validade
           </DialogTitle>
           <DialogDescription>Defina por quantas horas os arquivos ficarão disponíveis após aprovação</DialogDescription>
@@ -69,7 +69,7 @@ export function ExpirationEditorModal({ open, onOpenChange, currentHours, onUpda
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleUpdate} className="bg-[#00A99D] hover:bg-[#00A99D]/90">
+          <Button onClick={handleUpdate} className="bg-primary hover:bg-primary/90">
             <Clock className="h-4 w-4 mr-2" />
             Atualizar Validade
           </Button>

@@ -217,7 +217,7 @@ export function ActivityDetailModal({ activity, isOpen, onClose }: ActivityDetai
 
           {/* Data e Hora */}
           <div className="flex items-center gap-2 pt-4 border-t">
-            <Clock className="h-4 w-4 text-[#00A99D]" />
+            <Clock className="h-4 w-4 text-primary" />
             <span className="text-sm text-muted-foreground">
               Realizado em {format(activity.timestamp, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}
             </span>

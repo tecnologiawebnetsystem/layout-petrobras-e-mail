@@ -314,13 +314,13 @@ export default function SuportePage() {
         {/* Metricas - Clicaveis para filtrar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card 
-            className={`bg-gradient-to-br from-card to-card/80 border-border/50 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] ${filtroStatus === "todos" ? "ring-2 ring-[#0047BB]" : ""}`}
+            className={`bg-gradient-to-br from-card to-card/80 border-border/50 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] ${filtroStatus === "todos" ? "ring-2 ring-secondary" : ""}`}
             onClick={() => handleFiltrarPorStatus("todos")}
           >
             <CardContent className="p-5">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0047BB]/10 to-[#0047BB]/5 flex items-center justify-center">
-                  <Users className="h-6 w-6 text-[#0047BB]" />
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-secondary/10 to-secondary/5 flex items-center justify-center">
+                  <Users className="h-6 w-6 text-secondary" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-foreground">{stats.total}</p>
@@ -365,13 +365,13 @@ export default function SuportePage() {
           </Card>
 
           <Card 
-            className={`bg-gradient-to-br from-card to-card/80 border-border/50 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] ${filtroStatus === "hoje" ? "ring-2 ring-[#00A99D]" : ""}`}
+            className={`bg-gradient-to-br from-card to-card/80 border-border/50 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] ${filtroStatus === "hoje" ? "ring-2 ring-primary" : ""}`}
             onClick={() => handleFiltrarPorStatus("hoje")}
           >
             <CardContent className="p-5">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#00A99D]/10 to-[#00A99D]/5 flex items-center justify-center">
-                  <Activity className="h-6 w-6 text-[#00A99D]" />
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+                  <Activity className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-foreground">{stats.hoje}</p>
@@ -404,7 +404,7 @@ export default function SuportePage() {
             <Card className="bg-card/50 backdrop-blur-sm border shadow-xl">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-4">
-                  <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center shadow-lg">
+                  <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
                     <UserPlus className="h-7 w-7 text-white" />
                   </div>
                   <div>
@@ -421,7 +421,7 @@ export default function SuportePage() {
                   {/* Numero da Solicitacao */}
                   <div className="space-y-2">
                     <Label htmlFor="numeroSolicitacao" className="text-base font-medium flex items-center gap-2">
-                      <Hash className="h-4 w-4 text-[#0047BB]" />
+                      <Hash className="h-4 w-4 text-secondary" />
                       Numero da Solicitacao
                       <span className="text-red-500">*</span>
                     </Label>
@@ -442,7 +442,7 @@ export default function SuportePage() {
                   {/* E-mail do Solicitante */}
                   <div className="space-y-2">
                     <Label htmlFor="emailSolicitante" className="text-base font-medium flex items-center gap-2">
-                      <User className="h-4 w-4 text-[#00A99D]" />
+                      <User className="h-4 w-4 text-primary" />
                       E-mail do Solicitante
                       <span className="text-red-500">*</span>
                     </Label>
@@ -463,7 +463,7 @@ export default function SuportePage() {
                   {/* E-mail do Usuario */}
                   <div className="space-y-2">
                     <Label htmlFor="emailUsuarioExterno" className="text-base font-medium flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-[#FDB913]" />
+                      <Mail className="h-4 w-4 text-accent" />
                       E-mail do Usuario
                       <span className="text-red-500">*</span>
                     </Label>
@@ -500,7 +500,7 @@ export default function SuportePage() {
                       type="submit"
                       disabled={isLoading}
                       size="lg"
-                      className="bg-gradient-to-r from-[#00A99D] to-[#0047BB] hover:from-[#008A81] hover:to-[#003A99] text-white font-semibold px-8 text-base shadow-lg hover:shadow-xl min-w-[200px]"
+                      className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-semibold px-8 text-base shadow-lg hover:shadow-xl min-w-[200px]"
                     >
                       {isLoading ? (
                         <>
@@ -526,7 +526,7 @@ export default function SuportePage() {
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between flex-wrap gap-4">
                   <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center shadow-lg">
+                  <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
                       <Search className="h-7 w-7 text-white" />
                     </div>
                     <div>
@@ -538,7 +538,7 @@ export default function SuportePage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {filtroStatus !== "todos" && (
-                      <Badge variant="outline" className="bg-[#0047BB]/10 text-[#0047BB] border-[#0047BB]/30 px-3 py-1">
+                      <Badge variant="outline" className="bg-secondary/10 text-secondary border-secondary/30 px-3 py-1">
                         Filtro: {filtroStatus === "ativo" ? "Ativos" : filtroStatus === "pendente" ? "Pendentes" : filtroStatus === "hoje" ? "Hoje" : "Inativos"}
                       </Badge>
                     )}
@@ -577,7 +577,7 @@ export default function SuportePage() {
                     variant={filtroStatus === "todos" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setFiltroStatus("todos")}
-                    className={filtroStatus === "todos" ? "bg-[#0047BB]" : ""}
+                            className={filtroStatus === "todos" ? "bg-secondary" : ""}
                   >
                     Todos ({stats.total})
                   </Button>
@@ -621,7 +621,7 @@ export default function SuportePage() {
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 space-y-2">
                             <div className="flex items-center gap-3 flex-wrap">
-                              <span className="font-mono text-sm font-semibold text-[#0047BB]">
+                              <span className="font-mono text-sm font-semibold text-secondary">
                                 {registro.numeroSolicitacao}
                               </span>
                               {getStatusBadge(registro.status)}
@@ -647,7 +647,7 @@ export default function SuportePage() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="flex-shrink-0 hover:bg-[#0047BB]/10"
+                            className="flex-shrink-0 hover:bg-secondary/10"
                             onClick={() => handleVisualizarDetalhes(registro)}
                             title="Ver detalhes"
                           >
@@ -668,7 +668,7 @@ export default function SuportePage() {
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center shadow-lg">
+                    <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
                       <FileText className="h-7 w-7 text-white" />
                     </div>
                     <div>
@@ -708,8 +708,8 @@ export default function SuportePage() {
                         className="bg-background/50 border rounded-xl p-4 hover:bg-background/80 transition-colors"
                       >
                         <div className="flex items-start gap-4">
-                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#00A99D]/20 to-[#0047BB]/20 flex items-center justify-center flex-shrink-0">
-                            <UserPlus className="h-5 w-5 text-[#0047BB]" />
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center flex-shrink-0">
+                    <UserPlus className="h-5 w-5 text-secondary" />
                           </div>
                           <div className="flex-1 space-y-1">
                             <div className="flex items-center gap-2 flex-wrap">
@@ -752,7 +752,7 @@ export default function SuportePage() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                 <User className="h-5 w-5 text-white" />
               </div>
               Detalhes do Usuario
@@ -768,7 +768,7 @@ export default function SuportePage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Hash className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-mono text-lg font-semibold text-[#0047BB]">
+                    <span className="font-mono text-lg font-semibold text-secondary">
                     {registroSelecionado.numeroSolicitacao}
                   </span>
                 </div>
@@ -783,7 +783,7 @@ export default function SuportePage() {
                   </h4>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Mail className="h-5 w-5 text-[#00A99D]" />
+                      <Mail className="h-5 w-5 text-primary" />
                       <span className="text-foreground font-medium">
                         {registroSelecionado.emailUsuarioExterno}
                       </span>
@@ -805,7 +805,7 @@ export default function SuportePage() {
                   </h4>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <User className="h-5 w-5 text-[#0047BB]" />
+                      <User className="h-5 w-5 text-secondary" />
                       <span className="text-foreground font-medium">
                         {registroSelecionado.emailSolicitante}
                       </span>

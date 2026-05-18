@@ -140,7 +140,7 @@ export default function SupervisorPage() {
         {/* Header com gradiente */}
         <div className="mb-8 mt-4">
           <div className="flex items-center gap-4 mb-2">
-            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#0047BB] to-[#00A99D] flex items-center justify-center shadow-lg">
+            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
               <Shield className="h-7 w-7 text-white" />
             </div>
             <div>
@@ -153,18 +153,18 @@ export default function SupervisorPage() {
         {/* Cards de Metricas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card
-            className={`p-6 relative overflow-hidden card-hover cursor-pointer ${statusFilter === "all" ? "ring-2 ring-[#0047BB]" : ""}`}
+            className={`p-6 relative overflow-hidden card-hover cursor-pointer ${statusFilter === "all" ? "ring-2 ring-primary" : ""}`}
             onClick={() => { setStatusFilter("all"); setActiveTab("aprovacoes") }}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-[#00A99D] to-[#0047BB] opacity-5" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary to-secondary opacity-5" />
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-4">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#00A99D] to-[#0047BB] flex items-center justify-center">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                   <FileText className="h-6 w-6 text-white" />
                 </div>
               </div>
               <p className="text-2xl font-bold text-foreground mb-1">{totalCount}</p>
-              <p className="text-sm text-muted-foreground">Total para Análise</p>
+              <p className="text-sm text-muted-foreground">Total para Analise</p>
             </div>
           </Card>
 
@@ -365,7 +365,7 @@ export default function SupervisorPage() {
                         <Button
                           variant="default"
                           size="sm"
-                          className="bg-[#0047BB] hover:bg-[#003399] gap-2"
+                          className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 gap-2"
                           onClick={() => router.push(`/supervisor/detalhes/${upload.id}`)}
                         >
                           <Eye className="h-4 w-4" />

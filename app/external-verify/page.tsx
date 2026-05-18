@@ -102,7 +102,7 @@ function VerifyContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0047BB]/5 via-white to-[#FFB81C]/5 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-secondary/5 via-background to-accent/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-4">
           <div className="flex justify-center">
@@ -167,7 +167,7 @@ function VerifyContent() {
             <Button
               onClick={handleVerify}
               disabled={loading || code.length !== 6 || timeRemaining === 0}
-              className="w-full bg-[#0047BB] hover:bg-[#003A99]"
+              className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
               size="lg"
             >
               {loading ? "Verificando..." : "Verificar Código"}
@@ -199,7 +199,7 @@ export default function ExternalVerifyPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-br from-[#0047BB]/5 via-white to-[#FFB81C]/5 flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-secondary/5 via-background to-accent/5 flex items-center justify-center">
           <div className="animate-pulse space-y-4">
             <div className="h-12 w-48 bg-muted rounded-lg mx-auto" />
             <div className="h-64 w-96 bg-muted rounded-lg" />

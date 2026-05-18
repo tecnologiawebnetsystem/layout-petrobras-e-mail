@@ -94,7 +94,7 @@ export function HistoryTimeline({ activities, onViewDetails }: HistoryTimelinePr
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#00A99D]/10 text-[#00A99D]">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                     {getTypeLabel(activity.type)}
                   </span>
                   <span className="text-sm text-muted-foreground">
@@ -115,7 +115,7 @@ export function HistoryTimeline({ activities, onViewDetails }: HistoryTimelinePr
                 variant="outline"
                 size="sm"
                 onClick={() => onViewDetails(activity)}
-                className="flex items-center gap-2 hover:bg-teal-50 hover:text-[#00A99D] hover:border-[#00A99D] dark:hover:bg-teal-900/30"
+                className="flex items-center gap-2 hover:bg-teal-50 hover:text-primary hover:border-primary dark:hover:bg-teal-900/30"
               >
                 <Eye className="h-4 w-4" />
                 Detalhes

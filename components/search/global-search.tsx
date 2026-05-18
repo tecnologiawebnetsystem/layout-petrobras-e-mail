@@ -210,7 +210,7 @@ export function GlobalSearch() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowFilters(!showFilters)}
-                className={showFilters ? "bg-teal-100 text-[#00A99D] dark:bg-teal-900/30" : ""}
+                className={showFilters ? "bg-teal-100 text-primary dark:bg-teal-900/30" : ""}
               >
                 <Filter className="h-4 w-4" />
               </Button>

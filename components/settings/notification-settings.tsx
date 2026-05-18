@@ -114,7 +114,7 @@ export function NotificationSettings() {
 
         <div className="flex justify-end gap-3 pt-4 border-t">
           <Button variant="outline">Cancelar</Button>
-          <Button onClick={handleSave} className="bg-[#0047BB] hover:bg-[#003a99]">
+          <Button onClick={handleSave} className="bg-secondary hover:bg-[#003a99]">
             <Save className="h-4 w-4 mr-2" />
             Salvar preferências
           </Button>

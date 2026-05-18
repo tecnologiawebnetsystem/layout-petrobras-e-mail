@@ -51,8 +51,8 @@ export function SecurityVerificationModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-[#00A99D]/10">
-              <Shield className="h-6 w-6 text-[#00A99D]" />
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Shield className="h-6 w-6 text-primary" />
             </div>
             <DialogTitle>Verificação de Segurança</DialogTitle>
           </div>
@@ -124,7 +124,7 @@ export function SecurityVerificationModal({
           <Button
             onClick={handleVerify}
             disabled={verifying || (requiresPassword && !password)}
-            className="flex-1 bg-[#0047BB] hover:bg-[#003A99]"
+            className="flex-1 bg-secondary hover:bg-secondary/90"
           >
             {verifying ? "Verificando..." : "Confirmar Download"}
           </Button>

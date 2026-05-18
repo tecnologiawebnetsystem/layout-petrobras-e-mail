@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -669,7 +669,7 @@ export default function SupervisorDetailsPage({
                 {uploadData.status === "pending" &&
                   !id.startsWith("upload-") && (
                     <Button
-                      className="flex-1 bg-[#0047BB] hover:bg-[#003A99] text-white"
+                            className="flex-1 bg-secondary hover:bg-secondary/90 text-white"
                       disabled={isDownloading}
                       onClick={handleDownloadZip}
                     >

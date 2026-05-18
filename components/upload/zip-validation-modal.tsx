@@ -102,7 +102,7 @@ export function ZipValidationModal({
         </div>
 
         <div className="flex justify-end">
-          <Button onClick={() => onOpenChange(false)} className="bg-gradient-to-r from-[#00A99D] to-[#0047BB]">
+          <Button onClick={() => onOpenChange(false)} className="bg-gradient-to-r from-primary to-secondary">
             Entendi
           </Button>
         </div>

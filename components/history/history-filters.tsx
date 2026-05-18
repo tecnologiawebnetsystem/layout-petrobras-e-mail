@@ -42,7 +42,7 @@ export function HistoryFilters({ onFilterChange, totalActivities }: HistoryFilte
     <div className="bg-card border rounded-lg p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Filter className="h-5 w-5 text-[#00A99D]" />
+          <Filter className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-semibold text-foreground">Filtros</h2>
         </div>
         <span className="text-sm text-muted-foreground">

@@ -296,7 +296,7 @@ export function LoginForm() {
             {!isExternalUser && (
               <p className="text-sm text-center text-muted-foreground">
                 Colaboradores Petrobras devem usar o botao{" "}
-                <span className="font-semibold text-[#0047BB]">Login com Microsoft</span> abaixo.
+                <span className="font-semibold text-secondary">Login com Microsoft</span> abaixo.
               </p>
             )}
 
@@ -305,7 +305,7 @@ export function LoginForm() {
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground text-center text-pretty">
                   Digite o codigo de 6 digitos enviado para{" "}
-                  <span className="text-[#00A99D] font-semibold">{email}</span>
+                  <span className="text-primary font-semibold">{email}</span>
                 </p>
 
                 {/* Codigo retornado pelo backend em ambiente dev */}
@@ -351,7 +351,7 @@ export function LoginForm() {
                       variant="link"
                       onClick={handleResendCode}
                       disabled={isResending}
-                      className="text-[#00A99D] hover:text-[#00857A]"
+                      className="text-primary hover:text-primary/90"
                     >
                       {isResending ? "Reenviando..." : "Reenviar codigo"}
                     </Button>
@@ -376,7 +376,7 @@ export function LoginForm() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 text-base font-semibold bg-[#00A859] hover:bg-[#008a48] text-white transition-all duration-200 shadow-sm hover:shadow-md"
+                className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90 text-white transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 {isLoading ? "Enviando..." : "Enviar codigo de acesso"}
               </Button>

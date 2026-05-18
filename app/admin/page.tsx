@@ -379,7 +379,7 @@ function AdminContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <AppHeader />
       <BreadcrumbNav
         items={[
@@ -389,15 +389,16 @@ function AdminContent() {
       />
 
       <main className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Shield className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Painel Administrativo</h1>
-            <p className="text-sm text-muted-foreground">
-              Visao completa de todos os usuarios, compartilhamentos e logs do sistema
-            </p>
+        {/* Header com gradiente */}
+        <div className="mb-8 mt-4">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
+              <Shield className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Painel Administrativo</h1>
+              <p className="text-muted-foreground">Visao completa de todos os usuarios, compartilhamentos e logs do sistema</p>
+            </div>
           </div>
         </div>
 

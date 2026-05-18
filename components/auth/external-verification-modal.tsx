@@ -162,7 +162,7 @@ export function ExternalVerificationModal({ open, onOpenChange, onSuccess, initi
             <div className="space-y-6">
               {/* Email Step */}
               <div className="flex flex-col items-center space-y-4 pt-4">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#00A99D] to-[#00857A] flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/90 flex items-center justify-center">
                   <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       strokeLinecap="round"
@@ -200,7 +200,7 @@ export function ExternalVerificationModal({ open, onOpenChange, onSuccess, initi
 
                 <Button
                   onClick={handleSendCode}
-                  className="w-full h-12 text-base font-medium bg-[#00A99D] hover:bg-[#00857A] text-white"
+                  className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90 text-white"
                 >
                   Enviar código
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -211,7 +211,7 @@ export function ExternalVerificationModal({ open, onOpenChange, onSuccess, initi
             <div className="space-y-6">
               {/* Code Verification Step */}
               <div className="flex flex-col items-center space-y-4 pt-4">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#00A99D] to-[#00857A] flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/90 flex items-center justify-center">
                   <CheckCircle2 className="w-10 h-10 text-white" />
                 </div>
 
@@ -220,7 +220,7 @@ export function ExternalVerificationModal({ open, onOpenChange, onSuccess, initi
                   <p className="text-sm text-muted-foreground max-w-sm">
                     Digite o código de 6 dígitos enviado para
                     <br />
-                    <span className="text-[#00A99D] font-semibold">{email}</span>
+                    <span className="text-primary font-semibold">{email}</span>
                   </p>
                 </div>
               </div>
@@ -266,7 +266,7 @@ export function ExternalVerificationModal({ open, onOpenChange, onSuccess, initi
                       variant="link"
                       onClick={handleResendCode}
                       disabled={isResending}
-                      className="text-[#00A99D] hover:text-[#00857A]"
+                      className="text-primary hover:text-primary/90"
                     >
                       {isResending ? "Reenviando..." : "Reenviar código"}
                     </Button>

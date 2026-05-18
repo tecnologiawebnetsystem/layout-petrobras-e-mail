@@ -95,7 +95,7 @@ function CallbackContent() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center space-y-4">
-        <div className="w-10 h-10 border-4 border-[#0047BB] border-t-transparent rounded-full animate-spin mx-auto" />
+        <div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin mx-auto" />
         <p className="text-foreground font-medium">Autenticando...</p>
         <p className="text-muted-foreground text-sm">
           Processando sua autenticacao com a Microsoft
@@ -110,7 +110,7 @@ export default function EntraCallbackPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-background">
-          <div className="w-10 h-10 border-4 border-[#0047BB] border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >

@@ -419,20 +419,20 @@ export default function WikiCategoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      <AppHeader subtitle="Wiki e Documentação" />
+    <div className="min-h-screen bg-background">
+      <AppHeader subtitle="Wiki e Documentacao" />
 
       <main className="container max-w-5xl mx-auto px-6 py-8">
         <Breadcrumb className="mb-6">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/wiki" className="text-[#003F7F] hover:text-[#00A859]">
+              <BreadcrumbLink href="/wiki" className="text-secondary hover:text-primary">
                 Wiki
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage className="text-gray-600 dark:text-gray-400">
+              <BreadcrumbPage className="text-muted-foreground">
                 {getCategoryTitle(params.category as string)}
               </BreadcrumbPage>
             </BreadcrumbItem>
@@ -444,11 +444,11 @@ export default function WikiCategoryPage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar para Wiki
           </Button>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
+          <h1 className="text-4xl font-bold text-foreground mb-3">
             {getCategoryTitle(params.category as string)}
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
-            {articles.length} artigos disponíveis nesta categoria
+          <p className="text-lg text-muted-foreground">
+            {articles.length} artigos disponiveis nesta categoria
           </p>
         </div>
 
@@ -462,28 +462,28 @@ export default function WikiCategoryPage() {
                 onClick={() => router.push(`/wiki/${params.category}/${article.id}`)}
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-[#00A859]/10 flex items-center justify-center">
-                    <TypeIcon className="h-6 w-6 text-[#00A859]" />
+                  <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <TypeIcon className="h-6 w-6 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-[#00A859] transition-colors">
+                      <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
                         {article.title}
                       </h3>
-                      <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-[#00A859] transition-colors flex-shrink-0" />
+                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{article.description}</p>
+                    <p className="text-sm text-muted-foreground mb-4">{article.description}</p>
                     <div className="flex items-center gap-4 flex-wrap">
                       <Badge className={getDifficultyColor(article.difficulty)}>
                         {article.difficulty === "beginner" && "Iniciante"}
-                        {article.difficulty === "intermediate" && "Intermediário"}
-                        {article.difficulty === "advanced" && "Avançado"}
+                        {article.difficulty === "intermediate" && "Intermediario"}
+                        {article.difficulty === "advanced" && "Avancado"}
                       </Badge>
-                      <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4" />
                         <span>{article.readTime}</span>
                       </div>
-                      <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <User className="h-4 w-4" />
                         <span>{article.author}</span>
                       </div>
@@ -497,9 +497,9 @@ export default function WikiCategoryPage() {
 
         {articles.length === 0 && (
           <Card className="p-12 text-center">
-            <FileText className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Nenhum artigo disponível</h3>
-            <p className="text-gray-600 dark:text-gray-400">Os artigos desta categoria estão sendo preparados</p>
+            <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-xl font-semibold text-foreground mb-2">Nenhum artigo disponivel</h3>
+            <p className="text-muted-foreground">Os artigos desta categoria estao sendo preparados</p>
           </Card>
         )}
       </main>

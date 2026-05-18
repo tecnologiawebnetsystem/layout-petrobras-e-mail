@@ -47,26 +47,26 @@ export default function WikiArticlePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      <AppHeader subtitle="Wiki e Documentação" />
+    <div className="min-h-screen bg-background">
+      <AppHeader subtitle="Wiki e Documentacao" />
 
       <main className="container max-w-4xl mx-auto px-6 py-8">
         <Breadcrumb className="mb-6">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/wiki" className="text-[#003F7F] hover:text-[#00A859]">
+              <BreadcrumbLink href="/wiki" className="text-secondary hover:text-primary">
                 Wiki
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink href={`/wiki/${params.category}`} className="text-[#003F7F] hover:text-[#00A859]">
+              <BreadcrumbLink href={`/wiki/${params.category}`} className="text-secondary hover:text-primary">
                 {getCategoryTitle(params.category as string)}
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage className="text-gray-600 dark:text-gray-400">Artigo</BreadcrumbPage>
+              <BreadcrumbPage className="text-muted-foreground">Artigo</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -78,11 +78,11 @@ export default function WikiArticlePage() {
 
         <Card className="p-8">
           <div className="mb-6">
-            <Badge className="mb-4 bg-[#00A859] text-white">Iniciante</Badge>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            <Badge className="mb-4 bg-primary text-white">Iniciante</Badge>
+            <h1 className="text-4xl font-bold text-foreground mb-4">
               Bem-vindo ao Sistema de Compartilhamento Petrobras
             </h1>
-            <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4" />
                 <span>Equipe Petrobras</span>

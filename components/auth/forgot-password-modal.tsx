@@ -73,8 +73,8 @@ export function ForgotPasswordModal({ open, onOpenChange }: ForgotPasswordModalP
 
         {isSuccess ? (
           <div className="py-6 text-center space-y-3">
-            <div className="w-16 h-16 mx-auto rounded-full bg-[#00A99D]/10 flex items-center justify-center">
-              <Mail className="w-8 h-8 text-[#00A99D]" />
+            <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+              <Mail className="w-8 h-8 text-primary" />
             </div>
             <div className="space-y-2">
               <h3 className="font-semibold text-foreground">E-mail enviado!</h3>
@@ -121,7 +121,7 @@ export function ForgotPasswordModal({ open, onOpenChange }: ForgotPasswordModalP
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 h-11 bg-[#0047BB] hover:bg-[#003A99] text-white font-medium"
+                className="flex-1 h-11 bg-secondary hover:bg-secondary/90 text-white font-medium"
               >
                 {isLoading ? "Enviando..." : "Enviar"}
               </Button>

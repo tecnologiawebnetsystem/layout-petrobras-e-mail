@@ -39,13 +39,13 @@ export function GlobalAlertProvider() {
                     className={cn(
                       "flex justify-center p-4 rounded-full w-fit mx-auto",
                       alert.type === "error" && "bg-red-50 dark:bg-red-950/20",
-                      alert.type === "warning" && "bg-[#FDB913]/10 dark:bg-[#FDB913]/20",
-                      alert.type === "info" && "bg-[#003F7F]/10 dark:bg-[#003F7F]/20",
+                      alert.type === "warning" && "bg-accent/10 dark:bg-accent/20",
+                      alert.type === "info" && "bg-secondary/10 dark:bg-secondary/20",
                     )}
                   >
                     {alert.type === "error" && <XCircle className="h-16 w-16 text-red-500" />}
-                    {alert.type === "warning" && <AlertCircle className="h-16 w-16 text-[#FDB913]" />}
-                    {alert.type === "info" && <Info className="h-16 w-16 text-[#003F7F]" />}
+                    {alert.type === "warning" && <AlertCircle className="h-16 w-16 text-accent" />}
+                    {alert.type === "info" && <Info className="h-16 w-16 text-secondary" />}
                   </div>
                   <AlertDialogTitle className="text-center text-2xl font-bold">{alert.title}</AlertDialogTitle>
                   <AlertDialogDescription className="text-center text-base leading-relaxed">
@@ -68,7 +68,7 @@ export function GlobalAlertProvider() {
                     }}
                     className={cn(
                       alert.type === "error" && "bg-red-600 hover:bg-red-700",
-                      alert.type === "warning" && "bg-[#FDB913] hover:bg-[#FDB913]/90 text-black",
+                      alert.type === "warning" && "bg-accent hover:bg-accent/90 text-black",
                     )}
                   >
                     {alert.confirmText || "Confirmar"}

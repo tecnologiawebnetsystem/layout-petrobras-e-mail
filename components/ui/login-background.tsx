@@ -7,7 +7,7 @@ export function LoginBackground() {
       aria-hidden="true"
     >
       {/* Background gradient - cores Petrobras */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#003F7F] via-[#00A859] to-[#003F7F]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-secondary via-primary to-secondary" />
       
       {/* Subtle overlay pattern */}
       <div 
@@ -75,7 +75,7 @@ function FeatureItem({ title, description }: { title: string; description: strin
   return (
     <div className="flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/10 transition-colors hover:bg-white/10">
       <div className="flex-shrink-0 mt-0.5">
-        <svg className="w-5 h-5 text-[#FDB913]" viewBox="0 0 24 24" fill="none">
+        <svg className="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none">
           <path
             d="M9 12l2 2 4-4m6 2c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10z"
             stroke="currentColor"

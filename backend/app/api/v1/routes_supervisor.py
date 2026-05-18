@@ -28,6 +28,11 @@ from app.services.email_service import (
     send_share_rejected_requester_email,
     send_supervisor_approval_request_email,
 )
+from app.services.approval_hierarchy_service import (
+    validate_approval_authority,
+    find_next_approver,
+    get_approval_chain,
+)
 import logging
 logger = logging.getLogger(__name__)
 
@@ -190,20 +195,21 @@ async def approve_file(
 ):
     """
     Aprova um compartilhamento pendente.
-    O supervisor só pode aprovar shares criados pelos seus supervisionados.
+    
+    Regras de Aprovação Hierárquica:
+    1. O requisitante NÃO pode aprovar a si mesmo
+    2. O aprovador deve estar na cadeia hierárquica do requisitante
+    3. Suporta escalação até 3 níveis na hierarquia
     """
     share = session.get(Share, file_id)
     if not share:
         raise HTTPException(
             status_code=404, detail="Compartilhamento nao encontrado.")
 
-    # Verifica autoridade: o criador do share deve ter este supervisor como gestor
-    creator = session.get(User, share.created_by_id)
-    if not creator or creator.manager_id != user.id:
-        raise HTTPException(
-            status_code=403,
-            detail="Acesso negado: este compartilhamento nao pertence a um de seus supervisionados.",
-        )
+    # Validação de autoridade hierárquica (inclui verificação de auto-aprovação)
+    is_authorized, message = validate_approval_authority(session, share, user)
+    if not is_authorized:
+        raise HTTPException(status_code=403, detail=message)
 
     if share.status != ShareStatus.PENDING:
         raise HTTPException(
@@ -284,20 +290,20 @@ async def reject_file(
 ):
     """
     Rejeita um compartilhamento pendente.
-    O supervisor só pode rejeitar shares criados pelos seus supervisionados.
+    
+    Regras de Aprovação Hierárquica:
+    1. O requisitante NÃO pode rejeitar a si mesmo
+    2. O rejeitador deve estar na cadeia hierárquica do requisitante
     """
     share = session.get(Share, file_id)
     if not share:
         raise HTTPException(
             status_code=404, detail="Compartilhamento nao encontrado.")
 
-    # Verifica autoridade
-    creator = session.get(User, share.created_by_id)
-    if not creator or creator.manager_id != user.id:
-        raise HTTPException(
-            status_code=403,
-            detail="Acesso negado: este compartilhamento nao pertence a um de seus supervisionados.",
-        )
+    # Validação de autoridade hierárquica
+    is_authorized, message = validate_approval_authority(session, share, user)
+    if not is_authorized:
+        raise HTTPException(status_code=403, detail=message)
 
     if share.status != ShareStatus.PENDING:
         raise HTTPException(
@@ -565,6 +571,37 @@ async def approve_share_legacy(
     )
 
     return {"status": "ok", "share_id": share.id, "status_atual": share.status}
+
+
+# =====================================================
+# GET /supervisor/approval-chain/{user_id} - Cadeia de aprovação
+# =====================================================
+
+@router.get("/approval-chain/{user_id}")
+def get_user_approval_chain(
+    user_id: int,
+    session: Session = Depends(get_session),
+    user: User = Depends(require_supervisor),
+    request: Request = None,
+):
+    """
+    Retorna a cadeia de aprovação hierárquica de um usuário.
+    
+    Útil para verificar quem pode aprovar compartilhamentos de um usuário específico.
+    """
+    target_user = session.get(User, user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Usuario nao encontrado.")
+    
+    chain = get_approval_chain(session, target_user)
+    
+    return {
+        "user_id": user_id,
+        "user_name": target_user.name,
+        "user_email": target_user.email,
+        "approval_chain": chain,
+        "next_approver": chain[0] if chain and chain[0].get("can_approve") else None,
+    }
 
 
 # =====================================================

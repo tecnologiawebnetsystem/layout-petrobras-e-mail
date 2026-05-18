@@ -360,11 +360,11 @@ export default function DownloadPage() {
 
   if (isLoadingFiles) {
     return (
-      <div className="min-h-screen bg-muted/30">
-        <AppHeader subtitle="Solução de Compartilhamento de Arquivos Confidenciais" />
-        <main className="container max-w-7xl mx-auto px-6 py-12 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <AppHeader subtitle="Solucao de Compartilhamento de Arquivos Confidenciais" />
+        <main className="container mx-auto px-4 py-6 max-w-7xl flex items-center justify-center">
           <div className="text-center space-y-4">
-            <div className="h-10 w-10 border-4 border-[#0047BB] border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
             <p className="text-muted-foreground">Carregando seus arquivos...</p>
           </div>
         </main>
@@ -374,11 +374,11 @@ export default function DownloadPage() {
 
   if (filesError) {
     return (
-      <div className="min-h-screen bg-muted/30">
-        <AppHeader subtitle="Solução de Compartilhamento de Arquivos Confidenciais" />
-        <main className="container max-w-7xl mx-auto px-6 py-12 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <AppHeader subtitle="Solucao de Compartilhamento de Arquivos Confidenciais" />
+        <main className="container mx-auto px-4 py-6 max-w-7xl flex items-center justify-center">
           <div className="text-center space-y-4">
-            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto" />
+            <AlertTriangle className="h-12 w-12 text-destructive mx-auto" />
             <p className="text-foreground font-semibold">{filesError}</p>
             <Button onClick={() => window.location.reload()} variant="outline">Tentar novamente</Button>
           </div>
@@ -388,20 +388,29 @@ export default function DownloadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <AppHeader subtitle="Solução de Compartilhamento de Arquivos Confidenciais" />
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <AppHeader subtitle="Solucao de Compartilhamento de Arquivos Confidenciais" />
 
-      <main className="container max-w-7xl mx-auto px-6 py-12 pb-20 space-y-10">
-        <div>
-          <h1 className="text-4xl font-bold text-foreground mb-4 leading-tight">Documentos Aprovados para Download</h1>
-
-          <div className="flex items-start gap-4 bg-yellow-50 dark:bg-yellow-950/20 border-l-4 border-yellow-400 p-5 rounded">
-            <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+      <main className="container mx-auto px-4 py-6 max-w-7xl pb-20 space-y-10">
+        {/* Header com gradiente */}
+        <div className="mb-8 mt-4">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
+              <Download className="h-7 w-7 text-white" />
+            </div>
             <div>
-              <p className="font-semibold text-yellow-900 dark:text-yellow-100 text-base">
+              <h1 className="text-3xl font-bold text-foreground">Documentos Aprovados para Download</h1>
+              <p className="text-muted-foreground">Baixe seus arquivos compartilhados de forma segura</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-4 bg-accent/10 border-l-4 border-accent p-5 rounded">
+            <AlertTriangle className="h-6 w-6 text-accent flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-foreground text-base">
                 Aviso de Confidencialidade:
               </p>
-              <p className="text-yellow-800 dark:text-yellow-200 text-base leading-relaxed">
+              <p className="text-muted-foreground text-base leading-relaxed">
                 Os documentos listados abaixo são confidenciais e destinados exclusivamente ao destinatário. A
                 reprodução ou distribuição não autorizada é estritamente proibida. Todos os downloads são registrados.
               </p>
@@ -509,7 +518,7 @@ export default function DownloadPage() {
                 <Button
                   onClick={handleDownloadSelected}
                   disabled={selectedDocs.length === 0}
-                  className="bg-[#0047BB] hover:bg-[#003A99]"
+                  className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Baixar Selecionados ({selectedDocs.length})

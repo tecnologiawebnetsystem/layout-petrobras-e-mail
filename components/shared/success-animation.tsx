@@ -27,25 +27,23 @@ export function SuccessAnimation({ show, onComplete }: SuccessAnimationProps) {
         <div className="relative">
           <svg className="w-32 h-32" viewBox="0 0 52 52">
             <circle
-              className="success-checkmark-circle"
+              className="success-checkmark-circle stroke-primary"
               cx="26"
               cy="26"
               r="23"
               fill="none"
-              stroke="#00A859"
               strokeWidth="3"
             />
             <path
-              className="success-checkmark-check"
+              className="success-checkmark-check stroke-primary"
               fill="none"
-              stroke="#00A859"
               strokeWidth="3"
               strokeLinecap="round"
               d="M14 27l7 7 16-16"
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <CheckCircle className="w-24 h-24 text-[#00A859] animate-in zoom-in-50 duration-500" />
+            <CheckCircle className="w-24 h-24 text-primary animate-in zoom-in-50 duration-500" />
           </div>
         </div>
       </div>
