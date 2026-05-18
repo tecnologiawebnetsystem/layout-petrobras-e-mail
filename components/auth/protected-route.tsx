@@ -10,16 +10,11 @@ import { showAlert } from "@/lib/stores/alert-store"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
-  allowedUserTypes: Array<"internal" | "external" | "supervisor" | "admin" | "support">
-}
-
-// Verifica se e um token de desenvolvimento (modo teste)
-function isDevToken(token: string | null): boolean {
-  return token?.startsWith("dev-token-") || token?.startsWith("dev-refresh-token-") || false
+  allowedUserTypes: Array<"internal" | "external" | "supervisor" | "admin">
 }
 
 export function ProtectedRoute({ children, allowedUserTypes }: ProtectedRouteProps) {
-  const { user, isAuthenticated, accessToken, _hasHydrated } = useAuthStore()
+  const { user, isAuthenticated, _hasHydrated } = useAuthStore()
   const router = useRouter()
   const [isChecking, setIsChecking] = useState(true)
 
@@ -43,27 +38,13 @@ export function ProtectedRoute({ children, allowedUserTypes }: ProtectedRoutePro
       return
     }
 
-    // Em modo desenvolvimento (token dev), pula a validacao de sessao com o backend
-    if (isDevToken(accessToken)) {
-      if (user && !allowedUserTypes.includes(user.userType)) {
-        showAlert.error(
-          "Acesso Negado",
-          "Voce nao tem permissao para acessar esta pagina.",
-        )
-        router.push("/")
-        return
-      }
-      setIsChecking(false)
-      return
-    }
-
     if (user && !allowedUserTypes.includes(user.userType)) {
       router.push("/")
       return
     }
 
     setIsChecking(false)
-  }, [_hasHydrated, isAuthenticated, user, allowedUserTypes, router, accessToken])
+  }, [_hasHydrated, isAuthenticated, user, allowedUserTypes, router])
 
   if (isChecking) {
     return (

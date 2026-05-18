@@ -3,7 +3,7 @@
 import type { FormEvent } from "react"
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
-import { User, Lock, ArrowLeft, Code, ChevronDown } from "lucide-react"
+import { User, Lock, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,63 +13,6 @@ import { FullPageLoader } from "@/components/ui/full-page-loader"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useRouter } from "next/navigation"
 import { isBackendAvailable } from "@/lib/services/api-fetch"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-
-// Usuarios de teste para modo desenvolvimento
-const DEV_USERS = [
-  {
-    id: "1",
-    name: "Usuario Interno",
-    email: "usuario.interno@petrobras.com.br",
-    userType: "internal" as const,
-    department: "TIC/TIC-E&P/ECTD",
-    jobTitle: "Analista de Sistemas",
-    redirectTo: "/upload",
-  },
-  {
-    id: "2",
-    name: "Supervisor",
-    email: "supervisor@petrobras.com.br",
-    userType: "supervisor" as const,
-    department: "TIC/TIC-E&P/ECTD",
-    jobTitle: "Coordenador",
-    redirectTo: "/supervisor",
-  },
-  {
-    id: "3",
-    name: "Admin Global",
-    email: "admin.global@petrobras.com.br",
-    userType: "admin" as const,
-    isAdmin: true,
-    department: "TIC/SEGURANCA",
-    jobTitle: "Administrador de Sistemas",
-    redirectTo: "/admin",
-  },
-  {
-    id: "4",
-    name: "Usuario Externo",
-    email: "externo@empresa.com",
-    userType: "external" as const,
-    redirectTo: "/download",
-  },
-  {
-    id: "5",
-    name: "Suporte",
-    email: "suporte@petrobras.com.br",
-    userType: "support" as const,
-    department: "TIC/SUPORTE",
-    jobTitle: "Atendente",
-    redirectTo: "/suporte",
-  },
-]
-
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
@@ -96,34 +39,7 @@ export function LoginForm() {
   const router = useRouter()
   const { setAuth } = useAuthStore()
 
-  // Verifica se esta em modo desenvolvimento
-  const isDev = process.env.NODE_ENV === "development" || typeof window !== "undefined" && window.location.hostname === "localhost"
-
   const isExternalUser = email.trim().length > 0 && !email.toLowerCase().includes("@petrobras")
-
-  // ─── Login em modo desenvolvimento ─────────────────────────────────────
-  const handleDevLogin = (devUser: typeof DEV_USERS[0]) => {
-    setAuth(
-      {
-        id: devUser.id,
-        email: devUser.email,
-        name: devUser.name,
-        userType: devUser.userType,
-        isAdmin: devUser.isAdmin,
-        department: devUser.department,
-        jobTitle: devUser.jobTitle,
-      },
-      "dev-token-" + devUser.id,
-      "dev-refresh-token-" + devUser.id,
-    )
-    setNotification({
-      show: true,
-      type: "success",
-      title: "Login realizado!",
-      message: `Entrando como ${devUser.name} (${devUser.userType})`,
-    })
-    setTimeout(() => router.push(devUser.redirectTo), 1000)
-  }
 
   // Countdown timer for verification code
   useEffect(() => {
@@ -497,53 +413,6 @@ export function LoginForm() {
           <footer className="text-center text-xs text-muted-foreground/60 pt-4">
             <p>2025 Petrobras. Todos os direitos reservados.</p>
           </footer>
-
-          {/* Modo Desenvolvimento - Acesso rapido para testar diferentes perfis */}
-          {isDev && (
-            <div className="border-t border-dashed border-amber-300 pt-4 mt-4">
-              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Code className="h-4 w-4 text-amber-600" />
-                  <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                    Modo Desenvolvimento
-                  </span>
-                </div>
-                <p className="text-xs text-amber-600 dark:text-amber-500 mb-3">
-                  Selecione um perfil para testar o sistema sem autenticacao:
-                </p>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between border-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30"
-                    >
-                      <span>Selecionar perfil de teste</span>
-                      <ChevronDown className="h-4 w-4 ml-2" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-72">
-                    <DropdownMenuLabel>Perfis Disponiveis</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {DEV_USERS.map((devUser) => (
-                      <DropdownMenuItem
-                        key={devUser.id}
-                        onClick={() => handleDevLogin(devUser)}
-                        className="flex flex-col items-start py-3 cursor-pointer"
-                      >
-                        <span className="font-medium">{devUser.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {devUser.email}
-                        </span>
-                        <span className="text-xs text-primary font-medium mt-1">
-                          Tipo: {devUser.userType}
-                        </span>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          )}
         </div>
       </div>
       <NotificationModal
