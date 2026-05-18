@@ -31,6 +31,11 @@ interface User {
   }
 }
 
+// Verifica se e um token de desenvolvimento
+function isDevToken(token: string | null): boolean {
+  return token?.startsWith("dev-token-") || token?.startsWith("dev-refresh-token-") || false
+}
+
 /**
  * Mapeia o campo `role` do backend Python para `userType` do frontend.
  * O Python retorna: "internal", "external", "supervisor", "support", "admin" (ou TypeUser enum).
@@ -118,12 +123,18 @@ export const useAuthStore = create<AuthState>()(
        * Valida a sessao com o backend (GET /auth/entra/session-check).
        * Se invalida, limpa o state e redireciona para login.
        * Retorna true se sessao e valida, false caso contrario.
+       * Em modo desenvolvimento (token dev), retorna true sem validar.
        */
       validateSession: async () => {
         const { accessToken } = get()
         if (!accessToken) {
           get().clearAuth()
           return false
+        }
+
+        // Em modo desenvolvimento, pula a validacao com o backend
+        if (isDevToken(accessToken)) {
+          return true
         }
 
         try {
