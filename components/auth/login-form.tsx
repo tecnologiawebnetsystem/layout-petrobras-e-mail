@@ -3,7 +3,8 @@
 import type { FormEvent } from "react";
 import type React from "react";
 import { useState, useEffect, useRef } from "react";
-import { User, Lock, ArrowLeft } from "lucide-react";
+import { User, Lock, ArrowLeft, BookOpen } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -573,6 +574,15 @@ export function LoginForm() {
                 </svg>
                 {isLoading ? "Redirecionando..." : "Login corporativo"}
               </Button>
+
+              {/* Link para Documentação */}
+              <Link
+                href="/docs"
+                className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
+              >
+                <BookOpen className="h-4 w-4" />
+                <span>Acessar documentação do sistema</span>
+              </Link>
             </div>
           )}
 
