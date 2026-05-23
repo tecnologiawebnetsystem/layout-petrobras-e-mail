@@ -14,7 +14,7 @@
 set -e
 
 echo "[entrypoint] Aplicando migrations do Alembic..."
-alembic upgrade head
+alembic upgrade heads
 
 # Seed de dados de desenvolvimento.
 # Ative apenas nos ambientes que precisam de dados iniciais:

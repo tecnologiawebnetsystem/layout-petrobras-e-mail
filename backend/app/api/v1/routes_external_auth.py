@@ -28,7 +28,7 @@ class VerifyCode(BaseModel):
 def request_code(payload: RequestCode, background_tasks: BackgroundTasks, session: Session = Depends(get_session), request: Request = None):
     """
     O externo informa apenas o e-mail. O backend localiza o share ATIVO e
-    envia um código de 6 dígitos por e-mail. Não expõe share_id.
+    envia um código de 6 dígitos por e-mail. Não expõe share_id nem o código.
     """
     facade = AuthFacade() # Serviço Externo
     try:
@@ -42,17 +42,16 @@ def request_code(payload: RequestCode, background_tasks: BackgroundTasks, sessio
             }
         )
 
-        # TESTADO O ENVIO DE E-MAIL, MAS SOMENTE ATIVAR PARA ENVIAR PARA DEV/PRODUÇÃO
-        # background_tasks.add_task(
-        #     send_otp_email,
-        #     payload.email,
-        #     code,
-        #     otp.expires_at
-        # )
+        # Envia o código exclusivamente por e-mail via pipeline central
+        background_tasks.add_task(
+            send_otp_email,
+            payload.email,
+            code,
+            otp.expires_at
+        )
 
-        # Remover code quando subir a aplicação para produção
+        # Nunca retornar o código na resposta — acesso exclusivo por e-mail
         return {
-            "code": code,
             "message": "Código enviado por e-mail.",
             "expires_at": otp.expires_at.isoformat()
         }

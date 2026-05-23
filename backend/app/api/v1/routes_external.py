@@ -2,11 +2,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Form
 from sqlmodel import Session, select
 from app.db.session import get_session
-from app.services.token_service import get_token_access, validate_token_access, consume_token,TokenError
+from app.services.token_service import get_token_access, validate_token_access, consume_token, TokenError, deactivate_external_if_no_active_share
 from app.services.file_service import generate_download_url
 from app.services.audit_service import log_event
 from app.services.share_service import list_share_files
-from app.models.user import TypeUser
+from app.models.user import User, TypeUser
 from app.models.share import ShareStatus
 from app.models.share_file import ShareFile
 from datetime import datetime, UTC
@@ -42,6 +42,15 @@ def external_logout(token: str = Form(...), session: Session = Depends(get_sessi
         user_agent=request.headers.get("User-Agent") if request else None
     )
 
+    # Desativa o usuário externo se não restar nenhum share ativo após o logout
+    user = session.get(User, user_id)
+    if user:
+        deactivate_external_if_no_active_share(
+            session, user,
+            {"ip": request.client.host if request else None,
+             "ua": request.headers.get("User-Agent") if request else None},
+        )
+
     return {"message": "Sessão encerrada"}
 
 
@@ -73,6 +82,13 @@ def list_files(
 
     share = token_obj.share
     if not share or share.status != ShareStatus.ACTIVE or share.expires_at.replace(tzinfo=UTC) <= datetime.now(UTC):
+        # Share expirado ou inativo durante navegação: desativa o usuário se
+        # não houver outro share ativo para o mesmo e-mail.
+        deactivate_external_if_no_active_share(
+            session, user,
+            {"ip": request.client.host if request else None,
+             "ua": request.headers.get("User-Agent") if request else None},
+        )
         raise HTTPException(status_code=403, detail="Compartilhamento indisponível ou expirado.")
 
 

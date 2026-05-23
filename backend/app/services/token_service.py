@@ -3,6 +3,7 @@ import secrets
 import random
 from datetime import datetime, timedelta, UTC
 from sqlmodel import Session, select
+from sqlalchemy import or_
 from passlib.context import CryptContext
 
 from app.models.user import User, TypeUser
@@ -15,6 +16,55 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class TokenError(Exception):
     pass
+
+
+def deactivate_external_if_no_active_share(
+    session: Session,
+    user: User,
+    request_meta: dict | None = None,
+) -> bool:
+    """
+    Verifica se o usuário externo possui algum compartilhamento ativo e dentro
+    do prazo. Se não possuir, desativa o usuário (status=False) e registra
+    auditoria. Retorna True se o usuário foi desativado, False caso contrário.
+
+    Deve ser chamado sempre que o sistema detectar que o share do usuário
+    expirou ou foi encerrado durante a navegação.
+    """
+    if not user or user.type != TypeUser.EXTERNAL or not user.status:
+        return False
+
+    now = datetime.now(UTC)
+    active_share = session.exec(
+        select(Share).where(
+            or_(
+                Share.recipient_user_id == user.id,
+                Share.external_email == user.email,
+            ),
+            Share.status.in_([
+                ShareStatus.PENDING,
+                ShareStatus.APPROVED,
+                ShareStatus.ACTIVE,
+            ]),
+            Share.expires_at > now,
+        ).limit(1)
+    ).first()
+
+    if active_share:
+        return False
+
+    user.status = False
+    session.add(user)
+    session.commit()
+    log_event(
+        session,
+        "EXTERNO_DESATIVADO",
+        user_id=user.id,
+        detail="Nenhum share ativo detectado durante navegação — acesso revogado",
+        ip=request_meta.get("ip") if request_meta else None,
+        user_agent=request_meta.get("ua") if request_meta else None,
+    )
+    return True
 
 
 # =====================
@@ -53,25 +103,58 @@ def issue_otp(session: Session, email: str, validity_minutes: int = 10, request_
     ).first()
 
     if not share:
+        # Verifica se há share PENDING (ainda aguardando aprovação do supervisor).
+        # Nesse caso NÃO desativa o usuário — o share é válido, só ainda não foi aprovado.
+        pending_share = session.exec(
+            select(Share)
+            .where(
+                Share.external_email == email,
+                Share.status == ShareStatus.PENDING,
+                Share.expires_at > datetime.now(UTC),
+            )
+            .limit(1)
+        ).first()
+        if pending_share:
+            raise TokenError("O compartilhamento ainda não foi aprovado pelo supervisor.")
+
+        # Sem nenhum share vivo (PENDING, APPROVED ou ACTIVE): desativa o usuário.
+        existing_user = session.exec(select(User).where(User.email == email)).first()
+        if existing_user and existing_user.type == TypeUser.EXTERNAL and existing_user.status:
+            existing_user.status = False
+            session.add(existing_user)
+            session.commit()
+            log_event(
+                session, "EXTERNO_DESATIVADO",
+                user_id=existing_user.id,
+                detail="Nenhum share vivo (PENDING/APPROVED/ACTIVE) no momento da solicitação de OTP",
+                ip=request_meta.get("ip") if request_meta else None,
+                user_agent=request_meta.get("ua") if request_meta else None,
+            )
         raise TokenError("Não há compartilhamento ativo para este e-mail.")
 
-    # Garante usuário externo
-    user = session.exec(select(User).where(User.email == email)).first()
-    if not user:
-        user = User(
-            name=email.split("@")[0],
-            email=email,
-            type=TypeUser.EXTERNAL,
-            status=True
-        )
-        session.add(user)
-        session.commit()
-        session.refresh(user)
+    # Usa o usuário externo pré-provisionado na criação do share (recipient_user_id).
+    # Caso o share antigo não possua o vínculo (dados migrados), recupera via e-mail.
+    if share.recipient_user_id:
+        user = session.get(User, share.recipient_user_id)
+    else:
+        user = session.exec(select(User).where(User.email == email)).first()
+        if not user:
+            user = User(
+                name=email.split("@")[0],
+                email=email,
+                type=TypeUser.EXTERNAL,
+                status=True
+            )
+            session.add(user)
+            session.commit()
+            session.refresh(user)
 
-    # Valida tipo e status
+    # Valida tipo
     if user.type != TypeUser.EXTERNAL:
         raise TokenError(
             "A emissão de token por e-mail é apenas para usuário EXTERNO.")
+
+    # Garante que o usuário está ativo (pode ter sido desativado por inatividade anterior)
     if not user.status:
         raise TokenError("Usuário inativo. Contate o suporte.")
 

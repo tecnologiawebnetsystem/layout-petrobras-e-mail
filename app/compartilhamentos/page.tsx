@@ -6,16 +6,9 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 import { useWorkflowStore } from "@/lib/stores/workflow-store";
 import { AppHeader } from "@/components/shared/app-header";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   FileText,
   Clock,
@@ -27,21 +20,12 @@ import {
   Ban,
   AlertCircle,
   Search,
-  Filter,
   Eye,
-  Download,
   RefreshCcw,
-  ArrowUpRight,
-  Sparkles,
-  TrendingUp,
   Share2,
   Copy,
-  ExternalLink,
-  ChevronRight,
   Plus,
-  Send,
   SendHorizonal,
-  MailWarning,
   MailCheck,
   MailX,
   Loader2,
@@ -100,13 +84,19 @@ export default function CompartilhamentosPage() {
 
   const fetchEmailLog = useCallback(async (shareId: string) => {
     try {
-      const token = useAuthStore.getState().accessToken;
+      const token = useAuthStore((state) => state.accessToken);
       const res = await fetch(`/api/shares/${shareId}/email-logs`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        if (res.status === 401) {
+          // opcional: logout ou refresh token
+          console.warn("Sessão expirada");
+        }
+        return;
+      }
       const data = await res.json();
-      const logs: any[] = data.email_logs || [];
+      const logs = Array.isArray(data.email_logs) ? data.email_logs : [];
       const latest =
         logs.find((l: any) => l.email_type === "approval_request") ||
         logs[0] ||
@@ -117,7 +107,7 @@ export default function CompartilhamentosPage() {
           ? {
               status: latest.status,
               sent_at: latest.sent_at,
-              error_message: latest.error_message,
+              error_message: String(latest.error_message || ""),
             }
           : null,
       }));
@@ -129,7 +119,7 @@ export default function CompartilhamentosPage() {
   const handleResendNotification = async (shareId: string) => {
     setResendingId(shareId);
     try {
-      const token = useAuthStore.getState().accessToken;
+      const token = useAuthStore((state) => state.accessToken);
       const res = await fetch(`/api/shares/${shareId}/resend-notification`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
@@ -242,17 +232,6 @@ export default function CompartilhamentosPage() {
   const handleViewDetails = (upload: (typeof uploads)[0]) => {
     setSelectedUpload(upload);
     setIsDetailModalOpen(true);
-  };
-
-  const handleCopyLink = (uploadId: string) => {
-    const link = `${window.location.origin}/download?share=${uploadId}`;
-    navigator.clipboard.writeText(link);
-    setNotification({
-      show: true,
-      type: "success",
-      title: "Link copiado",
-      message: "Link de compartilhamento copiado para a area de transferencia.",
-    });
   };
 
   const handleFilterByStatus = (status: string) => {
@@ -801,20 +780,6 @@ export default function CompartilhamentosPage() {
                           <span className="hidden sm:inline">Detalhes</span>
                         </Button>
 
-                        {upload.status === "approved" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCopyLink(upload.id)}
-                            className="gap-2 hover:bg-primary/10"
-                          >
-                            <Copy className="h-4 w-4" />
-                            <span className="hidden sm:inline">
-                              Copiar Link
-                            </span>
-                          </Button>
-                        )}
-
                         {upload.status === "pending" && (
                           <Button
                             variant="ghost"
@@ -1014,15 +979,6 @@ export default function CompartilhamentosPage() {
                   >
                     Fechar
                   </Button>
-                  {selectedUpload.status === "approved" && (
-                    <Button
-                      onClick={() => handleCopyLink(selectedUpload.id)}
-                      className="gap-2 bg-gradient-to-r from-primary to-secondary text-white"
-                    >
-                      <Copy className="h-4 w-4" />
-                      Copiar Link
-                    </Button>
-                  )}
                 </div>
               </div>
             )}

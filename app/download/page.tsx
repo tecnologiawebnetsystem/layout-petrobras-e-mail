@@ -13,10 +13,36 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Download, Search, AlertTriangle, Clock } from "lucide-react"
+import { Archive, Download, Loader2, Search, AlertTriangle } from "lucide-react"
 import { NotificationModal } from "@/components/shared/notification-modal"
 import { ScrollToTop } from "@/components/shared/scroll-to-top"
 import type { Document } from "@/types/download"
+
+const MIME_TO_EXT: Record<string, string> = {
+  "application/pdf": "pdf",
+  "application/msword": "docx",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+  "application/vnd.ms-excel": "xlsx",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+  "application/vnd.ms-powerpoint": "pptx",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/png": "png",
+  "image/gif": "gif",
+  "image/webp": "webp",
+  "image/svg+xml": "svg",
+  "text/plain": "txt",
+  "text/csv": "csv",
+  "application/zip": "zip",
+  "application/x-zip-compressed": "zip",
+  "application/x-rar-compressed": "rar",
+  "application/json": "json",
+}
+
+function mimeToExtension(mime: string): string {
+  return MIME_TO_EXT[mime.toLowerCase()] ?? mime.split("/").pop()?.split(".").pop()?.toLowerCase() ?? "unknown"
+}
 
 interface ShareFileResponse {
   id: number
@@ -25,6 +51,7 @@ interface ShareFileResponse {
   type: string
   downloaded: boolean
   downloaded_at: string | null
+  created_at: string | null
 }
 
 interface ShareResponse {
@@ -55,6 +82,7 @@ export default function DownloadPage() {
   const [filterType, setFilterType] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [securityModal, setSecurityModal] = useState({ show: false, documentId: "", documentName: "" })
+  const [isZipping, setIsZipping] = useState(false)
 
   // Redireciona se não for usuário externo autenticado
   useEffect(() => {
@@ -83,11 +111,11 @@ export default function DownloadPage() {
             id: String(file.id),
             name: file.name,
             sender: share.sender?.name ?? "Desconhecido",
-            date: share.expires_at
-              ? new Date(share.expires_at).toLocaleDateString("pt-BR")
-              : new Date().toLocaleDateString("pt-BR"),
+            date: file.created_at
+              ? new Date(file.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+              : "—",
             size: file.size,
-            type: file.type?.split("/").pop()?.toLowerCase() ?? "unknown",
+            type: mimeToExtension(file.type ?? ""),
             downloaded: file.downloaded,
             downloadedAt: file.downloaded_at
               ? new Date(file.downloaded_at).toLocaleString("pt-BR")
@@ -126,12 +154,26 @@ export default function DownloadPage() {
     status: doc.downloaded ? "downloaded" : "pending",
   }))
 
-  const filteredDocuments = availableDocuments.filter((doc) => {
-    if (filterStatus === "downloaded" && !doc.downloaded) return false
-    if (filterStatus === "pending" && doc.downloaded) return false
-
-    return true
-  })
+  const filteredDocuments = availableDocuments
+    .filter((doc) => {
+      if (filterStatus === "downloaded" && !doc.downloaded) return false
+      if (filterStatus === "pending" && doc.downloaded) return false
+      if (filterType !== "all" && doc.type !== filterType) return false
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase()
+        if (!doc.name.toLowerCase().includes(q) && !doc.sender.toLowerCase().includes(q)) return false
+      }
+      return true
+    })
+    .sort((a, b) => {
+      if (sortBy === "name") return a.name.localeCompare(b.name)
+      if (sortBy === "size") {
+        const toBytes = (s: string) => parseFloat(s) * (s.includes("MB") ? 1024 * 1024 : 1)
+        return toBytes(b.size) - toBytes(a.size)
+      }
+      // "recent" → ordena por remetente (padrão)
+      return a.sender.localeCompare(b.sender)
+    })
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -150,91 +192,58 @@ export default function DownloadPage() {
     }
   }
 
-  const handleDownloadSelected = async () => {
+  const handleDownloadZip = async () => {
     if (selectedDocs.length === 0) {
       setNotification({
         show: true,
         type: "warning",
         title: "Nenhum documento selecionado",
-        message: "Por favor, selecione pelo menos um documento para download.",
+        message: "Selecione pelo menos um documento para gerar o ZIP.",
       })
       return
     }
 
-    setNotification({
-      show: true,
-      type: "info",
-      title: "Iniciando downloads...",
-      message: `Processando ${selectedDocs.length} documento(s).`,
-    })
+    setIsZipping(true)
+    try {
+      const ids = selectedDocs.join(",")
+      const res = await fetch(`/api/download/files/zip?ids=${ids}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
 
-    let successCount = 0
-    let errorCount = 0
-
-    for (const docId of selectedDocs) {
-      const doc = documents.find((d) => d.id === docId)
-      if (!doc) continue
-
-      try {
-        const res = await fetch(`/api/download/files/${docId}/url`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        })
-
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}))
-          throw new Error((errorData as { message?: string }).message || "Erro ao obter URL de download")
-        }
-
-        const data = await res.json() as { download_url: string }
-        const a = document.createElement("a")
-        a.href = data.download_url
-        a.download = doc.name
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-
-        setDocuments((prev) =>
-          prev.map((d) =>
-            d.id === docId
-              ? {
-                  ...d,
-                  downloaded: true,
-                  downloadedAt: new Date().toLocaleString("pt-BR"),
-                  downloadCount: d.downloadCount + 1,
-                }
-              : d,
-          ),
-        )
-        successCount++
-      } catch (err) {
-        // console.error(`[DownloadPage] Erro ao baixar arquivo ${docId}:`, err)
-        errorCount++
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        const msg = (err as { detail?: string }).detail || "Falha ao gerar o arquivo ZIP."
+        setNotification({ show: true, type: "error", title: "Erro no download", message: msg })
+        return
       }
-    }
 
-    setSelectedDocs([])
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = "arquivos.zip"
+      a.click()
+      URL.revokeObjectURL(url)
 
-    if (errorCount === 0) {
+      // Marca localmente como baixados
+      setDocuments((prev) =>
+        prev.map((d) =>
+          selectedDocs.includes(d.id)
+            ? { ...d, downloaded: true, downloadedAt: new Date().toLocaleString("pt-BR"), downloadCount: d.downloadCount + 1 }
+            : d,
+        ),
+      )
+      setSelectedDocs([])
       setNotification({
         show: true,
         type: "success",
-        title: "Downloads concluídos!",
-        message: `${successCount} documento(s) baixado(s) com sucesso.`,
+        title: "ZIP gerado com sucesso!",
+        message: `${selectedDocs.length} arquivo(s) compactados e baixados.`,
       })
-    } else if (successCount === 0) {
-      setNotification({
-        show: true,
-        type: "error",
-        title: "Falha nos downloads",
-        message: "Não foi possível baixar os documentos. Tente novamente.",
-      })
-    } else {
-      setNotification({
-        show: true,
-        type: "warning",
-        title: "Downloads parciais",
-        message: `${successCount} baixado(s) com sucesso, ${errorCount} com falha.`,
-      })
+    } catch {
+      setNotification({ show: true, type: "error", title: "Erro", message: "Não foi possível gerar o ZIP. Tente novamente." })
+    } finally {
+      setIsZipping(false)
     }
   }
 
@@ -490,9 +499,16 @@ export default function DownloadPage() {
                   <SelectContent>
                     <SelectItem value="all">Todos os tipos</SelectItem>
                     <SelectItem value="pdf">PDF</SelectItem>
-                    <SelectItem value="docx">DOCX</SelectItem>
-                    <SelectItem value="xlsx">XLSX</SelectItem>
-                    <SelectItem value="pptx">PPTX</SelectItem>
+                    <SelectItem value="docx">Word (DOCX)</SelectItem>
+                    <SelectItem value="xlsx">Excel (XLSX)</SelectItem>
+                    <SelectItem value="pptx">PowerPoint (PPTX)</SelectItem>
+                    <SelectItem value="jpg">Imagem JPG</SelectItem>
+                    <SelectItem value="png">Imagem PNG</SelectItem>
+                    <SelectItem value="gif">Imagem GIF</SelectItem>
+                    <SelectItem value="webp">Imagem WEBP</SelectItem>
+                    <SelectItem value="txt">Texto (TXT)</SelectItem>
+                    <SelectItem value="csv">Planilha CSV</SelectItem>
+                    <SelectItem value="zip">Arquivo ZIP</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -515,14 +531,18 @@ export default function DownloadPage() {
                   </label>
                 </div>
 
-                <Button
-                  onClick={handleDownloadSelected}
-                  disabled={selectedDocs.length === 0}
-                  className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Baixar Selecionados ({selectedDocs.length})
-                </Button>
+                                <Button
+                    onClick={handleDownloadZip}
+                    disabled={selectedDocs.length === 0 || isZipping}
+                    className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
+                  >
+                    {isZipping ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Archive className="h-4 w-4 mr-2" />
+                    )}
+                    Baixar como ZIP ({selectedDocs.length})
+                  </Button>
               </div>
             </div>
 
@@ -531,20 +551,14 @@ export default function DownloadPage() {
                 const timeRemaining = getTimeRemaining(doc.expiresAt)
 
                 return (
-                  <div key={doc.id} className="relative">
+                  <div key={doc.id}>
                     <DocumentCard
                       document={doc}
                       isSelected={selectedDocs.includes(doc.id)}
                       onSelect={(checked) => handleSelectDoc(doc.id, checked)}
                       onDownload={() => handleDownloadSingle(doc.id)}
+                      timeRemaining={getTimeRemaining(doc.expiresAt)}
                     />
-
-                    {doc.expiresAt && !doc.downloaded && (
-                      <div className="absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1 bg-yellow-100 text-yellow-800 border border-yellow-300">
-                        <Clock className="h-3 w-3" />
-                        {timeRemaining}
-                      </div>
-                    )}
                   </div>
                 )
               })}

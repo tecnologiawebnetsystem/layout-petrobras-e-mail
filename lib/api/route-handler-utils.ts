@@ -12,14 +12,14 @@
  *   }
  */
 
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constante base
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** URL do backend Python. Variável privada – nunca usar NEXT_PUBLIC_. */
-export const BACKEND_URL = process.env.BACKEND_URL ?? "http://127.0.0.1:8080"
+export const BACKEND_URL = process.env.BACKEND_URL ?? "http://127.0.0.1:8080";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Headers
@@ -30,7 +30,7 @@ export function forwardedHeaders(request: NextRequest): Record<string, string> {
   return {
     "X-Forwarded-For": request.headers.get("x-forwarded-for") ?? "",
     "User-Agent": request.headers.get("user-agent") ?? "",
-  }
+  };
 }
 
 /**
@@ -45,18 +45,24 @@ export function forwardedHeaders(request: NextRequest): Record<string, string> {
  */
 export function proxyHeaders(
   request: NextRequest,
-  opts: { withAuth?: boolean; withContentType?: boolean } = {}
+  opts: { withAuth?: boolean; withContentType?: boolean } = {},
 ): Record<string, string> {
-  const headers: Record<string, string> = { ...forwardedHeaders(request) }
+  const headers: Record<string, string> = {
+    ...forwardedHeaders(request),
+  };
+  const auth = request.headers.get("authorization");
 
-  if (opts.withAuth !== false) {
-    headers["Authorization"] = request.headers.get("authorization") ?? ""
+  if (opts.withAuth !== false && !auth) {
+    throw new Error("Token ausente");
   }
+
+  headers["Authorization"] = auth!;
+
   if (opts.withContentType) {
-    headers["Content-Type"] = "application/json"
+    headers["Content-Type"] = "application/json";
   }
 
-  return headers
+  return headers;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -68,8 +74,8 @@ export function proxyHeaders(
  * Pronto para concatenar em URLs: `${BACKEND_URL}/v1/files${qs(request)}`.
  */
 export function qs(request: NextRequest): string {
-  const s = request.nextUrl.searchParams.toString()
-  return s ? `?${s}` : ""
+  const s = request.nextUrl.searchParams.toString();
+  return s ? `?${s}` : "";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -78,16 +84,16 @@ export function qs(request: NextRequest): string {
 
 export interface HandleResponseOpts {
   /** Código de erro para respostas HTTP não-OK */
-  errorCode?: string
+  errorCode?: string;
   /** Mensagem de fallback quando o backend não retorna `detail` */
-  errorMessage?: string
+  errorMessage?: string;
   /**
    * Estratégia de formatação da resposta bem-sucedida:
    * - "passthrough" (padrão) → retorna `data` diretamente
    * - "wrap"       → `{ success: true, data }`
    * - "spread"     → `{ success: true, ...data }`
    */
-  successShape?: "passthrough" | "wrap" | "spread"
+  successShape?: "passthrough" | "wrap" | "spread";
 }
 
 /**
@@ -100,11 +106,11 @@ export interface HandleResponseOpts {
  */
 export async function handleProxyResponse(
   response: Response,
-  opts: HandleResponseOpts = {}
+  opts: HandleResponseOpts = {},
 ): Promise<NextResponse> {
-  let data: Record<string, unknown> = {}
+  let data: Record<string, unknown> = {};
   try {
-    data = (await response.json()) as Record<string, unknown>
+    data = (await response.json()) as Record<string, unknown>;
   } catch {
     // Resposta sem corpo ou não-JSON: retorna erro genérico com o status original
     return NextResponse.json(
@@ -112,40 +118,40 @@ export async function handleProxyResponse(
         success: false,
         error: {
           code: opts.errorCode ?? "REQUEST_FAILED",
-          message: opts.errorMessage ?? "Erro na requisição (resposta inválida do servidor)",
+          message:
+            opts.errorMessage ??
+            "Erro na requisição (resposta inválida do servidor)",
         },
       },
-      { status: response.ok ? 500 : response.status }
-    )
+      { status: response.ok ? 500 : response.status },
+    );
   }
 
   if (!response.ok) {
-    const rawDetail = data.detail
-    const message: string = Array.isArray(rawDetail)
-      ? rawDetail.map((e) => (typeof e === "object" && e !== null ? (e as Record<string, unknown>).msg ?? JSON.stringify(e) : String(e))).join("; ")
-      : typeof rawDetail === "string"
-      ? rawDetail
-      : (opts.errorMessage ?? "Erro na requisição")
-
     return NextResponse.json(
       {
         success: false,
         error: {
           code: opts.errorCode ?? "REQUEST_FAILED",
-          message,
+          message:
+            response.status === 404
+              ? "Recurso não encontrado"
+              : response.status === 403
+                ? "Acesso não autorizado"
+                : (opts.errorMessage ?? "Erro na requisição"),
         },
       },
-      { status: response.status }
-    )
+      { status: response.status },
+    );
   }
 
   switch (opts.successShape) {
     case "wrap":
-      return NextResponse.json({ success: true, data })
+      return NextResponse.json({ success: true, data });
     case "spread":
-      return NextResponse.json({ success: true, ...data })
+      return NextResponse.json({ success: true, ...data });
     default:
-      return NextResponse.json(data)
+      return NextResponse.json(data);
   }
 }
 
@@ -159,11 +165,14 @@ export async function handleProxyResponse(
  * ```
  */
 export function serverError(tag: string, error: unknown): NextResponse {
-  console.error(`[API] ${tag}:`, error)
+  console.error(`[API] ${tag}:`, error);
   return NextResponse.json(
-    { success: false, error: { code: "SERVER_ERROR", message: "Erro interno do servidor" } },
-    { status: 500 }
-  )
+    {
+      success: false,
+      error: { code: "SERVER_ERROR", message: "Erro interno do servidor" },
+    },
+    { status: 500 },
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -172,9 +181,9 @@ export function serverError(tag: string, error: unknown): NextResponse {
 
 export interface ProxyOpts extends HandleResponseOpts {
   /** false → omite Authorization (rotas públicas, e.g. login, download auth) */
-  withAuth?: boolean
+  withAuth?: boolean;
   /** Sobrescreve o método HTTP enviado ao backend (ex: frontend POST → backend PUT) */
-  backendMethod?: string
+  backendMethod?: string;
 }
 
 /**
@@ -189,15 +198,15 @@ export interface ProxyOpts extends HandleResponseOpts {
 export async function proxyGET(
   request: NextRequest,
   backendPath: string,
-  opts: ProxyOpts = {}
+  opts: ProxyOpts = {},
 ): Promise<NextResponse> {
   try {
     const response = await fetch(`${BACKEND_URL}${backendPath}${qs(request)}`, {
       headers: proxyHeaders(request, { withAuth: opts.withAuth }),
-    })
-    return await handleProxyResponse(response, opts)
+    });
+    return await handleProxyResponse(response, opts);
   } catch (error) {
-    return serverError(`GET ${backendPath}`, error)
+    return serverError(`GET ${backendPath}`, error);
   }
 }
 
@@ -215,24 +224,27 @@ export async function proxyJSON(
   method: "POST" | "PUT" | "PATCH",
   request: NextRequest,
   backendPath: string,
-  opts: ProxyOpts = {}
+  opts: ProxyOpts = {},
 ): Promise<NextResponse> {
   try {
-    let body: unknown = {}
+    let body: unknown = {};
     try {
-      body = await request.json()
+      body = await request.json();
     } catch {
       // body ausente ou não-JSON – usa {}
     }
 
     const response = await fetch(`${BACKEND_URL}${backendPath}`, {
       method: opts.backendMethod ?? method,
-      headers: proxyHeaders(request, { withAuth: opts.withAuth, withContentType: true }),
+      headers: proxyHeaders(request, {
+        withAuth: opts.withAuth,
+        withContentType: true,
+      }),
       body: JSON.stringify(body),
-    })
-    return await handleProxyResponse(response, opts)
+    });
+    return await handleProxyResponse(response, opts);
   } catch (error) {
-    return serverError(`${method} ${backendPath}`, error)
+    return serverError(`${method} ${backendPath}`, error);
   }
 }
 
@@ -249,16 +261,16 @@ export async function proxyJSON(
 export async function proxyDELETE(
   request: NextRequest,
   backendPath: string,
-  opts: ProxyOpts = {}
+  opts: ProxyOpts = {},
 ): Promise<NextResponse> {
   try {
     const response = await fetch(`${BACKEND_URL}${backendPath}`, {
       method: "DELETE",
       headers: proxyHeaders(request, { withAuth: opts.withAuth }),
-    })
-    return await handleProxyResponse(response, opts)
+    });
+    return await handleProxyResponse(response, opts);
   } catch (error) {
-    return serverError(`DELETE ${backendPath}`, error)
+    return serverError(`DELETE ${backendPath}`, error);
   }
 }
 
@@ -275,18 +287,18 @@ export async function proxyDELETE(
 export async function proxyFormData(
   request: NextRequest,
   backendPath: string,
-  opts: ProxyOpts = {}
+  opts: ProxyOpts = {},
 ): Promise<NextResponse> {
   try {
-    const formData = await request.formData()
+    const formData = await request.formData();
     const response = await fetch(`${BACKEND_URL}${backendPath}`, {
       method: "POST",
       // Sem Content-Type → Node/fetch define o boundary do multipart automaticamente
       headers: proxyHeaders(request, { withAuth: opts.withAuth }),
       body: formData,
-    })
-    return await handleProxyResponse(response, opts)
+    });
+    return await handleProxyResponse(response, opts);
   } catch (error) {
-    return serverError(`FormData POST ${backendPath}`, error)
+    return serverError(`FormData POST ${backendPath}`, error);
   }
 }

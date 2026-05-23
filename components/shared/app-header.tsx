@@ -16,7 +16,7 @@ import { useAuthStore } from "@/lib/stores/auth-store"
 import { useThemeStore } from "@/lib/stores/theme-store"
 import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { GlobalSearch } from "@/components/search/global-search"
+// import { GlobalSearch } from "@/components/search/global-search"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { useState } from "react"
 
@@ -77,9 +77,9 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
           )}
         </div>
 
-        <div className="hidden md:flex flex-1 justify-center max-w-md mx-auto">
+        {/* <div className="hidden md:flex flex-1 justify-center max-w-md mx-auto">
           {!isExternalUser && <GlobalSearch />}
-        </div>
+        </div> */}
 
         <TooltipProvider>
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">

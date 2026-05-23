@@ -44,6 +44,9 @@ class Share(SQLModel, table=True):
     # Quem criou o compartilhamento (interno)
     created_by_id: int = Field(foreign_key="user.id", index=True)
 
+    # Destinatário externo pré-registrado no momento da criação do share
+    recipient_user_id: Optional[int] = Field(default=None, foreign_key="user.id", index=True)
+
     # Aprovacao/Rejeicao
     approver_id: Optional[int] = Field(default=None, foreign_key="user.id")
     approved_at: Optional[datetime] = Field(default=None)
@@ -60,6 +63,9 @@ class Share(SQLModel, table=True):
     created_by: Optional["User"] = Relationship(
         back_populates="shares_created",
         sa_relationship_kwargs={"foreign_keys": "[Share.created_by_id]"}
+    )
+    recipient: Optional["User"] = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[Share.recipient_user_id]"}
     )
     files: List["ShareFile"] = Relationship(back_populates="share")
     token: Optional["TokenAccess"] = Relationship(back_populates="share", sa_relationship_kwargs={"uselist": False})

@@ -9,6 +9,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { apiFetch, ApiRequestError } from "@/lib/services/api-fetch"
+import { getClientEnv } from "@/lib/env"
 
 interface User {
   id: string
@@ -160,23 +161,26 @@ export const useAuthStore = create<AuthState>()(
       },
 
       /**
-       * Logout via backend (POST /auth/entra/logout).
-       * Revoga todos refresh tokens e redireciona para logout Microsoft.
+       * Logout via backend.
+       * - Modo entra: POST /auth/entra/logout (revoga refresh token, retorna URL Microsoft)
+       * - Modo dev:   POST /auth/internal/logout (limpa cookie de sessão)
+       * Em ambos os casos limpa o state local e redireciona para /.
        */
       logout: async () => {
+        const authMode = getClientEnv("NEXT_PUBLIC_AUTH_MODE") || "entra"
+        const endpoint = authMode !== "entra" ? "/auth/internal/logout" : "/auth/entra/logout"
+        const clearState = {
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+          isAuthenticated: false,
+          isLoading: false,
+        }
+
         try {
-          const data = await apiFetch<{ ms_logout_url?: string }>("/auth/entra/logout", {
-            method: "POST",
-          })
-          // Limpa state local
-          set({
-            user: null,
-            accessToken: null,
-            refreshToken: null,
-            isAuthenticated: false,
-            isLoading: false,
-          })
-          // Redireciona para logout Microsoft (limpa sessao SSO)
+          const data = await apiFetch<{ ms_logout_url?: string }>(endpoint, { method: "POST" })
+          set(clearState)
+          // Modo entra: redireciona para logout Microsoft (limpa sessao SSO)
           if (data?.ms_logout_url) {
             window.location.href = data.ms_logout_url
             return
@@ -184,13 +188,12 @@ export const useAuthStore = create<AuthState>()(
         } catch {
           // Ignora erros de logout — limpa o state de qualquer forma
         }
-        set({
-          user: null,
-          accessToken: null,
-          refreshToken: null,
-          isAuthenticated: false,
-          isLoading: false,
-        })
+
+        set(clearState)
+        // Redireciona para a pagina de login
+        if (typeof window !== "undefined") {
+          window.location.href = "/"
+        }
       },
 
       /**

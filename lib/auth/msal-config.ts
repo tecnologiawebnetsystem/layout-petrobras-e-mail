@@ -11,18 +11,26 @@ import {
   PublicClientApplication,
   Configuration,
   LogLevel,
-} from "@azure/msal-browser"
-import { getClientEnv } from "@/lib/env"
+} from "@azure/msal-browser";
+import { getClientEnv } from "@/lib/env";
 
 // Lê de window.__ENV__ no cliente (runtime) em vez do valor baked no bundle (build-time).
-const clientId = getClientEnv("NEXT_PUBLIC_ENTRA_CLIENT_ID")
-const tenantId = getClientEnv("NEXT_PUBLIC_ENTRA_TENANT_ID")
+const clientId = getClientEnv("NEXT_PUBLIC_ENTRA_CLIENT_ID");
+const tenantId = getClientEnv("NEXT_PUBLIC_ENTRA_TENANT_ID");
 
 export const msalConfig: Configuration = {
   auth: {
     clientId,
     authority: `https://login.microsoftonline.com/${tenantId}`,
-    // redirectUri principal: usado pelo loginRedirect (não loginPopup).
+    // redirectUri: URL para onde a Microsoft redireciona apos autenticacao.
+    // Usar window.location.origin (sem path) quando http://localhost:3000 estiver
+    // cadastrado no Azure AD como SPA redirect URI.
+    // Trocar para "/auth/entra-callback" se cadastrar esse path especifico.
+    // redirectUri:
+    //   typeof window !== "undefined"
+    //     ? `${window.location.origin}/auth/entra-callback`
+    //     : "/auth/entra-callback",
+
     redirectUri: typeof window !== "undefined" ? window.location.origin : "/",
   },
   cache: {
@@ -32,38 +40,38 @@ export const msalConfig: Configuration = {
   system: {
     loggerOptions: {
       loggerCallback: (level, message, containsPii) => {
-        if (containsPii) return
-        if (process.env.NODE_ENV !== "development") return
+        if (containsPii) return;
+        if (process.env.NODE_ENV !== "development") return;
         switch (level) {
           case LogLevel.Error:
-            console.error("[MSAL]", message)
-            break
+            console.error("[MSAL]", message);
+            break;
           case LogLevel.Warning:
-            console.warn("[MSAL]", message)
-            break
+            console.warn("[MSAL]", message);
+            break;
           default:
-            console.debug("[MSAL]", message)
+            console.debug("[MSAL]", message);
         }
       },
     },
   },
-}
+};
 
 /** Escopos solicitados ao Microsoft Entra ID. */
 export const loginRequest = {
   scopes: ["openid", "profile", "email", "User.Read"],
-}
+};
 
 /**
  * Instância singleton do MSAL para uso no browser.
  * Inicializar com `await getMsalInstance()` antes de chamar qualquer método.
  */
-let _instance: PublicClientApplication | null = null
+let _instance: PublicClientApplication | null = null;
 
 export async function getMsalInstance(): Promise<PublicClientApplication> {
   if (!_instance) {
-    _instance = new PublicClientApplication(msalConfig)
-    await _instance.initialize()
+    _instance = new PublicClientApplication(msalConfig);
+    await _instance.initialize();
   }
-  return _instance
+  return _instance;
 }

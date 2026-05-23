@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-from logging.config import fileConfig
 import os
 import sys
+from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -14,19 +12,25 @@ from alembic import context
 # Adicionar o diretorio raiz do backend ao sys.path para importar os models
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+# Nota: NÃO chamar load_dotenv() aqui.
+# Pydantic BaseSettings já lê o .env nativo via env_file=".env" (config.py).
+# Chamar load_dotenv() colocaria DATABASE_URL (só host) em os.environ e
+# acionaria um bug em config.py que sobrescreveria a URL já montada.
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-# Sobrescrever sqlalchemy.url com DATABASE_URL do .env (se existir)
-database_url = os.environ.get("DATABASE_URL")
-if database_url:
-    # Ajustar driver para psycopg3
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
-    elif database_url.startswith("postgresql://") and "+psycopg" not in database_url:
-        database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
-    config.set_main_option("sqlalchemy.url", database_url)
+# Reutiliza a mesma lógica de montagem de URL do app em runtime:
+# Pydantic Settings lê os.environ + .env e monta DATABASE_URL via
+# _assemble_database_url (3 cenários: URL completa / só host / só rds_aurora_*).
+# Mesmo comportamento de GET /diagnostico/db-connection. Sem boto3 aqui.
+from app.core.config import settings  # noqa: E402
+
+database_url = settings.database_url or ""
+if database_url and "://" in database_url:
+    # configparser interpreta '%' como interpolação — escapar para '%%'
+    config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -62,7 +66,6 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        render_as_batch=True,  # SQLite-friendly para migrações complexas
     )
 
     with context.begin_transaction():
@@ -87,9 +90,8 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, 
-            target_metadata=target_metadata, 
-            render_as_batch=True,  # SQLite-friendly para migrações complexas
+            connection=connection,
+            target_metadata=target_metadata,
         )
 
         with context.begin_transaction():

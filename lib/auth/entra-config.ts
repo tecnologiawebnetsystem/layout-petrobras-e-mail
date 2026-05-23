@@ -2,7 +2,7 @@
  * Configuração de Autenticação – Entra ID
  *
  * MSAL removido: toda a autenticação é tratada pelo backend (csa-backend).
- * O frontend inicia o fluxo OAuth redirecionando para /api/auth/internal/entra-login,
+ * O frontend inicia o fluxo OAuth redirecionando para /api/auth/entra/authorize,
  * que o backend processa e redireciona de volta com um JWT de sessão.
  */
 

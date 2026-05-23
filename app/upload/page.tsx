@@ -63,7 +63,7 @@ export default function UploadPage() {
   useEffect(() => {
     if (!_hasHydrated) return;
 
-    if (!isAuthenticated || user?.userType !== "internal") {
+    if (!isAuthenticated || (user?.userType !== "internal" && user?.userType !== "supervisor")) {
       router.push("/");
     }
   }, [_hasHydrated, isAuthenticated, user, router]);
@@ -289,7 +289,7 @@ export default function UploadPage() {
   );
 
   return (
-    <ProtectedRoute allowedUserTypes={["internal"]}>
+    <ProtectedRoute allowedUserTypes={["internal", "supervisor"]}>
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <AppHeader subtitle="Solucao de Compartilhamento de Arquivos Confidenciais" />
 
@@ -323,7 +323,24 @@ export default function UploadPage() {
 
           <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-10 space-y-8 relative overflow-hidden mt-8">
             <form onSubmit={handleSubmit} className="space-y-7">
-              {user?.manager && (
+              {user?.userType === "supervisor" && (
+                <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-5 space-y-2">
+                  <div className="flex items-start gap-3">
+                    <div className="h-8 w-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Sparkles className="h-4 w-4 text-green-600" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-green-800 dark:text-green-400">
+                        Aprovação automática
+                      </p>
+                      <p className="text-sm text-green-700 dark:text-green-500 leading-relaxed">
+                        Como supervisor, este compartilhamento será aprovado imediatamente e o destinatário receberá acesso aos arquivos assim que o envio for concluído.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {user?.userType !== "supervisor" && user?.manager && (
                 <div className="bg-muted/30 border border-border/50 rounded-xl p-5 space-y-3">
                   <Label className="text-base font-medium flex items-center gap-2">
                     <Lock className="h-4 w-4 text-secondary" />
@@ -362,7 +379,7 @@ export default function UploadPage() {
                   </p>
                 </div>
               )}
-              {!user?.manager && (
+              {user?.userType !== "supervisor" && !user?.manager && (
                 <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-5 space-y-2">
                   <div className="flex items-start gap-3">
                     <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">

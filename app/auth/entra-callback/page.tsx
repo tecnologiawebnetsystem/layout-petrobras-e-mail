@@ -3,24 +3,24 @@
 /**
  * /auth/entra-callback
  *
- * Processa o redirect do backend apos autenticacao OAuth2 com Entra ID.
+ * Processa o redirect do Microsoft Entra ID apos autenticacao MSAL (fluxo SPA).
  *
- * O backend redireciona para esta pagina com os seguintes query params:
- *   - access_token: JWT interno emitido pelo backend
- *   - refresh_token: token para renovacao
- *   - expires_in: tempo de vida do access_token em segundos
- *   - user_info: JSON URL-encoded com dados do usuario
- *   - error: mensagem de erro (se falha na autenticacao)
+ * Fluxo:
+ *   1. MSAL redireciona o browser para esta pagina apos login na Microsoft
+ *   2. handleRedirectPromise() processa o hash/code da URL e retorna os tokens
+ *   3. Frontend envia id_token + access_token para o backend (POST /api/auth/entra/token)
+ *   4. Backend valida, verifica grupo e retorna JWT interno + dados do usuario
+ *   5. Salva no auth store e redireciona para o dashboard
  */
 
 import { useEffect, useRef } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
+import { getMsalInstance } from "@/lib/auth/msal-config"
 import { Suspense } from "react"
 
 function CallbackContent() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { setAuth } = useAuthStore()
   const processed = useRef(false)
 
@@ -28,69 +28,86 @@ function CallbackContent() {
     if (processed.current) return
     processed.current = true
 
-    // Verifica se houve erro na autenticacao
-    const error = searchParams.get("error")
-    if (error) {
-      console.error("[EntraCallback] Erro retornado pelo backend:", error)
-      router.replace(`/?error=${encodeURIComponent(error)}`)
-      return
+    const handleMsalCallback = async () => {
+      try {
+        const msal = await getMsalInstance()
+        const result = await msal.handleRedirectPromise()
+
+        if (!result) {
+          // Nao e uma resposta de redirect do MSAL — voltar para login
+          console.warn("[EntraCallback] handleRedirectPromise retornou null.")
+          router.replace("/")
+          return
+        }
+
+        // Trocar tokens Microsoft por JWT interno via backend
+        const resp = await fetch("/api/auth/entra/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id_token: result.idToken,
+            access_token: result.accessToken,
+          }),
+        })
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}))
+          const msg = err.detail || "Falha na autenticacao"
+          console.error("[EntraCallback] Erro do backend:", msg)
+          router.replace(`/?error=${encodeURIComponent(msg)}`)
+          return
+        }
+
+        const data = await resp.json()
+        const u = data.user
+        const role: string = (u.role || "").toLowerCase()
+
+        let userType: "internal" | "external" | "supervisor" | "admin"
+        if (role === "admin") userType = "admin"
+        else if (role === "supervisor") userType = "supervisor"
+        else if (role === "external") userType = "external"
+        else userType = "internal"
+
+        const dest =
+          userType === "admin" ? "/admin" :
+          userType === "supervisor" ? "/supervisor" :
+          userType === "external" ? "/download" :
+          "/upload"
+
+        setAuth(
+          {
+            id: String(u.id),
+            email: u.email || "",
+            name: u.name || "",
+            userType,
+            isAdmin: role === "admin",
+            jobTitle: u.job_title || undefined,
+            department: u.department || undefined,
+            employeeId: u.employee_id || undefined,
+            photoUrl: u.photo_url || undefined,
+            manager: u.manager
+              ? {
+                  id: String(u.manager.id),
+                  name: u.manager.name,
+                  email: u.manager.email,
+                  jobTitle: u.manager.job_title || undefined,
+                  department: u.manager.department || undefined,
+                }
+              : undefined,
+          },
+          data.access_token,
+          data.refresh_token,
+        )
+
+        router.replace(dest)
+      } catch (err) {
+        console.error("[EntraCallback] Erro inesperado:", err)
+        router.replace("/?error=auth_failed")
+      }
     }
 
-    // Extrai tokens
-    const accessToken = searchParams.get("access_token")
-    const refreshToken = searchParams.get("refresh_token")
-    const userInfoRaw = searchParams.get("user_info")
-
-    if (!accessToken || !refreshToken || !userInfoRaw) {
-      console.error("[EntraCallback] Parametros ausentes na URL.")
-      router.replace("/?error=auth_failed")
-      return
-    }
-
-    // Parseia dados do usuario
-    try {
-      const userInfo = JSON.parse(decodeURIComponent(userInfoRaw))
-
-      // Verifica se e admin (flag do backend)
-      const isAdmin = userInfo.is_admin === true
-
-      // Mapeia role do backend para userType do frontend
-      let userType: "internal" | "external" | "supervisor" | "support" | "admin" = "internal"
-      if (isAdmin) {
-        userType = "admin"
-      } else {
-        const role = (userInfo.role || "").toLowerCase()
-        if (role.includes("supervisor")) userType = "supervisor"
-        else if (role.includes("support") || role.includes("suporte")) userType = "support"
-        else if (role.includes("external") || role.includes("externo")) userType = "external"
-      }
-
-      const user = {
-        id: String(userInfo.id),
-        email: userInfo.email || "",
-        name: userInfo.name || "",
-        userType,
-        isAdmin,
-        jobTitle: userInfo.job_title || undefined,
-        department: userInfo.department || undefined,
-        employeeId: userInfo.employee_id || undefined,
-        photoUrl: userInfo.photo_url || undefined,
-      }
-
-      // Salva no auth store (Zustand + persist)
-      setAuth(user, accessToken, refreshToken)
-
-      // Redireciona para pagina apropriada
-      if (isAdmin) {
-        router.replace("/admin")
-      } else {
-        router.replace("/dashboard")
-      }
-    } catch (parseError) {
-      console.error("[EntraCallback] Erro ao parsear user_info:", parseError)
-      router.replace("/?error=auth_failed")
-    }
-  }, [searchParams, setAuth, router])
+    handleMsalCallback()
+  }, [router, setAuth])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

@@ -60,14 +60,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     APP_ENV=dsv \
     CDK_APP_SERVICE_NAME=backend \
     USE_AWS_CONFIG=true \
-    DATABASE_URL=sqlite:////app/data/dev.db \
     STORAGE_PROVIDER=local \
     AUTH_MODE=local \
     EMAIL_PROVIDER=dev \
     SEED_ON_STARTUP=true
-
-# Volume para persistência do banco SQLite (monte EFS na AWS)
-VOLUME ["/app/data"]
 
 EXPOSE 8080
 

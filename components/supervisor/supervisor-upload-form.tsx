@@ -352,6 +352,10 @@ export function SupervisorUploadForm() {
             <SelectContent>
               <SelectItem value="24">24 horas (1 dia)</SelectItem>
               <SelectItem value="48">48 horas (2 dias)</SelectItem>
+              <SelectItem value="72">72 horas (3 dias)</SelectItem>
+              <SelectItem value="96">96 horas (4 dias)</SelectItem>
+              <SelectItem value="120">120 horas (5 dias)</SelectItem>
+              <SelectItem value="144">144 horas (6 dias)</SelectItem>
               <SelectItem value="168">168 horas (7 dias)</SelectItem>
             </SelectContent>
           </Select>

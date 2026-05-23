@@ -132,10 +132,6 @@ export default function RootLayout({
       ((process.env['NEXT_PUBLIC_ENTRA_CLIENT_ID'] || process.env['ENTRA_CLIENT_ID'] || "") as string),
     NEXT_PUBLIC_ENTRA_TENANT_ID:
       ((process.env['NEXT_PUBLIC_ENTRA_TENANT_ID'] || process.env['ENTRA_TENANT_ID'] || "") as string),
-    // Derivado do APP_URL do próprio frontend (ENTRA_REDIRECT_URI da secret aponta para o backend)
-    NEXT_PUBLIC_ENTRA_REDIRECT_URI:
-      ((process.env['NEXT_PUBLIC_ENTRA_REDIRECT_URI'] || "") as string) ||
-      (appUrl ? `${appUrl}/api/auth/internal/callback` : ""),
     NEXT_PUBLIC_APP_URL: appUrl,
   }
 

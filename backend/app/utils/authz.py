@@ -25,11 +25,6 @@ def get_current_user(
     - Token DEVE ser um JWT valido emitido por este backend (issuer: secure-share)
     - Token NAO pode estar expirado
     - Usuario DEVE existir e estar ativo no banco
-
-    NAO aceita:
-    - Cookies de sessao (removido — era fallback inseguro)
-    - Tokens fake/mock
-    - Tokens de outro issuer
     """
     token = None
 
@@ -37,11 +32,15 @@ def get_current_user(
     if credentials and credentials.credentials:
         token = credentials.credentials
 
-    # 2. Fallback manual para header Authorization (caso HTTPBearer nao capture)
+    # 2. Fallback manual para header Authorization
     if not token:
         auth_header = request.headers.get("Authorization", "")
         if auth_header.startswith("Bearer "):
             token = auth_header[7:]
+
+    # 3. Fallback para cookie de sessao (compatibilidade legado)
+    if not token:
+        token = request.cookies.get("app_session")
 
     if not token:
         raise HTTPException(status_code=401, detail="Nao autenticado. Token Bearer obrigatorio.")
@@ -51,7 +50,7 @@ def get_current_user(
     if not data:
         raise HTTPException(status_code=401, detail="Token invalido ou expirado.")
 
-    # Verificar issuer (impede tokens fake/de outro sistema)
+    # Verificar issuer
     if data.get("iss") != "secure-share":
         raise HTTPException(status_code=401, detail="Token com issuer invalido.")
 
@@ -60,7 +59,7 @@ def get_current_user(
     if exp and datetime.fromtimestamp(exp, tz=UTC) < datetime.now(UTC):
         raise HTTPException(status_code=401, detail="Token expirado.")
 
-    # Busca usuario
+    # Busca usuario por user_id (preferencial) ou email
     user_id = data.get("user_id")
     email = data.get("email")
 

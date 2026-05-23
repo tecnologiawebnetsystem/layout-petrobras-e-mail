@@ -3,12 +3,12 @@ seed_dev.py – Popula o banco de desenvolvimento com dados mínimos para testar
 o fluxo completo: INTERNO cria share → SUPERVISOR aprova → EXTERNO recebe OTP → download.
 
 Dados criados:
-  1. Usuários internos (múltiplos / internal@123) – ver INTERNAL_USERS
-  2. Supervisor        (supervisor@petrobras.com.br / supervisor@123)
-  3. Área + vínculo AreaSupervisor (um por usuário interno)
-  4. Share PENDENTE    → 2 arquivos vinculados (carregados no S3 real)
-  5. Usuário externo   (destinatario@example.com)
-  6. Usuário suporte (suporte@petrobras.com.br / suporte@123) - Usuário desativado a pedido do PO da aplicação
+  1. Administrador global (admin@petrobras.com.br / admin@123)  [is_admin=True]
+  2. Supervisor           (supervisor@petrobras.com.br / supervisor@123)  [is_supervisor=True]
+  3. Usuários internos    (múltiplos / internal@123) – ver INTERNAL_USERS
+  4. Área + vínculo AreaSupervisor (um por usuário interno)
+  5. Share PENDENTE       → 2 arquivos vinculados (carregados no S3 real)
+  6. Usuário externo      (destinatario@example.com)
 
 Os arquivos são enviados ao S3 apenas se ainda não existirem no bucket
 (verificado via HeadObject), tornando o seed idempotente.
@@ -67,11 +67,15 @@ INTERNAL_USERS: list[tuple[str, str]] = [
 
 def _upsert_user(session: Session, email: str, name: str,
                  user_type: TypeUser, password: str,
-                 is_supervisor: bool = False) -> tuple[User, bool]:
+                 is_supervisor: bool = False,
+                 is_admin: bool = False) -> tuple[User, bool]:
     user = session.exec(select(User).where(User.email == email)).first()
     if user:
         return user, False
-    user = User(name=name, email=email, type=user_type, is_supervisor=is_supervisor, status=True)
+    user = User(
+        name=name, email=email, type=user_type,
+        is_supervisor=is_supervisor, is_admin=is_admin, status=True,
+    )
     session.add(user)
     session.commit()
     session.refresh(user)
@@ -297,7 +301,19 @@ def main() -> None:
 
     with Session(engine) as session:
 
-        # ── Supervisor (compartilhado por todos os internos) ─────────────────
+        # ── Administrador global ──────────────────────────────────────────────
+        admin, adc = _upsert_user(
+            session,
+            email="admin@petrobras.com.br",
+            name="Admin Dev",
+            user_type=TypeUser.INTERNAL,
+            password="admin@123",
+            is_admin=True,
+        )
+        print(f"[seed] admin       id={admin.id}  email={admin.email}"
+              + ("  ← CRIADO" if adc else "  ← já existia"))
+
+        # ── Supervisor (compartilhado por todos os internos) ──────────────────
         supervisor, sc = _upsert_user(
             session,
             email="supervisor@petrobras.com.br",
@@ -333,28 +349,35 @@ def main() -> None:
         print(f"\n[seed] {sep}")
         print(f"[seed]  FLUXO COMPLETO PARA TESTAR:")
         print(f"[seed] {sep}")
-        print(f"[seed]  1) Login como supervisor:")
-        print(f"[seed]     POST /api/v1/auth/login")
+        print(f"[seed]  [ADMIN] Login como administrador global:")
+        print(f"[seed]     POST /api/v1/auth/internal/login")
+        print(f'[seed]     {{"email":"admin@petrobras.com.br","password":"admin@123"}}')
+        print(f"[seed]     GET  /api/v1/admin/dashboard    Authorization: Bearer <token_admin>")
+        print(f"[seed]     GET  /api/v1/admin/users        Authorization: Bearer <token_admin>")
+        print(f"[seed]     GET  /api/v1/admin/logs         Authorization: Bearer <token_admin>")
+        print(f"[seed] ")
+        print(f"[seed]  [SUPERVISOR] Login como supervisor:")
+        print(f"[seed]     POST /api/v1/auth/internal/login")
         print(f'[seed]     {{"email":"supervisor@petrobras.com.br","password":"supervisor@123"}}')
         print(f"[seed] ")
-        print(f"[seed]  2) Listar pendentes:")
+        print(f"[seed]  1) Listar pendentes:")
         print(f"[seed]     GET /api/v1/supervisor/pending")
         print(f"[seed]     Authorization: Bearer <token_supervisor>")
         print(f"[seed] ")
-        print(f"[seed]  3) Aprovar um share:")
+        print(f"[seed]  2) Aprovar um share:")
         print(f"[seed]     POST /api/v1/supervisor/approve/<share_id>")
         print(f"[seed]     Authorization: Bearer <token_supervisor>")
         print(f'[seed]     {{"message":"Aprovado!"}}')
         print(f"[seed] ")
-        print(f"[seed]  4) Externo solicita OTP:")
+        print(f"[seed]  3) Externo solicita OTP:")
         print(f"[seed]     POST /api/v1/download/verify")
         print(f'[seed]     {{"email":"{EXTERNAL_EMAIL}"}}')
         print(f"[seed] ")
-        print(f"[seed]  5) Externo autentica com OTP (código no log do servidor):")
+        print(f"[seed]  4) Externo autentica com OTP (código no log do servidor):")
         print(f"[seed]     POST /api/v1/download/authenticate")
         print(f'[seed]     {{"email":"{EXTERNAL_EMAIL}","code":"<otp>"}}')
         print(f"[seed] ")
-        print(f"[seed]  6) Externo lista/baixa arquivos:")
+        print(f"[seed]  5) Externo lista/baixa arquivos:")
         print(f"[seed]     GET /api/v1/download/files")
         print(f"[seed]     Authorization: Bearer <access_token>")
         print(f"[seed] {sep}\n")

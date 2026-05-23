@@ -12,6 +12,7 @@ import shutil
 
 from app.db.session import get_session
 from app.utils.authz import require_supervisor, get_current_user
+from app.services.token_service import deactivate_external_if_no_active_share
 from app.models.area import SharedArea
 from app.models.areasupervisors import AreaSupervisor
 from app.models.share import Share, ShareStatus
@@ -27,11 +28,6 @@ from app.services.email_service import (
     send_share_approved_requester_email,
     send_share_rejected_requester_email,
     send_supervisor_approval_request_email,
-)
-from app.services.approval_hierarchy_service import (
-    validate_approval_authority,
-    find_next_approver,
-    get_approval_chain,
 )
 import logging
 logger = logging.getLogger(__name__)
@@ -195,21 +191,20 @@ async def approve_file(
 ):
     """
     Aprova um compartilhamento pendente.
-    
-    Regras de Aprovação Hierárquica:
-    1. O requisitante NÃO pode aprovar a si mesmo
-    2. O aprovador deve estar na cadeia hierárquica do requisitante
-    3. Suporta escalação até 3 níveis na hierarquia
+    O supervisor só pode aprovar shares criados pelos seus supervisionados.
     """
     share = session.get(Share, file_id)
     if not share:
         raise HTTPException(
             status_code=404, detail="Compartilhamento nao encontrado.")
 
-    # Validação de autoridade hierárquica (inclui verificação de auto-aprovação)
-    is_authorized, message = validate_approval_authority(session, share, user)
-    if not is_authorized:
-        raise HTTPException(status_code=403, detail=message)
+    # Verifica autoridade: o criador do share deve ter este supervisor como gestor
+    creator = session.get(User, share.created_by_id)
+    if not creator or creator.manager_id != user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Acesso negado: este compartilhamento nao pertence a um de seus supervisionados.",
+        )
 
     if share.status != ShareStatus.PENDING:
         raise HTTPException(
@@ -228,6 +223,23 @@ async def approve_file(
     session.add(share)
     session.commit()
     session.refresh(share)
+
+    # Reativa o usuário externo se estiver inativo (pode ter sido desativado após downloads anteriores)
+    if share.recipient_user_id:
+        ext_user = session.get(User, share.recipient_user_id)
+        if ext_user and not ext_user.status:
+            ext_user.status = True
+            session.add(ext_user)
+            session.commit()
+            log_event(
+                session=session,
+                action="REATIVAR_USUARIO_EXTERNO",
+                user_id=ext_user.id,
+                share_id=share.id,
+                detail=f"reativado_por_aprovacao_share={share.id}",
+                ip=request.client.host if request else None,
+                user_agent=request.headers.get("User-Agent") if request else None,
+            )
 
     # Busca dados para emails
     applicant = session.get(User, share.created_by_id)
@@ -290,20 +302,20 @@ async def reject_file(
 ):
     """
     Rejeita um compartilhamento pendente.
-    
-    Regras de Aprovação Hierárquica:
-    1. O requisitante NÃO pode rejeitar a si mesmo
-    2. O rejeitador deve estar na cadeia hierárquica do requisitante
+    O supervisor só pode rejeitar shares criados pelos seus supervisionados.
     """
     share = session.get(Share, file_id)
     if not share:
         raise HTTPException(
             status_code=404, detail="Compartilhamento nao encontrado.")
 
-    # Validação de autoridade hierárquica
-    is_authorized, message = validate_approval_authority(session, share, user)
-    if not is_authorized:
-        raise HTTPException(status_code=403, detail=message)
+    # Verifica autoridade
+    creator = session.get(User, share.created_by_id)
+    if not creator or creator.manager_id != user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Acesso negado: este compartilhamento nao pertence a um de seus supervisionados.",
+        )
 
     if share.status != ShareStatus.PENDING:
         raise HTTPException(
@@ -356,6 +368,21 @@ async def reject_file(
         ip=request.client.host if request else None,
         user_agent=request.headers.get("User-Agent") if request else None
     )
+
+    # Após rejeição, verifica se o destinatário externo tem outro share ativo.
+    # Se não tiver, desativa o usuário para revogar qualquer acesso remanescente.
+    if share.recipient_user_id:
+        recipient = session.get(User, share.recipient_user_id)
+    else:
+        recipient = session.exec(
+            select(User).where(User.email == share.external_email)
+        ).first()
+    if recipient:
+        deactivate_external_if_no_active_share(
+            session, recipient,
+            {"ip": request.client.host if request else None,
+             "ua": request.headers.get("User-Agent") if request else None},
+        )
 
     return {
         "file_id": share.id,
@@ -571,37 +598,6 @@ async def approve_share_legacy(
     )
 
     return {"status": "ok", "share_id": share.id, "status_atual": share.status}
-
-
-# =====================================================
-# GET /supervisor/approval-chain/{user_id} - Cadeia de aprovação
-# =====================================================
-
-@router.get("/approval-chain/{user_id}")
-def get_user_approval_chain(
-    user_id: int,
-    session: Session = Depends(get_session),
-    user: User = Depends(require_supervisor),
-    request: Request = None,
-):
-    """
-    Retorna a cadeia de aprovação hierárquica de um usuário.
-    
-    Útil para verificar quem pode aprovar compartilhamentos de um usuário específico.
-    """
-    target_user = session.get(User, user_id)
-    if not target_user:
-        raise HTTPException(status_code=404, detail="Usuario nao encontrado.")
-    
-    chain = get_approval_chain(session, target_user)
-    
-    return {
-        "user_id": user_id,
-        "user_name": target_user.name,
-        "user_email": target_user.email,
-        "approval_chain": chain,
-        "next_approver": chain[0] if chain and chain[0].get("can_approve") else None,
-    }
 
 
 # =====================================================

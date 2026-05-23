@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from app.models.areasupervisors import AreaSupervisor
 
 class TypeUser(str, Enum):
-    EXTERNAL = "externo"
+    EXTERNAL = "external"
     INTERNAL = "internal"
     # SUPERVISOR foi removido: supervisores são usuários INTERNAL com is_supervisor=True.
     # A relação supervisor-supervisionado vem do chamado ServiceNow e é armazenada em manager_id.
@@ -33,10 +33,10 @@ class User(SQLModel, table=True):
     department: Optional[str] = Field(default=None, max_length=255)
     job_title: Optional[str] = Field(default=None, max_length=255)
     employee_id: Optional[str] = Field(default=None, max_length=50)
-    photo_url: Optional[str] = Field(default=None, max_length=500)
+    photo_url: Optional[str] = Field(default=None)
     manager_id: Optional[int] = Field(default=None, foreign_key="user.id")
     is_supervisor: bool = Field(default=False)  # True = pode aprovar/rejeitar shares da sua área
-    is_admin: bool = Field(default=False)  # True = super administrador global (ve tudo)
+    is_admin: bool = Field(default=False)  # True = acesso ao painel administrativo global
     status: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     last_login: Optional[datetime] = Field(default=None)

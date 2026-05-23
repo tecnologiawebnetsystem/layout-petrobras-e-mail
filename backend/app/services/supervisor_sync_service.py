@@ -2,7 +2,7 @@
 Servico de auto-criacao e vinculacao de supervisores.
 
 Responsavel por:
-- Buscar o gestor (manager) do usuario via Microsoft Graph API (/me/manager)
+- Buscar o gestor (manager) do usuario via Microsoft Graph (/me/manager)
 - Verificar se o gestor ja existe na base de dados local (por e-mail)
 - Criar automaticamente o gestor como supervisor (is_supervisor=True, status=True)
   caso nao exista
@@ -18,7 +18,6 @@ from datetime import datetime, UTC
 from sqlmodel import Session, select
 from typing import Optional
 
-from app.core.config import settings
 from app.models.user import User, TypeUser
 from app.services.audit_service import log_event
 
@@ -50,16 +49,7 @@ def resolve_and_link_supervisor(
     5. Vincula user.manager_id ao supervisor
     6. Registra log de auditoria
 
-    Args:
-        session: Sessao do banco de dados
-        user: Usuario autenticado (subordinado)
-        graph_info: Dados coletados do Graph (/me, /me/manager)
-        ms_access_token: Token Microsoft para consulta adicional (opcional)
-        request_ip: IP da requisicao (para log)
-        request_ua: User-Agent da requisicao (para log)
-
-    Returns:
-        User supervisor encontrado/criado, ou None se nao ha manager_email
+    Retorna o supervisor encontrado/criado, ou None se nao ha manager_email.
     """
     manager_email = graph_info.get("manager_email")
     manager_name = graph_info.get("manager_name")
@@ -164,16 +154,14 @@ def _auto_create_supervisor(
     """
     Cria automaticamente um usuario supervisor na base de dados.
 
-    Dados obrigatorios: email
-    Dados opcionais (enriquecidos via Graph se token disponivel):
-      name, department, job_title, employee_id
-
     O supervisor criado tera:
     - type = INTERNAL
     - is_supervisor = True
     - status = True
+    - last_login = None (nunca logou diretamente)
+
+    Dados opcionais enriquecidos via Graph API se access_token disponivel.
     """
-    # Tentar enriquecer dados via Graph API se token disponivel
     enriched = {}
     if ms_access_token:
         enriched = _enrich_manager_from_graph(ms_access_token, manager_email)
@@ -188,7 +176,7 @@ def _auto_create_supervisor(
         job_title=enriched.get("job_title"),
         employee_id=enriched.get("employee_id"),
         photo_url=(enriched.get("photo_url") or "")[:500] or None,
-        last_login=None,  # Nunca logou diretamente
+        last_login=None,
     )
     session.add(supervisor)
     session.commit()
@@ -224,19 +212,14 @@ def _enrich_manager_from_graph(access_token: str, manager_email: str) -> dict:
     """
     Busca dados do manager via Microsoft Graph API /users/{email}.
 
-    Retorna dicionario com:
-    - name, department, job_title, employee_id, photo_url
-
+    Retorna dicionario com name, department, job_title, employee_id, photo_url.
     Se o Graph retornar erro ou timeout, retorna dicionario vazio.
-    O enriquecimento NAO e obrigatorio — se falhar, o supervisor
-    sera criado apenas com email e nome basico.
     """
     info: dict = {}
     headers = {"Authorization": f"Bearer {access_token}"}
 
     try:
         with httpx.Client(timeout=10.0) as client:
-            # Buscar perfil do manager
             resp = client.get(
                 f"{_GRAPH_BASE}/users/{manager_email}"
                 f"?$select=displayName,jobTitle,department,employeeId,mail",
@@ -254,7 +237,6 @@ def _enrich_manager_from_graph(access_token: str, manager_email: str) -> dict:
                     f"{resp.text[:200]}"
                 )
 
-            # Buscar foto do manager
             photo_resp = client.get(
                 f"{_GRAPH_BASE}/users/{manager_email}/photo/$value",
                 headers=headers,
@@ -265,7 +247,6 @@ def _enrich_manager_from_graph(access_token: str, manager_email: str) -> dict:
                 info["photo_url"] = (
                     f"data:{ct};base64,{_b64.b64encode(photo_resp.content).decode()}"
                 )
-
     except httpx.TimeoutException:
         logger.warning(f"Timeout ao enriquecer dados do manager {manager_email}")
     except Exception as e:
@@ -275,7 +256,7 @@ def _enrich_manager_from_graph(access_token: str, manager_email: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# 4. Buscar manager info diretamente (utilitario para diagnostico)
+# 4. Utilitario: buscar manager info diretamente
 # ---------------------------------------------------------------------------
 
 def get_manager_info_from_graph(access_token: str) -> Optional[dict]:
@@ -284,10 +265,6 @@ def get_manager_info_from_graph(access_token: str) -> Optional[dict]:
 
     Util para diagnostico e para garantir que o Graph retorna dados
     corretamente antes de tentar auto-criar.
-
-    Returns:
-        Dict com mail, displayName, jobTitle, department, employeeId
-        ou None se nao disponivel.
     """
     headers = {"Authorization": f"Bearer {access_token}"}
     try:

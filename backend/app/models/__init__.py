@@ -11,5 +11,7 @@ from .restricted_file import RestrictedFile
 from .session_token import SessionToken
 from .share_file import ShareFile
 from .share import Share
+from .support_audit import SupportAudit
+from .support_registration import SupportRegistration
 from .token_access import TokenAccess
 from .user import User

@@ -13,7 +13,6 @@ import {
   MailCheck,
   MailX,
   Mail,
-  RefreshCcw,
   SendHorizonal,
   Loader2,
 } from "lucide-react";
@@ -91,7 +90,7 @@ export default function SupervisorDetailsPage({
 
   const fetchEmailLogs = useCallback(async (shareId: string) => {
     try {
-      const token = useAuthStore.getState().accessToken;
+      const token = useAuthStore(state => state.accessToken);
       const res = await fetch(`/api/supervisor/shares/${shareId}/email-logs`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -108,7 +107,7 @@ export default function SupervisorDetailsPage({
     if (!id) return;
     setResending(true);
     try {
-      const token = useAuthStore.getState().accessToken;
+      const token = useAuthStore(state => state.accessToken);
       const res = await fetch(
         `/api/supervisor/shares/${id}/resend-notification`,
         {
@@ -198,7 +197,7 @@ export default function SupervisorDetailsPage({
     if (!id) return;
     setIsDownloading(true);
     try {
-      const token = useAuthStore.getState().accessToken;
+      const token = useAuthStore(state => state.accessToken);
       const res = await fetch(`/api/supervisor/shares/${id}/download-zip`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -238,7 +237,7 @@ export default function SupervisorDetailsPage({
     if (!id) return;
     setRemovingFileId(shareFileId);
     try {
-      const token = useAuthStore.getState().accessToken;
+      const token = useAuthStore(state => state.accessToken);
       const res = await fetch(
         `/api/supervisor/shares/${id}/files/${shareFileId}`,
         {
@@ -864,7 +863,7 @@ export default function SupervisorDetailsPage({
               </div>
             </Card>
 
-            <Card className="p-6">
+            {/* <Card className="p-6">
               <h2 className="text-xl font-bold text-foreground mb-6">
                 Histórico de Envios
               </h2>
@@ -885,7 +884,7 @@ export default function SupervisorDetailsPage({
                   </div>
                 ))}
               </div>
-            </Card>
+            </Card> */}
           </div>
         </div>
       </div>

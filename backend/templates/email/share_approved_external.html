@@ -9,6 +9,7 @@
   <li><b>Disponível até:</b> {{ expires_at }}</li>
 </ul>
 <p>Para acessar, entre no portal e informe seu e-mail. Você receberá um código de 6 dígitos:</p>
-<p>{{ portal_url }}Acessar portal</a></p>
+<p style="margin-top:24px;">
+  <a href="{{ portal_url }}" class="btn">Acessar portal</a>
+</p>
 {% endblock %}
-``

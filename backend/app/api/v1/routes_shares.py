@@ -18,13 +18,18 @@ from app.models.share_file import ShareFile
 from app.models.restricted_file import RestrictedFile
 from app.models.user import User
 from app.models.email_log import EmailLog
-from app.services.share_service import create_share, ShareError, S3UploadError
+from app.services.share_service import create_share, ShareError, S3UploadError, get_or_create_external_user
 from app.services.token_service import issue_token_access, TokenError
 from app.schemas.token_schema import TokenRead
 from app.utils.authz import require_internal, get_current_user
 from app.services.audit_service import log_event
 from app.services.s3_service import delete_object, S3ServiceError
-from app.services.email_service import send_supervisor_approval_request_email
+from app.services.email_service import (
+    send_supervisor_approval_request_email,
+    send_share_approved_external_email,
+    send_share_approved_requester_email,
+)
+from datetime import timedelta
 from app.core.config import settings
 
 router = APIRouter(prefix="/shares", tags=["Shares"])
@@ -63,11 +68,15 @@ async def create_share_endpoint(
     Cria um novo compartilhamento de arquivos.
     """
     try:
+        # Provisiona destinatário externo antes de criar o share
+        recipient = get_or_create_external_user(session, payload.recipient_email)
+
         # Cria o share
         share = Share(
             name=payload.name,
             description=payload.description,
             external_email=payload.recipient_email,
+            recipient_user_id=recipient.id,
             expiration_hours=payload.expiration_hours,
             area_id=payload.area_id,
             created_by_id=user.id,
@@ -103,6 +112,7 @@ async def create_share_endpoint(
             "id": share.id,
             "name": share.name,
             "recipient_email": share.external_email,
+            "recipient_user_id": recipient.id,
             "status": share.status,
             "expiration_hours": share.expiration_hours,
             "created_at": share.created_at.isoformat(),
@@ -162,24 +172,71 @@ async def create_with_upload(
             }
         )
 
-        # Notifica supervisor via e-mail (background — não bloqueia resposta)
+        # Se o criador é supervisor, aprova automaticamente
         creator = session.get(User, payload_obj.created_by_id)
-        if creator and creator.manager_id:
-            supervisor = session.get(User, creator.manager_id)
-            if supervisor:
-                files_count = len(new_uploads) if new_uploads else len(payload_obj.file_ids or [])
-                background_tasks.add_task(
-                    send_supervisor_approval_request_email,
-                    supervisor_email=supervisor.email,
-                    supervisor_name=supervisor.name,
-                    requester_name=creator.name,
-                    requester_email=creator.email,
-                    recipient_email=payload_obj.external_email,
-                    files_count=files_count,
-                    expiration_hours=payload_obj.expiration_hours,
-                    share_name=payload_obj.name,
-                    share_id=share.id,
-                )
+        if creator and creator.is_supervisor:
+            now = datetime.now(UTC)
+            share.status = ShareStatus.ACTIVE
+            share.approver_id = creator.id
+            share.approved_at = now
+            share.expires_at = now + timedelta(hours=share.expiration_hours)
+            session.add(share)
+            session.commit()
+            session.refresh(share)
+
+            # Reativa o usuário externo se estiver inativo
+            ext_user = session.exec(
+                select(User).where(User.email == payload_obj.external_email)
+            ).first()
+            if ext_user and not ext_user.status:
+                ext_user.status = True
+                session.add(ext_user)
+                session.commit()
+
+            files_count = len(new_uploads) if new_uploads else len(payload_obj.file_ids or [])
+            background_tasks.add_task(
+                send_share_approved_external_email,
+                share.external_email,
+                creator.name or "Supervisor",
+                files_count,
+                share.expires_at,
+                share.id,
+            )
+            background_tasks.add_task(
+                send_share_approved_requester_email,
+                creator.email,
+                creator.name or "Supervisor",
+                share.external_email,
+                share.id,
+                creator.id,
+            )
+            log_event(
+                session=session,
+                action="AUTO_APROVAR_SHARE_SUPERVISOR",
+                user_id=creator.id,
+                share_id=share.id,
+                detail=f"supervisor_self_approved, files={files_count}",
+                ip=request.client.host if request else None,
+                user_agent=request.headers.get("User-Agent") if request else None,
+            )
+        else:
+            # Notifica supervisor via e-mail (background — não bloqueia resposta)
+            if creator and creator.manager_id:
+                supervisor = session.get(User, creator.manager_id)
+                if supervisor:
+                    files_count = len(new_uploads) if new_uploads else len(payload_obj.file_ids or [])
+                    background_tasks.add_task(
+                        send_supervisor_approval_request_email,
+                        supervisor_email=supervisor.email,
+                        supervisor_name=supervisor.name,
+                        requester_name=creator.name,
+                        requester_email=creator.email,
+                        recipient_email=payload_obj.external_email,
+                        files_count=files_count,
+                        expiration_hours=payload_obj.expiration_hours,
+                        share_name=payload_obj.name,
+                        share_id=share.id,
+                    )
 
         return share
 

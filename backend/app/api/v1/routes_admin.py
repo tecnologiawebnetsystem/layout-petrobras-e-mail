@@ -5,11 +5,13 @@ O Admin pode visualizar TODOS os logs, usuarios, compartilhamentos e
 rastreamento do sistema, independente de hierarquia.
 
 Endpoints:
-- GET /admin/dashboard      — Metricas globais completas
-- GET /admin/users          — Lista TODOS os usuarios com filtros
-- GET /admin/shares         — Lista TODOS os compartilhamentos
-- GET /admin/logs           — Lista TODOS os logs de auditoria
-- GET /admin/tracking/{id}  — Rastreamento completo de um usuario
+- GET /admin/dashboard          — Metricas globais completas
+- GET /admin/users              — Lista TODOS os usuarios com filtros
+- GET /admin/shares             — Lista TODOS os compartilhamentos
+- GET /admin/logs               — Lista TODOS os logs de auditoria
+- GET /admin/tracking/by-email  — Rastreamento completo por email
+- GET /admin/tracking/{id}      — Rastreamento completo por ID
+- PATCH /admin/users/{id}/admin — Promover/rebaixar admin
 """
 
 from datetime import datetime, UTC, timedelta
@@ -23,7 +25,7 @@ from app.models.user import User, TypeUser
 from app.models.share import Share, ShareStatus
 from app.models.share_file import ShareFile
 from app.models.restricted_file import RestrictedFile
-from app.models.audit import AuditLog
+from app.models.audit import Audit as AuditLog
 from app.models.email_log import EmailLog
 from app.utils.authz import require_admin
 from app.services.audit_service import log_event
@@ -45,7 +47,6 @@ def admin_dashboard(
     Retorna metricas globais do sistema inteiro.
     Inclui: total de usuarios, shares, arquivos, downloads, storage usado.
     """
-    # Contagem de usuarios por tipo
     total_users = session.exec(select(func.count()).select_from(User)).one()
     internal_users = session.exec(
         select(func.count()).select_from(User).where(User.type == TypeUser.INTERNAL)
@@ -63,7 +64,6 @@ def admin_dashboard(
         select(func.count()).select_from(User).where(User.status == True)
     ).one()
 
-    # Contagem de shares por status
     total_shares = session.exec(select(func.count()).select_from(Share)).one()
     pending_shares = session.exec(
         select(func.count()).select_from(Share).where(Share.status == ShareStatus.PENDING)
@@ -81,22 +81,17 @@ def admin_dashboard(
         select(func.count()).select_from(Share).where(Share.status == ShareStatus.EXPIRED)
     ).one()
 
-    # Arquivos
     total_files = session.exec(select(func.count()).select_from(RestrictedFile)).one()
     total_storage_bytes = session.exec(
         select(func.sum(RestrictedFile.size_bytes)).select_from(RestrictedFile)
     ).one() or 0
 
-    # Logs de auditoria
     total_logs = session.exec(select(func.count()).select_from(AuditLog)).one()
-
-    # Logs dos ultimos 7 dias
     week_ago = datetime.now(UTC) - timedelta(days=7)
     logs_last_week = session.exec(
         select(func.count()).select_from(AuditLog).where(AuditLog.created_at >= week_ago)
     ).one()
 
-    # Emails enviados
     total_emails = session.exec(select(func.count()).select_from(EmailLog)).one()
 
     log_event(
@@ -157,12 +152,9 @@ def admin_list_users(
     user: User = Depends(require_admin),
     request: Request = None,
 ):
-    """
-    Lista TODOS os usuarios do sistema com filtros e paginacao.
-    """
+    """Lista TODOS os usuarios do sistema com filtros e paginacao."""
     query = select(User)
 
-    # Filtros
     if search:
         query = query.where(
             or_(
@@ -182,12 +174,10 @@ def admin_list_users(
     if is_admin is not None:
         query = query.where(User.is_admin == is_admin)
 
-    # Contagem total
     count_query = select(func.count()).select_from(query.subquery())
     total_items = session.exec(count_query).one()
     total_pages = (total_items + limit - 1) // limit if total_items > 0 else 1
 
-    # Paginacao
     offset = (page - 1) * limit
     query = query.order_by(User.created_at.desc()).offset(offset).limit(limit)
     users = session.exec(query).all()
@@ -233,7 +223,7 @@ def admin_list_users(
 
 @router.get("/shares")
 def admin_list_shares(
-    search: Optional[str] = Query(None, description="Busca por nome, email destinatario"),
+    search: Optional[str] = Query(None, description="Busca por nome ou email destinatario"),
     status: Optional[str] = Query(None, description="Filtro: pending, approved, active, rejected, expired"),
     start_date: Optional[str] = Query(None, description="Data inicio (ISO 8601)"),
     end_date: Optional[str] = Query(None, description="Data fim (ISO 8601)"),
@@ -243,12 +233,9 @@ def admin_list_shares(
     user: User = Depends(require_admin),
     request: Request = None,
 ):
-    """
-    Lista TODOS os compartilhamentos do sistema com filtros e paginacao.
-    """
+    """Lista TODOS os compartilhamentos do sistema com filtros e paginacao."""
     query = select(Share)
 
-    # Filtros
     if search:
         query = query.where(
             or_(
@@ -256,13 +243,15 @@ def admin_list_shares(
                 Share.external_email.ilike(f"%{search}%"),
             )
         )
-    
+
     status_map = {
         "pending": ShareStatus.PENDING,
         "approved": ShareStatus.APPROVED,
         "active": ShareStatus.ACTIVE,
         "rejected": ShareStatus.REJECTED,
         "expired": ShareStatus.EXPIRED,
+        "canceled": ShareStatus.CANCELED,
+        "completed": ShareStatus.COMPLETED,
     }
     if status and status.lower() in status_map:
         query = query.where(Share.status == status_map[status.lower()])
@@ -280,22 +269,18 @@ def admin_list_shares(
         except ValueError:
             pass
 
-    # Contagem total
     count_query = select(func.count()).select_from(query.subquery())
     total_items = session.exec(count_query).one()
     total_pages = (total_items + limit - 1) // limit if total_items > 0 else 1
 
-    # Paginacao
     offset = (page - 1) * limit
     query = query.order_by(Share.created_at.desc()).offset(offset).limit(limit)
     shares = session.exec(query).all()
 
     result = []
     for s in shares:
-        creator = session.get(User, s.created_by_id)
+        creator = session.get(User, s.created_by_id) if s.created_by_id else None
         approver = session.get(User, s.approver_id) if s.approver_id else None
-        
-        # Contar arquivos
         files_count = session.exec(
             select(func.count()).select_from(ShareFile).where(ShareFile.share_id == s.id)
         ).one()
@@ -359,12 +344,9 @@ def admin_list_logs(
     user: User = Depends(require_admin),
     request: Request = None,
 ):
-    """
-    Lista TODOS os logs de auditoria do sistema com filtros e paginacao.
-    """
+    """Lista TODOS os logs de auditoria do sistema com filtros e paginacao."""
     query = select(AuditLog)
 
-    # Filtros
     if search:
         query = query.where(
             or_(
@@ -389,12 +371,10 @@ def admin_list_logs(
         except ValueError:
             pass
 
-    # Contagem total
     count_query = select(func.count()).select_from(query.subquery())
     total_items = session.exec(count_query).one()
     total_pages = (total_items + limit - 1) // limit if total_items > 0 else 1
 
-    # Paginacao
     offset = (page - 1) * limit
     query = query.order_by(AuditLog.created_at.desc()).offset(offset).limit(limit)
     logs = session.exec(query).all()
@@ -406,7 +386,7 @@ def admin_list_logs(
             "id": log.id,
             "action": log.action,
             "detail": log.detail,
-            "ip": log.ip,
+            "ip": log.ip_address,  # campo correto: ip_address
             "user_agent": log.user_agent,
             "created_at": log.created_at.isoformat() if log.created_at else None,
             "share_id": log.share_id,
@@ -438,7 +418,7 @@ def admin_list_logs(
 
 
 # ---------------------------------------------------------------------------
-# GET /admin/tracking/by-email — Rastreamento completo de um usuario por email
+# GET /admin/tracking/by-email — Rastreamento completo por email
 # ---------------------------------------------------------------------------
 
 @router.get("/tracking/by-email")
@@ -448,42 +428,63 @@ def admin_tracking_user_by_email(
     user: User = Depends(require_admin),
     request: Request = None,
 ):
-    """
-    Retorna rastreamento completo de um usuario especifico por email:
-    - Dados do usuario
-    - Todos os compartilhamentos criados
-    - Todos os compartilhamentos aprovados (se supervisor)
-    - Todos os logs de auditoria
-    - Historico de downloads
-    """
+    """Retorna rastreamento completo de um usuario especifico por email."""
     target = session.exec(select(User).where(User.email == email)).first()
     if not target:
         raise HTTPException(status_code=404, detail="Usuario nao encontrado com este email.")
+    return _build_tracking_response(session, target, user, request)
 
-    # Shares criados pelo usuario
+
+# ---------------------------------------------------------------------------
+# GET /admin/tracking/{user_id} — Rastreamento completo por ID
+# ---------------------------------------------------------------------------
+
+@router.get("/tracking/{target_user_id}")
+def admin_tracking_user(
+    target_user_id: int,
+    session: Session = Depends(get_session),
+    user: User = Depends(require_admin),
+    request: Request = None,
+):
+    """Retorna rastreamento completo de um usuario especifico por ID."""
+    target = session.get(User, target_user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="Usuario nao encontrado.")
+    return _build_tracking_response(session, target, user, request)
+
+
+def _build_tracking_response(
+    session: Session,
+    target: User,
+    requesting_admin: User,
+    request: Request,
+) -> dict:
+    """Monta o payload de rastreamento completo de um usuario."""
     shares_created = session.exec(
         select(Share).where(Share.created_by_id == target.id).order_by(Share.created_at.desc())
     ).all()
 
-    # Shares aprovados pelo usuario (se supervisor)
     shares_approved = session.exec(
         select(Share).where(Share.approver_id == target.id).order_by(Share.approved_at.desc())
     ).all()
 
-    # Logs do usuario
     logs = session.exec(
-        select(AuditLog).where(AuditLog.user_id == target.id).order_by(AuditLog.created_at.desc()).limit(100)
+        select(AuditLog)
+        .where(AuditLog.user_id == target.id)
+        .order_by(AuditLog.created_at.desc())
+        .limit(100)
     ).all()
 
-    # Arquivos enviados pelo usuario
     files_uploaded = session.exec(
-        select(RestrictedFile).where(RestrictedFile.upload_id == target.id).order_by(RestrictedFile.created_at.desc())
+        select(RestrictedFile)
+        .where(RestrictedFile.upload_id == target.id)
+        .order_by(RestrictedFile.created_at.desc())
     ).all()
 
     log_event(
         session=session,
         action="ADMIN_TRACKING_USER",
-        user_id=user.id,
+        user_id=requesting_admin.id,
         detail=f"Rastreou usuario email={target.email}",
         ip=request.client.host if request else None,
         user_agent=request.headers.get("User-Agent") if request else None,
@@ -553,123 +554,50 @@ def admin_tracking_user_by_email(
 
 
 # ---------------------------------------------------------------------------
-# GET /admin/tracking/{user_id} — Rastreamento completo de um usuario
+# PATCH /admin/users/{user_id}/admin — Promover/rebaixar admin
 # ---------------------------------------------------------------------------
 
-@router.get("/tracking/{target_user_id}")
-def admin_tracking_user(
+@router.patch("/users/{target_user_id}/admin")
+def toggle_admin(
     target_user_id: int,
+    is_admin: bool = Query(..., description="True para promover, False para rebaixar"),
     session: Session = Depends(get_session),
     user: User = Depends(require_admin),
     request: Request = None,
 ):
-    """
-    Retorna rastreamento completo de um usuario especifico:
-    - Dados do usuario
-    - Todos os compartilhamentos criados
-    - Todos os compartilhamentos aprovados (se supervisor)
-    - Todos os logs de auditoria
-    - Historico de downloads
-    """
+    """Promove ou rebaixa um usuario a/de Super Administrador Global."""
+    if target_user_id == user.id:
+        raise HTTPException(status_code=400, detail="Voce nao pode alterar o proprio status de admin.")
+
     target = session.get(User, target_user_id)
     if not target:
         raise HTTPException(status_code=404, detail="Usuario nao encontrado.")
 
-    # Shares criados pelo usuario
-    shares_created = session.exec(
-        select(Share).where(Share.created_by_id == target.id).order_by(Share.created_at.desc())
-    ).all()
+    old_value = target.is_admin
+    target.is_admin = is_admin
+    session.add(target)
+    session.commit()
 
-    # Shares aprovados pelo usuario (se supervisor)
-    shares_approved = session.exec(
-        select(Share).where(Share.approver_id == target.id).order_by(Share.approved_at.desc())
-    ).all()
-
-    # Logs do usuario
-    logs = session.exec(
-        select(AuditLog).where(AuditLog.user_id == target.id).order_by(AuditLog.created_at.desc()).limit(100)
-    ).all()
-
-    # Arquivos enviados pelo usuario
-    files_uploaded = session.exec(
-        select(RestrictedFile).where(RestrictedFile.upload_id == target.id).order_by(RestrictedFile.created_at.desc())
-    ).all()
-
+    action = "ADMIN_USER_PROMOTED" if is_admin else "ADMIN_USER_DEMOTED"
     log_event(
         session=session,
-        action="ADMIN_TRACKING_USER",
+        action=action,
         user_id=user.id,
-        detail=f"Rastreou usuario id={target.id} email={target.email}",
+        detail=f"target_email={target.email}, old_is_admin={old_value}, new_is_admin={is_admin}",
         ip=request.client.host if request else None,
         user_agent=request.headers.get("User-Agent") if request else None,
     )
 
     return {
-        "user": {
-            "id": target.id,
-            "name": target.name,
-            "email": target.email,
-            "type": target.type.value if hasattr(target.type, "value") else str(target.type),
-            "department": target.department,
-            "job_title": target.job_title,
-            "is_supervisor": target.is_supervisor,
-            "is_admin": target.is_admin,
-            "status": target.status,
-            "created_at": target.created_at.isoformat() if target.created_at else None,
-            "last_login": target.last_login.isoformat() if target.last_login else None,
-            "manager_id": target.manager_id,
-        },
-        "shares_created": [
-            {
-                "id": s.id,
-                "name": s.name,
-                "external_email": s.external_email,
-                "status": s.status.value if hasattr(s.status, "value") else str(s.status),
-                "created_at": s.created_at.isoformat() if s.created_at else None,
-            }
-            for s in shares_created
-        ],
-        "shares_approved": [
-            {
-                "id": s.id,
-                "name": s.name,
-                "external_email": s.external_email,
-                "status": s.status.value if hasattr(s.status, "value") else str(s.status),
-                "approved_at": s.approved_at.isoformat() if s.approved_at else None,
-            }
-            for s in shares_approved
-        ],
-        "files_uploaded": [
-            {
-                "id": f.id,
-                "name": f.name,
-                "size_bytes": f.size_bytes,
-                "mime_type": f.mime_type,
-                "created_at": f.created_at.isoformat() if f.created_at else None,
-            }
-            for f in files_uploaded
-        ],
-        "recent_logs": [
-            {
-                "id": log.id,
-                "action": log.action,
-                "detail": log.detail,
-                "ip": log.ip,
-                "created_at": log.created_at.isoformat() if log.created_at else None,
-            }
-            for log in logs
-        ],
-        "stats": {
-            "total_shares_created": len(shares_created),
-            "total_shares_approved": len(shares_approved),
-            "total_files_uploaded": len(files_uploaded),
-            "total_logs": len(logs),
-        },
+        "message": f"Usuario {'promovido a admin' if is_admin else 'rebaixado de admin'} com sucesso.",
+        "user_id": target.id,
+        "email": target.email,
+        "is_admin": target.is_admin,
     }
 
 
 # ---------------------------------------------------------------------------
-# GET /admin/actions — Lista tipos de acoes para filtros
+# GET /admin/actions — Lista de tipos de acao distintos nos logs
 # ---------------------------------------------------------------------------
 
 @router.get("/actions")
@@ -677,11 +605,8 @@ def admin_list_actions(
     session: Session = Depends(get_session),
     user: User = Depends(require_admin),
 ):
-    """
-    Lista todos os tipos de acoes registradas no sistema (para preencher filtros).
-    """
+    """Retorna todos os tipos de acao distintos registrados na tabela de auditoria."""
     actions = session.exec(
         select(AuditLog.action).distinct().order_by(AuditLog.action)
     ).all()
-    
-    return {"actions": actions}
+    return {"actions": list(actions)}

@@ -3,10 +3,11 @@ import uuid
 from sqlmodel import Session, select
 from datetime import datetime, UTC
 from typing import Iterable
+from pydantic import EmailStr
 
 from app.core.config import settings
 from app.models.area import SharedArea
-from app.models.user import User
+from app.models.user import User, TypeUser
 from app.models.restricted_file import RestrictedFile
 from app.models.share import Share, ShareStatus, TokenConsumption
 from app.models.share_file import ShareFile
@@ -48,6 +49,40 @@ def _get_or_create_automatic_area(session: Session, applicant_id: int) -> Shared
     session.refresh(area)
     return area
 
+
+def get_or_create_external_user(session: Session, email: str) -> User:
+    """
+    Retorna o usuário externo existente com o e-mail informado, ou cria um
+    novo registro com type=EXTERNAL caso não exista.
+
+    Se o usuário existir mas estiver inativo (desativado por ausência de share
+    anterior), reativa-o — pois um novo share válido está sendo criado.
+
+    Chamado no momento da criação do share para que o destinatário já esteja
+    provisionado na base antes de qualquer aprovação ou fluxo de OTP.
+    """
+    user = session.exec(select(User).where(User.email == email)).first()
+    if user:
+        if not user.status:
+            # Reativa: novo share válido justifica o acesso
+            user.status = True
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+        return user
+    # Deriva um nome amigável a partir do endereço de e-mail (parte antes do @)
+    name_from_email = email.split("@")[0].replace(".", " ").replace("_", " ").title()
+    user = User(
+        name=name_from_email,
+        email=email,
+        type=TypeUser.EXTERNAL,
+        status=True,
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
+
 def create_share(
     session: Session,
     area_id: int,
@@ -67,6 +102,10 @@ def create_share(
         raise ShareError("Usuário interno (criador) não encontrado.")
     if not external_email:
         raise ShareError("E-mail do destinatário externo é obrigatório.")
+
+    # Provisiona destinatário externo: cria o User se não existir
+    recipient = get_or_create_external_user(session, external_email)
+
     # resolve área
     if area_id is None:
         area = _get_or_create_automatic_area(session, applicant_id=created_by_id)
@@ -82,6 +121,7 @@ def create_share(
         name=name,
         description=description,
         external_email=external_email,
+        recipient_user_id=recipient.id,
         created_by_id=created_by_id,
         expiration_hours=expiration_hours,
         expires_at=None,  # definido apenas na aprovação do supervisor
