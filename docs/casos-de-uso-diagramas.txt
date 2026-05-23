@@ -1,0 +1,1405 @@
+================================================================================
+      DOCUMENTO DE CASOS DE USO - DIAGRAMAS COMPLETOS
+      SISTEMA PETROBRAS FILE TRANSFER
+================================================================================
+
+Data de Criacao: 23/05/2026
+Versao: 1.0
+Autor: Equipe de Desenvolvimento
+
+================================================================================
+                           INDICE
+================================================================================
+
+1. DIAGRAMA GERAL DO SISTEMA
+2. DIAGRAMA - USUARIO INTERNO
+3. DIAGRAMA - USUARIO EXTERNO
+4. DIAGRAMA - SUPERVISOR
+5. DIAGRAMA - ADMIN GLOBAL
+6. DIAGRAMAS DE SEQUENCIA
+7. DIAGRAMAS DE ATIVIDADE
+8. MATRIZ DE RASTREABILIDADE
+
+================================================================================
+                    1. DIAGRAMA GERAL DO SISTEMA
+================================================================================
+
+Este diagrama apresenta a visao geral de todos os atores e seus casos de uso
+no sistema Petrobras File Transfer.
+
+                    +--------------------------------------------------+
+                    |        SISTEMA PETROBRAS FILE TRANSFER           |
+                    +--------------------------------------------------+
+                    |                                                  |
+    +--------+      |  +------------------------------------------+    |      +--------+
+    |USUARIO |      |  |                                          |    |      |USUARIO |
+    |INTERNO |------+->|  (UC01) Fazer Login SSO                  |<---+------|EXTERNO |
+    |        |      |  |                                          |    |      |        |
+    +--------+      |  +------------------------------------------+    |      +--------+
+        |           |                                                  |           |
+        |           |  +------------------------------------------+    |           |
+        +----------->  |  (UC02) Fazer Upload de Arquivos         |    |           |
+        |           |  +------------------------------------------+    |           |
+        |           |                                                  |           |
+        |           |  +------------------------------------------+    |           |
+        +----------->  |  (UC03) Selecionar Destinatarios         |    |           |
+        |           |  +------------------------------------------+    |           |
+        |           |                                                  |           |
+        |           |  +------------------------------------------+    |           |
+        +----------->  |  (UC04) Acompanhar Status                |    |           |
+        |           |  +------------------------------------------+    |           |
+        |           |                                                  |           |
+        |           |  +------------------------------------------+    |           |
+        |           |  |  (UC05) Receber Notificacao por Email    |<---+-----------+
+        |           |  +------------------------------------------+    |           |
+        |           |                                                  |           |
+        |           |  +------------------------------------------+    |           |
+        |           |  |  (UC06) Verificar Codigo de Seguranca    |<---+-----------+
+        |           |  +------------------------------------------+    |           |
+        |           |                                                  |           |
+        |           |  +------------------------------------------+    |           |
+        |           |  |  (UC07) Fazer Download de Arquivos       |<---+-----------+
+        |           |  +------------------------------------------+    |
+        |           |                                                  |
+    +--------+      |  +------------------------------------------+    |      +--------+
+    |SUPER-  |      |  |                                          |    |      |ADMIN   |
+    |VISOR   |------+->|  (UC08) Aprovar/Rejeitar Transferencias  |    |      |GLOBAL  |
+    |        |      |  |                                          |    |      |        |
+    +--------+      |  +------------------------------------------+    |      +--------+
+        |           |                                                  |           |
+        |           |  +------------------------------------------+    |           |
+        +----------->  |  (UC09) Visualizar Dashboard Equipe      |    |           |
+        |           |  +------------------------------------------+    |           |
+        |           |                                                  |           |
+        |           |  +------------------------------------------+    |           |
+        |           |  |  (UC10) Gerenciar Usuarios               |<---+-----------+
+        |           |  +------------------------------------------+    |           |
+        |           |                                                  |           |
+        |           |  +------------------------------------------+    |           |
+        |           |  |  (UC11) Visualizar Logs de Auditoria     |<---+-----------+
+        |           |  +------------------------------------------+    |           |
+        |           |                                                  |           |
+        |           |  +------------------------------------------+    |           |
+        |           |  |  (UC12) Configurar Sistema               |<---+-----------+
+        |           |  +------------------------------------------+    |
+        |           |                                                  |
+        +--------------------------------------------------+-----------+
+
+
+================================================================================
+                    2. DIAGRAMA - USUARIO INTERNO
+================================================================================
+
+Ator: Usuario Interno (Colaborador Petrobras)
+Descricao: Funcionario da Petrobras que utiliza o sistema para enviar arquivos
+           de forma segura para destinatarios internos e externos.
+
+                         CASOS DE USO - USUARIO INTERNO
+    +------------------------------------------------------------------------+
+    |                                                                        |
+    |                    +--------------------------------+                  |
+    |                    |                                |                  |
+    |     +------------->|   (UC-INT-01)                  |                  |
+    |     |              |   Fazer Login SSO              |                  |
+    |     |              |   Microsoft Entra ID           |                  |
+    |     |              |                                |                  |
+    |     |              +--------------------------------+                  |
+    |     |                             |                                    |
+    |     |                             | <<include>>                        |
+    |     |                             v                                    |
+    |     |              +--------------------------------+                  |
+    |     |              |                                |                  |
+    |     +------------->|   (UC-INT-02)                  |                  |
+    |     |              |   Acessar Dashboard            |                  |
+    |     |              |   Principal                    |                  |
+    |     |              |                                |                  |
+    |     |              +--------------------------------+                  |
+    |     |                             |                                    |
+    |     |              +--------------+---------------+                    |
+    |     |              |              |               |                    |
+    |     |              v              v               v                    |
++---+-----+---+  +-------------+ +-------------+ +-------------+             |
+|             |  |             | |             | |             |             |
+|  USUARIO    |  | (UC-INT-03) | | (UC-INT-04) | | (UC-INT-05) |             |
+|  INTERNO    |  | Upload de   | | Selecionar  | | Visualizar  |             |
+|             |  | Arquivos    | | Destina-    | | Historico   |             |
+|  +-------+  |  |             | | tarios      | |             |             |
+|  |  SSO  |  |  +-------------+ +-------------+ +-------------+             |
+|  +-------+  |         |              |               |                     |
+|             |         v              v               v                     |
++-------------+  +-------------+ +-------------+ +-------------+             |
+    |     |      |             | |             | |             |             |
+    |     |      | (UC-INT-06) | | (UC-INT-07) | | (UC-INT-08) |             |
+    |     +----->| Enviar      | | Adicionar   | | Acompanhar  |             |
+    |     |      | Transferen- | | Mensagem    | | Status      |             |
+    |     |      | cia         | | Opcional    | | Envio       |             |
+    |     |      |             | |             | |             |             |
+    |     |      +-------------+ +-------------+ +-------------+             |
+    |     |                                            |                     |
+    |     |                                            v                     |
+    |     |                                    +-------------+               |
+    |     |                                    |             |               |
+    |     +----------------------------------->| (UC-INT-09) |               |
+    |                                          | Acessar     |               |
+    |                                          | Documentacao|               |
+    |                                          |             |               |
+    |                                          +-------------+               |
+    |                                                                        |
+    +------------------------------------------------------------------------+
+
+
+    DETALHAMENTO DOS CASOS DE USO - USUARIO INTERNO
+    ================================================
+
+    +--------------------------------------------------------------------------+
+    | UC-INT-01: FAZER LOGIN SSO                                               |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Usuario Interno                                          |
+    | Pre-condicao: Usuario possui conta no Microsoft Entra ID                 |
+    | Pos-condicao: Usuario autenticado e redirecionado ao dashboard           |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Usuario acessa a pagina inicial do sistema                            |
+    | 2. Sistema exibe tela de login com botao "Login Corporativo"             |
+    | 3. Usuario clica no botao "Login Corporativo"                            |
+    | 4. Sistema exibe loading com logo Petrobras                              |
+    | 5. Sistema redireciona para Microsoft Entra ID                           |
+    | 6. Usuario insere credenciais corporativas                               |
+    | 7. Microsoft valida credenciais                                          |
+    | 8. Sistema recebe token de autenticacao                                  |
+    | 9. Sistema identifica tipo de usuario (interno/supervisor/admin)         |
+    | 10. Sistema redireciona para dashboard apropriado                        |
+    +--------------------------------------------------------------------------+
+    | FLUXO ALTERNATIVO:                                                       |
+    | 3a. Usuario ja possui sessao ativa                                       |
+    |     3a.1. Sistema redireciona diretamente ao dashboard                   |
+    | 7a. Credenciais invalidas                                                |
+    |     7a.1. Microsoft exibe erro de autenticacao                           |
+    |     7a.2. Usuario pode tentar novamente                                  |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-INT-02: ACESSAR DASHBOARD PRINCIPAL                                   |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Usuario Interno                                          |
+    | Pre-condicao: Usuario autenticado no sistema                             |
+    | Pos-condicao: Dashboard exibido com informacoes do usuario               |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Sistema exibe header com logo e nome do usuario                       |
+    | 2. Sistema exibe menu lateral com opcoes disponiveis                     |
+    | 3. Sistema exibe area principal para upload de arquivos                  |
+    | 4. Sistema exibe estatisticas de transferencias recentes                 |
+    | 5. Usuario pode navegar entre as opcoes do menu                          |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-INT-03: FAZER UPLOAD DE ARQUIVOS                                      |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Usuario Interno                                          |
+    | Pre-condicao: Usuario autenticado e no dashboard                         |
+    | Pos-condicao: Arquivos carregados e prontos para envio                   |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Usuario acessa area de upload no dashboard                            |
+    | 2. Sistema exibe zona de arrastar e soltar (drag and drop)               |
+    | 3. Usuario arrasta arquivos para a zona de upload                        |
+    |    OU clica para selecionar arquivos do computador                       |
+    | 4. Sistema valida tipo e tamanho dos arquivos                            |
+    | 5. Sistema exibe lista de arquivos selecionados                          |
+    | 6. Sistema exibe barra de progresso do upload                            |
+    | 7. Sistema confirma upload concluido                                     |
+    +--------------------------------------------------------------------------+
+    | FLUXO ALTERNATIVO:                                                       |
+    | 4a. Arquivo excede tamanho maximo (500MB)                                |
+    |     4a.1. Sistema exibe mensagem de erro                                 |
+    |     4a.2. Arquivo nao e adicionado a lista                               |
+    | 4b. Tipo de arquivo nao permitido                                        |
+    |     4b.1. Sistema exibe mensagem de erro                                 |
+    |     4b.2. Arquivo nao e adicionado a lista                               |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-INT-04: SELECIONAR DESTINATARIOS                                      |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Usuario Interno                                          |
+    | Pre-condicao: Arquivos carregados com sucesso                            |
+    | Pos-condicao: Destinatarios selecionados para receber arquivos           |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Sistema exibe campo para inserir emails dos destinatarios             |
+    | 2. Usuario digita email do destinatario                                  |
+    | 3. Sistema valida formato do email                                       |
+    | 4. Usuario pode adicionar multiplos destinatarios                        |
+    | 5. Sistema exibe lista de destinatarios adicionados                      |
+    | 6. Usuario pode remover destinatarios da lista                           |
+    +--------------------------------------------------------------------------+
+    | FLUXO ALTERNATIVO:                                                       |
+    | 3a. Email com formato invalido                                           |
+    |     3a.1. Sistema exibe mensagem de erro                                 |
+    |     3a.2. Email nao e adicionado a lista                                 |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-INT-05: VISUALIZAR HISTORICO DE TRANSFERENCIAS                        |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Usuario Interno                                          |
+    | Pre-condicao: Usuario autenticado                                        |
+    | Pos-condicao: Historico exibido na tela                                  |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Usuario clica em "Meus Compartilhamentos" no menu                     |
+    | 2. Sistema exibe lista de todas as transferencias realizadas             |
+    | 3. Sistema exibe status de cada transferencia (Pendente/Concluido)       |
+    | 4. Usuario pode filtrar por data, status ou destinatario                 |
+    | 5. Usuario pode clicar em uma transferencia para ver detalhes            |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-INT-06: ENVIAR TRANSFERENCIA                                          |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Usuario Interno                                          |
+    | Pre-condicao: Arquivos e destinatarios selecionados                      |
+    | Pos-condicao: Transferencia criada e notificacao enviada                 |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Usuario revisa arquivos e destinatarios selecionados                  |
+    | 2. Usuario clica no botao "Enviar"                                       |
+    | 3. Sistema cria registro da transferencia                                |
+    | 4. Sistema gera link seguro com codigo de verificacao                    |
+    | 5. Sistema envia email para cada destinatario                            |
+    | 6. Sistema exibe confirmacao de envio                                    |
+    | 7. Sistema atualiza contador de transferencias                           |
+    +--------------------------------------------------------------------------+
+
+
+================================================================================
+                    3. DIAGRAMA - USUARIO EXTERNO
+================================================================================
+
+Ator: Usuario Externo (Parceiro/Fornecedor)
+Descricao: Pessoa externa a Petrobras que recebe arquivos compartilhados
+           por usuarios internos atraves de link seguro por email.
+
+                         CASOS DE USO - USUARIO EXTERNO
+    +------------------------------------------------------------------------+
+    |                                                                        |
+    |     +----------------------------------------------------------+       |
+    |     |                                                          |       |
+    |     |                    EMAIL RECEBIDO                        |       |
+    |     |    +---------------------------------------------+       |       |
+    |     |    |  De: noreply@petrobras.com.br               |       |       |
+    |     |    |  Assunto: Arquivos compartilhados           |       |       |
+    |     |    |                                             |       |       |
+    |     |    |  Voce recebeu arquivos de Joao Silva.       |       |       |
+    |     |    |  Clique no link abaixo para acessar:        |       |       |
+    |     |    |                                             |       |       |
+    |     |    |  [ACESSAR ARQUIVOS]                         |       |       |
+    |     |    |                                             |       |       |
+    |     |    |  Codigo de verificacao: 847291              |       |       |
+    |     |    +---------------------------------------------+       |       |
+    |     |                          |                               |       |
+    |     +--------------------------+-------------------------------+       |
+    |                                |                                       |
+    |                                v                                       |
+    |                    +--------------------------------+                  |
+    |                    |                                |                  |
++---+-------------+      |   (UC-EXT-01)                  |                  |
+|                 |      |   Receber Notificacao          |                  |
+|    USUARIO      +----->|   por Email                    |                  |
+|    EXTERNO      |      |                                |                  |
+|                 |      +--------------------------------+                  |
+|  +-----------+  |                      |                                   |
+|  | Email     |  |                      v                                   |
+|  | Recebido  |  |      +--------------------------------+                  |
+|  +-----------+  |      |                                |                  |
+|                 +----->|   (UC-EXT-02)                  |                  |
+|                 |      |   Acessar Link Seguro          |                  |
+|                 |      |                                |                  |
+|                 |      +--------------------------------+                  |
+|                 |                      |                                   |
+|                 |                      v                                   |
+|                 |      +--------------------------------+                  |
+|                 |      |                                |                  |
+|                 +----->|   (UC-EXT-03)                  |                  |
+|                 |      |   Verificar Codigo             |                  |
+|                 |      |   de Seguranca                 |                  |
+|                 |      |                                |                  |
+|                 |      +--------------------------------+                  |
+|                 |                      |                                   |
+|                 |                      v                                   |
+|                 |      +--------------------------------+                  |
+|                 |      |                                |                  |
+|                 +----->|   (UC-EXT-04)                  |                  |
+|                 |      |   Visualizar Detalhes          |                  |
+|                 |      |   da Transferencia             |                  |
+|                 |      |                                |                  |
+|                 |      +--------------------------------+                  |
+|                 |                      |                                   |
+|                 |                      v                                   |
+|                 |      +--------------------------------+                  |
+|                 |      |                                |                  |
+|                 +----->|   (UC-EXT-05)                  |                  |
+|                        |   Fazer Download               |                  |
+|                        |   dos Arquivos                 |                  |
+|                        |                                |                  |
++-----------------+      +--------------------------------+                  |
+                                         |                                   |
+                                         v                                   |
+                         +--------------------------------+                  |
+                         |                                |                  |
+                         |   (UC-EXT-06)                  |                  |
+                         |   Confirmar Recebimento        |                  |
+                         |                                |                  |
+                         +--------------------------------+                  |
+                                                                             |
+    +------------------------------------------------------------------------+
+
+
+    DETALHAMENTO DOS CASOS DE USO - USUARIO EXTERNO
+    ================================================
+
+    +--------------------------------------------------------------------------+
+    | UC-EXT-01: RECEBER NOTIFICACAO POR EMAIL                                 |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Usuario Externo                                          |
+    | Pre-condicao: Usuario interno enviou transferencia para este email       |
+    | Pos-condicao: Email recebido na caixa de entrada                         |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Sistema envia email para endereco do destinatario                     |
+    | 2. Email contem informacoes do remetente                                 |
+    | 3. Email contem link seguro para acesso                                  |
+    | 4. Email contem codigo de verificacao de 6 digitos                       |
+    | 5. Email contem data de expiracao do link                                |
+    | 6. Usuario externo recebe email em sua caixa de entrada                  |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-EXT-02: ACESSAR LINK SEGURO                                           |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Usuario Externo                                          |
+    | Pre-condicao: Email recebido com link valido                             |
+    | Pos-condicao: Pagina de verificacao exibida                              |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Usuario clica no link "Acessar Arquivos" no email                     |
+    | 2. Navegador abre pagina do sistema Petrobras                            |
+    | 3. Sistema valida token do link                                          |
+    | 4. Sistema exibe pagina de verificacao de codigo                         |
+    +--------------------------------------------------------------------------+
+    | FLUXO ALTERNATIVO:                                                       |
+    | 3a. Link expirado                                                        |
+    |     3a.1. Sistema exibe mensagem "Link expirado"                         |
+    |     3a.2. Usuario deve solicitar novo envio ao remetente                 |
+    | 3b. Link invalido ou ja utilizado                                        |
+    |     3b.1. Sistema exibe mensagem de erro                                 |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-EXT-03: VERIFICAR CODIGO DE SEGURANCA                                 |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Usuario Externo                                          |
+    | Pre-condicao: Pagina de verificacao exibida                              |
+    | Pos-condicao: Acesso liberado aos arquivos                               |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Sistema exibe campo para inserir codigo de 6 digitos                  |
+    | 2. Usuario digita codigo recebido no email                               |
+    | 3. Usuario clica em "Verificar"                                          |
+    | 4. Sistema valida codigo                                                 |
+    | 5. Sistema libera acesso aos arquivos                                    |
+    | 6. Sistema redireciona para pagina de download                           |
+    +--------------------------------------------------------------------------+
+    | FLUXO ALTERNATIVO:                                                       |
+    | 4a. Codigo incorreto                                                     |
+    |     4a.1. Sistema exibe mensagem "Codigo invalido"                       |
+    |     4a.2. Usuario pode tentar novamente (max 5 tentativas)               |
+    | 4b. Numero maximo de tentativas excedido                                 |
+    |     4b.1. Sistema bloqueia acesso temporariamente                        |
+    |     4b.2. Sistema notifica administrador                                 |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-EXT-04: VISUALIZAR DETALHES DA TRANSFERENCIA                          |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Usuario Externo                                          |
+    | Pre-condicao: Codigo verificado com sucesso                              |
+    | Pos-condicao: Detalhes exibidos na tela                                  |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Sistema exibe nome do remetente                                       |
+    | 2. Sistema exibe data de envio                                           |
+    | 3. Sistema exibe lista de arquivos disponiveis                           |
+    | 4. Sistema exibe tamanho de cada arquivo                                 |
+    | 5. Sistema exibe mensagem opcional do remetente                          |
+    | 6. Sistema exibe data de expiracao                                       |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-EXT-05: FAZER DOWNLOAD DOS ARQUIVOS                                   |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Usuario Externo                                          |
+    | Pre-condicao: Acesso liberado apos verificacao                           |
+    | Pos-condicao: Arquivos baixados para computador do usuario               |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Sistema exibe lista de arquivos com botao de download                 |
+    | 2. Usuario clica em "Baixar" no arquivo desejado                         |
+    |    OU clica em "Baixar Todos" para download em ZIP                       |
+    | 3. Sistema inicia download do arquivo                                    |
+    | 4. Navegador salva arquivo no computador do usuario                      |
+    | 5. Sistema registra log do download                                      |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-EXT-06: CONFIRMAR RECEBIMENTO                                         |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Usuario Externo                                          |
+    | Pre-condicao: Download realizado com sucesso                             |
+    | Pos-condicao: Remetente notificado sobre confirmacao                     |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Sistema exibe botao "Confirmar Recebimento"                           |
+    | 2. Usuario clica no botao                                                |
+    | 3. Sistema registra confirmacao com data/hora                            |
+    | 4. Sistema envia notificacao ao remetente                                |
+    | 5. Sistema exibe mensagem de confirmacao                                 |
+    +--------------------------------------------------------------------------+
+
+
+================================================================================
+                    4. DIAGRAMA - SUPERVISOR
+================================================================================
+
+Ator: Supervisor
+Descricao: Gestor de equipe na Petrobras responsavel por aprovar transferencias,
+           monitorar atividades da equipe e gerar relatorios.
+
+                         CASOS DE USO - SUPERVISOR
+    +------------------------------------------------------------------------+
+    |                                                                        |
+    |                    +--------------------------------+                  |
+    |                    |                                |                  |
+    |     +------------->|   (UC-SUP-01)                  |                  |
+    |     |              |   Fazer Login SSO              |                  |
+    |     |              |   (Perfil Supervisor)          |                  |
+    |     |              |                                |                  |
+    |     |              +--------------------------------+                  |
+    |     |                             |                                    |
+    |     |                             v                                    |
+    |     |              +--------------------------------+                  |
+    |     |              |                                |                  |
+    |     +------------->|   (UC-SUP-02)                  |                  |
+    |     |              |   Acessar Dashboard            |                  |
+    |     |              |   do Supervisor                |                  |
+    |     |              |                                |                  |
+    |     |              +--------------------------------+                  |
+    |     |                             |                                    |
+    |     |              +--------------+--------------+                     |
+    |     |              |              |              |                     |
+    |     |              v              v              v                     |
++---+-----+---+  +-------------+ +-------------+ +-------------+             |
+|             |  |             | |             | |             |             |
+| SUPERVISOR  |  | (UC-SUP-03) | | (UC-SUP-04) | | (UC-SUP-05) |             |
+|             |  | Visualizar  | | Aprovar     | | Rejeitar    |             |
+|  +-------+  |  | Pendencias  | | Transfe-    | | Transfe-    |             |
+|  | Gestor|  |  | de Apro-    | | rencia      | | rencia      |             |
+|  +-------+  |  | vacao       | |             | |             |             |
+|             |  +-------------+ +-------------+ +-------------+             |
++-------------+         |              |              |                      |
+    |     |             v              v              v                      |
+    |     |      +-------------+ +-------------+ +-------------+             |
+    |     |      |             | |             | |             |             |
+    |     +----->| (UC-SUP-06) | | (UC-SUP-07) | | (UC-SUP-08) |             |
+    |     |      | Visualizar  | | Gerar       | | Upload      |             |
+    |     |      | Metricas    | | Relatorios  | | Automatico  |             |
+    |     |      | da Equipe   | | Departamento| | (Aprovado)  |             |
+    |     |      |             | |             | |             |             |
+    |     |      +-------------+ +-------------+ +-------------+             |
+    |     |                                                                  |
+    |     |      +-------------+ +-------------+ +-------------+             |
+    |     |      |             | |             | |             |             |
+    |     +----->| (UC-SUP-09) | | (UC-SUP-10) | | (UC-SUP-11) |             |
+    |            | Acessar     | | Filtrar     | | Configurar  |             |
+    |            | Meus Com-   | | por Usuario | | Notificacoes|             |
+    |            | partilha-   | | ou Data     | |             |             |
+    |            | mentos      | |             | |             |             |
+    |            +-------------+ +-------------+ +-------------+             |
+    |                                                                        |
+    +------------------------------------------------------------------------+
+
+
+    FLUXO DE APROVACAO DO SUPERVISOR (DIAGRAMA DE ATIVIDADE)
+    ========================================================
+
+                              [INICIO]
+                                  |
+                                  v
+                    +---------------------------+
+                    | Supervisor acessa         |
+                    | Dashboard                 |
+                    +---------------------------+
+                                  |
+                                  v
+                    +---------------------------+
+                    | Sistema exibe lista de    |
+                    | transferencias pendentes  |
+                    +---------------------------+
+                                  |
+                                  v
+                    +---------------------------+
+                    | Supervisor seleciona      |
+                    | transferencia             |
+                    +---------------------------+
+                                  |
+                                  v
+                    +---------------------------+
+                    | Sistema exibe detalhes:   |
+                    | - Remetente               |
+                    | - Arquivos                |
+                    | - Destinatarios           |
+                    | - Data/Hora               |
+                    +---------------------------+
+                                  |
+                                  v
+                         +----------------+
+                        /                  \
+                       /   Supervisor       \
+                      <    decide acao       >
+                       \                    /
+                        \                  /
+                         +----------------+
+                          |             |
+              [APROVAR]   |             |   [REJEITAR]
+                          v             v
+            +----------------+     +----------------+
+            | Sistema        |     | Sistema        |
+            | aprova e       |     | registra       |
+            | notifica       |     | rejeicao       |
+            | usuario        |     |                |
+            +----------------+     +----------------+
+                          |             |
+                          v             v
+            +----------------+     +----------------+
+            | Transferencia  |     | Usuario        |
+            | enviada para   |     | notificado     |
+            | destinatarios  |     | da rejeicao    |
+            +----------------+     +----------------+
+                          |             |
+                          +------+------+
+                                 |
+                                 v
+                              [FIM]
+
+
+    DETALHAMENTO DOS CASOS DE USO - SUPERVISOR
+    ==========================================
+
+    +--------------------------------------------------------------------------+
+    | UC-SUP-01: FAZER LOGIN SSO (PERFIL SUPERVISOR)                           |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Supervisor                                               |
+    | Pre-condicao: Usuario possui conta com perfil Supervisor no sistema      |
+    | Pos-condicao: Usuario autenticado e redirecionado ao dashboard supervisor|
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Supervisor acessa pagina inicial do sistema                           |
+    | 2. Sistema exibe tela de login com botao "Login Corporativo"             |
+    | 3. Supervisor clica no botao "Login Corporativo"                         |
+    | 4. Sistema redireciona para Microsoft Entra ID                           |
+    | 5. Supervisor insere credenciais corporativas                            |
+    | 6. Microsoft valida credenciais                                          |
+    | 7. Sistema identifica perfil como "Supervisor"                           |
+    | 8. Sistema redireciona para /supervisor (dashboard do supervisor)        |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-SUP-02: ACESSAR DASHBOARD DO SUPERVISOR                               |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Supervisor                                               |
+    | Pre-condicao: Supervisor autenticado no sistema                          |
+    | Pos-condicao: Dashboard exibido com metricas e pendencias                |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Sistema exibe header com logo e nome do supervisor                    |
+    | 2. Sistema exibe cards com metricas:                                     |
+    |    - Total de transferencias                                             |
+    |    - Pendentes de aprovacao                                              |
+    |    - Aprovadas hoje                                                      |
+    |    - Rejeitadas                                                          |
+    | 3. Sistema exibe lista de transferencias pendentes de aprovacao          |
+    | 4. Sistema exibe grafico de atividades da equipe                         |
+    | 5. Sistema exibe menu lateral com opcoes do supervisor                   |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-SUP-03: VISUALIZAR PENDENCIAS DE APROVACAO                            |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Supervisor                                               |
+    | Pre-condicao: Supervisor no dashboard                                    |
+    | Pos-condicao: Lista de pendencias exibida                                |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Sistema exibe tabela com transferencias pendentes                     |
+    | 2. Cada linha mostra:                                                    |
+    |    - Nome do solicitante                                                 |
+    |    - Quantidade de arquivos                                              |
+    |    - Destinatarios                                                       |
+    |    - Data da solicitacao                                                 |
+    |    - Botoes de acao (Aprovar/Rejeitar)                                   |
+    | 3. Supervisor pode ordenar por data ou solicitante                       |
+    | 4. Supervisor pode filtrar por tipo de arquivo                           |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-SUP-04: APROVAR TRANSFERENCIA                                         |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Supervisor                                               |
+    | Pre-condicao: Transferencia pendente selecionada                         |
+    | Pos-condicao: Transferencia aprovada e enviada                           |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Supervisor visualiza detalhes da transferencia                        |
+    | 2. Supervisor clica em "Aprovar"                                         |
+    | 3. Sistema solicita confirmacao                                          |
+    | 4. Supervisor confirma aprovacao                                         |
+    | 5. Sistema registra aprovacao com data/hora e ID do supervisor           |
+    | 6. Sistema envia email aos destinatarios                                 |
+    | 7. Sistema notifica solicitante sobre aprovacao                          |
+    | 8. Sistema atualiza status para "Aprovado"                               |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-SUP-05: REJEITAR TRANSFERENCIA                                        |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Supervisor                                               |
+    | Pre-condicao: Transferencia pendente selecionada                         |
+    | Pos-condicao: Transferencia rejeitada e solicitante notificado           |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Supervisor visualiza detalhes da transferencia                        |
+    | 2. Supervisor clica em "Rejeitar"                                        |
+    | 3. Sistema exibe campo para motivo da rejeicao                           |
+    | 4. Supervisor insere motivo (obrigatorio)                                |
+    | 5. Supervisor confirma rejeicao                                          |
+    | 6. Sistema registra rejeicao com motivo, data/hora e ID do supervisor    |
+    | 7. Sistema notifica solicitante sobre rejeicao e motivo                  |
+    | 8. Sistema atualiza status para "Rejeitado"                              |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-SUP-06: VISUALIZAR METRICAS DA EQUIPE                                 |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Supervisor                                               |
+    | Pre-condicao: Supervisor autenticado                                     |
+    | Pos-condicao: Metricas exibidas                                          |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Sistema exibe graficos de:                                            |
+    |    - Transferencias por periodo                                          |
+    |    - Volume de dados transferidos                                        |
+    |    - Taxa de aprovacao/rejeicao                                          |
+    |    - Tempo medio de aprovacao                                            |
+    | 2. Supervisor pode filtrar por periodo                                   |
+    | 3. Supervisor pode filtrar por membro da equipe                          |
+    | 4. Sistema permite exportar metricas                                     |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-SUP-09: ACESSAR MEUS COMPARTILHAMENTOS                                |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Supervisor                                               |
+    | Pre-condicao: Supervisor autenticado                                     |
+    | Pos-condicao: Lista de compartilhamentos proprios exibida                |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Supervisor clica em "Meus Compartilhamentos" no menu                  |
+    | 2. Sistema redireciona para /compartilhamentos                           |
+    | 3. Sistema exibe breadcrumb com link "Inicio" para /supervisor           |
+    | 4. Sistema exibe lista de transferencias realizadas pelo supervisor      |
+    | 5. Supervisor pode filtrar e ordenar transferencias                      |
+    +--------------------------------------------------------------------------+
+
+
+================================================================================
+                    5. DIAGRAMA - ADMIN GLOBAL
+================================================================================
+
+Ator: Admin Global (Administrador do Sistema)
+Descricao: Administrador com acesso total ao sistema, responsavel por
+           configuracoes, gestao de usuarios e auditoria.
+
+                         CASOS DE USO - ADMIN GLOBAL
+    +------------------------------------------------------------------------+
+    |                                                                        |
+    |                    +--------------------------------+                  |
+    |                    |                                |                  |
+    |     +------------->|   (UC-ADM-01)                  |                  |
+    |     |              |   Fazer Login SSO              |                  |
+    |     |              |   (Perfil Admin Global)        |                  |
+    |     |              |                                |                  |
+    |     |              +--------------------------------+                  |
+    |     |                             |                                    |
+    |     |                             v                                    |
+    |     |              +--------------------------------+                  |
+    |     |              |                                |                  |
+    |     |              |   (UC-ADM-02)                  |                  |
+    |     +------------->|   Acessar Dashboard            |                  |
+    |     |              |   Administrativo               |                  |
+    |     |              |                                |                  |
+    |     |              +--------------------------------+                  |
+    |     |                             |                                    |
+    |     |      +----------------------+----------------------+             |
+    |     |      |              |               |              |             |
+    |     |      v              v               v              v             |
++---+-----+---+                                                              |
+|             |  +-------------+ +-------------+ +-------------+ +---------+ |
+|   ADMIN     |  | (UC-ADM-03) | | (UC-ADM-04) | | (UC-ADM-05) | |(UC-ADM- | |
+|   GLOBAL    |  | Gerenciar   | | Gerenciar   | | Visualizar  | | 06)     | |
+|             |  | Usuarios    | | Comparti-   | | Logs de     | | Rastrea-| |
+|  +-------+  |  |             | | lhamentos   | | Auditoria   | | mento   | |
+|  | Super |  |  +-------------+ +-------------+ +-------------+ +---------+ |
+|  | Admin |  |         |              |               |              |      |
+|  +-------+  |         v              v               v              v      |
+|             |  +-------------+ +-------------+ +-------------+ +---------+ |
++-------------+  | - Criar     | | - Visualizar| | - Filtrar   | | - Filtrar| |
+    |     |      | - Editar    | | - Filtrar   | |   por data  | |   por ID | |
+    |     |      | - Ativar    | | - Cancelar  | | - Filtrar   | | - Buscar | |
+    |     |      | - Desativar | | - Reenviar  | |   por acao  | |   arquivo| |
+    |     |      | - Alterar   | |             | | - Exportar  | |          | |
+    |     |      |   perfil    | |             | |             | |          | |
+    |     |      +-------------+ +-------------+ +-------------+ +---------+ |
+    |     |                                                                  |
+    |     |      +-------------+ +-------------+ +-------------+ +---------+ |
+    |     |      | (UC-ADM-07) | | (UC-ADM-08) | | (UC-ADM-09) | |(UC-ADM- | |
+    |     +----->| Exportar    | | Configurar  | | Gerenciar   | | 10)     | |
+    |            | Relatorios  | | Sistema     | | Permissoes  | | Backup  | |
+    |            |             | |             | |             | |         | |
+    |            +-------------+ +-------------+ +-------------+ +---------+ |
+    |                   |              |               |              |      |
+    |                   v              v               v              v      |
+    |            +-------------+ +-------------+ +-------------+ +---------+ |
+    |            | - PDF       | | - Limite    | | - Por perfil| | - Manual| |
+    |            | - Excel     | |   arquivos  | | - Por depto | | - Auto  | |
+    |            | - CSV       | | - Tempo     | |             | |         | |
+    |            |             | |   expiracao | |             | |         | |
+    |            +-------------+ +-------------+ +-------------+ +---------+ |
+    |                                                                        |
+    +------------------------------------------------------------------------+
+
+
+    DASHBOARD ADMINISTRATIVO (LAYOUT)
+    ==================================
+
+    +------------------------------------------------------------------------+
+    |  [LOGO PETROBRAS]           Dashboard Administrativo     [Admin] [Sair]|
+    +------------------------------------------------------------------------+
+    |         |                                                              |
+    | MENU    |  +----------------+ +----------------+ +----------------+    |
+    |         |  | TOTAL          | | USUARIOS       | | TRANSFERENCIAS |    |
+    | Inicio  |  | USUARIOS       | | ATIVOS HOJE    | | PENDENTES      |    |
+    | Usuarios|  |     1.247      | |      89        | |      23        |    |
+    | Compart.|  +----------------+ +----------------+ +----------------+    |
+    | Logs    |                                                              |
+    | Rastrear|  +----------------+ +----------------+ +----------------+    |
+    | Config. |  | VOLUME         | | TAXA           | | ALERTAS        |    |
+    | Backup  |  | TRANSFERIDO    | | SUCESSO        | | SEGURANCA      |    |
+    |         |  |   2.4 TB       | |    98.5%       | |      3         |    |
+    |         |  +----------------+ +----------------+ +----------------+    |
+    |         |                                                              |
+    |         |  +--------------------------------------------------------+ |
+    |         |  |  ATIVIDADES RECENTES                                   | |
+    |         |  +--------------------------------------------------------+ |
+    |         |  | Hora    | Usuario      | Acao           | Status       | |
+    |         |  |---------+--------------+----------------+--------------| |
+    |         |  | 14:32   | joao.silva   | Upload arquivo | Concluido    | |
+    |         |  | 14:28   | maria.santos | Download       | Concluido    | |
+    |         |  | 14:15   | carlos.lima  | Login          | Sucesso      | |
+    |         |  | 14:10   | ana.costa    | Aprovacao      | Concluido    | |
+    |         |  +--------------------------------------------------------+ |
+    |         |                                                              |
+    +------------------------------------------------------------------------+
+
+
+    DETALHAMENTO DOS CASOS DE USO - ADMIN GLOBAL
+    ============================================
+
+    +--------------------------------------------------------------------------+
+    | UC-ADM-01: FAZER LOGIN SSO (PERFIL ADMIN GLOBAL)                         |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Admin Global                                             |
+    | Pre-condicao: Usuario possui conta com perfil Admin Global               |
+    | Pos-condicao: Usuario autenticado e redirecionado ao dashboard admin     |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Admin acessa pagina inicial do sistema                                |
+    | 2. Sistema exibe tela de login com botao "Login Corporativo"             |
+    | 3. Admin clica no botao "Login Corporativo"                              |
+    | 4. Sistema redireciona para Microsoft Entra ID                           |
+    | 5. Admin insere credenciais corporativas                                 |
+    | 6. Microsoft valida credenciais                                          |
+    | 7. Sistema identifica perfil como "Admin Global"                         |
+    | 8. Sistema redireciona para /admin (dashboard administrativo)            |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-ADM-02: ACESSAR DASHBOARD ADMINISTRATIVO                              |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Admin Global                                             |
+    | Pre-condicao: Admin autenticado no sistema                               |
+    | Pos-condicao: Dashboard exibido com visao geral do sistema               |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Sistema exibe header com logo e identificacao do admin                |
+    | 2. Sistema exibe cards com metricas globais:                             |
+    |    - Total de usuarios                                                   |
+    |    - Usuarios ativos hoje                                                |
+    |    - Total de transferencias                                             |
+    |    - Volume de dados                                                     |
+    |    - Taxa de sucesso                                                     |
+    |    - Alertas de seguranca                                                |
+    | 3. Sistema exibe lista de atividades recentes                            |
+    | 4. Sistema exibe menu lateral com todas as opcoes administrativas        |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-ADM-03: GERENCIAR USUARIOS                                            |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Admin Global                                             |
+    | Pre-condicao: Admin autenticado                                          |
+    | Pos-condicao: Usuario criado/editado/alterado conforme acao              |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Admin clica em "Usuarios" no menu                                     |
+    | 2. Sistema exibe lista de todos os usuarios                              |
+    | 3. Admin pode buscar usuario por nome ou email                           |
+    | 4. Admin pode filtrar por perfil ou status                               |
+    | 5. Admin seleciona usuario para editar                                   |
+    | 6. Sistema exibe formulario de edicao                                    |
+    | 7. Admin altera dados necessarios                                        |
+    | 8. Admin salva alteracoes                                                |
+    | 9. Sistema registra alteracao no log de auditoria                        |
+    +--------------------------------------------------------------------------+
+    | FLUXO ALTERNATIVO - CRIAR USUARIO:                                       |
+    | 3a. Admin clica em "Novo Usuario"                                        |
+    |     3a.1. Sistema exibe formulario em branco                             |
+    |     3a.2. Admin preenche dados do usuario                                |
+    |     3a.3. Admin seleciona perfil (Interno/Supervisor/Admin)              |
+    |     3a.4. Admin salva novo usuario                                       |
+    |     3a.5. Sistema envia email de boas-vindas                             |
+    +--------------------------------------------------------------------------+
+    | FLUXO ALTERNATIVO - DESATIVAR USUARIO:                                   |
+    | 5a. Admin clica em "Desativar"                                           |
+    |     5a.1. Sistema solicita confirmacao                                   |
+    |     5a.2. Admin confirma desativacao                                     |
+    |     5a.3. Sistema desativa usuario                                       |
+    |     5a.4. Usuario nao consegue mais fazer login                          |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-ADM-04: GERENCIAR COMPARTILHAMENTOS                                   |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Admin Global                                             |
+    | Pre-condicao: Admin autenticado                                          |
+    | Pos-condicao: Compartilhamento visualizado/cancelado/reenviado           |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Admin clica em "Compartilhamentos" no menu                            |
+    | 2. Sistema exibe lista de todas as transferencias                        |
+    | 3. Admin pode filtrar por:                                               |
+    |    - Data (de/ate)                                                       |
+    |    - Remetente                                                           |
+    |    - Destinatario                                                        |
+    |    - Status                                                              |
+    | 4. Admin seleciona transferencia para visualizar detalhes                |
+    | 5. Sistema exibe todos os detalhes da transferencia                      |
+    +--------------------------------------------------------------------------+
+    | FLUXO ALTERNATIVO - CANCELAR TRANSFERENCIA:                              |
+    | 5a. Admin clica em "Cancelar"                                            |
+    |     5a.1. Sistema solicita motivo do cancelamento                        |
+    |     5a.2. Admin insere motivo                                            |
+    |     5a.3. Sistema cancela transferencia                                  |
+    |     5a.4. Sistema notifica remetente e destinatarios                     |
+    +--------------------------------------------------------------------------+
+    | FLUXO ALTERNATIVO - REENVIAR NOTIFICACAO:                                |
+    | 5b. Admin clica em "Reenviar Email"                                      |
+    |     5b.1. Sistema reenvia email para destinatario                        |
+    |     5b.2. Sistema registra reenvio no log                                |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-ADM-05: VISUALIZAR LOGS DE AUDITORIA                                  |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Admin Global                                             |
+    | Pre-condicao: Admin autenticado                                          |
+    | Pos-condicao: Logs exibidos conforme filtros                             |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Admin clica em "Logs" no menu                                         |
+    | 2. Sistema exibe lista de logs de auditoria                              |
+    | 3. Admin pode filtrar por:                                               |
+    |    - Data/hora (de/ate)                                                  |
+    |    - Usuario                                                             |
+    |    - Tipo de acao (Login, Upload, Download, etc)                         |
+    |    - IP de origem                                                        |
+    | 4. Sistema exibe logs ordenados por data (mais recente primeiro)         |
+    | 5. Admin pode clicar em log para ver detalhes completos                  |
+    +--------------------------------------------------------------------------+
+    | FLUXO ALTERNATIVO - EXPORTAR LOGS:                                       |
+    | 4a. Admin clica em "Exportar"                                            |
+    |     4a.1. Sistema solicita formato (CSV, PDF, Excel)                     |
+    |     4a.2. Admin seleciona formato                                        |
+    |     4a.3. Sistema gera arquivo com logs filtrados                        |
+    |     4a.4. Sistema inicia download do arquivo                             |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-ADM-06: RASTREAR TRANSFERENCIA                                        |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Admin Global                                             |
+    | Pre-condicao: Admin autenticado                                          |
+    | Pos-condicao: Detalhes da transferencia exibidos                         |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Admin clica em "Rastrear" no menu                                     |
+    | 2. Sistema exibe campo de busca                                          |
+    | 3. Admin insere ID da transferencia ou nome do arquivo                   |
+    | 4. Sistema busca e exibe resultados                                      |
+    | 5. Admin visualiza historico completo:                                   |
+    |    - Data/hora de criacao                                                |
+    |    - Remetente                                                           |
+    |    - Aprovador (se aplicavel)                                            |
+    |    - Data/hora de envio                                                  |
+    |    - Data/hora de download (cada destinatario)                           |
+    |    - IPs de acesso                                                       |
+    +--------------------------------------------------------------------------+
+
+    +--------------------------------------------------------------------------+
+    | UC-ADM-07: EXPORTAR RELATORIOS                                           |
+    +--------------------------------------------------------------------------+
+    | Ator Principal: Admin Global                                             |
+    | Pre-condicao: Admin autenticado                                          |
+    | Pos-condicao: Relatorio gerado e baixado                                 |
+    +--------------------------------------------------------------------------+
+    | FLUXO PRINCIPAL:                                                         |
+    | 1. Admin acessa area de relatorios                                       |
+    | 2. Sistema exibe tipos de relatorios disponiveis:                        |
+    |    - Relatorio de usuarios                                               |
+    |    - Relatorio de transferencias                                         |
+    |    - Relatorio de volume de dados                                        |
+    |    - Relatorio de auditoria                                              |
+    | 3. Admin seleciona tipo de relatorio                                     |
+    | 4. Admin define filtros (periodo, departamento, etc)                     |
+    | 5. Admin seleciona formato (PDF, Excel, CSV)                             |
+    | 6. Sistema gera relatorio                                                |
+    | 7. Sistema inicia download automaticamente                               |
+    +--------------------------------------------------------------------------+
+
+
+================================================================================
+                    6. DIAGRAMAS DE SEQUENCIA
+================================================================================
+
+    DIAGRAMA DE SEQUENCIA - ENVIO DE ARQUIVOS (USUARIO INTERNO)
+    ============================================================
+
+    Usuario          Sistema         Microsoft       Email           Banco
+    Interno          Frontend        Entra ID        Service         Dados
+       |                |               |               |               |
+       | 1. Acessa      |               |               |               |
+       |    sistema     |               |               |               |
+       |--------------->|               |               |               |
+       |                |               |               |               |
+       |                | 2. Redireciona|               |               |
+       |                |    login SSO  |               |               |
+       |                |-------------->|               |               |
+       |                |               |               |               |
+       | 3. Insere      |               |               |               |
+       |    credenciais |               |               |               |
+       |-------------------------------->               |               |
+       |                |               |               |               |
+       |                | 4. Token      |               |               |
+       |                |    validado   |               |               |
+       |                |<--------------|               |               |
+       |                |               |               |               |
+       | 5. Dashboard   |               |               |               |
+       |    exibido     |               |               |               |
+       |<---------------|               |               |               |
+       |                |               |               |               |
+       | 6. Upload      |               |               |               |
+       |    arquivos    |               |               |               |
+       |--------------->|               |               |               |
+       |                |               |               |               |
+       |                | 7. Salva      |               |               |
+       |                |    arquivos   |               |               |
+       |                |---------------------------------------------->|
+       |                |               |               |               |
+       | 8. Seleciona   |               |               |               |
+       |    destinatarios               |               |               |
+       |--------------->|               |               |               |
+       |                |               |               |               |
+       | 9. Clica       |               |               |               |
+       |    "Enviar"    |               |               |               |
+       |--------------->|               |               |               |
+       |                |               |               |               |
+       |                | 10. Cria      |               |               |
+       |                |     registro  |               |               |
+       |                |---------------------------------------------->|
+       |                |               |               |               |
+       |                | 11. Gera link |               |               |
+       |                |     e codigo  |               |               |
+       |                |---------------------------------------------->|
+       |                |               |               |               |
+       |                | 12. Envia     |               |               |
+       |                |     email     |               |               |
+       |                |------------------------------>|               |
+       |                |               |               |               |
+       | 13. Confirmacao|               |               |               |
+       |     enviada    |               |               |               |
+       |<---------------|               |               |               |
+       |                |               |               |               |
+
+
+    DIAGRAMA DE SEQUENCIA - DOWNLOAD DE ARQUIVOS (USUARIO EXTERNO)
+    ==============================================================
+
+    Usuario          Sistema         Banco           Email
+    Externo          Frontend        Dados           Service
+       |                |               |               |
+       |                |               |               | 1. Email
+       |                |               |               |    recebido
+       |<-----------------------------------------------|
+       |                |               |               |
+       | 2. Clica no    |               |               |
+       |    link        |               |               |
+       |--------------->|               |               |
+       |                |               |               |
+       |                | 3. Valida     |               |
+       |                |    token      |               |
+       |                |-------------->|               |
+       |                |               |               |
+       |                | 4. Token OK   |               |
+       |                |<--------------|               |
+       |                |               |               |
+       | 5. Tela de     |               |               |
+       |    verificacao |               |               |
+       |<---------------|               |               |
+       |                |               |               |
+       | 6. Insere      |               |               |
+       |    codigo      |               |               |
+       |--------------->|               |               |
+       |                |               |               |
+       |                | 7. Valida     |               |
+       |                |    codigo     |               |
+       |                |-------------->|               |
+       |                |               |               |
+       |                | 8. Codigo OK  |               |
+       |                |<--------------|               |
+       |                |               |               |
+       | 9. Lista de    |               |               |
+       |    arquivos    |               |               |
+       |<---------------|               |               |
+       |                |               |               |
+       | 10. Clica      |               |               |
+       |     "Baixar"   |               |               |
+       |--------------->|               |               |
+       |                |               |               |
+       |                | 11. Busca     |               |
+       |                |     arquivo   |               |
+       |                |-------------->|               |
+       |                |               |               |
+       | 12. Download   |               |               |
+       |     iniciado   |               |               |
+       |<---------------|               |               |
+       |                |               |               |
+       |                | 13. Registra  |               |
+       |                |     download  |               |
+       |                |-------------->|               |
+       |                |               |               |
+
+
+    DIAGRAMA DE SEQUENCIA - APROVACAO (SUPERVISOR)
+    ===============================================
+
+    Supervisor       Sistema         Banco           Email           Usuario
+                     Frontend        Dados           Service         Interno
+       |                |               |               |               |
+       | 1. Acessa      |               |               |               |
+       |    dashboard   |               |               |               |
+       |--------------->|               |               |               |
+       |                |               |               |               |
+       |                | 2. Busca      |               |               |
+       |                |    pendencias |               |               |
+       |                |-------------->|               |               |
+       |                |               |               |               |
+       | 3. Lista de    |               |               |               |
+       |    pendencias  |               |               |               |
+       |<---------------|               |               |               |
+       |                |               |               |               |
+       | 4. Seleciona   |               |               |               |
+       |    transferencia               |               |               |
+       |--------------->|               |               |               |
+       |                |               |               |               |
+       |                | 5. Busca      |               |               |
+       |                |    detalhes   |               |               |
+       |                |-------------->|               |               |
+       |                |               |               |               |
+       | 6. Detalhes    |               |               |               |
+       |    exibidos    |               |               |               |
+       |<---------------|               |               |               |
+       |                |               |               |               |
+       | 7. Clica       |               |               |               |
+       |    "Aprovar"   |               |               |               |
+       |--------------->|               |               |               |
+       |                |               |               |               |
+       |                | 8. Atualiza   |               |               |
+       |                |    status     |               |               |
+       |                |-------------->|               |               |
+       |                |               |               |               |
+       |                | 9. Envia      |               |               |
+       |                |    email      |               |               |
+       |                |    destina-   |               |               |
+       |                |    tarios     |               |               |
+       |                |------------------------------>|               |
+       |                |               |               |               |
+       |                | 10. Notifica  |               |               |
+       |                |     remetente |               |               |
+       |                |------------------------------>|-------------->|
+       |                |               |               |               |
+       | 11. Confirmacao|               |               |               |
+       |     aprovacao  |               |               |               |
+       |<---------------|               |               |               |
+       |                |               |               |               |
+
+
+================================================================================
+                    7. DIAGRAMAS DE ATIVIDADE
+================================================================================
+
+    DIAGRAMA DE ATIVIDADE - PROCESSO COMPLETO DE TRANSFERENCIA
+    ==========================================================
+
+                                    [INICIO]
+                                        |
+                                        v
+                        +-------------------------------+
+                        | Usuario Interno faz login    |
+                        | via Microsoft Entra ID       |
+                        +-------------------------------+
+                                        |
+                                        v
+                        +-------------------------------+
+                        | Sistema valida credenciais   |
+                        | e identifica perfil          |
+                        +-------------------------------+
+                                        |
+                                        v
+                        +-------------------------------+
+                        | Usuario acessa dashboard     |
+                        | de upload                    |
+                        +-------------------------------+
+                                        |
+                                        v
+                        +-------------------------------+
+                        | Usuario seleciona arquivos   |
+                        | para upload                  |
+                        +-------------------------------+
+                                        |
+                                        v
+                               +----------------+
+                              /                  \
+                             /   Arquivos         \
+                            <    validos?          >
+                             \                    /
+                              \                  /
+                               +----------------+
+                                |             |
+                       [SIM]    |             |    [NAO]
+                                v             v
+            +-------------------+             +-------------------+
+            | Upload realizado  |             | Sistema exibe     |
+            | com sucesso       |             | mensagem de erro  |
+            +-------------------+             +-------------------+
+                    |                                   |
+                    v                                   |
+            +-------------------+                       |
+            | Usuario adiciona  |<----------------------+
+            | destinatarios     |
+            +-------------------+
+                    |
+                    v
+            +-------------------+
+            | Usuario clica     |
+            | "Enviar"          |
+            +-------------------+
+                    |
+                    v
+           +----------------+
+          /                  \
+         /   Requer           \
+        <    aprovacao?        >
+         \                    /
+          \                  /
+           +----------------+
+            |             |
+   [SIM]    |             |    [NAO]
+            v             v
+    +-------------+   +-------------+
+    | Transferen- |   | Email       |
+    | cia fica    |   | enviado     |
+    | pendente    |   | diretamente |
+    +-------------+   +-------------+
+            |                 |
+            v                 |
+    +-------------+           |
+    | Supervisor  |           |
+    | recebe      |           |
+    | notificacao |           |
+    +-------------+           |
+            |                 |
+            v                 |
+    +----------------+        |
+   /                  \       |
+  /   Supervisor       \      |
+ <    aprova?           >     |
+  \                    /      |
+   \                  /       |
+    +----------------+        |
+     |             |          |
+[APROVA]      [REJEITA]       |
+     |             |          |
+     v             v          |
++----------+  +----------+    |
+| Email    |  | Usuario  |    |
+| enviado  |  | notifi-  |    |
+| para     |  | cado da  |    |
+| destina- |  | rejeicao |    |
+| tarios   |  +----------+    |
++----------+       |          |
+     |             |          |
+     +------+------+          |
+            |                 |
+            v                 |
+            +-----------------+
+            |
+            v
+    +-------------------+
+    | Usuario externo   |
+    | recebe email com  |
+    | link seguro       |
+    +-------------------+
+            |
+            v
+    +-------------------+
+    | Usuario externo   |
+    | acessa link       |
+    +-------------------+
+            |
+            v
+    +-------------------+
+    | Sistema solicita  |
+    | codigo de         |
+    | verificacao       |
+    +-------------------+
+            |
+            v
+       +----------------+
+      /                  \
+     /   Codigo           \
+    <    correto?          >
+     \                    /
+      \                  /
+       +----------------+
+        |             |
+[SIM]   |             |   [NAO]
+        v             v
++-------------+  +-------------+
+| Acesso      |  | Erro        |
+| liberado    |  | exibido     |
++-------------+  +-------------+
+        |             |
+        v             |
++-------------+       |
+| Usuario     |       |
+| faz download|       |
++-------------+       |
+        |             |
+        v             |
++-------------+       |
+| Download    |       |
+| registrado  |       |
+| no log      |       |
++-------------+       |
+        |             |
+        v             |
+    +---+-------------+
+        |
+        v
+     [FIM]
+
+
+================================================================================
+                    8. MATRIZ DE RASTREABILIDADE
+================================================================================
+
+    Esta matriz relaciona os casos de uso com os requisitos funcionais
+    e as telas/componentes do sistema.
+
+    +--------+-----------------------+---------------------------+---------------+
+    | ID     | CASO DE USO           | REQUISITO FUNCIONAL       | TELA/PAGINA   |
+    +--------+-----------------------+---------------------------+---------------+
+    | UC-INT | USUARIO INTERNO                                                    |
+    +--------+-----------------------+---------------------------+---------------+
+    | 01     | Login SSO             | RF001 - Autenticacao SSO  | /             |
+    | 02     | Dashboard             | RF002 - Dashboard usuario | /upload       |
+    | 03     | Upload arquivos       | RF003 - Upload ate 500MB  | /upload       |
+    | 04     | Selecionar destina.   | RF004 - Multi destina.    | /upload       |
+    | 05     | Historico             | RF005 - Historico transf. | /compartilham.|
+    | 06     | Enviar transferencia  | RF006 - Criar transf.     | /upload       |
+    +--------+-----------------------+---------------------------+---------------+
+    | UC-EXT | USUARIO EXTERNO                                                    |
+    +--------+-----------------------+---------------------------+---------------+
+    | 01     | Receber notificacao   | RF010 - Envio email       | N/A (email)   |
+    | 02     | Acessar link          | RF011 - Link seguro       | /download     |
+    | 03     | Verificar codigo      | RF012 - Codigo 6 digitos  | /external-ver.|
+    | 04     | Visualizar detalhes   | RF013 - Info transf.      | /download     |
+    | 05     | Download arquivos     | RF014 - Download          | /download     |
+    | 06     | Confirmar recebimento | RF015 - Confirmacao       | /download     |
+    +--------+-----------------------+---------------------------+---------------+
+    | UC-SUP | SUPERVISOR                                                         |
+    +--------+-----------------------+---------------------------+---------------+
+    | 01     | Login SSO Supervisor  | RF001 - Autenticacao SSO  | /             |
+    | 02     | Dashboard Supervisor  | RF020 - Dashboard super.  | /supervisor   |
+    | 03     | Visualizar pendencias | RF021 - Lista pendencias  | /supervisor   |
+    | 04     | Aprovar transferencia | RF022 - Workflow aprovacao| /supervisor   |
+    | 05     | Rejeitar transferencia| RF023 - Rejeicao c/motivo | /supervisor   |
+    | 06     | Metricas equipe       | RF024 - Metricas          | /supervisor   |
+    | 09     | Meus compartilhamentos| RF005 - Historico transf. | /compartilham.|
+    +--------+-----------------------+---------------------------+---------------+
+    | UC-ADM | ADMIN GLOBAL                                                       |
+    +--------+-----------------------+---------------------------+---------------+
+    | 01     | Login SSO Admin       | RF001 - Autenticacao SSO  | /             |
+    | 02     | Dashboard Admin       | RF030 - Dashboard admin   | /admin        |
+    | 03     | Gerenciar usuarios    | RF031 - CRUD usuarios     | /admin        |
+    | 04     | Gerenciar compartilh. | RF032 - Gestao transf.    | /admin        |
+    | 05     | Logs de auditoria     | RF033 - Auditoria         | /admin        |
+    | 06     | Rastrear transferencia| RF034 - Rastreamento      | /admin        |
+    | 07     | Exportar relatorios   | RF035 - Exportacao        | /admin        |
+    +--------+-----------------------+---------------------------+---------------+
+
+
+================================================================================
+                         HISTORICO DE REVISOES
+================================================================================
+
+    +--------+------------+------------------+--------------------------------+
+    | Versao | Data       | Autor            | Descricao                      |
+    +--------+------------+------------------+--------------------------------+
+    | 1.0    | 23/05/2026 | Equipe Desenvol. | Versao inicial do documento    |
+    +--------+------------+------------------+--------------------------------+
+
+
+================================================================================
+                              FIM DO DOCUMENTO
+================================================================================
