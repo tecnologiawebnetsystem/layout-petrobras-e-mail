@@ -306,10 +306,10 @@ export default function CompartilhamentosPage() {
         <main className="container mx-auto px-4 md:px-6 py-6 md:py-8 max-w-7xl">
           <BreadcrumbNav
             items={[
-              { label: "Inicio", href: "/upload" },
+              { label: "Inicio", href: user?.userType === "supervisor" ? "/supervisor" : "/upload" },
               { label: "Meus Compartilhamentos" },
             ]}
-            dashboardLink="/upload"
+            dashboardLink={user?.userType === "supervisor" ? "/supervisor" : "/upload"}
           />
 
           {/* Header com titulo e acao */}
