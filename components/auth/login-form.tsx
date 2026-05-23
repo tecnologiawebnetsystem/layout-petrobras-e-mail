@@ -277,8 +277,9 @@ export function LoginForm() {
   // ─── Fluxo Interno (Entra ID via backend) ─────────────────────────────
 
   const handleEntraIdLogin = async () => {
-    setIsLoading(true);
+    // Mostra o FullPageLoader imediatamente ao clicar
     setIsRedirectingToMicrosoft(true);
+    setIsLoading(true);
     try {
       // Verifica se o backend esta acessivel antes de redirecionar
       const backendOk = await isBackendAvailable();
