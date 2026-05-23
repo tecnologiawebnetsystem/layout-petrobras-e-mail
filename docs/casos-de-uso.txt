@@ -1,0 +1,818 @@
+================================================================================
+                    DOCUMENTO DE CASOS DE USO (USE CASES)
+                    SISTEMA DE COMPARTILHAMENTO SEGURO DE ARQUIVOS
+                    PETROBRAS - SOLUCAO CONFIDENCIAL
+================================================================================
+
+Data de Criacao: Janeiro 2025
+Versao: 1.0
+Autor: Equipe de Desenvolvimento
+
+================================================================================
+                              INDICE
+================================================================================
+
+1. INTRODUCAO
+2. VISAO GERAL DO SISTEMA
+3. ATORES DO SISTEMA
+4. DIAGRAMA GERAL DE CASOS DE USO
+5. CASOS DE USO - USUARIO INTERNO
+6. CASOS DE USO - USUARIO EXTERNO
+7. CASOS DE USO - SUPERVISOR
+8. CASOS DE USO - ADMIN GLOBAL
+9. FLUXOS ALTERNATIVOS E EXCECOES
+10. REQUISITOS NAO FUNCIONAIS
+11. GLOSSARIO
+
+================================================================================
+                           1. INTRODUCAO
+================================================================================
+
+Este documento descreve os casos de uso do Sistema de Compartilhamento Seguro 
+de Arquivos da Petrobras. O sistema permite o envio seguro de documentos 
+confidenciais entre colaboradores internos e destinatarios externos, com 
+fluxo de aprovacao por supervisores e auditoria completa por administradores.
+
+Objetivo Principal:
+- Garantir a transferencia segura de arquivos confidenciais
+- Manter rastreabilidade completa de todas as operacoes
+- Implementar fluxo de aprovacao hierarquico
+- Proteger informacoes sensiveis da organizacao
+
+================================================================================
+                       2. VISAO GERAL DO SISTEMA
+================================================================================
+
+O sistema possui quatro perfis de usuarios com diferentes niveis de acesso:
+
++------------------+--------------------------------------------------+
+|     PERFIL       |              DESCRICAO                           |
++------------------+--------------------------------------------------+
+| Usuario Interno  | Colaborador Petrobras que envia arquivos         |
+| Usuario Externo  | Destinatario externo que recebe arquivos         |
+| Supervisor       | Aprova/rejeita compartilhamentos e envia arquivos|
+| Admin Global     | Administra o sistema completo                    |
++------------------+--------------------------------------------------+
+
+================================================================================
+                        3. ATORES DO SISTEMA
+================================================================================
+
+ATOR: Usuario Interno (UI)
+--------------------------
+Descricao: Colaborador da Petrobras autenticado via Microsoft Entra ID
+Responsabilidades:
+  - Fazer upload de arquivos para compartilhamento
+  - Definir destinatario externo
+  - Acompanhar status dos envios
+  - Visualizar historico de compartilhamentos
+
+ATOR: Usuario Externo (UE)
+--------------------------
+Descricao: Pessoa externa a Petrobras que recebe arquivos compartilhados
+Responsabilidades:
+  - Receber codigo de verificacao por e-mail
+  - Acessar sistema com autenticacao temporaria
+  - Fazer download dos arquivos aprovados
+  - Confirmar recebimento
+
+ATOR: Supervisor (SUP)
+----------------------
+Descricao: Gestor responsavel por aprovar compartilhamentos de sua equipe
+Responsabilidades:
+  - Aprovar ou rejeitar solicitacoes de compartilhamento
+  - Visualizar detalhes dos arquivos
+  - Acompanhar metricas da equipe
+  - Realizar compartilhamentos com aprovacao automatica
+
+ATOR: Admin Global (ADM)
+------------------------
+Descricao: Administrador com acesso total ao sistema
+Responsabilidades:
+  - Gerenciar usuarios
+  - Visualizar todos os compartilhamentos
+  - Acessar logs de auditoria
+  - Rastrear atividades de usuarios
+  - Monitorar metricas do sistema
+
+================================================================================
+                 4. DIAGRAMA GERAL DE CASOS DE USO
+================================================================================
+
+                         +----------------------------------+
+                         |    SISTEMA DE COMPARTILHAMENTO   |
+                         |       SEGURO DE ARQUIVOS         |
+                         +----------------------------------+
+                                        |
+        +---------------+---------------+---------------+---------------+
+        |               |               |               |               |
+   +---------+    +-----------+    +-----------+    +-----------+
+   | Usuario |    |  Usuario  |    |Supervisor |    |   Admin   |
+   | Interno |    |  Externo  |    |           |    |  Global   |
+   +---------+    +-----------+    +-----------+    +-----------+
+        |               |               |               |
+        v               v               v               v
+   +----------+    +----------+    +----------+    +----------+
+   |  Login   |    | Verificar|    |  Login   |    |  Login   |
+   |Microsoft |    |  Codigo  |    |Microsoft |    |Microsoft |
+   +----------+    +----------+    +----------+    +----------+
+        |               |               |               |
+        v               v               v               v
+   +----------+    +----------+    +----------+    +----------+
+   |  Upload  |    | Download |    | Aprovar/ |    |Dashboard |
+   | Arquivos |    | Arquivos |    | Rejeitar |    |  Admin   |
+   +----------+    +----------+    +----------+    +----------+
+        |               |               |               |
+        v               v               v               v
+   +----------+    +----------+    +----------+    +----------+
+   |Acompanhar|    |Visualizar|    | Upload   |    | Gerenciar|
+   |  Status  |    | Detalhes |    | Direto   |    | Usuarios |
+   +----------+    +----------+    +----------+    +----------+
+        |                               |               |
+        v                               v               v
+   +----------+                    +----------+    +----------+
+   |Historico |                    | Metricas |    |   Logs   |
+   |          |                    |  Equipe  |    | Auditoria|
+   +----------+                    +----------+    +----------+
+                                                        |
+                                                        v
+                                                   +----------+
+                                                   |Rastrear  |
+                                                   | Usuario  |
+                                                   +----------+
+
+================================================================================
+                    5. CASOS DE USO - USUARIO INTERNO
+================================================================================
+
++----------------------------------------------------------------------------+
+|  UC-UI-001: LOGIN NO SISTEMA                                               |
++----------------------------------------------------------------------------+
+| Ator Principal: Usuario Interno                                            |
+| Pre-condicoes: Usuario possui conta corporativa Microsoft                  |
+| Pos-condicoes: Usuario autenticado com acesso ao dashboard                 |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Usuario acessa a pagina inicial do sistema                              |
+| 2. Sistema exibe tela de login com botao "Login corporativo"               |
+| 3. Usuario clica no botao "Login corporativo"                              |
+| 4. Sistema exibe loading com logo Petrobras                                |
+| 5. Sistema redireciona para autenticacao Microsoft Entra ID                |
+| 6. Usuario insere credenciais corporativas                                 |
+| 7. Microsoft valida credenciais e retorna token                            |
+| 8. Sistema valida token e cria sessao                                      |
+| 9. Sistema identifica tipo de usuario (interno/supervisor)                 |
+| 10. Sistema redireciona para dashboard apropriado                          |
++----------------------------------------------------------------------------+
+| FLUXOS ALTERNATIVOS:                                                       |
+| 3a. Usuario clica em "Acessar documentacao"                                |
+|     - Sistema exibe pagina de documentacao                                 |
+| 7a. Credenciais invalidas                                                  |
+|     - Microsoft exibe mensagem de erro                                     |
+|     - Usuario pode tentar novamente                                        |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-UI-002: FAZER UPLOAD DE ARQUIVOS                                       |
++----------------------------------------------------------------------------+
+| Ator Principal: Usuario Interno                                            |
+| Pre-condicoes: Usuario autenticado no sistema                              |
+| Pos-condicoes: Arquivos enviados e aguardando aprovacao do supervisor      |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Usuario acessa a tela de "Transferencia Segura de Arquivos"             |
+| 2. Sistema exibe formulario de upload com:                                 |
+|    - Campo de e-mail do destinatario externo                               |
+|    - Area de arrastar/soltar arquivos                                      |
+|    - Seletor de tempo de disponibilidade (1-7 dias)                        |
+|    - Campo de descricao obrigatoria                                        |
+|    - Informacao do supervisor aprovador                                    |
+| 3. Usuario informa e-mail do destinatario externo                          |
+| 4. Usuario arrasta ou seleciona arquivos para upload                       |
+| 5. Sistema valida extensoes dos arquivos (bloqueia .exe, .bat, etc.)       |
+| 6. Usuario seleciona tempo de disponibilidade                              |
+| 7. Usuario preenche descricao do envio                                     |
+| 8. Usuario clica em "Enviar para Aprovacao"                                |
+| 9. Sistema exibe barra de progresso do upload                              |
+| 10. Sistema envia arquivos para armazenamento seguro (S3)                  |
+| 11. Sistema cria registro de compartilhamento com status "pendente"        |
+| 12. Sistema notifica supervisor por e-mail                                 |
+| 13. Sistema exibe modal de sucesso com detalhes do envio                   |
++----------------------------------------------------------------------------+
+| FLUXOS ALTERNATIVOS:                                                       |
+| 5a. Arquivo com extensao bloqueada detectado                               |
+|     - Sistema exibe notificacao de erro                                    |
+|     - Lista arquivos bloqueados e extensoes proibidas                      |
+|     - Usuario deve remover arquivos invalidos                              |
+| 10a. Falha no upload para S3                                               |
+|     - Sistema exibe mensagem de erro                                       |
+|     - Nenhum registro e criado                                             |
+|     - Usuario pode tentar novamente                                        |
++----------------------------------------------------------------------------+
+| REGRAS DE NEGOCIO:                                                         |
+| - Extensoes bloqueadas: .exe, .dll, .bat, .cmd, .com, .msi, .scr,          |
+|   .vbs, .ps1, .sh                                                          |
+| - Tempo maximo de disponibilidade: 168 horas (7 dias)                      |
+| - Descricao e obrigatoria                                                  |
+| - E-mail do destinatario deve ser valido                                   |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-UI-003: ACOMPANHAR STATUS DOS ENVIOS                                   |
++----------------------------------------------------------------------------+
+| Ator Principal: Usuario Interno                                            |
+| Pre-condicoes: Usuario autenticado e possui envios realizados              |
+| Pos-condicoes: Usuario visualiza status atualizado                         |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Usuario acessa dashboard principal                                      |
+| 2. Sistema exibe metricas resumidas:                                       |
+|    - Total de envios                                                       |
+|    - Envios pendentes                                                      |
+|    - Envios aprovados                                                      |
+|    - Envios rejeitados                                                     |
+| 3. Usuario pode clicar em cada metrica para ver detalhes                   |
+| 4. Sistema exibe modal com lista de arquivos da categoria                  |
+| 5. Usuario visualiza informacoes de cada arquivo:                          |
+|    - Nome do arquivo                                                       |
+|    - Tamanho                                                               |
+|    - Data de envio                                                         |
+|    - Destinatario                                                          |
+|    - Status atual                                                          |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-UI-004: VISUALIZAR HISTORICO DE COMPARTILHAMENTOS                      |
++----------------------------------------------------------------------------+
+| Ator Principal: Usuario Interno                                            |
+| Pre-condicoes: Usuario autenticado                                         |
+| Pos-condicoes: Usuario visualiza historico completo                        |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Usuario acessa menu "Meus Compartilhamentos"                            |
+| 2. Sistema exibe lista de todos os compartilhamentos do usuario            |
+| 3. Usuario pode filtrar por:                                               |
+|    - Status (pendente, aprovado, rejeitado)                                |
+|    - Periodo                                                               |
+|    - Destinatario                                                          |
+| 4. Usuario pode buscar por nome do arquivo                                 |
+| 5. Sistema exibe resultados filtrados                                      |
+| 6. Usuario pode clicar em um compartilhamento para ver detalhes            |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-UI-005: ACESSAR DOCUMENTACAO DO SISTEMA                                |
++----------------------------------------------------------------------------+
+| Ator Principal: Usuario Interno                                            |
+| Pre-condicoes: Nenhuma (disponivel antes do login)                         |
+| Pos-condicoes: Usuario visualiza documentacao                              |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Usuario clica no link "Acessar documentacao do sistema"                 |
+| 2. Sistema exibe pagina de documentacao com:                               |
+|    - Menu lateral de navegacao                                             |
+|    - Guias para cada perfil de usuario                                     |
+|    - Screenshots das telas                                                 |
+|    - Passo a passo detalhado                                               |
+|    - FAQ                                                                   |
+|    - Informacoes de suporte                                                |
+| 3. Usuario navega entre as secoes                                          |
+| 4. Usuario pode usar busca integrada                                       |
++----------------------------------------------------------------------------+
+
+================================================================================
+                    6. CASOS DE USO - USUARIO EXTERNO
+================================================================================
+
++----------------------------------------------------------------------------+
+|  UC-UE-001: RECEBER NOTIFICACAO DE COMPARTILHAMENTO                        |
++----------------------------------------------------------------------------+
+| Ator Principal: Usuario Externo                                            |
+| Pre-condicoes: Compartilhamento aprovado pelo supervisor                   |
+| Pos-condicoes: Usuario externo recebe e-mail com instrucoes                |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Supervisor aprova compartilhamento                                      |
+| 2. Sistema envia e-mail automatico para destinatario contendo:             |
+|    - Informacao do remetente (colaborador Petrobras)                       |
+|    - Descricao dos arquivos                                                |
+|    - Link seguro para acesso                                               |
+|    - Prazo de validade do compartilhamento                                 |
+| 3. Usuario externo recebe e-mail                                           |
+| 4. Usuario externo clica no link seguro                                    |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-UE-002: VERIFICAR CODIGO DE ACESSO                                     |
++----------------------------------------------------------------------------+
+| Ator Principal: Usuario Externo                                            |
+| Pre-condicoes: Usuario externo acessou link do e-mail                      |
+| Pos-condicoes: Usuario autenticado com acesso temporario                   |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Usuario externo acessa link do compartilhamento                         |
+| 2. Sistema redireciona para pagina de verificacao                          |
+| 3. Sistema envia codigo de 6 digitos para e-mail do usuario                |
+| 4. Sistema exibe:                                                          |
+|    - Mensagem de codigo enviado                                            |
+|    - Campo para inserir codigo                                             |
+|    - Contador regressivo (10 minutos)                                      |
+| 5. Usuario verifica caixa de entrada do e-mail                             |
+| 6. Usuario insere codigo de 6 digitos                                      |
+| 7. Sistema valida codigo                                                   |
+| 8. Sistema cria sessao temporaria (24 horas)                               |
+| 9. Sistema redireciona para pagina de downloads                            |
++----------------------------------------------------------------------------+
+| FLUXOS ALTERNATIVOS:                                                       |
+| 7a. Codigo invalido                                                        |
+|     - Sistema exibe mensagem de erro                                       |
+|     - Usuario pode tentar novamente                                        |
+| 7b. Codigo expirado                                                        |
+|     - Sistema exibe mensagem de expiracao                                  |
+|     - Usuario pode solicitar novo codigo                                   |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-UE-003: FAZER DOWNLOAD DE ARQUIVOS                                     |
++----------------------------------------------------------------------------+
+| Ator Principal: Usuario Externo                                            |
+| Pre-condicoes: Usuario autenticado com sessao valida                       |
+| Pos-condicoes: Arquivos baixados e registrados no sistema                  |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Sistema exibe pagina "Documentos Aprovados para Download"               |
+| 2. Sistema mostra aviso de confidencialidade                               |
+| 3. Sistema exibe metricas:                                                 |
+|    - Total de arquivos recebidos                                           |
+|    - Arquivos pendentes de download                                        |
+|    - Arquivos ja baixados                                                  |
+| 4. Sistema lista todos os arquivos disponiveis com:                        |
+|    - Nome do arquivo                                                       |
+|    - Remetente                                                             |
+|    - Tamanho                                                               |
+|    - Tipo                                                                  |
+|    - Tempo restante para expiracao                                         |
+|    - Status de download                                                    |
+| 5. Usuario pode filtrar por status ou tipo                                 |
+| 6. Usuario pode buscar por nome                                            |
+| 7. Usuario clica no botao de download de um arquivo                        |
+| 8. Sistema exibe modal de verificacao de seguranca                         |
+| 9. Usuario confirma termos de uso                                          |
+| 10. Sistema gera URL temporaria de download                                |
+| 11. Sistema inicia download do arquivo                                     |
+| 12. Sistema registra download no log de auditoria                          |
+| 13. Sistema atualiza status do arquivo para "baixado"                      |
++----------------------------------------------------------------------------+
+| FLUXOS ALTERNATIVOS:                                                       |
+| 7a. Usuario seleciona multiplos arquivos                                   |
+|     - Usuario marca checkbox de cada arquivo                               |
+|     - Usuario clica em "Baixar Selecionados (ZIP)"                         |
+|     - Sistema gera arquivo ZIP com todos os selecionados                   |
+|     - Sistema inicia download do ZIP                                       |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-UE-004: VISUALIZAR DETALHES DO COMPARTILHAMENTO                        |
++----------------------------------------------------------------------------+
+| Ator Principal: Usuario Externo                                            |
+| Pre-condicoes: Usuario autenticado                                         |
+| Pos-condicoes: Usuario visualiza informacoes detalhadas                    |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Usuario clica em um arquivo da lista                                    |
+| 2. Sistema exibe detalhes:                                                 |
+|    - Informacoes do remetente (nome, e-mail, departamento)                 |
+|    - Data de compartilhamento                                              |
+|    - Data de expiracao                                                     |
+|    - Tempo restante                                                        |
+|    - Historico de downloads                                                |
++----------------------------------------------------------------------------+
+
+================================================================================
+                      7. CASOS DE USO - SUPERVISOR
+================================================================================
+
++----------------------------------------------------------------------------+
+|  UC-SUP-001: LOGIN NO SISTEMA                                              |
++----------------------------------------------------------------------------+
+| Ator Principal: Supervisor                                                 |
+| Pre-condicoes: Usuario possui conta corporativa e e supervisor cadastrado  |
+| Pos-condicoes: Usuario autenticado com acesso ao painel de supervisor      |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Supervisor acessa a pagina inicial                                      |
+| 2. Supervisor clica em "Login corporativo"                                 |
+| 3. Sistema exibe loading padrao Petrobras                                  |
+| 4. Sistema redireciona para Microsoft Entra ID                             |
+| 5. Supervisor insere credenciais                                           |
+| 6. Microsoft valida e retorna token                                        |
+| 7. Sistema identifica usuario como supervisor                              |
+| 8. Sistema redireciona para painel do supervisor                           |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-SUP-002: VISUALIZAR DASHBOARD DO SUPERVISOR                            |
++----------------------------------------------------------------------------+
+| Ator Principal: Supervisor                                                 |
+| Pre-condicoes: Supervisor autenticado                                      |
+| Pos-condicoes: Supervisor visualiza metricas e pendencias                  |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Sistema exibe painel do supervisor com:                                 |
+|    - Cabecalho com titulo "Painel do Supervisor"                           |
+|    - Cards de metricas clicaveis:                                          |
+|      * Total para analise                                                  |
+|      * Pendentes (com destaque)                                            |
+|      * Aprovados                                                           |
+|      * Rejeitados                                                          |
+| 2. Supervisor pode clicar nos cards para filtrar lista                     |
+| 3. Sistema exibe abas:                                                     |
+|    - Aprovacoes (com badge de pendentes)                                   |
+|    - Compartilhar                                                          |
+| 4. Supervisor visualiza lista de compartilhamentos pendentes               |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-SUP-003: APROVAR COMPARTILHAMENTO                                      |
++----------------------------------------------------------------------------+
+| Ator Principal: Supervisor                                                 |
+| Pre-condicoes: Existe compartilhamento pendente de aprovacao               |
+| Pos-condicoes: Compartilhamento aprovado e destinatario notificado         |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Supervisor acessa aba "Aprovacoes"                                      |
+| 2. Sistema exibe lista de compartilhamentos com:                           |
+|    - Nome do compartilhamento                                              |
+|    - Badge de status                                                       |
+|    - Nome do remetente                                                     |
+|    - E-mail do destinatario                                                |
+|    - Data da solicitacao                                                   |
+|    - Quantidade de arquivos                                                |
+| 3. Supervisor pode filtrar por status                                      |
+| 4. Supervisor pode buscar por nome, remetente ou destinatario              |
+| 5. Supervisor clica em "Ver Detalhes"                                      |
+| 6. Sistema exibe pagina de detalhes com:                                   |
+|    - Informacoes completas do remetente                                    |
+|    - Informacoes do destinatario                                           |
+|    - Descricao do compartilhamento                                         |
+|    - Lista de arquivos com preview (se possivel)                           |
+|    - Botoes de acao                                                        |
+| 7. Supervisor analisa os arquivos                                          |
+| 8. Supervisor clica em "Aprovar"                                           |
+| 9. Sistema solicita confirmacao                                            |
+| 10. Supervisor confirma aprovacao                                          |
+| 11. Sistema atualiza status para "aprovado"                                |
+| 12. Sistema envia e-mail de notificacao ao destinatario externo            |
+| 13. Sistema envia e-mail de confirmacao ao remetente                       |
+| 14. Sistema registra acao no log de auditoria                              |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-SUP-004: REJEITAR COMPARTILHAMENTO                                     |
++----------------------------------------------------------------------------+
+| Ator Principal: Supervisor                                                 |
+| Pre-condicoes: Existe compartilhamento pendente de aprovacao               |
+| Pos-condicoes: Compartilhamento rejeitado e remetente notificado           |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1-6. Mesmo fluxo do UC-SUP-003 ate visualizar detalhes                     |
+| 7. Supervisor decide rejeitar o compartilhamento                           |
+| 8. Supervisor clica em "Rejeitar"                                          |
+| 9. Sistema solicita motivo da rejeicao                                     |
+| 10. Supervisor informa motivo                                              |
+| 11. Supervisor confirma rejeicao                                           |
+| 12. Sistema atualiza status para "rejeitado"                               |
+| 13. Sistema envia e-mail ao remetente com motivo                           |
+| 14. Sistema registra acao no log de auditoria                              |
++----------------------------------------------------------------------------+
+| REGRAS DE NEGOCIO:                                                         |
+| - Motivo da rejeicao e obrigatorio                                         |
+| - Arquivos rejeitados nao sao enviados ao destinatario                     |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-SUP-005: FAZER UPLOAD COM APROVACAO AUTOMATICA                         |
++----------------------------------------------------------------------------+
+| Ator Principal: Supervisor                                                 |
+| Pre-condicoes: Supervisor autenticado                                      |
+| Pos-condicoes: Arquivos enviados e automaticamente aprovados               |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Supervisor acessa aba "Compartilhar"                                    |
+| 2. Sistema exibe formulario de upload com aviso:                           |
+|    "Como supervisor, este compartilhamento sera aprovado imediatamente"    |
+| 3. Supervisor informa e-mail do destinatario                               |
+| 4. Supervisor arrasta ou seleciona arquivos                                |
+| 5. Supervisor seleciona tempo de disponibilidade                           |
+| 6. Supervisor preenche descricao                                           |
+| 7. Supervisor clica em "Enviar para Destinatario"                          |
+| 8. Sistema faz upload dos arquivos                                         |
+| 9. Sistema cria compartilhamento com status "aprovado"                     |
+| 10. Sistema envia e-mail imediatamente ao destinatario                     |
+| 11. Sistema exibe confirmacao de sucesso                                   |
++----------------------------------------------------------------------------+
+| REGRAS DE NEGOCIO:                                                         |
+| - Compartilhamentos de supervisores nao precisam de aprovacao              |
+| - Destinatario recebe acesso imediatamente apos o envio                    |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-SUP-006: VISUALIZAR METRICAS DA EQUIPE                                 |
++----------------------------------------------------------------------------+
+| Ator Principal: Supervisor                                                 |
+| Pre-condicoes: Supervisor autenticado                                      |
+| Pos-condicoes: Supervisor visualiza dados consolidados                     |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Supervisor acessa dashboard                                             |
+| 2. Sistema exibe cards com metricas:                                       |
+|    - Total de compartilhamentos para analise                               |
+|    - Compartilhamentos pendentes                                           |
+|    - Compartilhamentos aprovados                                           |
+|    - Compartilhamentos rejeitados                                          |
+| 3. Supervisor pode clicar em cada card para ver detalhes                   |
+| 4. Sistema filtra lista conforme card selecionado                          |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-SUP-007: ACESSAR MEUS COMPARTILHAMENTOS                                |
++----------------------------------------------------------------------------+
+| Ator Principal: Supervisor                                                 |
+| Pre-condicoes: Supervisor autenticado                                      |
+| Pos-condicoes: Supervisor visualiza seus proprios envios                   |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Supervisor acessa menu "Meus Compartilhamentos"                         |
+| 2. Sistema exibe lista de compartilhamentos feitos pelo supervisor         |
+| 3. Supervisor pode filtrar e buscar                                        |
+| 4. Sistema exibe breadcrumb com link "Inicio" para /supervisor             |
++----------------------------------------------------------------------------+
+
+================================================================================
+                     8. CASOS DE USO - ADMIN GLOBAL
+================================================================================
+
++----------------------------------------------------------------------------+
+|  UC-ADM-001: LOGIN NO SISTEMA                                              |
++----------------------------------------------------------------------------+
+| Ator Principal: Admin Global                                               |
+| Pre-condicoes: Usuario possui conta corporativa e e admin cadastrado       |
+| Pos-condicoes: Admin autenticado com acesso ao painel administrativo       |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Admin acessa pagina inicial                                             |
+| 2. Admin clica em "Login corporativo"                                      |
+| 3. Sistema exibe loading padrao Petrobras                                  |
+| 4. Sistema redireciona para Microsoft Entra ID                             |
+| 5. Admin insere credenciais                                                |
+| 6. Microsoft valida e retorna token                                        |
+| 7. Sistema identifica usuario como admin                                   |
+| 8. Sistema redireciona para painel administrativo                          |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-ADM-002: VISUALIZAR DASHBOARD ADMINISTRATIVO                           |
++----------------------------------------------------------------------------+
+| Ator Principal: Admin Global                                               |
+| Pre-condicoes: Admin autenticado                                           |
+| Pos-condicoes: Admin visualiza visao geral do sistema                      |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Sistema exibe painel administrativo com abas:                           |
+|    - Dashboard                                                             |
+|    - Usuarios                                                              |
+|    - Compartilhamentos                                                     |
+|    - Logs                                                                  |
+|    - Rastreamento                                                          |
+| 2. Na aba Dashboard, sistema exibe:                                        |
+|    - Metricas de usuarios (total, internos, externos, supervisores, admins)|
+|    - Metricas de compartilhamentos (total, pendentes, aprovados, etc.)     |
+|    - Metricas de arquivos (total, armazenamento usado)                     |
+|    - Metricas de auditoria (total de logs, ultimos 7 dias)                 |
+|    - Metricas de e-mails enviados                                          |
+| 3. Admin pode atualizar dados clicando em "Atualizar"                      |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-ADM-003: GERENCIAR USUARIOS                                            |
++----------------------------------------------------------------------------+
+| Ator Principal: Admin Global                                               |
+| Pre-condicoes: Admin autenticado                                           |
+| Pos-condicoes: Admin visualiza/gerencia usuarios do sistema                |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Admin acessa aba "Usuarios"                                             |
+| 2. Sistema exibe tabela paginada com:                                      |
+|    - Nome do usuario                                                       |
+|    - E-mail                                                                |
+|    - Tipo (interno, externo, supervisor, admin)                            |
+|    - Departamento                                                          |
+|    - Cargo                                                                 |
+|    - Status (ativo/inativo)                                                |
+|    - Data de criacao                                                       |
+|    - Ultimo login                                                          |
+| 3. Admin pode filtrar por tipo de usuario                                  |
+| 4. Admin pode buscar por nome ou e-mail                                    |
+| 5. Admin pode navegar entre paginas                                        |
+| 6. Admin pode visualizar detalhes de um usuario                            |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-ADM-004: VISUALIZAR TODOS OS COMPARTILHAMENTOS                         |
++----------------------------------------------------------------------------+
+| Ator Principal: Admin Global                                               |
+| Pre-condicoes: Admin autenticado                                           |
+| Pos-condicoes: Admin visualiza todos os compartilhamentos do sistema       |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Admin acessa aba "Compartilhamentos"                                    |
+| 2. Sistema exibe tabela paginada com:                                      |
+|    - Nome do compartilhamento                                              |
+|    - Descricao                                                             |
+|    - E-mail do destinatario                                                |
+|    - Status (pendente, aprovado, rejeitado, expirado)                      |
+|    - Data de criacao                                                       |
+|    - Data de expiracao                                                     |
+|    - Data de aprovacao                                                     |
+|    - Quantidade de arquivos                                                |
+|    - Criador (nome, e-mail)                                                |
+|    - Aprovador (nome, e-mail)                                              |
+| 3. Admin pode filtrar por status                                           |
+| 4. Admin pode buscar por nome, descricao ou e-mail                         |
+| 5. Admin pode navegar entre paginas                                        |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-ADM-005: VISUALIZAR LOGS DE AUDITORIA                                  |
++----------------------------------------------------------------------------+
+| Ator Principal: Admin Global                                               |
+| Pre-condicoes: Admin autenticado                                           |
+| Pos-condicoes: Admin visualiza historico de acoes do sistema               |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Admin acessa aba "Logs"                                                 |
+| 2. Sistema exibe tabela paginada com:                                      |
+|    - Data/hora da acao                                                     |
+|    - Acao realizada                                                        |
+|    - Detalhes                                                              |
+|    - Usuario (nome, e-mail)                                                |
+|    - IP de origem                                                          |
+|    - User Agent                                                            |
+|    - ID do compartilhamento (se aplicavel)                                 |
+| 3. Admin pode filtrar por tipo de acao                                     |
+| 4. Admin pode buscar nos detalhes                                          |
+| 5. Admin pode navegar entre paginas                                        |
++----------------------------------------------------------------------------+
+| TIPOS DE ACOES REGISTRADAS:                                                |
+| - login: Usuario fez login                                                 |
+| - logout: Usuario fez logout                                               |
+| - share_created: Compartilhamento criado                                   |
+| - share_approved: Compartilhamento aprovado                                |
+| - share_rejected: Compartilhamento rejeitado                               |
+| - file_uploaded: Arquivo enviado                                           |
+| - file_downloaded: Arquivo baixado                                         |
+| - code_requested: Codigo de verificacao solicitado                         |
+| - code_verified: Codigo de verificacao validado                            |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-ADM-006: RASTREAR ATIVIDADES DE USUARIO                                |
++----------------------------------------------------------------------------+
+| Ator Principal: Admin Global                                               |
+| Pre-condicoes: Admin autenticado                                           |
+| Pos-condicoes: Admin visualiza todas as atividades de um usuario           |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Admin acessa aba "Rastreamento"                                         |
+| 2. Sistema exibe campo de busca por e-mail                                 |
+| 3. Admin insere e-mail do usuario a rastrear                               |
+| 4. Admin clica em "Rastrear"                                               |
+| 5. Sistema busca dados do usuario                                          |
+| 6. Sistema exibe painel completo com:                                      |
+|    - Informacoes do usuario (nome, e-mail, tipo, departamento, cargo)      |
+|    - Compartilhamentos criados pelo usuario                                |
+|    - Compartilhamentos aprovados pelo usuario (se supervisor)              |
+|    - Arquivos enviados pelo usuario                                        |
+|    - Logs de atividades recentes                                           |
+|    - Estatisticas consolidadas:                                            |
+|      * Total de compartilhamentos criados                                  |
+|      * Total de compartilhamentos aprovados                                |
+|      * Total de arquivos enviados                                          |
+|      * Total de logs de atividade                                          |
++----------------------------------------------------------------------------+
+| FLUXOS ALTERNATIVOS:                                                       |
+| 5a. Usuario nao encontrado                                                 |
+|     - Sistema exibe mensagem de erro                                       |
+|     - Admin pode tentar outro e-mail                                       |
++----------------------------------------------------------------------------+
+
++----------------------------------------------------------------------------+
+|  UC-ADM-007: EXPORTAR RELATORIOS                                           |
++----------------------------------------------------------------------------+
+| Ator Principal: Admin Global                                               |
+| Pre-condicoes: Admin autenticado                                           |
+| Pos-condicoes: Relatorio exportado                                         |
++----------------------------------------------------------------------------+
+| FLUXO PRINCIPAL:                                                           |
+| 1. Admin navega ate a secao desejada (usuarios, compartilhamentos, logs)   |
+| 2. Admin aplica filtros desejados                                          |
+| 3. Admin clica em botao de exportacao                                      |
+| 4. Sistema gera arquivo (CSV ou Excel)                                     |
+| 5. Sistema inicia download do arquivo                                      |
++----------------------------------------------------------------------------+
+
+================================================================================
+                  9. FLUXOS ALTERNATIVOS E EXCECOES
+================================================================================
+
+EXCECAO: SESSAO EXPIRADA
+------------------------
+Gatilho: Token de autenticacao expirou durante uso
+Fluxo:
+1. Sistema detecta token expirado
+2. Sistema redireciona para pagina de login
+3. Sistema exibe mensagem "Sessao expirada"
+4. Usuario deve fazer login novamente
+
+EXCECAO: ERRO DE CONEXAO
+------------------------
+Gatilho: Falha de rede durante operacao
+Fluxo:
+1. Sistema detecta falha de conexao
+2. Sistema exibe notificacao de erro
+3. Usuario pode tentar novamente
+
+EXCECAO: ARQUIVO MUITO GRANDE
+-----------------------------
+Gatilho: Usuario tenta enviar arquivo maior que o limite
+Fluxo:
+1. Sistema detecta tamanho do arquivo
+2. Sistema exibe mensagem de erro com limite permitido
+3. Usuario deve selecionar arquivo menor
+
+EXCECAO: COMPARTILHAMENTO EXPIRADO
+----------------------------------
+Gatilho: Usuario externo tenta acessar compartilhamento expirado
+Fluxo:
+1. Sistema verifica data de expiracao
+2. Sistema exibe mensagem "Compartilhamento expirado"
+3. Usuario externo deve solicitar novo compartilhamento
+
+================================================================================
+                    10. REQUISITOS NAO FUNCIONAIS
+================================================================================
+
+SEGURANCA:
+- Autenticacao via Microsoft Entra ID (SSO)
+- Tokens JWT com expiracao
+- Criptografia em transito (HTTPS)
+- Arquivos armazenados em S3 com criptografia
+- Validacao de extensoes de arquivos
+- Registro de todas as acoes em log de auditoria
+- Codigo de verificacao temporario para usuarios externos
+
+DESEMPENHO:
+- Tempo de resposta < 3 segundos
+- Upload com barra de progresso
+- Paginacao de listas grandes
+- Cache de dados quando apropriado
+
+USABILIDADE:
+- Interface responsiva (mobile e desktop)
+- Feedback visual para todas as acoes
+- Mensagens de erro claras e acionaveis
+- Documentacao integrada ao sistema
+
+DISPONIBILIDADE:
+- Sistema disponivel 24/7
+- Backup regular dos dados
+- Notificacoes de manutencao programada
+
+================================================================================
+                           11. GLOSSARIO
+================================================================================
+
++----------------------+-----------------------------------------------------+
+|        TERMO         |                   DEFINICAO                         |
++----------------------+-----------------------------------------------------+
+| Compartilhamento     | Registro de envio de arquivos para destinatario     |
+| Download             | Acao de baixar arquivo do sistema                   |
+| Upload               | Acao de enviar arquivo para o sistema               |
+| Aprovacao            | Autorizacao do supervisor para liberar arquivos     |
+| Token                | Credencial temporaria de autenticacao               |
+| SSO                  | Single Sign-On (autenticacao unica)                 |
+| Entra ID             | Servico de identidade da Microsoft                  |
+| S3                   | Servico de armazenamento da AWS                     |
+| Log de Auditoria     | Registro de todas as acoes no sistema               |
+| Breadcrumb           | Navegacao hierarquica em forma de trilha            |
++----------------------+-----------------------------------------------------+
+
+================================================================================
+                         FIM DO DOCUMENTO
+================================================================================
+
+Para duvidas ou sugestoes sobre este documento, entre em contato com:
+- E-mail: suporte-tic@petrobras.com.br
+- Telefone: 0800-728-9001
+
+================================================================================
