@@ -1,398 +1,568 @@
-# Sistema de Transferência de Arquivos Petrobras
+# Sistema de Compartilhamento Seguro de Arquivos - Petrobras (CSA)
 
-Sistema corporativo de transferência segura de arquivos com aprovação supervisionada, desenvolvido para atender aos rigorosos padrões de segurança e compliance da Petrobras.
+Sistema corporativo de transferencia segura de arquivos com aprovacao supervisionada, desenvolvido para atender aos rigorosos padroes de seguranca e compliance da Petrobras.
 
-## Visão Geral
+---
 
-O sistema permite que usuários internos da Petrobras façam upload de arquivos para compartilhamento com destinatários externos, passando por um fluxo de aprovação supervisionada antes da disponibilização. Toda a operação é auditada e monitorada para garantir segurança e rastreabilidade completa.
+## Indice
 
-## Características Principais
+- [Visao Geral](#visao-geral)
+- [Stack Tecnologica](#stack-tecnologica)
+- [Arquitetura](#arquitetura)
+- [Infraestrutura AWS](#infraestrutura-aws)
+- [Instalacao e Configuracao](#instalacao-e-configuracao)
+- [Estrutura do Projeto](#estrutura-do-projeto)
+- [Variaveis de Ambiente](#variaveis-de-ambiente)
+- [Docker e Deploy](#docker-e-deploy)
+- [Banco de Dados](#banco-de-dados)
+- [Autenticacao](#autenticacao)
+- [Seguranca](#seguranca)
 
-### Segurança
-- Validação rigorosa de tipos de arquivos (bloqueia .exe, .dll, .bat, .cmd e outros executáveis)
-- Aprovação obrigatória por supervisor antes da disponibilização
-- Auditoria completa de todas as operações
-- Controle de acesso baseado em perfis (Interno/Supervisor)
-- Expiração automática de arquivos (máximo 168 horas)
-- Links temporários com token único por transferência
-- Autenticação Microsoft Entra ID (Azure AD) integrada ao Active Directory da Petrobras
+---
 
-### Fluxo de Trabalho
-1. **Autenticação**: Usuário faz login com credenciais corporativas Microsoft
-2. **Upload**: Usuário interno faz upload dos arquivos
-3. **Aprovação Automática**: Supervisor direto do Active Directory recebe notificação
-4. **Aprovação Manual**: Supervisor revisa e aprova/rejeita
-5. **Acesso Externo**: Destinatário externo recebe código OTP por email (válido 3 minutos)
-6. **Download**: Arquivo disponível por período limitado após verificação
-7. **Auditoria**: Todo o processo é registrado
+## Visao Geral
 
-### Perfis de Usuário
+O **CSA (Compartilhamento Seguro de Arquivos)** permite que usuarios internos da Petrobras facam upload de arquivos para compartilhamento com destinatarios externos, passando por um fluxo de aprovacao supervisionada antes da disponibilizacao. Toda a operacao e auditada e monitorada para garantir seguranca e rastreabilidade completa.
 
-#### Usuário Interno
-- Login SSO com Microsoft (automático se já logado no Windows/Office)
-- Fazer upload de arquivos
-- Definir destinatários e tempo de disponibilidade (até 72h)
-- Acompanhar status das transferências
-- Visualizar histórico de uploads
-- Cancelar compartilhamentos pendentes
+### Principais Funcionalidades
 
-#### Supervisor
-- Login SSO com Microsoft
-- Aprovar ou rejeitar transferências pendentes
-- Informar motivo em caso de rejeição
-- Visualizar dashboard com métricas (Pendentes, Aprovados, Rejeitados, Cancelados)
-- Ajustar tempo de disponibilidade antes de aprovar
-- Acessar detalhes completos de cada transferência
-- Dados hierárquicos capturados automaticamente do AD (cargo, departamento, localização)
+- **Upload Seguro**: Usuarios internos enviam arquivos com validacao rigorosa
+- **Aprovacao Supervisionada**: Supervisor da area aprova ou rejeita compartilhamentos
+- **Acesso Externo via OTP**: Destinatarios externos recebem codigo de verificacao por email
+- **Auditoria Completa**: Todo o fluxo e registrado para compliance
+- **Dashboard Administrativo**: Visao gerencial de metricas e status
+- **Painel Admin Global**: Acesso total a todas as funcionalidades, configuracoes e gestao do sistema
 
-#### Usuário Externo
-- Recebe email com código OTP de 6 dígitos
-- Acessa página de verificação
-- Insere código (válido por 3 minutos, máximo 3 tentativas)
-- Faz download dos arquivos compartilhados
+### Perfis de Usuario
 
-## Tecnologias
+| Perfil | Descricao |
+|--------|-----------|
+| **Interno** | Colaborador Petrobras que faz upload e compartilha arquivos |
+| **Supervisor** | Aprova/rejeita compartilhamentos da sua area |
+| **Externo** | Terceiros que recebem arquivos compartilhados |
+| **Admin Global** | Administrador com acesso total ao sistema (todas as funcionalidades, configuracoes e dados) |
+
+---
+
+## Stack Tecnologica
 
 ### Frontend
-- **Next.js 16.0.10** - Framework React com App Router
-- **React 19.2** - Interface de usuário
-- **TypeScript** - Tipagem estática
-- **Tailwind CSS v4** - Estilização
-- **Shadcn/ui** - Componentes de interface
-- **Zustand** - Gerenciamento de estado
-- **React Hook Form** - Gerenciamento de formulários
-- **Lucide React** - Ícones
 
-### Autenticação e Segurança
-- **Microsoft Entra ID** - SSO corporativo integrado ao Active Directory
-- **Microsoft Graph API** - Captura de dados hierárquicos (foto, cargo, supervisor)
-- **Rate Limiting** - Proteção contra força bruta (5 tentativas em 15min)
-- **Session Hijacking Protection** - Validação de fingerprint do navegador
-- **CSP Headers** - Content Security Policy completo
-- **Timeout de Sessão** - Logout automático após 30min de inatividade
+| Tecnologia | Versao | Descricao |
+|------------|--------|-----------|
+| **Next.js** | 16.0.10 | Framework React com App Router e Server Components |
+| **React** | 19.2.0 | Biblioteca de UI com hooks e concurrent features |
+| **TypeScript** | 5.x | Tipagem estatica para JavaScript |
+| **Tailwind CSS** | 4.1.9 | Framework CSS utility-first |
+| **shadcn/ui** | Latest | Componentes de UI baseados em Radix UI |
 
-### Infraestrutura AWS
-- **S3** - Armazenamento de arquivos
-- **CloudFront** - CDN para distribuição
-- **Lambda** - Processamento serverless
-- **SES** - Envio de emails (notificações e OTP)
-- **CloudWatch** - Monitoramento e logs
-- **IAM** - Controle de acesso
-- **KMS** - Criptografia de dados
+### Gerenciamento de Estado
+
+| Biblioteca | Versao | Uso |
+|------------|--------|-----|
+| **Zustand** | 5.0.2 | Gerenciamento de estado global |
+| **SWR** | 2.2.5 | Data fetching e cache |
+| **React Hook Form** | 7.60.0 | Formularios com validacao |
+| **Zod** | 3.25.76 | Validacao de schemas |
+
+### Componentes UI (Radix UI)
+
+```
+@radix-ui/react-accordion       @radix-ui/react-alert-dialog
+@radix-ui/react-avatar          @radix-ui/react-checkbox
+@radix-ui/react-dialog          @radix-ui/react-dropdown-menu
+@radix-ui/react-label           @radix-ui/react-popover
+@radix-ui/react-progress        @radix-ui/react-select
+@radix-ui/react-tabs            @radix-ui/react-toast
+@radix-ui/react-tooltip         @radix-ui/react-switch
+```
+
+### Bibliotecas Auxiliares
+
+| Biblioteca | Uso |
+|------------|-----|
+| **Lucide React** | Icones vetoriais |
+| **Recharts** | Graficos e visualizacoes |
+| **date-fns** | Manipulacao de datas |
+| **JSZip** | Compressao de arquivos |
+| **cmdk** | Command palette |
+| **Sonner** | Notificacoes toast |
+| **Vaul** | Drawer/modal mobile |
+| **Immer** | Imutabilidade de estado |
+
+### Autenticacao Microsoft
+
+| Pacote | Versao | Uso |
+|--------|--------|-----|
+| **@azure/msal-browser** | 4.0.0 | Autenticacao Microsoft Entra ID |
+| **@azure/msal-react** | 3.0.0 | Hooks React para MSAL |
+
+### Banco de Dados
+
+| Tecnologia | Uso |
+|------------|-----|
+| **PostgreSQL 14+** | Banco relacional principal |
+| **Neon** | Serverless PostgreSQL |
+| **@neondatabase/serverless** | Driver serverless |
+
+---
+
+## Arquitetura
+
+### Diagrama de Alto Nivel
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              USUARIOS                                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│  [Interno]     [Supervisor]     [Externo]     [Admin Global]            │
+│      │              │               │              │                     │
+└──────┼──────────────┼───────────────┼──────────────┼─────────────────────┘
+       │              │               │              │
+       ▼              ▼               ▼              ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         FRONTEND (Next.js 16)                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│  App Router │ Server Components │ API Routes │ Middleware (proxy.ts)    │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────────┐│
+│  │                        PAGINAS PRINCIPAIS                           ││
+│  │  /upload  /compartilhamentos  /supervisor  /download  /admin        ││
+│  └─────────────────────────────────────────────────────────────────────┘│
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────────┐│
+│  │                         WIKI DEV (Documentacao)                     ││
+│  │  /wiki-dev/arquitetura  /aws-implementation  /banco-dados  ...      ││
+│  └─────────────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           BACKEND (Python)                              │
+├─────────────────────────────────────────────────────────────────────────┤
+│  FastAPI │ Alembic │ SQLAlchemy │ Pydantic                              │
+│  URL: https://scac-backend-dsv.petrobras.com.br                         │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              AWS CLOUD                                   │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                   │
+│  │     ECS      │  │      S3      │  │     SES      │                   │
+│  │  (Containers)│  │  (Arquivos)  │  │   (E-mail)   │                   │
+│  └──────────────┘  └──────────────┘  └──────────────┘                   │
+│                                                                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                   │
+│  │  CloudFront  │  │  CloudWatch  │  │     IAM      │                   │
+│  │    (CDN)     │  │   (Logs)     │  │  (Acesso)    │                   │
+│  └──────────────┘  └──────────────┘  └──────────────┘                   │
+│                                                                         │
+│  ┌──────────────┐  ┌──────────────┐                                     │
+│  │     SSM      │  │ Secrets Mgr  │                                     │
+│  │ (Parametros) │  │  (Segredos)  │                                     │
+│  └──────────────┘  └──────────────┘                                     │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                       BANCO DE DADOS (Neon PostgreSQL)                  │
+├─────────────────────────────────────────────────────────────────────────┤
+│  21 Tabelas │ ENUMs │ Indices │ Foreign Keys │ Constraints              │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Fluxo de Compartilhamento
+
+```
+┌─────────┐    ┌─────────┐    ┌──────────┐    ┌─────────┐    ┌──────────┐
+│ Upload  │───▶│Pendente │───▶│ Aprovado │───▶│  OTP    │───▶│ Download │
+│         │    │         │    │          │    │ Enviado │    │          │
+└─────────┘    └─────────┘    └──────────┘    └─────────┘    └──────────┘
+     │              │              │                              │
+     │         [Rejeitado]    [Cancelado]                    [Expirado]
+     │              │              │                              │
+     └──────────────┴──────────────┴──────────────────────────────┘
+                              (Estados Finais)
+```
+
+---
+
+## Infraestrutura AWS
+
+### Servicos Utilizados
+
+| Servico | Uso no Projeto |
+|---------|----------------|
+| **Amazon ECS** | Hospedagem de containers Docker do frontend e backend |
+| **Amazon S3** | Armazenamento de arquivos compartilhados |
+| **Amazon CloudFront** | CDN para distribuicao de arquivos |
+| **Amazon SES** | Envio de e-mails (notificacoes, OTP) |
+| **Amazon CloudWatch** | Monitoramento, logs e alertas |
+| **AWS IAM** | Controle de acesso e permissoes |
+| **AWS KMS** | Criptografia de dados em repouso |
+| **AWS SSM Parameter Store** | Variaveis de configuracao |
+| **AWS Secrets Manager** | Credenciais sensiveis (Entra ID, DB) |
+
+### Configuracao S3
+
+```bash
+# Bucket para arquivos
+aws s3 mb s3://petrobras-csa-files-prod
+
+# Politica de lifecycle (expiracao automatica)
+aws s3api put-bucket-lifecycle-configuration \
+  --bucket petrobras-csa-files-prod \
+  --lifecycle-configuration file://lifecycle.json
+```
+
+### Configuracao SES
+
+```bash
+# Verificar dominio
+aws ses verify-domain-identity --domain petrobras.com.br
+
+# Verificar email (sandbox)
+aws ses verify-email-identity --email-address noreply@petrobras.com.br
+```
+
+### Deploy ECS
+
+O frontend e empacotado em container Docker e deployed no ECS com as seguintes caracteristicas:
+
+- **Task Definition**: Configuracao de CPU, memoria e variaveis de ambiente
+- **Service**: Auto-scaling baseado em metricas
+- **Load Balancer**: ALB com HTTPS e certificado SSL
+- **Secrets**: Injetados via AWS Secrets Manager
+
+---
+
+## Instalacao e Configuracao
+
+### Pre-requisitos
+
+- **Node.js** 18+ (recomendado 20 LTS)
+- **npm** ou **pnpm** (gerenciador de pacotes)
+- **Git** para versionamento
+- **Docker** para containerizacao (opcional)
+
+### Instalacao Local
+
+```bash
+# 1. Clone o repositorio
+git clone ...
+
+# 2. Entre na pasta do projeto
+
+# 3. Instale as dependencias
+npm install
+
+# 4. Configure as variaveis de ambiente
+cp .env.example .env.local
+# Edite o .env.local com suas credenciais
+
+# 5. Execute o servidor de desenvolvimento
+npm run dev
+
+# 6. Acesse http://localhost:3000
+```
+
+### Instalacao com Docker
+
+```bash
+# Build da imagem
+docker build -t petrobras-csa-frontend .
+
+# Executar container
+docker run -p 3000:3000 \
+  -e NEXT_PUBLIC_APP_URL=http://localhost:3000 \
+  -e BACKEND_URL=https://scac-backend-dsv.petrobras.com.br \
+  petrobras-csa-frontend
+```
+
+---
 
 ## Estrutura do Projeto
 
-\`\`\`
-├── app/                          # Páginas e rotas Next.js
-│   ├── page.tsx                 # Página de login
-│   ├── upload/                  # Upload de arquivos (usuário interno)
-│   ├── compartilhamentos/       # Meus compartilhamentos (usuário interno)
-│   ├── supervisor/              # Dashboard do supervisor
-│   │   └── detalhes/[id]/      # Detalhes e aprovação
-│   ├── download/                # Download de arquivos (destinatário)
-│   ├── external-verify/         # Verificação OTP usuário externo
-│   ├── configuracoes/           # Configurações do usuário
-│   ├── logs/                    # Logs e Rastreamento (supervisor)
-│   ├── suporte/                 # Painel de Suporte (cadastro usuarios)
-│   └── api/                     # API Routes
+```
+petrobras-csa-frontend/
 │
-├── components/                  # Componentes React
-│   ├── auth/                   # Autenticação
-│   │   ├── login-form.tsx     # Form de login com botão Microsoft
-│   │   └── protected-route.tsx # Proteção de rotas
-│   ├── dashboard/              # Componentes do dashboard
-│   ├── shared/                 # Componentes compartilhados
-│   │   └── app-header.tsx     # Header com perfil enriquecido
-│   └── ui/                     # Componentes de UI (shadcn)
+├── app/                              # App Router (Next.js 16)
+│   ├── page.tsx                      # Pagina de login
+│   ├── layout.tsx                    # Layout raiz com providers
+│   ├── globals.css                   # Estilos globais + tema Petrobras
+│   │
+│   ├── upload/                       # Upload de arquivos
+│   ├── compartilhamentos/            # Meus compartilhamentos
+│   ├── supervisor/                   # Dashboard do supervisor
+│   │   └── detalhes/[id]/           # Detalhes do compartilhamento
+│   ├── download/                     # Download (usuario externo)
+│   ├── external-verify/              # Verificacao OTP
+│   ├── historico/                    # Historico de envios
+│   ├── configuracoes/                # Configuracoes do usuario
+│   ├── auditoria/                    # Logs de auditoria
+│   ├── suporte/                      # Painel de suporte
+│   ├── logs/                         # Rastreamento de emails
+│   ├── admin/                        # Painel administrativo
+│   └── api/                          # API Routes
+│       ├── auth/                    # Autenticacao
+│       │   ├── internal/            # Auth interno (Entra ID)
+│       │   ├── external/            # Auth externo (OTP)
+│       │   └── entra/               # Endpoints Entra ID
+│       ├── shares/                  # Compartilhamentos
+│       ├── files/                   # Arquivos
+│       ├── supervisor/              # Acoes do supervisor
+│       ├── admin/                   # Acoes administrativas
+│       ├── notifications/           # Notificacoes
+│       ├── emails/                  # Envio de emails
+│       ├── audit/                   # Auditoria
+│       └── support/                 # Suporte
 │
-├── lib/                        # Bibliotecas e utilitários
-│   ├── auth/                  # Autenticação
-│   │   ├── entra-config.ts   # Configuração Entra ID
-│   │   └── otp-service.ts    # Serviço de OTP
-│   ├── stores/                # Stores Zustand
-│   │   ├── auth-store.ts     # Autenticação com Graph API
-│   │   ├── workflow-store.ts # Fluxo de aprovação e cancelamento
-│   │   ├── notification-store.ts # Notificações
-│   │   └── audit-log-store.ts # Auditoria
-│   ├── security/              # Segurança
-│   │   ├── rate-limiter.ts   # Rate limiting
-│   │   ├── session-guard.ts  # Session hijacking protection
-│   │   └── timeout-manager.ts # Timeout de sessão
-│   ├── utils/                 # Utilitários
-│   │   ├── zip-validator.ts  # Validação de arquivos
-│   │   └── file-security.ts  # Segurança de arquivos
-│   └── email/                 # Email templates
-│       └── templates/
-│           └── otp-email.ts  # Template email OTP
+├── components/                       # Componentes React
+│   ├── ui/                          # Componentes base (shadcn)
+│   ├── auth/                        # Autenticacao
+│   │   ├── entra-provider.tsx      # Provider MSAL
+│   │   ├── login-form.tsx          # Formulario de login
+│   │   └── protected-route.tsx     # Protecao de rotas
+│   ├── dashboard/                   # Dashboard components
+│   ├── shared/                      # Componentes compartilhados
+│   │   ├── app-header.tsx          # Header da aplicacao
+│   │   ├── expiration-monitor.tsx  # Monitor de expiracao
+│   │   └── global-alert-provider.tsx
+│   └── wiki-dev/                    # Componentes da wiki
 │
+├── lib/                              # Bibliotecas e utilitarios
+│   ├── auth/                        # Autenticacao
+│   │   ├── entra-config.ts         # Config Entra ID
+│   │   └── otp-service.ts          # Servico OTP
+│   ├── stores/                      # Zustand stores
+│   │   ├── auth-store.ts           # Estado de autenticacao
+│   │   ├── workflow-store.ts       # Fluxo de aprovacao
+│   │   ├── notification-store.ts   # Notificacoes
+│   │   └── audit-log-store.ts      # Auditoria
+│   ├── security/                    # Seguranca
+│   │   ├── rate-limiter.ts         # Rate limiting
+│   │   └── session-guard.ts        # Protecao de sessao
+│   ├── utils/                       # Utilitarios
+│   │   ├── file-security.ts        # Validacao de arquivos
+│   │   └── zip-validator.ts        # Validacao de ZIP
+│   └── email/                       # Templates de email
 │
-├── back-end/                   # Back-end Python (futuro)
-│   └── python/
+├── hooks/                            # React Hooks customizados
+├── types/                            # Definicoes TypeScript
+├── public/                           # Arquivos estaticos
+│   └── fonts/                       # Fontes Inter
 │
-└── proxy.ts                    # Middleware (Next.js 16) com CSP headers
-\`\`\`
+├── docs/                             # Documentacao adicional
+│   └── DATABASE-STRUCTURE.md        # Estrutura do banco
+│
+├── Dockerfile                        # Containerizacao
+├── next.config.mjs                   # Configuracao Next.js
+├── tsconfig.json                     # Configuracao TypeScript
+├── package.json                      # Dependencias
+├── proxy.ts                          # Middleware (CSP headers)
+└── README.md                         # Este arquivo
+```
 
-## Início Rápido
+---
 
-### Pré-requisitos
-- Node.js 18+
-- Conta AWS configurada
-- Credenciais AWS (Access Key e Secret Key)
-- Registro de aplicação no Microsoft Entra ID (Azure AD)
+## Variaveis de Ambiente
 
-### Instalação
+### Variaveis Publicas (NEXT_PUBLIC_*)
 
-\`\`\`bash
-# Clone o repositório
-git clone https://github.com/petrobras/sistema-transferencia-arquivos.git
+```env
+# URL da aplicacao
+NEXT_PUBLIC_APP_URL=https://transfer.petrobras.com.br
 
-# Entre na pasta
-cd sistema-transferencia-arquivos
+# Modo de autenticacao (entra | local)
+NEXT_PUBLIC_AUTH_MODE=entra
 
-# Instale as dependências
-npm install
-
-# Configure as variáveis de ambiente
-cp .env.example .env.local
-# Edite o .env.local com suas credenciais
-\`\`\`
-
-### Configuração Microsoft Entra ID
-
-1. **Portal Azure** → **Azure Active Directory** → **App registrations**
-2. Crie um novo registro com:
-   - Nome: `Sistema Compartilhamento Petrobras`
-   - Redirect URI: `http://localhost:3000` (dev) e `https://seu-dominio.com` (prod)
-3. Copie: **Tenant ID**, **Client ID**
-4. Crie um **Client Secret** e copie o valor
-5. Em **API Permissions**, adicione:
-   - `User.Read` - Ler perfil do usuário
-   - `User.ReadBasic.All` - Ler informações de outros usuários
-6. Solicite **Admin Consent** do TI da Petrobras
-
-### Configuração AWS
-
-1. **S3 Bucket**
-   \`\`\`bash
-   aws s3 mb s3://petrobras-file-transfer-prod
-   \`\`\`
-
-2. **DynamoDB Tables**
-   \`\`\`bash
-   # Execute os scripts SQL na ordem
-   npm run db:setup
-   \`\`\`
-
-3. **SES Email Verification**
-   \`\`\`bash
-   aws ses verify-email-identity --email-address noreply@petrobras.com.br
-   \`\`\`
-
-4. **CloudFront Distribution**
-   - Configure no console AWS ou via CLI
-   - Adicione o domain no .env.local
-
-### Executar Localmente
-
-\`\`\`bash
-# Modo desenvolvimento
-npm run dev
-
-# Acesse http://localhost:3000
-\`\`\`
-
-### Build e Deploy
-
-\`\`\`bash
-# Build de produção
-npm run build
-
-# Deploy para Vercel
-vercel --prod
-
-# Ou deploy para AWS
-npm run deploy:aws
-\`\`\`
-
-## Variáveis de Ambiente
-
-\`\`\`env
-# Microsoft Entra ID (Azure AD)
+# Microsoft Entra ID
 NEXT_PUBLIC_ENTRA_TENANT_ID=5b6f6241-9a57-4be4-8e50-1dfa72e79a57
 NEXT_PUBLIC_ENTRA_CLIENT_ID=da3aaaad-619f-4bee-a434-51efd11faf7c
-NEXT_PUBLIC_ENTRA_REDIRECT_URI=http://localhost:3000
-ENTRA_CLIENT_SECRET=seu_client_secret_aqui
+NEXT_PUBLIC_ENTRA_REDIRECT_URI=https://transfer.petrobras.com.br
+
+# Limites da aplicacao
+NEXT_PUBLIC_MAX_FILE_SIZE=524288000
+NEXT_PUBLIC_MAX_AVAILABILITY_HOURS=72
+```
+
+### Variaveis de Servidor
+
+```env
+# URL do Backend Python
+BACKEND_URL=https://scac-backend-dsv.petrobras.com.br
+
+# Entra ID (servidor)
+ENTRA_CLIENT_SECRET=***
+
+# Banco de Dados (Neon)
+DATABASE_URL=postgres://user:pass@host/dbname
 
 # AWS
 AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=your_access_key
-AWS_SECRET_ACCESS_KEY=your_secret_key
-AWS_S3_BUCKET=petrobras-file-transfer-prod
+AWS_ACCESS_KEY_ID=***
+AWS_SECRET_ACCESS_KEY=***
+AWS_S3_BUCKET=petrobras-csa-files-prod
 AWS_CLOUDFRONT_DOMAIN=d1234567890.cloudfront.net
 
-# DynamoDB
-DYNAMODB_USERS_TABLE=petrobras-users
-DYNAMODB_FILES_TABLE=petrobras-files
-DYNAMODB_SESSIONS_TABLE=petrobras-sessions
-DYNAMODB_AUDIT_TABLE=petrobras-audit-logs
-DYNAMODB_NOTIFICATIONS_TABLE=petrobras-notifications
-
-# Email - AWS SES
+# Email (SES)
 AWS_SES_FROM_EMAIL=noreply@petrobras.com.br
 AWS_SES_REPLY_TO=suporte@petrobras.com.br
+```
 
-# Aplicação
-NEXT_PUBLIC_APP_URL=https://transfer.petrobras.com.br
-NEXT_PUBLIC_MAX_FILE_SIZE=524288000
-NEXT_PUBLIC_MAX_AVAILABILITY_HOURS=72
-\`\`\`
+### Injecao de Variaveis no ECS
 
-## Sistema de Email
+No ambiente ECS, as variaveis sao injetadas via:
 
-### AWS SES (Simple Email Service)
+1. **SSM Parameter Store**: Variaveis de configuracao
+2. **Secrets Manager**: Credenciais sensiveis
 
-O sistema utiliza AWS SES para envio de emails:
+O `layout.tsx` le as variaveis em runtime e injeta no `window.__ENV__` para Client Components.
 
-**Configuração:**
-\`\`\`bash
-# 1. Verificar domínio no SES
-aws ses verify-domain-identity --domain petrobras.com.br
+---
 
-# 2. Ou verificar email individual (sandbox)
-aws ses verify-email-identity --email-address noreply@petrobras.com.br
+## Docker e Deploy
 
-# 3. Configurar variáveis no .env.local
-AWS_SES_FROM_EMAIL=noreply@petrobras.com.br
-AWS_SES_REPLY_TO=suporte@petrobras.com.br
-\`\`\`
+### Dockerfile
 
-**Tipos de Email Enviados:**
-- **Notificação ao Supervisor**: Quando upload é realizado
-- **Confirmação ao Remetente**: Upload confirmado
-- **Código OTP para Externo**: Verificação de acesso
-- **Aprovação/Rejeição**: Status final do compartilhamento
+O projeto utiliza multi-stage build para otimizacao:
+
+```dockerfile
+# BUILDER: Instala dependencias e faz build
+FROM registry.petrobras.com.br/imagens-devops/base/petro-node22-alpine AS builder
+
+# RUNNER: Imagem final otimizada
+FROM registry.petrobras.com.br/imagens-devops/base/petro-node22-alpine AS runner
+```
+
+### Build e Deploy
+
+```bash
+# Build de producao
+npm run build
+
+# Build Docker
+docker build -t petrobras-csa-frontend:latest .
+
+# Push para registry
+docker tag petrobras-csa-frontend:latest \
+  registry.petrobras.com.br/csa/frontend:latest
+docker push registry.petrobras.com.br/csa/frontend:latest
+```
+
+### Configuracao Next.js
+
+```javascript
+// next.config.mjs
+const nextConfig = {
+  output: 'standalone',        // Build otimizado para container
+  images: { unoptimized: true }, // Imagens sem otimizacao (CloudFront)
+  headers() {
+    return [{ source: '/:path*', headers: [/* CSP Headers */] }]
+  }
+}
+```
+
+---
 
 ## Banco de Dados
 
-O sistema utiliza 5 tabelas DynamoDB:
+### Tecnologia
 
-### 1. Users
-Armazena dados dos usuários (internos e supervisores)
-- Partition Key: `userId` (String)
-- Campos: email, name, userType, jobTitle, department, manager, photoUrl, createdAt
+- **PostgreSQL 14+** hospedado no **Neon** (serverless)
+- **21 tabelas** com relacionamentos e constraints
+- **ENUMs** para tipos de dados padronizados
 
-### 2. Files
-Metadados dos arquivos transferidos
-- Partition Key: `fileId` (String)
-- GSI: `uploaderUserId`, `recipientEmail`, `status`
-- Novos campos: `cancelled_by`, `cancellation_date`, `cancellation_reason`
-- 8 índices secundários globais para queries otimizadas
+### Principais Tabelas
 
-### 3. Sessions
-Sessões de autenticação dos usuários
-- Partition Key: `sessionId` (String)
-- GSI: `userId`
-- TTL automático após expiração
-- Campos de segurança: `fingerprint`, `userAgent`, `lastActivity`
+| Tabela | Descricao |
+|--------|-----------|
+| `user` | Usuarios do sistema (internos, externos, admin) |
+| `share` | Compartilhamentos de arquivos |
+| `share_file` | Relacao N:N entre shares e arquivos |
+| `restricted_file` | Arquivos armazenados no S3 |
+| `shared_area` | Areas de compartilhamento |
+| `token_access` | Tokens OTP e de acesso |
+| `audit` | Logs de auditoria |
+| `email_log` | Rastreamento de emails |
+| `notification` | Notificacoes internas |
+| `support_registration` | Cadastros do suporte |
 
-### 4. Audit Logs
-Registro completo de todas as operações
-- Partition Key: `logId` (String)
-- GSI: `userId`, `action`, `timestamp`
-- Novos eventos: `SHARE_CANCELLED`, `LOGIN_SSO`, `OTP_SENT`, `OTP_VERIFIED`
+## Autenticacao
 
-### 5. OTP Codes (Nova)
-Códigos de verificação para usuários externos
-- Partition Key: `otpId` (String)
-- GSI: `email`
-- Campos: `code`, `expiresAt`, `attempts`, `used`
-- TTL automático após 3 minutos
+### Microsoft Entra ID (SSO)
 
-## Segurança
+O sistema utiliza **Microsoft Entra ID** (antigo Azure AD) para autenticacao de usuarios internos:
 
-### Autenticação
-- **SSO Microsoft**: Login único integrado ao Office 365
-- **Graph API**: Captura automática de hierarquia organizacional
-- **Rate Limiting**: Máximo 5 tentativas de login em 15 minutos
-- **Session Hijacking**: Validação de fingerprint (User-Agent, screen, timezone)
-- **Timeout**: Logout automático após 30 minutos de inatividade
+1. Usuario clica em "Entrar com Microsoft"
+2. Redirecionado para login.microsoftonline.com
+3. Apos autenticacao, retorna com token
+4. Frontend valida token e busca dados do usuario via Graph API
+5. Sessao criada com dados hierarquicos (cargo, departamento, gestor)
 
-### Validação de Arquivos
-Extensões bloqueadas automaticamente:
-- Executáveis: .exe, .dll, .bat, .cmd, .com, .msi
-- Scripts: .ps1, .vbs, .js, .jar
-- Outros: .scr, .pif, .app, .deb, .rpm
+### OTP para Usuarios Externos
 
-### Controle de Acesso
-- Autenticação obrigatória para todas as operações
-- Perfis separados (Interno/Supervisor/Externo)
-- Validação de permissões em cada endpoint
-- Tokens únicos e temporários para downloads
-- OTP com validade de 3 minutos
+Usuarios externos utilizam verificacao por codigo OTP:
 
-### Headers de Segurança (CSP)
-- `Content-Security-Policy`: Bloqueia scripts inline e XSS
-- `X-Frame-Options`: Previne clickjacking
-- `X-Content-Type-Options`: Previne MIME sniffing
-- `Referrer-Policy`: Controla informações de referência
-- `Permissions-Policy`: Restringe APIs do navegador
+1. Sistema envia email com codigo de 6 digitos
+2. Codigo valido por 3 minutos
+3. Maximo de 3 tentativas
+4. Apos verificacao, acesso aos arquivos liberado
+
+---
+
+## Seguranca
+
+### Headers CSP
+
+```javascript
+Content-Security-Policy:
+  default-src 'self';
+  script-src 'self' 'unsafe-inline';
+  connect-src 'self' https://graph.microsoft.com 
+              https://login.microsoftonline.com;
+  frame-src 'self' https://login.microsoftonline.com;
+```
+
+### Validacao de Arquivos
+
+Extensoes bloqueadas automaticamente:
+- Executaveis: `.exe`, `.dll`, `.bat`, `.cmd`, `.com`, `.msi`
+- Scripts: `.ps1`, `.vbs`, `.js`, `.jar`
+- Outros: `.scr`, `.pif`, `.app`, `.deb`, `.rpm`
+
+### Rate Limiting
+
+- **Login**: 5 tentativas em 15 minutos
+- **OTP**: 3 tentativas por codigo
+- **API**: 100 requisicoes/minuto por IP
 
 ### Auditoria
-Todos os eventos são registrados:
-- Login/Logout (SSO e tradicional)
-- Upload de arquivos
-- Aprovação/Rejeição/Cancelamento
-- Envio e verificação de OTP
-- Downloads
-- Tentativas de acesso bloqueadas
-- Alterações de configuração
 
-## Monitoramento
+Todos os eventos sao registrados:
+- Login/Logout
+- Upload/Download
+- Aprovacao/Rejeicao
+- Envio de OTP
+- Alteracoes de configuracao
 
-### Métricas Disponíveis
-- Total de transferências por status
-- Taxa de aprovação/rejeição/cancelamento
-- Tempo médio de aprovação
-- Volume de dados transferidos
-- Erros e exceções
-- Tentativas de login bloqueadas
-- Códigos OTP enviados vs verificados
+---
 
-### Logs
-- CloudWatch Logs para todos os serviços
-- Logs estruturados em JSON
-- Retenção configurável (90 dias padrão)
-- Alertas automáticos para anomalias
+## Scripts Disponiveis
 
-## Testes
-
-\`\`\`bash
-# Testes unitários
-npm run test
-
-# Testes E2E
-npm run test:e2E
-
-# Cobertura
-npm run test:coverage
-\`\`\`
-
-## Scripts Úteis
-
-\`\`\`bash
+```bash
 # Desenvolvimento
 npm run dev              # Inicia servidor de desenvolvimento
-npm run build           # Build de produção
-npm run start           # Inicia servidor de produção
-npm run lint            # Verifica código com ESLint
-npm run format          # Formata código com Prettier
+npm run build           # Build de producao
+npm run start           # Inicia servidor de producao
+npm run lint            # Verifica codigo com ESLint
 
-# Banco de Dados
-npm run db:setup        # Cria todas as tabelas
-npm run db:seed         # Popula dados de demonstração
-npm run db:reset        # Apaga e recria tudo
+# Docker
+docker build -t csa .   # Build da imagem
+docker run -p 3000:3000 csa  # Executa container
+```
 
-# Deploy
-npm run deploy:staging  # Deploy para staging
-npm run deploy:prod     # Deploy para produção
-\`\`\`
+---
