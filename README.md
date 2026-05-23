@@ -17,7 +17,6 @@ Sistema corporativo de transferencia segura de arquivos com aprovacao supervisio
 - [Banco de Dados](#banco-de-dados)
 - [Autenticacao](#autenticacao)
 - [Seguranca](#seguranca)
-- [Scripts Disponiveis](#scripts-disponiveis)
 
 ---
 
@@ -253,10 +252,9 @@ O frontend e empacotado em container Docker e deployed no ECS com as seguintes c
 
 ```bash
 # 1. Clone o repositorio
-git clone https://github.com/tecnologiawebnetsystem/layout-petrobras-e-mail.git
+git clone ...
 
 # 2. Entre na pasta do projeto
-cd layout-petrobras-e-mail
 
 # 3. Instale as dependencias
 npm install
@@ -308,17 +306,6 @@ petrobras-csa-frontend/
 │   ├── suporte/                      # Painel de suporte
 │   ├── logs/                         # Rastreamento de emails
 │   ├── admin/                        # Painel administrativo
-│   │
-│   ├── wiki-dev/                     # Documentacao tecnica
-│   │   ├── arquitetura/             # Arquitetura do sistema
-│   │   ├── aws-implementation/      # Implementacao AWS
-│   │   ├── banco-dados/             # Estrutura do banco
-│   │   ├── deploy-aws/              # Deploy na AWS
-│   │   ├── docker-aws/              # Docker na AWS
-│   │   ├── entra-id/                # Configuracao Entra ID
-│   │   ├── variaveis-ambiente/      # Variaveis de ambiente
-│   │   └── ...                      # Mais paginas de documentacao
-│   │
 │   └── api/                          # API Routes
 │       ├── auth/                    # Autenticacao
 │       │   ├── internal/            # Auth interno (Entra ID)
@@ -367,11 +354,6 @@ petrobras-csa-frontend/
 ├── types/                            # Definicoes TypeScript
 ├── public/                           # Arquivos estaticos
 │   └── fonts/                       # Fontes Inter
-│
-├── backend/                          # Backend Python (separado)
-│   ├── sql/                         # Scripts SQL
-│   ├── docs/                        # Documentacao do backend
-│   └── alembic/                     # Migracoes
 │
 ├── docs/                             # Documentacao adicional
 │   └── DATABASE-STRUCTURE.md        # Estrutura do banco
@@ -509,12 +491,6 @@ const nextConfig = {
 | `notification` | Notificacoes internas |
 | `support_registration` | Cadastros do suporte |
 
-### Diagrama de Relacionamentos
-
-Consulte o arquivo `docs/DATABASE-STRUCTURE.md` para o diagrama completo.
-
----
-
 ## Autenticacao
 
 ### Microsoft Entra ID (SSO)
@@ -590,29 +566,3 @@ docker run -p 3000:3000 csa  # Executa container
 ```
 
 ---
-
-## Contribuicao
-
-1. Crie uma branch: `git checkout -b feature/nova-funcionalidade`
-2. Faca commit: `git commit -m 'Adiciona nova funcionalidade'`
-3. Push: `git push origin feature/nova-funcionalidade`
-4. Abra um Pull Request
-
----
-
-## Suporte
-
-- **Documentacao Interna**: `/wiki-dev` na aplicacao
-- **Issues**: Abra uma issue no repositorio
-- **Contato**: equipe-csa@petrobras.com.br
-
----
-
-## Licenca
-
-Propriedade da Petrobras - Todos os direitos reservados.
-
----
-
-**Versao**: 0.1.0  
-**Ultima atualizacao**: Maio 2026
