@@ -32,7 +32,7 @@ O **CSA (Compartilhamento Seguro de Arquivos)** permite que usuarios internos da
 - **Acesso Externo via OTP**: Destinatarios externos recebem codigo de verificacao por email
 - **Auditoria Completa**: Todo o fluxo e registrado para compliance
 - **Dashboard Administrativo**: Visao gerencial de metricas e status
-- **Suporte ao Usuario**: Painel dedicado para atendimento e cadastros
+- **Painel Admin Global**: Acesso total a todas as funcionalidades, configuracoes e gestao do sistema
 
 ### Perfis de Usuario
 
@@ -41,7 +41,7 @@ O **CSA (Compartilhamento Seguro de Arquivos)** permite que usuarios internos da
 | **Interno** | Colaborador Petrobras que faz upload e compartilha arquivos |
 | **Supervisor** | Aprova/rejeita compartilhamentos da sua area |
 | **Externo** | Terceiros que recebem arquivos compartilhados |
-| **Suporte** | Atendentes que cadastram e gerenciam usuarios externos |
+| **Admin Global** | Administrador com acesso total ao sistema (todas as funcionalidades, configuracoes e dados) |
 
 ---
 
@@ -116,7 +116,7 @@ O **CSA (Compartilhamento Seguro de Arquivos)** permite que usuarios internos da
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                              USUARIOS                                    │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  [Interno]     [Supervisor]     [Externo]     [Suporte]                 │
+│  [Interno]     [Supervisor]     [Externo]     [Admin Global]            │
 │      │              │               │              │                     │
 └──────┼──────────────┼───────────────┼──────────────┼─────────────────────┘
        │              │               │              │
@@ -128,7 +128,7 @@ O **CSA (Compartilhamento Seguro de Arquivos)** permite que usuarios internos da
 │                                                                         │
 │  ┌─────────────────────────────────────────────────────────────────────┐│
 │  │                        PAGINAS PRINCIPAIS                           ││
-│  │  /upload  /compartilhamentos  /supervisor  /download  /suporte     ││
+│  │  /upload  /compartilhamentos  /supervisor  /download  /admin        ││
 │  └─────────────────────────────────────────────────────────────────────┘│
 │                                                                         │
 │  ┌─────────────────────────────────────────────────────────────────────┐│
@@ -498,7 +498,7 @@ const nextConfig = {
 
 | Tabela | Descricao |
 |--------|-----------|
-| `user` | Usuarios do sistema (internos, externos, suporte) |
+| `user` | Usuarios do sistema (internos, externos, admin) |
 | `share` | Compartilhamentos de arquivos |
 | `share_file` | Relacao N:N entre shares e arquivos |
 | `restricted_file` | Arquivos armazenados no S3 |
