@@ -253,8 +253,7 @@ backend/
 #### 1. Clonar o Repositorio
 
 ```bash
-git clone https://github.com/tecnologiawebnetsystem/layout-petrobras-e-mail.git
-cd layout-petrobras-e-mail/backend
+git clone ...
 ```
 
 #### 2. Criar Ambiente Virtual
@@ -717,24 +716,3 @@ curl -X POST http://localhost:8080/api/v1/shares/create \
 3. Verifique permissoes do bucket S3
 
 ---
-
-## Contribuindo
-
-1. Fork o repositorio
-2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
-3. Commit suas alteracoes (`git commit -m 'Adiciona nova feature'`)
-4. Push para a branch (`git push origin feature/nova-feature`)
-5. Abra um Pull Request
-
----
-
-## Licenca
-
-Proprietario - Petrobras
-
----
-
-## Contato
-
-- **Suporte:** suporte@petrobras.com.br
-- **Equipe de Desenvolvimento:** TIC - Tecnologia da Informacao e Comunicacao
