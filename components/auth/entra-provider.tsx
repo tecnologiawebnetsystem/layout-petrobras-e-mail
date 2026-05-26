@@ -18,6 +18,7 @@ import { setupCrossTabLogout } from "@/lib/auth/entra-security";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useRouter, usePathname } from "next/navigation";
 import { getClientEnv } from "@/lib/env";
+import { FullPageLoader } from "@/components/ui/full-page-loader";
 
 interface EntraProviderProps {
   children: ReactNode;
@@ -150,15 +151,10 @@ export function EntraProvider({ children }: EntraProviderProps) {
   // Exibe loading enquanto o MSAL processa o redirect da Microsoft
   if (isMsalProcessing) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-foreground font-medium">Autenticando...</p>
-          <p className="text-muted-foreground text-sm">
-            Verificando suas credenciais com a Microsoft
-          </p>
-        </div>
-      </div>
+      <FullPageLoader 
+        message="Autenticando..." 
+        subMessage="Verificando suas credenciais com a Microsoft" 
+      />
     );
   }
 

@@ -143,21 +143,9 @@ const sections: Section[] = [
     description: "Administrador do sistema",
     subsections: [
       { id: "admin-acesso", title: "1. Acessando o Admin" },
-      { id: "admin-dashboard", title: "2. Dashboard de Metricas" },
-      { id: "admin-usuarios", title: "3. Gerenciar Usuarios" },
-      { id: "admin-criar-usuario", title: "4. Criar Novo Usuario" },
-      { id: "admin-editar-usuario", title: "5. Editar Usuario" },
-      { id: "admin-compartilhamentos", title: "6. Todos Compartilhamentos" },
-      { id: "admin-logs", title: "7. Logs do Sistema" },
-      { id: "admin-rastreamento", title: "8. Rastreamento por Usuario" },
-      { id: "admin-configuracoes", title: "9. Configuracoes Globais" },
+      { id: "admin-logs", title: "2. Logs do Sistema" },
+      { id: "admin-rastreamento", title: "3. Rastreamento por Usuario" },
     ]
-  },
-  {
-    id: "faq",
-    title: "Perguntas Frequentes",
-    icon: <Lightbulb className="h-4 w-4" />,
-    description: "Duvidas comuns",
   },
 ]
 
@@ -2275,15 +2263,15 @@ function AdminGlobalSection() {
           <div>
             <h2 className="text-2xl font-bold mb-2">Guia do Admin Global</h2>
             <p className="text-muted-foreground">
-              Este guia detalha todas as funcionalidades exclusivas do administrador do sistema, 
-              incluindo gerenciamento de usuarios, visualizacao de todos os compartilhamentos e logs completos.
+              O Admin Global tem acesso exclusivo para visualizar os logs do sistema e 
+              realizar o rastreamento de atividades de todos os usuarios.
             </p>
           </div>
         </div>
       </div>
 
       <InfoBox type="important" title="Acesso Restrito">
-        O Admin Global tem acesso total a todas as funcionalidades do sistema, incluindo dados sensiveis. 
+        O Admin Global tem acesso aos logs e rastreabilidade de todos os usuarios do sistema. 
         Use este acesso com responsabilidade e siga as politicas de seguranca da informacao.
       </InfoBox>
 
@@ -2311,336 +2299,13 @@ function AdminGlobalSection() {
         </div>
       </section>
 
-      {/* 2. Dashboard de Metricas */}
-      <section id="admin-dashboard" className="scroll-mt-20">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-            <BarChart3 className="h-5 w-5 text-purple-600" />
-          </div>
-          2. Dashboard de Metricas
-        </h2>
-
-        <ScreenMockup title="Painel Administrativo - /admin" description="Visao geral completa do sistema">
-          <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center shadow-lg">
-                <Shield className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold">Painel Administrativo</h3>
-                <p className="text-sm text-muted-foreground">Visao completa de usuarios, compartilhamentos e logs</p>
-              </div>
-              <div className="ml-auto">
-                <ActionButton icon={<RefreshCw className="h-4 w-4" />} label="Atualizar" variant="secondary" />
-              </div>
-            </div>
-
-            {/* Metricas de Usuarios */}
-            <div>
-              <h4 className="font-semibold mb-3 text-sm text-muted-foreground">USUARIOS</h4>
-              <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-                <MetricCard label="Total" value="1,234" icon={<Users className="h-5 w-5" />} />
-                <MetricCard label="Internos" value="890" icon={<User className="h-5 w-5 text-blue-500" />} />
-                <MetricCard label="Externos" value="312" icon={<Globe className="h-5 w-5 text-green-500" />} />
-                <MetricCard label="Supervisores" value="45" icon={<UserCheck className="h-5 w-5 text-amber-500" />} />
-                <MetricCard label="Admins" value="5" icon={<Shield className="h-5 w-5 text-purple-500" />} />
-                <MetricCard label="Ativos" value="1,102" icon={<CheckCircle className="h-5 w-5 text-green-500" />} />
-              </div>
-            </div>
-
-            {/* Metricas de Compartilhamentos */}
-            <div>
-              <h4 className="font-semibold mb-3 text-sm text-muted-foreground">COMPARTILHAMENTOS</h4>
-              <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-                <MetricCard label="Total" value="5,678" icon={<Send className="h-5 w-5" />} />
-                <MetricCard label="Pendentes" value="23" icon={<Clock className="h-5 w-5 text-amber-500" />} />
-                <MetricCard label="Aprovados" value="4,890" icon={<CheckCircle className="h-5 w-5 text-green-500" />} />
-                <MetricCard label="Ativos" value="1,234" icon={<Wifi className="h-5 w-5 text-blue-500" />} />
-                <MetricCard label="Rejeitados" value="156" icon={<XCircle className="h-5 w-5 text-red-500" />} />
-                <MetricCard label="Expirados" value="609" icon={<Timer className="h-5 w-5 text-gray-500" />} />
-              </div>
-            </div>
-
-            {/* Metricas de Storage e Audit */}
-            <div>
-              <h4 className="font-semibold mb-3 text-sm text-muted-foreground">STORAGE & AUDITORIA</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <MetricCard label="Total Arquivos" value="8,901" icon={<FileText className="h-5 w-5" />} />
-                <MetricCard label="Storage Usado" value="45.2 GB" icon={<HardDrive className="h-5 w-5" />} />
-                <MetricCard label="Logs (7 dias)" value="12,456" icon={<Activity className="h-5 w-5" />} />
-                <MetricCard label="E-mails Enviados" value="6,789" icon={<Mail className="h-5 w-5" />} />
-              </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="flex gap-1 border-b overflow-x-auto">
-              <button className="px-4 py-2 border-b-2 border-primary font-medium whitespace-nowrap">Dashboard</button>
-              <button className="px-4 py-2 text-muted-foreground whitespace-nowrap">Usuarios</button>
-              <button className="px-4 py-2 text-muted-foreground whitespace-nowrap">Compartilhamentos</button>
-              <button className="px-4 py-2 text-muted-foreground whitespace-nowrap">Logs</button>
-              <button className="px-4 py-2 text-muted-foreground whitespace-nowrap">Rastreamento</button>
-            </div>
-          </div>
-        </ScreenMockup>
-      </section>
-
-      {/* 3. Gerenciar Usuarios */}
-      <section id="admin-usuarios" className="scroll-mt-20">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-            <Users className="h-5 w-5 text-purple-600" />
-          </div>
-          3. Gerenciar Usuarios
-        </h2>
-
-        <ScreenMockup title="Aba Usuarios - /admin" description="Lista e gerenciamento de todos os usuarios">
-          <div className="space-y-4">
-            {/* Filtros */}
-            <div className="flex flex-wrap gap-3">
-              <div className="flex-1 min-w-[200px] flex items-center gap-2 px-3 py-2 rounded-lg border bg-background">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <input placeholder="Buscar usuarios..." className="flex-1 bg-transparent outline-none text-sm" />
-              </div>
-              <select className="px-3 py-2 rounded-lg border bg-background text-sm">
-                <option>Todos os Tipos</option>
-                <option>Internos</option>
-                <option>Externos</option>
-                <option>Supervisores</option>
-                <option>Admins</option>
-              </select>
-              <ActionButton icon={<User className="h-4 w-4" />} label="+ Novo Usuario" />
-            </div>
-
-            {/* Tabela */}
-            <TableMockup 
-              headers={["Nome", "E-mail", "Tipo", "Status", "Ultimo Login", "Acoes"]}
-              rows={[
-                [
-                  <span className="font-medium">Carlos Mendes</span>,
-                  <span className="text-sm">carlos@petrobras.com.br</span>,
-                  <Badge variant="info">Interno</Badge>,
-                  <Badge variant="success">Ativo</Badge>,
-                  <span className="text-sm">22/05/2024 14:32</span>,
-                  <button className="text-primary text-sm font-medium">Editar</button>
-                ],
-                [
-                  <span className="font-medium">Maria Silva</span>,
-                  <span className="text-sm">maria@petrobras.com.br</span>,
-                  <Badge variant="warning">Supervisor</Badge>,
-                  <Badge variant="success">Ativo</Badge>,
-                  <span className="text-sm">22/05/2024 10:15</span>,
-                  <button className="text-primary text-sm font-medium">Editar</button>
-                ],
-                [
-                  <span className="font-medium">Joao Externo</span>,
-                  <span className="text-sm">joao@empresa.com</span>,
-                  <Badge variant="default">Externo</Badge>,
-                  <Badge variant="success">Ativo</Badge>,
-                  <span className="text-sm">21/05/2024 16:45</span>,
-                  <button className="text-primary text-sm font-medium">Editar</button>
-                ],
-              ]}
-            />
-
-            {/* Paginacao */}
-            <div className="flex items-center justify-between pt-4 border-t">
-              <span className="text-sm text-muted-foreground">Mostrando 1-20 de 1.234 usuarios</span>
-              <div className="flex gap-1">
-                <button className="p-2 rounded-lg border hover:bg-muted"><ChevronLeft className="h-4 w-4" /></button>
-                <button className="px-3 py-1 rounded-lg bg-primary text-primary-foreground text-sm">1</button>
-                <button className="px-3 py-1 rounded-lg border text-sm">2</button>
-                <button className="px-3 py-1 rounded-lg border text-sm">3</button>
-                <button className="p-2 rounded-lg border hover:bg-muted"><ChevronRight className="h-4 w-4" /></button>
-              </div>
-            </div>
-          </div>
-        </ScreenMockup>
-      </section>
-
-      {/* 4. Criar Novo Usuario */}
-      <section id="admin-criar-usuario" className="scroll-mt-20">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-            <User className="h-5 w-5 text-purple-600" />
-          </div>
-          4. Criar Novo Usuario
-        </h2>
-
-        <ScreenMockup title="Novo Usuario" description="Formulario de cadastro de usuario">
-          <div className="max-w-xl mx-auto space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium mb-1 block">Nome Completo *</label>
-                <input className="w-full p-3 rounded-lg border bg-background text-sm" placeholder="Nome do usuario" />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">E-mail *</label>
-                <input className="w-full p-3 rounded-lg border bg-background text-sm" placeholder="email@exemplo.com" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium mb-1 block">Tipo de Usuario *</label>
-                <select className="w-full p-3 rounded-lg border bg-background text-sm">
-                  <option>Interno</option>
-                  <option>Externo</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">Departamento</label>
-                <input className="w-full p-3 rounded-lg border bg-background text-sm" placeholder="Ex: TI, RH, Financeiro" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium mb-1 block">Cargo</label>
-                <input className="w-full p-3 rounded-lg border bg-background text-sm" placeholder="Ex: Analista, Gerente" />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">Supervisor</label>
-                <select className="w-full p-3 rounded-lg border bg-background text-sm">
-                  <option>Selecione um supervisor...</option>
-                  <option>Maria Silva</option>
-                  <option>Pedro Santos</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-muted/50 border">
-              <h4 className="font-semibold mb-3">Permissoes</h4>
-              <div className="space-y-2">
-                <label className="flex items-center gap-3">
-                  <input type="checkbox" className="h-4 w-4 rounded" />
-                  <span className="text-sm">E Supervisor (pode aprovar compartilhamentos)</span>
-                </label>
-                <label className="flex items-center gap-3">
-                  <input type="checkbox" className="h-4 w-4 rounded" />
-                  <span className="text-sm">E Admin Global (acesso total ao sistema)</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="flex gap-3 justify-end">
-              <ActionButton icon={<X className="h-4 w-4" />} label="Cancelar" variant="secondary" />
-              <ActionButton icon={<CheckCircle className="h-4 w-4" />} label="Criar Usuario" variant="success" />
-            </div>
-          </div>
-        </ScreenMockup>
-      </section>
-
-      {/* 5. Editar Usuario */}
-      <section id="admin-editar-usuario" className="scroll-mt-20">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-            <Edit className="h-5 w-5 text-purple-600" />
-          </div>
-          5. Editar Usuario
-        </h2>
-
-        <p className="text-muted-foreground mb-6">
-          Na edicao de usuario voce pode alterar dados pessoais, mudar o supervisor, 
-          promover a supervisor/admin ou desativar a conta.
-        </p>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          <FeatureCard
-            icon={<Edit className="h-6 w-6" />}
-            title="Editar Dados"
-            description="Altere nome, departamento, cargo e outras informacoes"
-            color="blue"
-          />
-          <FeatureCard
-            icon={<UserCheck className="h-6 w-6" />}
-            title="Alterar Supervisor"
-            description="Mude o supervisor responsavel pelo usuario"
-            color="amber"
-          />
-          <FeatureCard
-            icon={<Shield className="h-6 w-6" />}
-            title="Alterar Permissoes"
-            description="Promova ou remova privilegios de supervisor/admin"
-            color="purple"
-          />
-          <FeatureCard
-            icon={<XCircle className="h-6 w-6" />}
-            title="Desativar Conta"
-            description="Bloqueie temporariamente o acesso do usuario"
-            color="red"
-          />
-        </div>
-      </section>
-
-      {/* 6. Todos Compartilhamentos */}
-      <section id="admin-compartilhamentos" className="scroll-mt-20">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-            <FolderOpen className="h-5 w-5 text-purple-600" />
-          </div>
-          6. Todos os Compartilhamentos
-        </h2>
-
-        <ScreenMockup title="Aba Compartilhamentos - /admin" description="Lista de todos os compartilhamentos do sistema">
-          <div className="space-y-4">
-            {/* Filtros */}
-            <div className="flex flex-wrap gap-3">
-              <select className="px-3 py-2 rounded-lg border bg-background text-sm">
-                <option>Todos os Status</option>
-                <option>Pendentes</option>
-                <option>Aprovados</option>
-                <option>Ativos</option>
-                <option>Rejeitados</option>
-                <option>Expirados</option>
-              </select>
-              <input type="date" className="px-3 py-2 rounded-lg border bg-background text-sm" />
-              <div className="flex-1" />
-              <ActionButton icon={<Download className="h-4 w-4" />} label="Exportar CSV" variant="secondary" />
-            </div>
-
-            {/* Lista */}
-            <div className="space-y-3">
-              <div className="p-4 rounded-xl border bg-card flex items-center gap-4">
-                <FileText className="h-10 w-10 text-blue-500" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">Relatorio_Anual_2024.pdf</p>
-                  <p className="text-sm text-muted-foreground">De: carlos@petrobras → Para: joao@empresa.com</p>
-                </div>
-                <Badge variant="success">Aprovado</Badge>
-                <span className="text-xs text-muted-foreground">Downloads: 2/5</span>
-                <button className="p-2 rounded-lg hover:bg-muted"><Eye className="h-4 w-4" /></button>
-              </div>
-
-              <div className="p-4 rounded-xl border bg-card flex items-center gap-4">
-                <FileText className="h-10 w-10 text-amber-500" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">Contrato_Servicos.docx</p>
-                  <p className="text-sm text-muted-foreground">De: maria@petrobras → Para: fornecedor@empresa.com</p>
-                </div>
-                <Badge variant="warning">Pendente</Badge>
-                <span className="text-xs text-muted-foreground">-</span>
-                <button className="p-2 rounded-lg hover:bg-muted"><Eye className="h-4 w-4" /></button>
-              </div>
-            </div>
-          </div>
-        </ScreenMockup>
-
-        <div className="mt-6">
-          <InfoBox type="tip" title="Acoes do Admin">
-            O Admin pode cancelar compartilhamentos ativos, estender prazos de expiracao, 
-            aumentar limite de downloads e visualizar detalhes completos de qualquer compartilhamento.
-          </InfoBox>
-        </div>
-      </section>
-
-      {/* 7. Logs do Sistema */}
+      {/* 2. Logs do Sistema */}
       <section id="admin-logs" className="scroll-mt-20">
         <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
             <Activity className="h-5 w-5 text-purple-600" />
           </div>
-          7. Logs do Sistema
+          2. Logs do Sistema
         </h2>
 
         <ScreenMockup title="Aba Logs - /admin" description="Registro completo de todas as acoes do sistema">
@@ -2711,15 +2376,22 @@ function AdminGlobalSection() {
             </div>
           </div>
         </ScreenMockup>
+
+        <div className="mt-6">
+          <InfoBox type="tip" title="Dica">
+            Use os filtros para encontrar logs especificos. Voce pode filtrar por tipo de acao, 
+            nivel de severidade e data para facilitar a analise.
+          </InfoBox>
+        </div>
       </section>
 
-      {/* 8. Rastreamento por Usuario */}
+      {/* 3. Rastreamento por Usuario */}
       <section id="admin-rastreamento" className="scroll-mt-20">
         <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
             <Eye className="h-5 w-5 text-purple-600" />
           </div>
-          8. Rastreamento por Usuario
+          3. Rastreamento por Usuario
         </h2>
 
         <ScreenMockup title="Aba Rastreamento - /admin" description="Acompanhamento detalhado de atividades por usuario">
@@ -2807,189 +2479,15 @@ function AdminGlobalSection() {
             </div>
           </div>
         </ScreenMockup>
-      </section>
 
-      {/* 9. Configuracoes Globais */}
-      <section id="admin-configuracoes" className="scroll-mt-20">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-            <Settings className="h-5 w-5 text-purple-600" />
-          </div>
-          9. Configuracoes Globais
-        </h2>
-
-        <p className="text-muted-foreground mb-6">
-          As configuracoes globais do sistema sao gerenciadas atraves de variaveis de ambiente e 
-          configuracoes no banco de dados. Algumas opcoes disponiveis:
-        </p>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          <FeatureCard
-            icon={<Clock className="h-6 w-6" />}
-            title="Tempo de Expiracao Padrao"
-            description="Configure o tempo padrao de expiracao dos links de compartilhamento"
-            color="blue"
-          />
-          <FeatureCard
-            icon={<Download className="h-6 w-6" />}
-            title="Limite de Downloads Padrao"
-            description="Defina o limite padrao de downloads por compartilhamento"
-            color="green"
-          />
-          <FeatureCard
-            icon={<HardDrive className="h-6 w-6" />}
-            title="Tamanho Maximo de Arquivo"
-            description="Configure o limite de tamanho para upload de arquivos"
-            color="amber"
-          />
-          <FeatureCard
-            icon={<Mail className="h-6 w-6" />}
-            title="Templates de E-mail"
-            description="Personalize os templates de e-mail enviados pelo sistema"
-            color="purple"
-          />
+        <div className="mt-6">
+          <InfoBox type="info" title="Funcionalidade">
+            O rastreamento permite visualizar todo o historico de atividades de um usuario especifico, 
+            incluindo logins, uploads, compartilhamentos criados e downloads realizados.
+          </InfoBox>
         </div>
       </section>
     </div>
-  )
-}
-
-// ========================================
-// SECAO: FAQ
-// ========================================
-function FAQSection() {
-  const faqs = [
-    {
-      category: "Login e Acesso",
-      questions: [
-        {
-          question: "Esqueci minha senha, como recuperar?",
-          answer: "Para usuarios internos, a senha e gerenciada pelo Microsoft Entra ID. Acesse o portal de autoatendimento da Microsoft (passwordreset.microsoftonline.com) ou entre em contato com o suporte de TI. Usuarios externos nao possuem senha - eles usam autenticacao via codigo OTP enviado por e-mail."
-        },
-        {
-          question: "Por que nao consigo fazer login?",
-          answer: "Verifique se voce esta usando suas credenciais corporativas corretas (@petrobras.com.br). Se o problema persistir, pode ser uma questao de permissao de acesso. Entre em contato com o Admin Global para verificar se sua conta esta ativa no sistema."
-        },
-      ]
-    },
-    {
-      category: "Compartilhamentos",
-      questions: [
-        {
-          question: "Posso cancelar um compartilhamento apos aprovado?",
-          answer: "Sim, voce pode cancelar um compartilhamento na pagina 'Meus Compartilhamentos'. O link sera desativado imediatamente e o destinatario nao podera mais acessar o arquivo. Esta acao e registrada no log de auditoria."
-        },
-        {
-          question: "Quanto tempo leva para o supervisor aprovar?",
-          answer: "O tempo de aprovacao depende da disponibilidade do seu supervisor. O sistema envia notificacoes automaticas, mas voce pode entrar em contato diretamente com seu supervisor se for urgente."
-        },
-        {
-          question: "Posso editar um compartilhamento depois de criado?",
-          answer: "Compartilhamentos pendentes podem ser editados ou cancelados. Compartilhamentos ja aprovados nao podem ser editados, mas podem ser cancelados. Para alterar, cancele o atual e crie um novo."
-        },
-      ]
-    },
-    {
-      category: "Arquivos",
-      questions: [
-        {
-          question: "Qual o tamanho maximo de arquivo?",
-          answer: "O limite padrao e de 100MB por arquivo. Para arquivos maiores, entre em contato com o Admin Global para verificar opcoes alternativas, como dividir o arquivo em partes ou usar outro canal de transferencia."
-        },
-        {
-          question: "Quais tipos de arquivos sao permitidos?",
-          answer: "Sao permitidos: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, CSV, ZIP, RAR, JPG, PNG e outros formatos comuns. Arquivos executaveis (.exe, .bat, .sh) nao sao permitidos por questoes de seguranca."
-        },
-      ]
-    },
-    {
-      category: "Usuario Externo",
-      questions: [
-        {
-          question: "O destinatario nao recebeu o e-mail, o que fazer?",
-          answer: "1) Verifique se o e-mail esta correto. 2) Peca para verificar a pasta de spam/lixo eletronico. 3) Aguarde alguns minutos e verifique novamente. 4) Se persistir, o Admin Global pode reenviar o e-mail pelo painel administrativo."
-        },
-        {
-          question: "O codigo OTP expirou, como obter outro?",
-          answer: "Na pagina de verificacao, clique no botao 'Reenviar codigo'. Um novo codigo de 6 digitos sera enviado para o e-mail do destinatario. O codigo e valido por 10 minutos."
-        },
-        {
-          question: "Link expirado ou limite de downloads atingido?",
-          answer: "Cada compartilhamento tem prazo de validade e limite de downloads definidos pelo remetente. Se o link expirou ou o limite foi atingido, solicite ao remetente da Petrobras que crie um novo compartilhamento."
-        },
-      ]
-    },
-    {
-      category: "Supervisor",
-      questions: [
-        {
-          question: "Como sei quando tenho aprovacoes pendentes?",
-          answer: "Voce recebe notificacoes por e-mail quando um membro da sua equipe cria um compartilhamento. Alem disso, o icone de notificacoes no sistema mostra alertas de pendencias e o contador de 'Pendentes' no painel do supervisor."
-        },
-        {
-          question: "Posso delegar aprovacoes para outro supervisor?",
-          answer: "Atualmente, as aprovacoes sao vinculadas ao supervisor responsavel pelo usuario. Se precisar delegar, entre em contato com o Admin Global para alterar temporariamente a hierarquia."
-        },
-      ]
-    },
-  ]
-
-  return (
-    <div className="space-y-12">
-      <div className="p-6 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
-        <div className="flex items-start gap-4">
-          <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg flex-shrink-0">
-            <HelpCircle className="h-7 w-7 text-white" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold mb-2">Perguntas Frequentes</h2>
-            <p className="text-muted-foreground">
-              Encontre respostas para as duvidas mais comuns sobre o sistema de Transferencia Segura de Arquivos.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-8">
-        {faqs.map((category, i) => (
-          <div key={i}>
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-primary" />
-              {category.category}
-            </h3>
-            <div className="space-y-4">
-              {category.questions.map((faq, j) => (
-                <div key={j} className="p-5 rounded-xl border bg-card hover:shadow-md transition-shadow">
-                  <h4 className="font-semibold mb-3 flex items-start gap-3">
-                    <span className="text-primary font-bold">Q:</span>
-                    {faq.question}
-                  </h4>
-                  <p className="text-sm text-muted-foreground pl-7">
-                    <span className="text-green-600 font-bold">R:</span> {faq.answer}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="p-6 rounded-2xl bg-muted/50 border text-center">
-        <HelpCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-        <h3 className="text-lg font-semibold mb-2">Nao encontrou sua resposta?</h3>
-        <p className="text-muted-foreground mb-4">
-          Entre em contato com o suporte tecnico ou com o administrador do sistema.
-        </p>
-        <ActionButton icon={<Mail className="h-4 w-4" />} label="Contatar Suporte" />
-      </div>
-    </div>
-  )
-}
-
-// Componente HardDrive para usar na seção
-function HardDrive({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="22" x2="2" y1="12" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" x2="6.01" y1="16" y2="16"/><line x1="10" x2="10.01" y1="16" y2="16"/></svg>
   )
 }
 
@@ -3021,8 +2519,6 @@ export default function ManualDoUsuarioPage() {
         return <SupervisorSection />
       case "admin-global":
         return <AdminGlobalSection />
-      case "faq":
-        return <FAQSection />
       default:
         return <VisaoGeralSection />
     }
