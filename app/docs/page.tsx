@@ -2135,13 +2135,6 @@ function SupervisorSection() {
             />
           </div>
         </ScreenMockup>
-
-        <div className="mt-6">
-          <InfoBox type="info" title="Gerenciamento de Equipe">
-            A composicao da sua equipe e definida pelo Admin Global. Se precisar adicionar ou remover 
-            membros da equipe, entre em contato com o administrador do sistema.
-          </InfoBox>
-        </div>
       </section>
     </div>
   )
