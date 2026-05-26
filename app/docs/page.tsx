@@ -2523,15 +2523,23 @@ export default function ManualDoUsuarioPage() {
                   {section.subsections && expandedSections.includes(section.id) && (
                     <div className="ml-4 mt-1 space-y-1 pl-4 border-l-2 border-muted">
                       {section.subsections.map((sub) => (
-                        <a
+                        <button
                           key={sub.id}
-                          href={`#${sub.id}`}
-                          className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-                          onClick={() => setMobileMenuOpen(false)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors text-left"
+                          onClick={() => {
+                            setActiveSection(section.id)
+                            setMobileMenuOpen(false)
+                            setTimeout(() => {
+                              const element = document.getElementById(sub.id)
+                              if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                              }
+                            }, 100)
+                          }}
                         >
                           <ChevronRight className="h-3 w-3" />
                           {sub.title}
-                        </a>
+                        </button>
                       ))}
                     </div>
                   )}
