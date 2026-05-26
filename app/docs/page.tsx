@@ -385,13 +385,13 @@ function VisaoGeralSection() {
           </div>
           <div>
             <h2 className="text-2xl font-bold">Sobre o Sistema</h2>
-            <p className="text-muted-foreground">SCAC - Solucoes de Compartilhamento de Arquivos Confidenciais</p>
+            <p className="text-muted-foreground">SCAC - Soluções de Compartilhamento de Arquivos Confidenciais</p>
           </div>
         </div>
         
         <div className="prose prose-gray dark:prose-invert max-w-none mb-8">
           <p className="text-lg text-muted-foreground leading-relaxed">
-            O <strong className="text-foreground">SCAC - Solucoes de Compartilhamento de Arquivos Confidenciais</strong> da Petrobras e uma plataforma 
+            O <strong className="text-foreground">SCAC - Soluções de Compartilhamento de Arquivos Confidenciais</strong> da Petrobras é uma plataforma 
             desenvolvida para permitir o compartilhamento controlado e auditado de documentos com usuarios externos, 
             como terceiros, parceiros e fornecedores, garantindo total conformidade com as politicas de seguranca da informacao.
           </p>
@@ -413,7 +413,7 @@ function VisaoGeralSection() {
           <FeatureCard
             icon={<Clock className="h-8 w-8" />}
 title="Controlado"
-                description="Links com data de expiracao"
+                description="Links com data de expiração"
             color="amber"
           />
           <FeatureCard
@@ -610,15 +610,11 @@ title="Controlado"
                   <Badge variant="info">Administrador do Sistema</Badge>
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  Administrador com acesso total ao sistema. Gerencia usuarios, visualiza todos os compartilhamentos, 
-                  acessa logs completos e pode rastrear atividades de qualquer usuario.
+                  Administrador com acesso total aos logs do sistema e rastreabilidade de todos os usuários.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="default"><BarChart3 className="h-3 w-3" /> Dashboard Completo</Badge>
-                  <Badge variant="default"><Users className="h-3 w-3" /> Gerenciar Usuarios</Badge>
                   <Badge variant="default"><Activity className="h-3 w-3" /> Logs do Sistema</Badge>
                   <Badge variant="default"><Eye className="h-3 w-3" /> Rastreamento</Badge>
-                  <Badge variant="default"><Settings className="h-3 w-3" /> Configuracoes</Badge>
                 </div>
               </div>
             </div>
@@ -680,10 +676,10 @@ function UsuarioInternoSection() {
             <User className="h-7 w-7 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold mb-2">Guia do Usuario Interno</h2>
+            <h2 className="text-2xl font-bold mb-2">Guia do Usuário Interno</h2>
             <p className="text-muted-foreground">
-              Este guia detalha todas as funcionalidades disponiveis para colaboradores Petrobras, 
-              desde o login ate o gerenciamento de compartilhamentos.
+              Este guia detalha todas as funcionalidades disponíveis para colaboradores Petrobras, 
+              desde o login até o gerenciamento de compartilhamentos.
             </p>
           </div>
         </div>
@@ -704,7 +700,7 @@ function UsuarioInternoSection() {
               <FileText className="h-10 w-10 text-white" />
             </div>
             <h3 className="text-2xl font-bold mb-2">SCAC</h3>
-            <p className="text-muted-foreground mb-8">Solucoes de Compartilhamento de Arquivos Confidenciais - Petrobras</p>
+            <p className="text-muted-foreground mb-8">Soluções de Compartilhamento de Arquivos Confidenciais - Petrobras</p>
             
             <div className="p-4 rounded-xl bg-gradient-to-r from-[#0078d4] to-[#106ebe] text-white cursor-pointer hover:opacity-90 transition-opacity shadow-lg">
               <div className="flex items-center justify-center gap-3">
@@ -1355,7 +1351,7 @@ function UsuarioExternoSection() {
                 <p>Ola <strong>Joao</strong>,</p>
                 <p>
                   <strong>Carlos Mendes</strong> da Petrobras compartilhou um arquivo com voce atraves do 
-                  SCAC - Solucoes de Compartilhamento de Arquivos Confidenciais.
+                  SCAC - Soluções de Compartilhamento de Arquivos Confidenciais.
                 </p>
 
                 <div className="p-4 rounded-lg bg-muted/50 border">
@@ -1655,8 +1651,8 @@ function SupervisorSection() {
           <div>
             <h2 className="text-2xl font-bold mb-2">Guia do Supervisor</h2>
             <p className="text-muted-foreground">
-              Este guia detalha as funcionalidades exclusivas do supervisor, incluindo aprovacao de compartilhamentos, 
-              gerenciamento de equipe e visualizacao de logs de auditoria.
+              Este guia detalha as funcionalidades exclusivas do supervisor, incluindo aprovação de compartilhamentos, 
+              gerenciamento de equipe e visualização de logs de auditoria.
             </p>
           </div>
         </div>
@@ -2235,15 +2231,15 @@ function AdminGlobalSection() {
             <h2 className="text-2xl font-bold mb-2">Guia do Admin Global</h2>
             <p className="text-muted-foreground">
               O Admin Global tem acesso exclusivo para visualizar os logs do sistema e 
-              realizar o rastreamento de atividades de todos os usuarios.
+              realizar o rastreamento de atividades de todos os usuários.
             </p>
           </div>
         </div>
       </div>
 
       <InfoBox type="important" title="Acesso Restrito">
-        O Admin Global tem acesso aos logs e rastreabilidade de todos os usuarios do sistema. 
-        Use este acesso com responsabilidade e siga as politicas de seguranca da informacao.
+        O Admin Global tem acesso aos logs e rastreabilidade de todos os usuários do sistema. 
+        Use este acesso com responsabilidade e siga as políticas de segurança da informação.
       </InfoBox>
 
       {/* 1. Acessando o Admin */}
@@ -2256,16 +2252,16 @@ function AdminGlobalSection() {
         </h2>
 
         <p className="text-muted-foreground mb-6">
-          O acesso ao painel administrativo e feito via SSO. Apos o login, o sistema detecta automaticamente 
-          seu perfil de administrador e libera o acesso ao menu &quot;Administracao&quot;.
+          O acesso ao painel administrativo é feito via SSO. Após o login, o sistema detecta automaticamente 
+          seu perfil de administrador e libera o acesso ao menu &quot;Administração&quot;.
         </p>
 
         <div className="grid md:grid-cols-2 gap-6">
           <InfoBox type="info" title="URL Direta">
-            Voce pode acessar diretamente o painel admin em <strong>/admin</strong> apos fazer login.
+            Você pode acessar diretamente o painel admin em <strong>/admin</strong> após fazer login.
           </InfoBox>
-          <InfoBox type="warning" title="Permissao Necessaria">
-            Somente usuarios com a flag <strong>is_admin = true</strong> no banco de dados tem acesso ao painel.
+          <InfoBox type="warning" title="Permissão Necessária">
+            Somente usuários com a flag <strong>is_admin = true</strong> no banco de dados têm acesso ao painel.
           </InfoBox>
         </div>
       </section>
@@ -2279,7 +2275,7 @@ function AdminGlobalSection() {
           2. Logs do Sistema
         </h2>
 
-        <ScreenMockup title="Aba Logs - /admin" description="Registro completo de todas as acoes do sistema">
+        <ScreenMockup title="Aba Logs - /admin" description="Registro completo de todas as ações do sistema">
           <div className="space-y-4">
             {/* Filtros */}
             <div className="flex flex-wrap gap-3">
@@ -2350,8 +2346,8 @@ function AdminGlobalSection() {
 
         <div className="mt-6">
           <InfoBox type="tip" title="Dica">
-            Use os filtros para encontrar logs especificos. Voce pode filtrar por tipo de acao, 
-            nivel de severidade e data para facilitar a analise.
+            Use os filtros para encontrar logs específicos. Você pode filtrar por tipo de ação, 
+            nível de severidade e data para facilitar a análise.
           </InfoBox>
         </div>
       </section>
@@ -2365,13 +2361,13 @@ function AdminGlobalSection() {
           3. Rastreamento por Usuario
         </h2>
 
-        <ScreenMockup title="Aba Rastreamento - /admin" description="Acompanhamento detalhado de atividades por usuario">
+        <ScreenMockup title="Aba Rastreamento - /admin" description="Acompanhamento detalhado de atividades por usuário">
           <div className="space-y-6">
             {/* Busca */}
             <div className="flex gap-3">
               <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg border bg-background">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <input placeholder="Digite o e-mail do usuario para rastrear..." className="flex-1 bg-transparent outline-none text-sm" />
+                <input placeholder="Digite o e-mail do usuário para rastrear..." className="flex-1 bg-transparent outline-none text-sm" />
               </div>
               <ActionButton icon={<Search className="h-4 w-4" />} label="Rastrear" />
             </div>
@@ -2391,7 +2387,7 @@ function AdminGlobalSection() {
                   </div>
                 </div>
                 <div className="ml-auto text-right">
-                  <p className="text-sm text-muted-foreground">Ultimo login</p>
+                  <p className="text-sm">Último login</p>
                   <p className="font-medium">22/05/2024 14:32</p>
                 </div>
               </div>
@@ -2453,7 +2449,7 @@ function AdminGlobalSection() {
 
         <div className="mt-6">
           <InfoBox type="info" title="Funcionalidade">
-            O rastreamento permite visualizar todo o historico de atividades de um usuario especifico, 
+            O rastreamento permite visualizar todo o histórico de atividades de um usuário específico, 
             incluindo logins, uploads, compartilhamentos criados e downloads realizados.
           </InfoBox>
         </div>
@@ -2507,7 +2503,7 @@ export default function ManualDoUsuarioPage() {
               </div>
               <div>
 <h1 className="text-xl font-bold">Manual do Usuario</h1>
-            <p className="text-sm text-muted-foreground">SCAC - Solucoes de Compartilhamento de Arquivos Confidenciais</p>
+            <p className="text-sm text-muted-foreground">SCAC - Soluções de Compartilhamento de Arquivos Confidenciais</p>
               </div>
             </div>
             
@@ -2613,7 +2609,7 @@ export default function ManualDoUsuarioPage() {
       {/* Footer */}
       <footer className="border-t mt-16 py-8">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>SCAC - Solucoes de Compartilhamento de Arquivos Confidenciais - Petrobras</p>
+          <p>SCAC - Soluções de Compartilhamento de Arquivos Confidenciais - Petrobras</p>
           <p className="mt-1">Manual do Usuario v2.0 - Atualizado em Maio 2024</p>
         </div>
       </footer>
