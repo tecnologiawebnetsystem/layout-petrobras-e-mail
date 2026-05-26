@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { 
   Book, 
   Users, 
@@ -64,7 +65,9 @@ import {
   Calendar,
   Play,
   Pause,
-  RotateCcw
+  RotateCcw,
+  HardDrive,
+  ChevronLeft
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -77,23 +80,23 @@ type Section = {
   subsections?: { id: string; title: string }[]
 }
 
-// Navegacao
+// Navegação
 const sections: Section[] = [
   {
     id: "visao-geral",
-    title: "Visao Geral",
+    title: "Visão Geral",
     icon: <Book className="h-4 w-4" />,
-    description: "Introducao ao sistema",
+    description: "Introdução ao sistema",
     subsections: [
       { id: "sobre-sistema", title: "Sobre o Sistema" },
       { id: "arquitetura", title: "Arquitetura" },
-      { id: "perfis-usuario", title: "Perfis de Usuario" },
+      { id: "perfis-usuario", title: "Perfis de Usuário" },
       { id: "fluxo-geral", title: "Fluxo Geral" },
     ]
   },
   {
     id: "usuario-interno",
-    title: "Usuario Interno",
+    title: "Usuário Interno",
     icon: <User className="h-4 w-4" />,
     description: "Colaborador Petrobras",
     subsections: [
@@ -102,19 +105,18 @@ const sections: Section[] = [
       { id: "interno-upload", title: "3. Upload de Arquivos" },
       { id: "interno-criar-compartilhamento", title: "4. Criar Compartilhamento" },
       { id: "interno-compartilhamentos", title: "5. Meus Compartilhamentos" },
-      { id: "interno-historico", title: "6. Historico" },
-      { id: "interno-configuracoes", title: "7. Configuracoes" },
+      { id: "interno-historico", title: "6. Histórico" },
     ]
   },
   {
     id: "usuario-externo",
-    title: "Usuario Externo",
+    title: "Usuário Externo",
     icon: <Globe className="h-4 w-4" />,
     description: "Terceiros e Parceiros",
     subsections: [
       { id: "externo-email", title: "1. Recebendo o E-mail" },
       { id: "externo-acesso-link", title: "2. Acessando o Link" },
-      { id: "externo-verificacao", title: "3. Verificacao OTP" },
+      { id: "externo-verificacao", title: "3. Verificação OTP" },
       { id: "externo-download", title: "4. Download de Arquivos" },
       { id: "externo-problemas", title: "5. Problemas Comuns" },
     ]
@@ -131,7 +133,7 @@ const sections: Section[] = [
       { id: "supervisor-detalhes", title: "4. Detalhes do Compartilhamento" },
       { id: "supervisor-aprovar", title: "5. Aprovar Compartilhamento" },
       { id: "supervisor-rejeitar", title: "6. Rejeitar Compartilhamento" },
-      { id: "supervisor-auto-aprovacao", title: "7. Auto-Aprovacao" },
+      { id: "supervisor-auto-aprovacao", title: "7. Auto-Aprovação" },
       { id: "supervisor-auditoria", title: "8. Logs de Auditoria" },
       { id: "supervisor-equipe", title: "9. Gerenciar Equipe" },
     ]
@@ -144,7 +146,7 @@ const sections: Section[] = [
     subsections: [
       { id: "admin-acesso", title: "1. Acessando o Admin" },
       { id: "admin-logs", title: "2. Logs do Sistema" },
-      { id: "admin-rastreamento", title: "3. Rastreamento por Usuario" },
+      { id: "admin-rastreamento", title: "3. Rastreamento por Usuário" },
     ]
   },
 ]
@@ -383,15 +385,15 @@ function VisaoGeralSection() {
           </div>
           <div>
             <h2 className="text-2xl font-bold">Sobre o Sistema</h2>
-            <p className="text-muted-foreground">Sistema de Transferencia Segura de Arquivos</p>
+            <p className="text-muted-foreground">SCAC - Soluções de Compartilhamento de Arquivos Confidenciais</p>
           </div>
         </div>
         
         <div className="prose prose-gray dark:prose-invert max-w-none mb-8">
           <p className="text-lg text-muted-foreground leading-relaxed">
-            O <strong className="text-foreground">Sistema de Transferencia Segura de Arquivos</strong> da Petrobras e uma plataforma 
+            O <strong className="text-foreground">SCAC - Soluções de Compartilhamento de Arquivos Confidenciais</strong> da Petrobras é uma plataforma 
             desenvolvida para permitir o compartilhamento controlado e auditado de documentos com usuarios externos, 
-            como terceiros, parceiros e fornecedores, garantindo total conformidade com as politicas de seguranca da informacao.
+            como terceiros, parceiros e fornecedores, garantindo total conformidade com as políticas de segurança da informação.
           </p>
         </div>
         
@@ -399,31 +401,31 @@ function VisaoGeralSection() {
           <FeatureCard
             icon={<Shield className="h-8 w-8" />}
             title="Seguro"
-            description="Criptografia de ponta a ponta e autenticacao em duas etapas (OTP)"
+            description="Criptografia de ponta a ponta e autenticação em duas etapas (OTP)"
             color="green"
           />
           <FeatureCard
             icon={<Activity className="h-8 w-8" />}
             title="Auditado"
-            description="Todos os acessos, downloads e acoes sao registrados em log"
+            description="Todos os acessos, downloads e ações são registrados em log"
             color="blue"
           />
           <FeatureCard
             icon={<Clock className="h-8 w-8" />}
-            title="Controlado"
-            description="Links com data de expiracao e limite maximo de downloads"
+title="Controlado"
+                description="Links com data de expiração"
             color="amber"
           />
           <FeatureCard
             icon={<CheckCircle className="h-8 w-8" />}
             title="Aprovado"
-            description="Fluxo de aprovacao por supervisor antes do envio"
+            description="Fluxo de aprovação por supervisor antes do envio"
             color="purple"
           />
         </div>
 
         <InfoBox type="info" title="Conformidade">
-          O sistema foi desenvolvido para atender aos requisitos de seguranca da informacao da Petrobras, 
+          O sistema foi desenvolvido para atender aos requisitos de segurança da informação da Petrobras, 
           garantindo conformidade com as politicas internas de compartilhamento de dados e LGPD.
         </InfoBox>
       </section>
@@ -465,7 +467,7 @@ function VisaoGeralSection() {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-blue-500" />
-                    Criacao e aprovacao de compartilhamentos
+                    Criação e aprovação de compartilhamentos
                   </li>
                 </ul>
               </div>
@@ -480,7 +482,7 @@ function VisaoGeralSection() {
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
-                    Autenticacao via codigo OTP por e-mail
+                    Autenticação via código OTP por e-mail
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500" />
@@ -495,37 +497,6 @@ function VisaoGeralSection() {
                     Links com expiracao e limite de uso
                   </li>
                 </ul>
-              </div>
-            </div>
-
-            <div className="p-6 rounded-xl bg-muted/50 border">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <Database className="h-5 w-5 text-primary" />
-                </div>
-                <h4 className="font-semibold">Infraestrutura</h4>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div className="p-3 rounded-lg bg-background border text-center">
-                  <Server className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                  <p className="font-medium">Next.js 16</p>
-                  <p className="text-xs text-muted-foreground">Frontend</p>
-                </div>
-                <div className="p-3 rounded-lg bg-background border text-center">
-                  <Database className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                  <p className="font-medium">PostgreSQL</p>
-                  <p className="text-xs text-muted-foreground">Banco de Dados</p>
-                </div>
-                <div className="p-3 rounded-lg bg-background border text-center">
-                  <Shield className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                  <p className="font-medium">Entra ID</p>
-                  <p className="text-xs text-muted-foreground">Autenticacao</p>
-                </div>
-                <div className="p-3 rounded-lg bg-background border text-center">
-                  <HardDrive className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                  <p className="font-medium">S3/Blob</p>
-                  <p className="text-xs text-muted-foreground">Storage</p>
-                </div>
               </div>
             </div>
           </div>
@@ -587,7 +558,7 @@ function VisaoGeralSection() {
                 </div>
                 <p className="text-muted-foreground mb-4">
                   Responsavel por aprovar ou rejeitar os compartilhamentos criados pelos membros da sua equipe. 
-                  Possui acesso a logs de auditoria e pode criar compartilhamentos com auto-aprovacao.
+                  Possui acesso a logs de auditoria e pode criar compartilhamentos com auto-aprovação.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="default"><CheckCircle className="h-3 w-3" /> Aprovar/Rejeitar</Badge>
@@ -614,7 +585,7 @@ function VisaoGeralSection() {
                 </div>
                 <p className="text-muted-foreground mb-4">
                   Usuarios fora da rede Petrobras (terceiros, parceiros, fornecedores) que recebem arquivos compartilhados. 
-                  Acesso via link por e-mail com autenticacao OTP (codigo de verificacao).
+                  Acesso via link por e-mail com autenticação OTP (código de verificação).
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="default"><Mail className="h-3 w-3" /> Recebe E-mail</Badge>
@@ -639,15 +610,11 @@ function VisaoGeralSection() {
                   <Badge variant="info">Administrador do Sistema</Badge>
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  Administrador com acesso total ao sistema. Gerencia usuarios, visualiza todos os compartilhamentos, 
-                  acessa logs completos e pode rastrear atividades de qualquer usuario.
+                  Administrador com acesso total aos logs do sistema e rastreabilidade de todos os usuários.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="default"><BarChart3 className="h-3 w-3" /> Dashboard Completo</Badge>
-                  <Badge variant="default"><Users className="h-3 w-3" /> Gerenciar Usuarios</Badge>
                   <Badge variant="default"><Activity className="h-3 w-3" /> Logs do Sistema</Badge>
                   <Badge variant="default"><Eye className="h-3 w-3" /> Rastreamento</Badge>
-                  <Badge variant="default"><Settings className="h-3 w-3" /> Configuracoes</Badge>
                 </div>
               </div>
             </div>
@@ -683,11 +650,11 @@ function VisaoGeralSection() {
 
         <div className="mt-6 grid md:grid-cols-2 gap-4">
           <InfoBox type="tip" title="Fluxo Rapido para Supervisores">
-            Quando um supervisor cria um compartilhamento, o mesmo e aprovado automaticamente (auto-aprovacao), 
-            pulando a etapa de aguardar aprovacao.
+Quando um supervisor cria um compartilhamento, o mesmo é aprovado automaticamente (auto-aprovação),
+                pulando a etapa de aguardar aprovação.
           </InfoBox>
-          <InfoBox type="info" title="Notificacoes">
-            O sistema envia notificacoes por e-mail em cada etapa importante: criacao, aprovacao/rejeicao, 
+          <InfoBox type="info" title="Notificações">
+            O sistema envia notificações por e-mail em cada etapa importante: criação, aprovação/rejeição, 
             e quando o destinatario acessa o arquivo.
           </InfoBox>
         </div>
@@ -709,10 +676,10 @@ function UsuarioInternoSection() {
             <User className="h-7 w-7 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold mb-2">Guia do Usuario Interno</h2>
+            <h2 className="text-2xl font-bold mb-2">Guia do Usuário Interno</h2>
             <p className="text-muted-foreground">
-              Este guia detalha todas as funcionalidades disponiveis para colaboradores Petrobras, 
-              desde o login ate o gerenciamento de compartilhamentos.
+              Este guia detalha todas as funcionalidades disponíveis para colaboradores Petrobras, 
+              desde o login até o gerenciamento de compartilhamentos.
             </p>
           </div>
         </div>
@@ -732,8 +699,8 @@ function UsuarioInternoSection() {
             <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-xl">
               <FileText className="h-10 w-10 text-white" />
             </div>
-            <h3 className="text-2xl font-bold mb-2">Transferencia Segura</h3>
-            <p className="text-muted-foreground mb-8">Sistema de compartilhamento de arquivos da Petrobras</p>
+            <h3 className="text-2xl font-bold mb-2">SCAC</h3>
+            <p className="text-muted-foreground mb-8">Soluções de Compartilhamento de Arquivos Confidenciais - Petrobras</p>
             
             <div className="p-4 rounded-xl bg-gradient-to-r from-[#0078d4] to-[#106ebe] text-white cursor-pointer hover:opacity-90 transition-opacity shadow-lg">
               <div className="flex items-center justify-center gap-3">
@@ -778,7 +745,7 @@ function UsuarioInternoSection() {
           <StepCard 
             number={5} 
             title="Acesso Concedido" 
-            description="Apos a autenticacao, voce sera redirecionado ao dashboard do sistema."
+            description="Após a autenticação, você será redirecionado ao dashboard do sistema."
             icon={<CheckCircle className="h-5 w-5" />}
           />
         </div>
@@ -808,7 +775,7 @@ function UsuarioInternoSection() {
                 <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center">
                   <FileText className="h-5 w-5 text-white" />
                 </div>
-                <span className="font-semibold">Transferencia Segura</span>
+                <span className="font-semibold">SCAC</span>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted">
@@ -832,9 +799,9 @@ function UsuarioInternoSection() {
               <MetricCard label="Downloads" value="45" icon={<Download className="h-5 w-5" />} />
             </div>
 
-            {/* Acoes Rapidas */}
-            <div className="p-4 rounded-xl bg-muted/50 border">
-              <h4 className="font-semibold mb-3">Acoes Rapidas</h4>
+{/* Ações Rápidas */}
+            <div>
+              <h4 className="font-semibold mb-3">Ações Rápidas</h4>
               <div className="flex flex-wrap gap-3">
                 <ActionButton icon={<Upload className="h-4 w-4" />} label="Novo Upload" />
                 <ActionButton icon={<Send className="h-4 w-4" />} label="Compartilhar" variant="secondary" />
@@ -864,7 +831,7 @@ function UsuarioInternoSection() {
                 </div>
                 <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted transition-colors">
                   <Settings className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Configuracoes</span>
+                  <span className="text-sm">Configurações</span>
                 </div>
               </div>
             </div>
@@ -872,11 +839,11 @@ function UsuarioInternoSection() {
         </ScreenMockup>
 
         <div className="mt-6 grid md:grid-cols-2 gap-4">
-          <InfoBox type="info" title="Notificacoes">
-            O icone de sino mostra notificacoes importantes como aprovacoes, rejeicoes e downloads realizados.
+          <InfoBox type="info" title="Notificações">
+            O ícone de sino mostra notificações importantes como aprovações, rejeições e downloads realizados.
           </InfoBox>
           <InfoBox type="tip" title="Atalho Rapido">
-            Use as "Acoes Rapidas" para acessar rapidamente as funcionalidades mais utilizadas.
+            Use as "Ações Rápidas" para acessar rapidamente as funcionalidades mais utilizadas.
           </InfoBox>
         </div>
       </section>
@@ -1049,11 +1016,11 @@ function UsuarioInternoSection() {
               </div>
             </div>
 
-            {/* Passo 3: Configuracoes */}
-            <div className="p-5 rounded-xl border bg-card">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">3</div>
-                <h4 className="font-semibold">Configuracoes do Link</h4>
+{/* Passo 3: Configurações */}
+                  <div className="p-5 rounded-xl bg-muted/50">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">3</div>
+                      <h4 className="font-semibold">Configurações do Link</h4>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -1107,7 +1074,7 @@ function UsuarioInternoSection() {
         <div className="mt-6">
           <InfoBox type="info" title="Fluxo de Aprovacao">
             Apos criar o compartilhamento, ele sera enviado para seu supervisor aprovar. 
-            Somente apos a aprovacao o e-mail sera enviado ao destinatario externo.
+            Somente após a aprovação o e-mail será enviado ao destinatário externo.
           </InfoBox>
         </div>
       </section>
@@ -1175,7 +1142,7 @@ function UsuarioInternoSection() {
                     <Badge variant="warning"><Clock className="h-3 w-3" /> Pendente</Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">Para: maria@fornecedor.com</p>
-                  <p className="text-xs text-muted-foreground mt-1">Aguardando aprovacao do supervisor</p>
+                  <p className="text-xs text-muted-foreground mt-1">Aguardando aprovação do supervisor</p>
                 </div>
                 <div className="flex gap-2">
                   <button className="p-2 rounded-lg hover:bg-muted"><Eye className="h-4 w-4" /></button>
@@ -1210,7 +1177,7 @@ function UsuarioInternoSection() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-amber-500" />
-                <span className="text-sm"><strong>Pendente:</strong> Aguardando aprovacao do supervisor</span>
+                <span className="text-sm"><strong>Pendente:</strong> Aguardando aprovação do supervisor</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-green-500" />
@@ -1227,7 +1194,7 @@ function UsuarioInternoSection() {
             </div>
           </div>
           
-          <InfoBox type="tip" title="Acoes Disponiveis">
+          <InfoBox type="tip" title="Ações Disponíveis">
             <ul className="space-y-1 mt-2">
               <li><strong>Ver:</strong> Visualizar detalhes do compartilhamento</li>
               <li><strong>Copiar:</strong> Copiar link de download (se aprovado)</li>
@@ -1243,10 +1210,10 @@ function UsuarioInternoSection() {
           <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <History className="h-5 w-5 text-primary" />
           </div>
-          6. Historico
+          6. Histórico
         </h2>
 
-        <ScreenMockup title="Historico - /historico" description="Registro de todas as suas atividades no sistema">
+        <ScreenMockup title="Histórico - /historico" description="Registro de todas as suas atividades no sistema">
           <div className="space-y-4">
             <TableMockup 
               headers={["Data/Hora", "Acao", "Detalhes", "Status"]}
@@ -1281,51 +1248,6 @@ function UsuarioInternoSection() {
         </ScreenMockup>
       </section>
 
-      {/* 7. Configuracoes */}
-      <section id="interno-configuracoes" className="scroll-mt-20">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Settings className="h-5 w-5 text-primary" />
-          </div>
-          7. Configuracoes
-        </h2>
-
-        <ScreenMockup title="Configuracoes - /configuracoes" description="Preferencias e dados da conta">
-          <div className="max-w-xl mx-auto space-y-6">
-            <div className="p-5 rounded-xl border bg-card">
-              <h4 className="font-semibold mb-4">Perfil do Usuario</h4>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-8 w-8 text-primary" />
-                </div>
-                <div>
-                  <p className="font-semibold">Joao Silva</p>
-                  <p className="text-sm text-muted-foreground">joao.silva@petrobras.com.br</p>
-                  <Badge variant="info">Usuario Interno</Badge>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-5 rounded-xl border bg-card">
-              <h4 className="font-semibold mb-4">Preferencias de Notificacao</h4>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Notificar quando compartilhamento for aprovado</span>
-                  <div className="w-10 h-6 rounded-full bg-primary relative"><div className="absolute right-1 top-1 w-4 h-4 rounded-full bg-white" /></div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Notificar quando arquivo for baixado</span>
-                  <div className="w-10 h-6 rounded-full bg-primary relative"><div className="absolute right-1 top-1 w-4 h-4 rounded-full bg-white" /></div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Resumo semanal por e-mail</span>
-                  <div className="w-10 h-6 rounded-full bg-muted relative"><div className="absolute left-1 top-1 w-4 h-4 rounded-full bg-white" /></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </ScreenMockup>
-      </section>
     </div>
   )
 }
@@ -1370,7 +1292,7 @@ function UsuarioExternoSection() {
                   P
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold">Petrobras - Transferencia Segura</p>
+                  <p className="font-semibold">Petrobras - SCAC</p>
                   <p className="text-sm text-muted-foreground">noreply@petrobras.com.br</p>
                 </div>
                 <span className="text-xs text-muted-foreground">Hoje, 14:32</span>
@@ -1384,7 +1306,7 @@ function UsuarioExternoSection() {
                 <p>Ola <strong>Joao</strong>,</p>
                 <p>
                   <strong>Carlos Mendes</strong> da Petrobras compartilhou um arquivo com voce atraves do 
-                  Sistema de Transferencia Segura.
+                  SCAC - Soluções de Compartilhamento de Arquivos Confidenciais.
                 </p>
 
                 <div className="p-4 rounded-lg bg-muted/50 border">
@@ -1408,7 +1330,7 @@ function UsuarioExternoSection() {
                   <div className="flex items-start gap-2">
                     <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0" />
                     <div className="text-sm">
-                      <p className="font-medium text-amber-700 dark:text-amber-400">Informacoes Importantes:</p>
+                      <p className="font-medium text-amber-700 dark:text-amber-400">Informações Importantes:</p>
                       <ul className="mt-1 space-y-1 text-muted-foreground">
                         <li>• Este link expira em <strong>7 dias</strong></li>
                         <li>• Limite de <strong>5 downloads</strong></li>
@@ -1487,7 +1409,7 @@ function UsuarioExternoSection() {
               </div>
               <h3 className="text-xl font-bold mb-2">Digite o Codigo</h3>
               <p className="text-sm text-muted-foreground mb-6">
-                Enviamos um codigo de 6 digitos para <strong>joao@empresa.com</strong>
+                Enviamos um código de 6 dígitos para <strong>joao@empresa.com</strong>
               </p>
 
               <div className="flex justify-center gap-2 mb-6">
@@ -1502,11 +1424,11 @@ function UsuarioExternoSection() {
 
               <div className="mt-6 pt-4 border-t">
                 <p className="text-sm text-muted-foreground">
-                  Nao recebeu o codigo? 
+                  Não recebeu o código? 
                   <button className="text-primary font-medium ml-1">Reenviar</button>
                 </p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  O codigo expira em <strong>10 minutos</strong>
+                  O código expira em <strong>10 minutos</strong>
                 </p>
               </div>
             </div>
@@ -1522,14 +1444,14 @@ function UsuarioExternoSection() {
                 </div>
               </div>
 
-              <p className="text-sm mb-4">Seu codigo de verificacao e:</p>
+              <p className="text-sm mb-4">Seu código de verificação é:</p>
               
               <div className="p-4 rounded-lg bg-muted text-center mb-4">
                 <p className="text-3xl font-bold tracking-widest">847291</p>
               </div>
 
               <p className="text-xs text-muted-foreground">
-                Este codigo e valido por 10 minutos. Nao compartilhe com ninguem.
+                Este código é válido por 10 minutos. Não compartilhe com ninguém.
               </p>
             </div>
           </ScreenMockup>
@@ -1620,7 +1542,7 @@ function UsuarioExternoSection() {
           <div className="p-5 rounded-xl border bg-card">
             <h4 className="font-semibold mb-2 flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-amber-500" />
-              Nao recebi o e-mail com o codigo OTP
+              Não recebi o e-mail com o código OTP
             </h4>
             <ul className="text-sm text-muted-foreground space-y-1 ml-7">
               <li>• Verifique a pasta de Spam/Lixo Eletronico</li>
@@ -1633,7 +1555,7 @@ function UsuarioExternoSection() {
           <div className="p-5 rounded-xl border bg-card">
             <h4 className="font-semibold mb-2 flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-amber-500" />
-              Link expirado ou invalido
+              Link expirado ou inválido
             </h4>
             <ul className="text-sm text-muted-foreground space-y-1 ml-7">
               <li>• O link tem prazo de validade definido pelo remetente</li>
@@ -1645,22 +1567,11 @@ function UsuarioExternoSection() {
           <div className="p-5 rounded-xl border bg-card">
             <h4 className="font-semibold mb-2 flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-amber-500" />
-              Limite de downloads atingido
-            </h4>
-            <ul className="text-sm text-muted-foreground space-y-1 ml-7">
-              <li>• Cada link tem um limite de downloads</li>
-              <li>• Solicite ao remetente um novo compartilhamento com mais downloads</li>
-            </ul>
-          </div>
-
-          <div className="p-5 rounded-xl border bg-card">
-            <h4 className="font-semibold mb-2 flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-amber-500" />
               Codigo OTP expirado
             </h4>
             <ul className="text-sm text-muted-foreground space-y-1 ml-7">
-              <li>• O codigo e valido por apenas 10 minutos</li>
-              <li>• Clique em &quot;Reenviar codigo&quot; para receber um novo</li>
+              <li>• O código é válido por apenas 10 minutos</li>
+              <li>• Clique em &quot;Reenviar código&quot; para receber um novo</li>
             </ul>
           </div>
         </div>
@@ -1684,8 +1595,8 @@ function SupervisorSection() {
           <div>
             <h2 className="text-2xl font-bold mb-2">Guia do Supervisor</h2>
             <p className="text-muted-foreground">
-              Este guia detalha as funcionalidades exclusivas do supervisor, incluindo aprovacao de compartilhamentos, 
-              gerenciamento de equipe e visualizacao de logs de auditoria.
+              Este guia detalha as funcionalidades exclusivas do supervisor, incluindo aprovação de compartilhamentos, 
+              gerenciamento de equipe e visualização de logs de auditoria.
             </p>
           </div>
         </div>
@@ -1702,19 +1613,8 @@ function SupervisorSection() {
 
         <p className="text-muted-foreground mb-6">
           O acesso ao painel do supervisor e feito da mesma forma que o usuario interno (via SSO). 
-          Apos o login, o sistema detecta automaticamente seu perfil de supervisor e exibe as opcoes adicionais.
+          Após o login, o sistema detecta automaticamente seu perfil de supervisor e exibe as opções adicionais.
         </p>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <InfoBox type="info" title="Acesso Automatico">
-            Seu perfil de supervisor e configurado pelo Admin Global. Se voce deveria ter acesso de supervisor 
-            mas nao ve as opcoes, entre em contato com o administrador do sistema.
-          </InfoBox>
-          <InfoBox type="tip" title="Acesso Direto">
-            Apos o login, voce pode acessar diretamente o painel em <strong>/supervisor</strong> ou clicar 
-            no menu &quot;Painel do Supervisor&quot;.
-          </InfoBox>
-        </div>
       </section>
 
       {/* 2. Dashboard do Supervisor */}
@@ -1726,7 +1626,7 @@ function SupervisorSection() {
           2. Dashboard do Supervisor
         </h2>
 
-        <ScreenMockup title="Painel do Supervisor - /supervisor" description="Visao geral das aprovacoes e metricas da equipe">
+        <ScreenMockup title="Painel do Supervisor - /supervisor" description="Visão geral das aprovações e métricas da equipe">
           <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center gap-4">
@@ -1735,7 +1635,7 @@ function SupervisorSection() {
               </div>
               <div>
                 <h3 className="text-xl font-bold">Painel do Supervisor</h3>
-                <p className="text-sm text-muted-foreground">Gerencie aprovacoes, compartilhamentos e visualize logs</p>
+                <p className="text-sm text-muted-foreground">Gerencie aprovações, compartilhamentos e visualize logs</p>
               </div>
             </div>
 
@@ -1775,7 +1675,7 @@ function SupervisorSection() {
             <div className="flex gap-2 border-b">
               <button className="px-4 py-2 border-b-2 border-primary font-medium flex items-center gap-2">
                 <CheckCircle className="h-4 w-4" />
-                Aprovacoes
+                Aprovações
                 <span className="ml-1 px-2 py-0.5 rounded-full bg-amber-500 text-white text-xs">5</span>
               </button>
               <button className="px-4 py-2 text-muted-foreground flex items-center gap-2">
@@ -1796,7 +1696,7 @@ function SupervisorSection() {
           3. Lista de Pendentes
         </h2>
 
-        <ScreenMockup title="Aprovacoes Pendentes" description="Lista de compartilhamentos aguardando sua aprovacao">
+        <ScreenMockup title="Aprovações Pendentes" description="Lista de compartilhamentos aguardando sua aprovação">
           <div className="space-y-4">
             {/* Filtros */}
             <div className="flex items-center gap-3">
@@ -1873,11 +1773,11 @@ function SupervisorSection() {
 
         <ScreenMockup title="Detalhes - Compartilhamento #1234" description="Visualizacao completa antes de aprovar ou rejeitar">
           <div className="max-w-2xl mx-auto space-y-6">
-            {/* Informacoes do Arquivo */}
-            <div className="p-5 rounded-xl border bg-card">
-              <h4 className="font-semibold mb-4 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                Informacoes do Arquivo
+{/* Informações do Arquivo */}
+              <div>
+                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Informações do Arquivo
               </h4>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
@@ -1934,11 +1834,11 @@ function SupervisorSection() {
               </div>
             </div>
 
-            {/* Configuracoes */}
-            <div className="p-5 rounded-xl border bg-card">
-              <h4 className="font-semibold mb-4 flex items-center gap-2">
-                <Settings className="h-5 w-5 text-primary" />
-                Configuracoes do Link
+{/* Configurações */}
+              <div>
+                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Configurações do Link
               </h4>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
@@ -2030,7 +1930,7 @@ function SupervisorSection() {
           6. Rejeitar Compartilhamento
         </h2>
 
-        <ScreenMockup title="Motivo da Rejeicao" description="Informe o motivo da rejeicao para o solicitante">
+        <ScreenMockup title="Motivo da Rejeição" description="Informe o motivo da rejeição para o solicitante">
           <div className="max-w-md mx-auto">
             <div className="p-6 rounded-xl border bg-card">
               <div className="h-16 w-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
@@ -2038,7 +1938,7 @@ function SupervisorSection() {
               </div>
               <h3 className="text-xl font-bold mb-2 text-center">Rejeitar Compartilhamento</h3>
               <p className="text-muted-foreground mb-6 text-center">
-                Informe o motivo da rejeicao. O solicitante sera notificado.
+                Informe o motivo da rejeição. O solicitante será notificado.
               </p>
 
               <div className="space-y-4">
@@ -2057,7 +1957,7 @@ function SupervisorSection() {
                 <div>
                   <label className="text-sm font-medium mb-2 block">Comentarios Adicionais</label>
                   <textarea 
-                    placeholder="Adicione mais detalhes sobre a rejeicao..."
+                    placeholder="Adicione mais detalhes sobre a rejeição..."
                     className="w-full p-3 rounded-lg border bg-background resize-none h-24"
                   />
                 </div>
@@ -2086,20 +1986,20 @@ function SupervisorSection() {
       </section>
 
       {/* 7. Auto-Aprovacao */}
-      <section id="supervisor-auto-aprovacao" className="scroll-mt-20">
+<section id="supervisor-auto-aprovacao" className="scroll-mt-20">
         <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
             <Zap className="h-5 w-5 text-amber-600" />
           </div>
-          7. Auto-Aprovacao
+          7. Auto-Aprovação
         </h2>
 
         <p className="text-muted-foreground mb-6">
-          Como supervisor, voce pode criar compartilhamentos que sao aprovados automaticamente, 
-          sem necessidade de aprovacao de outro supervisor.
+          Como supervisor, seus próprios compartilhamentos são aprovados automaticamente, 
+          sem necessidade de aprovação de outro supervisor.
         </p>
 
-        <ScreenMockup title="Novo Compartilhamento (Supervisor)" description="Aviso de auto-aprovacao">
+        <ScreenMockup title="Novo Compartilhamento (Supervisor)" description="Aviso de auto-aprovação">
           <div className="max-w-md mx-auto">
             <div className="p-5 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-4">
               <div className="flex items-start gap-3">
@@ -2120,7 +2020,7 @@ function SupervisorSection() {
 
         <div className="mt-6">
           <InfoBox type="important" title="Responsabilidade">
-            A auto-aprovacao e um privilegio que exige responsabilidade. Todos os compartilhamentos 
+            A auto-aprovação é um privilégio que exige responsabilidade. Todos os compartilhamentos 
             sao registrados em log de auditoria e podem ser revisados pelo Admin Global.
           </InfoBox>
         </div>
@@ -2135,7 +2035,7 @@ function SupervisorSection() {
           8. Logs de Auditoria
         </h2>
 
-        <ScreenMockup title="Auditoria - /auditoria" description="Logs de acoes da sua equipe (somente visualizacao)">
+        <ScreenMockup title="Auditoria - /auditoria" description="Logs de ações da sua equipe (somente visualização)">
           <div className="space-y-4">
             <div className="flex items-center gap-3 pb-4 border-b">
               <select className="px-3 py-2 rounded-lg border bg-background text-sm">
@@ -2192,7 +2092,7 @@ function SupervisorSection() {
         <div className="mt-6">
           <InfoBox type="warning" title="Somente Leitura">
             Como supervisor, voce pode apenas <strong>visualizar</strong> os logs de auditoria da sua equipe. 
-            Somente o Admin Global pode exportar dados ou alterar configuracoes de auditoria.
+            Somente o Admin Global pode exportar dados ou alterar configurações de auditoria.
           </InfoBox>
         </div>
       </section>
@@ -2236,13 +2136,6 @@ function SupervisorSection() {
             />
           </div>
         </ScreenMockup>
-
-        <div className="mt-6">
-          <InfoBox type="info" title="Gerenciamento de Equipe">
-            A composicao da sua equipe e definida pelo Admin Global. Se precisar adicionar ou remover 
-            membros da equipe, entre em contato com o administrador do sistema.
-          </InfoBox>
-        </div>
       </section>
     </div>
   )
@@ -2264,15 +2157,15 @@ function AdminGlobalSection() {
             <h2 className="text-2xl font-bold mb-2">Guia do Admin Global</h2>
             <p className="text-muted-foreground">
               O Admin Global tem acesso exclusivo para visualizar os logs do sistema e 
-              realizar o rastreamento de atividades de todos os usuarios.
+              realizar o rastreamento de atividades de todos os usuários.
             </p>
           </div>
         </div>
       </div>
 
       <InfoBox type="important" title="Acesso Restrito">
-        O Admin Global tem acesso aos logs e rastreabilidade de todos os usuarios do sistema. 
-        Use este acesso com responsabilidade e siga as politicas de seguranca da informacao.
+        O Admin Global tem acesso aos logs e rastreabilidade de todos os usuários do sistema. 
+        Use este acesso com responsabilidade e siga as políticas de segurança da informação.
       </InfoBox>
 
       {/* 1. Acessando o Admin */}
@@ -2285,18 +2178,9 @@ function AdminGlobalSection() {
         </h2>
 
         <p className="text-muted-foreground mb-6">
-          O acesso ao painel administrativo e feito via SSO. Apos o login, o sistema detecta automaticamente 
-          seu perfil de administrador e libera o acesso ao menu &quot;Administracao&quot;.
+          O acesso ao painel administrativo é feito via SSO. Após o login, o sistema detecta automaticamente 
+          seu perfil de administrador e libera o acesso ao menu &quot;Administração&quot;.
         </p>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <InfoBox type="info" title="URL Direta">
-            Voce pode acessar diretamente o painel admin em <strong>/admin</strong> apos fazer login.
-          </InfoBox>
-          <InfoBox type="warning" title="Permissao Necessaria">
-            Somente usuarios com a flag <strong>is_admin = true</strong> no banco de dados tem acesso ao painel.
-          </InfoBox>
-        </div>
       </section>
 
       {/* 2. Logs do Sistema */}
@@ -2308,7 +2192,7 @@ function AdminGlobalSection() {
           2. Logs do Sistema
         </h2>
 
-        <ScreenMockup title="Aba Logs - /admin" description="Registro completo de todas as acoes do sistema">
+        <ScreenMockup title="Aba Logs - /admin" description="Registro completo de todas as ações do sistema">
           <div className="space-y-4">
             {/* Filtros */}
             <div className="flex flex-wrap gap-3">
@@ -2353,7 +2237,7 @@ function AdminGlobalSection() {
               <div className="p-3 rounded-lg border bg-amber-500/5 flex items-start gap-3">
                 <Badge variant="warning">WARN</Badge>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm"><strong>OTP_RETRY</strong> - joao@empresa.com tentou codigo OTP invalido (2/3)</p>
+                  <p className="text-sm"><strong>OTP_RETRY</strong> - joao@empresa.com tentou código OTP inválido (2/3)</p>
                   <p className="text-xs text-muted-foreground">IP: 189.45.67.89 | 22/05/2024 14:35:22</p>
                 </div>
               </div>
@@ -2379,8 +2263,8 @@ function AdminGlobalSection() {
 
         <div className="mt-6">
           <InfoBox type="tip" title="Dica">
-            Use os filtros para encontrar logs especificos. Voce pode filtrar por tipo de acao, 
-            nivel de severidade e data para facilitar a analise.
+            Use os filtros para encontrar logs específicos. Você pode filtrar por tipo de ação, 
+            nível de severidade e data para facilitar a análise.
           </InfoBox>
         </div>
       </section>
@@ -2394,13 +2278,13 @@ function AdminGlobalSection() {
           3. Rastreamento por Usuario
         </h2>
 
-        <ScreenMockup title="Aba Rastreamento - /admin" description="Acompanhamento detalhado de atividades por usuario">
+        <ScreenMockup title="Aba Rastreamento - /admin" description="Acompanhamento detalhado de atividades por usuário">
           <div className="space-y-6">
             {/* Busca */}
             <div className="flex gap-3">
               <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg border bg-background">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <input placeholder="Digite o e-mail do usuario para rastrear..." className="flex-1 bg-transparent outline-none text-sm" />
+                <input placeholder="Digite o e-mail do usuário para rastrear..." className="flex-1 bg-transparent outline-none text-sm" />
               </div>
               <ActionButton icon={<Search className="h-4 w-4" />} label="Rastrear" />
             </div>
@@ -2420,7 +2304,7 @@ function AdminGlobalSection() {
                   </div>
                 </div>
                 <div className="ml-auto text-right">
-                  <p className="text-sm text-muted-foreground">Ultimo login</p>
+                  <p className="text-sm">Último login</p>
                   <p className="font-medium">22/05/2024 14:32</p>
                 </div>
               </div>
@@ -2482,7 +2366,7 @@ function AdminGlobalSection() {
 
         <div className="mt-6">
           <InfoBox type="info" title="Funcionalidade">
-            O rastreamento permite visualizar todo o historico de atividades de um usuario especifico, 
+            O rastreamento permite visualizar todo o histórico de atividades de um usuário específico, 
             incluindo logins, uploads, compartilhamentos criados e downloads realizados.
           </InfoBox>
         </div>
@@ -2525,31 +2409,37 @@ export default function ManualDoUsuarioPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b shadow-sm">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-lg">
-                <Book className="h-6 w-6 text-white" />
-              </div>
+              <Image
+                src="/images/petrobras-logo.png"
+                alt="Petrobras"
+                width={48}
+                height={48}
+                className="object-contain"
+                priority
+              />
+              <div className="h-8 w-px bg-border hidden sm:block" />
               <div>
-                <h1 className="text-xl font-bold">Manual do Usuario</h1>
-                <p className="text-sm text-muted-foreground">Sistema de Transferencia Segura</p>
+                <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">Manual do Usuário</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground">SCAC - Soluções de Compartilhamento de Arquivos Confidenciais</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <Link
                 href="/"
-                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-green-600 to-green-700 text-white text-sm font-medium hover:from-green-700 hover:to-green-800 transition-all shadow-md hover:shadow-lg"
               >
                 <ExternalLink className="h-4 w-4" />
                 Voltar ao App
               </Link>
               <button 
-                className="md:hidden p-2 rounded-lg hover:bg-muted"
+                className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -2566,7 +2456,7 @@ export default function ManualDoUsuarioPage() {
             "lg:col-span-1",
             mobileMenuOpen ? "block" : "hidden lg:block"
           )}>
-            <nav className="sticky top-24 space-y-2 p-4 rounded-2xl border bg-card/50 backdrop-blur-sm">
+            <nav className="sticky top-24 space-y-2 p-4 rounded-2xl border bg-card/50 backdrop-blur-sm max-h-[calc(100vh-8rem)] overflow-y-auto">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">
                 Navegacao
               </p>
@@ -2613,15 +2503,23 @@ export default function ManualDoUsuarioPage() {
                   {section.subsections && expandedSections.includes(section.id) && (
                     <div className="ml-4 mt-1 space-y-1 pl-4 border-l-2 border-muted">
                       {section.subsections.map((sub) => (
-                        <a
+                        <button
                           key={sub.id}
-                          href={`#${sub.id}`}
-                          className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-                          onClick={() => setMobileMenuOpen(false)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors text-left"
+                          onClick={() => {
+                            setActiveSection(section.id)
+                            setMobileMenuOpen(false)
+                            setTimeout(() => {
+                              const element = document.getElementById(sub.id)
+                              if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                              }
+                            }, 100)
+                          }}
                         >
                           <ChevronRight className="h-3 w-3" />
                           {sub.title}
-                        </a>
+                        </button>
                       ))}
                     </div>
                   )}
@@ -2640,10 +2538,24 @@ export default function ManualDoUsuarioPage() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t mt-16 py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>Sistema de Transferencia Segura de Arquivos - Petrobras</p>
-          <p className="mt-1">Manual do Usuario v2.0 - Atualizado em Maio 2024</p>
+      <footer className="border-t mt-16 py-8 bg-gradient-to-b from-transparent to-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Image
+                src="/images/petrobras-logo.png"
+                alt="Petrobras"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
+              <div className="text-sm">
+                <p className="font-medium">SCAC - Soluções de Compartilhamento de Arquivos Confidenciais</p>
+                <p className="text-muted-foreground">Petrobras S.A.</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">Manual do Usuário v2.0 - Atualizado em Maio 2024</p>
+          </div>
         </div>
       </footer>
     </div>
