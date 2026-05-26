@@ -412,8 +412,8 @@ function VisaoGeralSection() {
           />
           <FeatureCard
             icon={<Clock className="h-8 w-8" />}
-            title="Controlado"
-            description="Links com data de expiracao e limite maximo de downloads"
+title="Controlado"
+                description="Links com data de expiracao"
             color="amber"
           />
           <FeatureCard
@@ -497,37 +497,6 @@ function VisaoGeralSection() {
                     Links com expiracao e limite de uso
                   </li>
                 </ul>
-              </div>
-            </div>
-
-            <div className="p-6 rounded-xl bg-muted/50 border">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <Database className="h-5 w-5 text-primary" />
-                </div>
-                <h4 className="font-semibold">Infraestrutura</h4>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div className="p-3 rounded-lg bg-background border text-center">
-                  <Server className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                  <p className="font-medium">Next.js 16</p>
-                  <p className="text-xs text-muted-foreground">Frontend</p>
-                </div>
-                <div className="p-3 rounded-lg bg-background border text-center">
-                  <Database className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                  <p className="font-medium">PostgreSQL</p>
-                  <p className="text-xs text-muted-foreground">Banco de Dados</p>
-                </div>
-                <div className="p-3 rounded-lg bg-background border text-center">
-                  <Shield className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                  <p className="font-medium">Entra ID</p>
-                  <p className="text-xs text-muted-foreground">Autenticacao</p>
-                </div>
-                <div className="p-3 rounded-lg bg-background border text-center">
-                  <HardDrive className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                  <p className="font-medium">S3/Blob</p>
-                  <p className="text-xs text-muted-foreground">Storage</p>
-                </div>
               </div>
             </div>
           </div>
@@ -2568,7 +2537,7 @@ export default function ManualDoUsuarioPage() {
             "lg:col-span-1",
             mobileMenuOpen ? "block" : "hidden lg:block"
           )}>
-            <nav className="sticky top-24 space-y-2 p-4 rounded-2xl border bg-card/50 backdrop-blur-sm">
+            <nav className="sticky top-24 space-y-2 p-4 rounded-2xl border bg-card/50 backdrop-blur-sm max-h-[calc(100vh-8rem)] overflow-y-auto">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">
                 Navegacao
               </p>
