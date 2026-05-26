@@ -2180,15 +2180,6 @@ function AdminGlobalSection() {
           O acesso ao painel administrativo é feito via SSO. Após o login, o sistema detecta automaticamente 
           seu perfil de administrador e libera o acesso ao menu &quot;Administração&quot;.
         </p>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <InfoBox type="info" title="URL Direta">
-            Você pode acessar diretamente o painel admin em <strong>/admin</strong> após fazer login.
-          </InfoBox>
-          <InfoBox type="warning" title="Permissão Necessária">
-            Somente usuários com a flag <strong>is_admin = true</strong> no banco de dados têm acesso ao painel.
-          </InfoBox>
-        </div>
       </section>
 
       {/* 2. Logs do Sistema */}
