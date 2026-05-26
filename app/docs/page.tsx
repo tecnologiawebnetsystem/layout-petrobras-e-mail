@@ -64,7 +64,9 @@ import {
   Calendar,
   Play,
   Pause,
-  RotateCcw
+  RotateCcw,
+  HardDrive,
+  ChevronLeft
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
