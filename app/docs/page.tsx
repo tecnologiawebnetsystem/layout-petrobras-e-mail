@@ -104,8 +104,7 @@ const sections: Section[] = [
       { id: "interno-upload", title: "3. Upload de Arquivos" },
       { id: "interno-criar-compartilhamento", title: "4. Criar Compartilhamento" },
       { id: "interno-compartilhamentos", title: "5. Meus Compartilhamentos" },
-      { id: "interno-historico", title: "6. Historico" },
-      { id: "interno-configuracoes", title: "7. Configuracoes" },
+      { id: "interno-historico", title: "6. Histórico" },
     ]
   },
   {
@@ -1248,51 +1247,6 @@ function UsuarioInternoSection() {
         </ScreenMockup>
       </section>
 
-      {/* 7. Configuracoes */}
-      <section id="interno-configuracoes" className="scroll-mt-20">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Settings className="h-5 w-5 text-primary" />
-          </div>
-          7. Configuracoes
-        </h2>
-
-        <ScreenMockup title="Configuracoes - /configuracoes" description="Preferencias e dados da conta">
-          <div className="max-w-xl mx-auto space-y-6">
-            <div className="p-5 rounded-xl border bg-card">
-              <h4 className="font-semibold mb-4">Perfil do Usuario</h4>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-8 w-8 text-primary" />
-                </div>
-                <div>
-                  <p className="font-semibold">Joao Silva</p>
-                  <p className="text-sm text-muted-foreground">joao.silva@petrobras.com.br</p>
-                  <Badge variant="info">Usuario Interno</Badge>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-5 rounded-xl border bg-card">
-              <h4 className="font-semibold mb-4">Preferencias de Notificacao</h4>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Notificar quando compartilhamento for aprovado</span>
-                  <div className="w-10 h-6 rounded-full bg-primary relative"><div className="absolute right-1 top-1 w-4 h-4 rounded-full bg-white" /></div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Notificar quando arquivo for baixado</span>
-                  <div className="w-10 h-6 rounded-full bg-primary relative"><div className="absolute right-1 top-1 w-4 h-4 rounded-full bg-white" /></div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Resumo semanal por e-mail</span>
-                  <div className="w-10 h-6 rounded-full bg-muted relative"><div className="absolute left-1 top-1 w-4 h-4 rounded-full bg-white" /></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </ScreenMockup>
-      </section>
     </div>
   )
 }
