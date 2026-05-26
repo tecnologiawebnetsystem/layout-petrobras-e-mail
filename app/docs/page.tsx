@@ -1614,17 +1614,6 @@ function SupervisorSection() {
           O acesso ao painel do supervisor e feito da mesma forma que o usuario interno (via SSO). 
           Apos o login, o sistema detecta automaticamente seu perfil de supervisor e exibe as opcoes adicionais.
         </p>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <InfoBox type="info" title="Acesso Automatico">
-            Seu perfil de supervisor e configurado pelo Admin Global. Se voce deveria ter acesso de supervisor 
-            mas nao ve as opcoes, entre em contato com o administrador do sistema.
-          </InfoBox>
-          <InfoBox type="tip" title="Acesso Direto">
-            Apos o login, voce pode acessar diretamente o painel em <strong>/supervisor</strong> ou clicar 
-            no menu &quot;Painel do Supervisor&quot;.
-          </InfoBox>
-        </div>
       </section>
 
       {/* 2. Dashboard do Supervisor */}
