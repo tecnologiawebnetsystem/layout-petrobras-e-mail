@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { getMsalInstance } from "@/lib/auth/msal-config"
 import { Suspense } from "react"
+import { FullPageLoader } from "@/components/ui/full-page-loader"
 
 function CallbackContent() {
   const router = useRouter()
@@ -110,15 +111,10 @@ function CallbackContent() {
   }, [router, setAuth])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center space-y-4">
-        <div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-foreground font-medium">Autenticando...</p>
-        <p className="text-muted-foreground text-sm">
-          Processando sua autenticacao com a Microsoft
-        </p>
-      </div>
-    </div>
+    <FullPageLoader 
+      message="Autenticando..." 
+      subMessage="Processando sua autenticacao com a Microsoft" 
+    />
   )
 }
 
@@ -126,9 +122,10 @@ export default function EntraCallbackPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
-        </div>
+        <FullPageLoader 
+          message="Carregando..." 
+          subMessage="Aguarde um momento" 
+        />
       }
     >
       <CallbackContent />
