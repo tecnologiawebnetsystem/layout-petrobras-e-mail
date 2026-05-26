@@ -1566,17 +1566,6 @@ function UsuarioExternoSection() {
           <div className="p-5 rounded-xl border bg-card">
             <h4 className="font-semibold mb-2 flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-amber-500" />
-              Limite de downloads atingido
-            </h4>
-            <ul className="text-sm text-muted-foreground space-y-1 ml-7">
-              <li>• Cada link tem um limite de downloads</li>
-              <li>• Solicite ao remetente um novo compartilhamento com mais downloads</li>
-            </ul>
-          </div>
-
-          <div className="p-5 rounded-xl border bg-card">
-            <h4 className="font-semibold mb-2 flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-amber-500" />
               Codigo OTP expirado
             </h4>
             <ul className="text-sm text-muted-foreground space-y-1 ml-7">
