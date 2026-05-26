@@ -385,13 +385,13 @@ function VisaoGeralSection() {
           </div>
           <div>
             <h2 className="text-2xl font-bold">Sobre o Sistema</h2>
-            <p className="text-muted-foreground">Sistema de Transferencia Segura de Arquivos</p>
+            <p className="text-muted-foreground">SCAC - Solucoes de Compartilhamento de Arquivos Confidenciais</p>
           </div>
         </div>
         
         <div className="prose prose-gray dark:prose-invert max-w-none mb-8">
           <p className="text-lg text-muted-foreground leading-relaxed">
-            O <strong className="text-foreground">Sistema de Transferencia Segura de Arquivos</strong> da Petrobras e uma plataforma 
+            O <strong className="text-foreground">SCAC - Solucoes de Compartilhamento de Arquivos Confidenciais</strong> da Petrobras e uma plataforma 
             desenvolvida para permitir o compartilhamento controlado e auditado de documentos com usuarios externos, 
             como terceiros, parceiros e fornecedores, garantindo total conformidade com as politicas de seguranca da informacao.
           </p>
@@ -734,8 +734,8 @@ function UsuarioInternoSection() {
             <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-xl">
               <FileText className="h-10 w-10 text-white" />
             </div>
-            <h3 className="text-2xl font-bold mb-2">Transferencia Segura</h3>
-            <p className="text-muted-foreground mb-8">Sistema de compartilhamento de arquivos da Petrobras</p>
+            <h3 className="text-2xl font-bold mb-2">SCAC</h3>
+            <p className="text-muted-foreground mb-8">Solucoes de Compartilhamento de Arquivos Confidenciais - Petrobras</p>
             
             <div className="p-4 rounded-xl bg-gradient-to-r from-[#0078d4] to-[#106ebe] text-white cursor-pointer hover:opacity-90 transition-opacity shadow-lg">
               <div className="flex items-center justify-center gap-3">
@@ -810,7 +810,7 @@ function UsuarioInternoSection() {
                 <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center">
                   <FileText className="h-5 w-5 text-white" />
                 </div>
-                <span className="font-semibold">Transferencia Segura</span>
+                <span className="font-semibold">SCAC</span>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted">
@@ -1372,7 +1372,7 @@ function UsuarioExternoSection() {
                   P
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold">Petrobras - Transferencia Segura</p>
+                  <p className="font-semibold">Petrobras - SCAC</p>
                   <p className="text-sm text-muted-foreground">noreply@petrobras.com.br</p>
                 </div>
                 <span className="text-xs text-muted-foreground">Hoje, 14:32</span>
@@ -1386,7 +1386,7 @@ function UsuarioExternoSection() {
                 <p>Ola <strong>Joao</strong>,</p>
                 <p>
                   <strong>Carlos Mendes</strong> da Petrobras compartilhou um arquivo com voce atraves do 
-                  Sistema de Transferencia Segura.
+                  SCAC - Solucoes de Compartilhamento de Arquivos Confidenciais.
                 </p>
 
                 <div className="p-4 rounded-lg bg-muted/50 border">
@@ -2537,8 +2537,8 @@ export default function ManualDoUsuarioPage() {
                 <Book className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold">Manual do Usuario</h1>
-                <p className="text-sm text-muted-foreground">Sistema de Transferencia Segura</p>
+<h1 className="text-xl font-bold">Manual do Usuario</h1>
+            <p className="text-sm text-muted-foreground">SCAC - Solucoes de Compartilhamento de Arquivos Confidenciais</p>
               </div>
             </div>
             
@@ -2644,7 +2644,7 @@ export default function ManualDoUsuarioPage() {
       {/* Footer */}
       <footer className="border-t mt-16 py-8">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>Sistema de Transferencia Segura de Arquivos - Petrobras</p>
+          <p>SCAC - Solucoes de Compartilhamento de Arquivos Confidenciais - Petrobras</p>
           <p className="mt-1">Manual do Usuario v2.0 - Atualizado em Maio 2024</p>
         </div>
       </footer>
