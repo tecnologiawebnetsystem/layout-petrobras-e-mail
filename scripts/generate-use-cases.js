@@ -11,23 +11,29 @@ const {
   BorderStyle,
   HeadingLevel,
   convertInchesToTwip,
+  PageBreak,
 } = require("docx");
 const fs = require("fs");
+
+// Cores Petrobras
+const PETROBRAS_GREEN = "007932";
+const PETROBRAS_DARK = "0b253e";
 
 // Função para criar célula de tabela
 function createCell(text, options = {}) {
   const { bold = false, header = false, width = 50 } = options;
   return new TableCell({
     width: { size: width, type: WidthType.PERCENTAGE },
-    shading: header ? { fill: "0b253e" } : undefined,
+    shading: header ? { fill: PETROBRAS_DARK } : undefined,
     children: [
       new Paragraph({
         children: [
           new TextRun({
             text,
             bold: bold || header,
-            color: header ? "FFFFFF" : "000000",
+            color: header ? "FFFFFF" : "333333",
             size: 22,
+            font: "Calibri",
           }),
         ],
       }),
@@ -94,6 +100,57 @@ function createUseCaseTable(useCase) {
   });
 }
 
+// Função para criar linha de metadado
+function createMetadataRow(label, value) {
+  return new Paragraph({
+    children: [
+      new TextRun({
+        text: label + " ",
+        bold: true,
+        color: "333333",
+        size: 22,
+        font: "Calibri",
+      }),
+      new TextRun({
+        text: value,
+        color: "333333",
+        size: 22,
+        font: "Calibri",
+      }),
+    ],
+    spacing: { after: 80 },
+  });
+}
+
+// Função para criar item de FAQ
+function createFAQItem(pergunta, resposta) {
+  return [
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: pergunta,
+          bold: true,
+          color: PETROBRAS_DARK,
+          size: 24,
+          font: "Calibri",
+        }),
+      ],
+      spacing: { before: 200, after: 100 },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: resposta,
+          color: "333333",
+          size: 22,
+          font: "Calibri",
+        }),
+      ],
+      spacing: { after: 200 },
+    }),
+  ];
+}
+
 // Casos de uso por perfil
 const useCases = {
   interno: [
@@ -111,13 +168,11 @@ const useCases = {
       id: "UC-INT-02",
       nome: "Criar Solicitação de Compartilhamento",
       ator: "Usuário Interno",
-      objetivo:
-        "Iniciar uma solicitação para compartilhar arquivos com usuários externos.",
+      objetivo: "Iniciar uma solicitação para compartilhar arquivos com usuários externos.",
       preCondicoes: "Usuário autenticado no sistema.",
       fluxoPrincipal:
         "1. Acessar 'Nova Solicitação' → 2. Informar dados do destinatário (nome, e-mail) → 3. Definir período de validade → 4. Salvar solicitação.",
-      posCondicoes:
-        "Solicitação criada com status 'Aguardando Upload'.",
+      posCondicoes: "Solicitação criada com status 'Aguardando Upload'.",
     },
     {
       id: "UC-INT-03",
@@ -127,8 +182,7 @@ const useCases = {
       preCondicoes: "Solicitação criada e em edição.",
       fluxoPrincipal:
         "1. Selecionar solicitação → 2. Clicar em 'Anexar Arquivos' → 3. Selecionar arquivos locais → 4. Confirmar upload → 5. Enviar para aprovação.",
-      posCondicoes:
-        "Arquivos anexados; solicitação enviada ao Supervisor.",
+      posCondicoes: "Arquivos anexados; solicitação enviada ao Supervisor.",
     },
     {
       id: "UC-INT-04",
@@ -146,38 +200,31 @@ const useCases = {
       id: "UC-SUP-01",
       nome: "Aprovar Solicitação de Compartilhamento",
       ator: "Supervisor",
-      objetivo:
-        "Autorizar o compartilhamento de arquivos solicitado por usuário interno.",
-      preCondicoes:
-        "Solicitação pendente de aprovação; Supervisor autenticado.",
+      objetivo: "Autorizar o compartilhamento de arquivos solicitado por usuário interno.",
+      preCondicoes: "Solicitação pendente de aprovação; Supervisor autenticado.",
       fluxoPrincipal:
         "1. Acessar 'Aprovações Pendentes' → 2. Selecionar solicitação → 3. Revisar arquivos e destinatário → 4. Clicar em 'Aprovar'.",
-      posCondicoes:
-        "Solicitação aprovada; link de acesso gerado e enviado ao externo.",
+      posCondicoes: "Solicitação aprovada; link de acesso gerado e enviado ao externo.",
     },
     {
       id: "UC-SUP-02",
       nome: "Rejeitar Solicitação de Compartilhamento",
       ator: "Supervisor",
       objetivo: "Negar uma solicitação de compartilhamento com justificativa.",
-      preCondicoes:
-        "Solicitação pendente de aprovação; Supervisor autenticado.",
+      preCondicoes: "Solicitação pendente de aprovação; Supervisor autenticado.",
       fluxoPrincipal:
         "1. Acessar 'Aprovações Pendentes' → 2. Selecionar solicitação → 3. Informar motivo da rejeição → 4. Clicar em 'Rejeitar'.",
-      posCondicoes:
-        "Solicitação rejeitada; solicitante notificado com justificativa.",
+      posCondicoes: "Solicitação rejeitada; solicitante notificado com justificativa.",
     },
     {
       id: "UC-SUP-03",
       nome: "Compartilhar Arquivos Diretamente",
       ator: "Supervisor",
-      objetivo:
-        "Realizar compartilhamento próprio sem necessidade de aprovação.",
+      objetivo: "Realizar compartilhamento próprio sem necessidade de aprovação.",
       preCondicoes: "Supervisor autenticado no sistema.",
       fluxoPrincipal:
         "1. Acessar 'Novo Compartilhamento' → 2. Informar destinatário → 3. Anexar arquivos → 4. Definir validade → 5. Confirmar envio.",
-      posCondicoes:
-        "Compartilhamento ativo; link enviado automaticamente ao externo.",
+      posCondicoes: "Compartilhamento ativo; link enviado automaticamente ao externo.",
     },
     {
       id: "UC-SUP-04",
@@ -247,8 +294,7 @@ const useCases = {
       id: "UC-ADM-02",
       nome: "Gerar Relatório de Compartilhamentos",
       ator: "Administrador",
-      objetivo:
-        "Produzir relatório consolidado de compartilhamentos realizados.",
+      objetivo: "Produzir relatório consolidado de compartilhamentos realizados.",
       preCondicoes: "Administrador autenticado.",
       fluxoPrincipal:
         "1. Acessar 'Relatórios' → 2. Selecionar tipo 'Compartilhamentos' → 3. Definir período → 4. Gerar e exportar (PDF/Excel).",
@@ -258,8 +304,7 @@ const useCases = {
       id: "UC-ADM-03",
       nome: "Analisar Acessos Externos",
       ator: "Administrador",
-      objetivo:
-        "Monitorar padrões de acesso de usuários externos aos arquivos.",
+      objetivo: "Monitorar padrões de acesso de usuários externos aos arquivos.",
       preCondicoes: "Administrador autenticado; dados de acesso disponíveis.",
       fluxoPrincipal:
         "1. Acessar 'Dashboard de Acessos' → 2. Visualizar métricas (total, por período) → 3. Identificar acessos por destinatário → 4. Exportar dados.",
@@ -269,8 +314,7 @@ const useCases = {
       id: "UC-ADM-04",
       nome: "Identificar Inconsistências",
       ator: "Administrador",
-      objetivo:
-        "Detectar e investigar comportamentos anômalos ou falhas no sistema.",
+      objetivo: "Detectar e investigar comportamentos anômalos ou falhas no sistema.",
       preCondicoes: "Administrador autenticado.",
       fluxoPrincipal:
         "1. Acessar 'Monitoramento' → 2. Revisar alertas de inconsistências → 3. Analisar detalhes do evento → 4. Registrar observações.",
@@ -278,6 +322,60 @@ const useCases = {
     },
   ],
 };
+
+// FAQ - Perguntas Frequentes
+const faq = [
+  {
+    pergunta: "1. O que é o SCAC?",
+    resposta:
+      "O SCAC (Sistema de Compartilhamento de Arquivos Confidenciais) é uma plataforma segura desenvolvida para permitir o compartilhamento controlado de documentos confidenciais com usuários externos autorizados, garantindo rastreabilidade, auditoria e conformidade com as políticas de segurança da Petrobras.",
+  },
+  {
+    pergunta: "2. Quem pode utilizar o sistema?",
+    resposta:
+      "O sistema possui quatro perfis de usuário: Usuário Interno (funcionários que iniciam compartilhamentos), Supervisor (responsável por aprovar solicitações), Usuário Externo (destinatário que recebe os arquivos) e Administrador (responsável por auditoria e monitoramento).",
+  },
+  {
+    pergunta: "3. Como funciona a autenticação para usuários internos?",
+    resposta:
+      "Usuários internos (funcionários Petrobras) realizam autenticação através do Entra ID (Microsoft), utilizando suas credenciais corporativas. O sistema valida automaticamente as permissões baseadas nos grupos do diretório corporativo.",
+  },
+  {
+    pergunta: "4. Como o usuário externo acessa os arquivos?",
+    resposta:
+      "O usuário externo recebe um link seguro por e-mail. Ao clicar, é direcionado para uma página de autenticação onde deve informar um código OTP (One-Time Password) enviado para seu e-mail cadastrado. Após validação, os arquivos ficam disponíveis para download.",
+  },
+  {
+    pergunta: "5. Por quanto tempo o link de compartilhamento fica válido?",
+    resposta:
+      "O período de validade é definido pelo usuário interno no momento da criação da solicitação. Após expirar, o link torna-se inválido e o usuário externo não conseguirá mais acessar os arquivos.",
+  },
+  {
+    pergunta: "6. O Supervisor precisa aprovar todos os compartilhamentos?",
+    resposta:
+      "Sim, todas as solicitações criadas por usuários internos passam por aprovação do Supervisor. Porém, quando o próprio Supervisor realiza um compartilhamento direto, não é necessária aprovação adicional.",
+  },
+  {
+    pergunta: "7. O sistema registra todas as atividades?",
+    resposta:
+      "Sim. O SCAC possui recursos completos de auditoria e rastreabilidade. Todas as ações são registradas, incluindo: criação de solicitações, uploads, aprovações, rejeições, acessos externos e downloads. O Administrador pode consultar esses logs a qualquer momento.",
+  },
+  {
+    pergunta: "8. Quais relatórios estão disponíveis?",
+    resposta:
+      "O sistema oferece relatórios de compartilhamentos realizados, acessos externos, histórico de aprovações e análise de inconsistências. Os relatórios podem ser exportados em formato PDF ou Excel.",
+  },
+  {
+    pergunta: "9. O que acontece se minha solicitação for rejeitada?",
+    resposta:
+      "Quando o Supervisor rejeita uma solicitação, o usuário interno que a criou recebe uma notificação com a justificativa da rejeição. O usuário pode então criar uma nova solicitação corrigindo os pontos indicados.",
+  },
+  {
+    pergunta: "10. Qual infraestrutura é utilizada pelo sistema?",
+    resposta:
+      "O SCAC utiliza infraestrutura em nuvem AWS com arquitetura containerizada por Amazon ECS, garantindo alta disponibilidade, escalabilidade e segurança dos dados.",
+  },
+];
 
 // Criar o documento
 const doc = new Document({
@@ -294,33 +392,129 @@ const doc = new Document({
         },
       },
       children: [
+        // ==================== CABEÇALHO ====================
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: "PETROBRAS",
+              bold: true,
+              color: PETROBRAS_GREEN,
+              size: 36,
+              font: "Calibri",
+            }),
+          ],
+          spacing: { after: 300 },
+        }),
+
         // Título principal
         new Paragraph({
-          text: "SCAC - Sistema de Compartilhamento de Arquivos Confidenciais",
-          heading: HeadingLevel.TITLE,
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 200 },
+          children: [
+            new TextRun({
+              text: "SCAC - Solução de Compartilhamento de Arquivos Confidenciais",
+              bold: true,
+              color: PETROBRAS_DARK,
+              size: 36,
+              font: "Calibri",
+            }),
+          ],
+          spacing: { after: 300 },
+        }),
+
+        // Metadados do projeto
+        createMetadataRow("Código:", "12022"),
+        createMetadataRow("Sigla:", "SCAC / SI-CSA"),
+        createMetadataRow("Líder Técnico:", "Isaac Henriques Francisco Pereira"),
+        createMetadataRow("Área Responsável:", "TIC/ARQTIC/ARQNUV"),
+        createMetadataRow("PO / Cliente:", "Wagner Gaspar Brazil"),
+        createMetadataRow("Área Cliente:", "SI/SDAA/SEGDA"),
+        createMetadataRow("Tipo Infraestrutura:", "Cloud AWS utilizando arquitetura containerizada por Amazon ECS"),
+
+        new Paragraph({ text: "", spacing: { after: 400 } }),
+
+        // ==================== DESCRIÇÃO DO SISTEMA ====================
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: "1. Descrição do Sistema",
+              bold: true,
+              color: PETROBRAS_DARK,
+              size: 28,
+              font: "Calibri",
+            }),
+          ],
+          spacing: { before: 200, after: 200 },
         }),
         new Paragraph({
-          text: "Documento de Casos de Uso",
-          heading: HeadingLevel.HEADING_1,
-          alignment: AlignmentType.CENTER,
+          children: [
+            new TextRun({
+              text: "O SCAC (Sistema de Compartilhamento de Arquivos Confidenciais) é uma plataforma segura para compartilhamento de arquivos confidenciais com usuários externos autorizados. A solução contempla autenticação corporativa, autorização baseada em grupos, upload de arquivos, compartilhamento seguro, fluxo de aprovação gerencial, autenticação externa via OTP, auditoria, rastreabilidade e geração de relatórios.",
+              color: "333333",
+              size: 22,
+              font: "Calibri",
+            }),
+          ],
+          spacing: { after: 200 },
+        }),
+
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: "Limites do escopo: ",
+              bold: true,
+              color: "333333",
+              size: 22,
+              font: "Calibri",
+            }),
+            new TextRun({
+              text: "O sistema não contempla gerenciamento administrativo de usuários, gerenciamento de grupos do Entra ID, gerenciamento direto de políticas Purview e administração da infraestrutura AWS.",
+              color: "333333",
+              size: 22,
+              font: "Calibri",
+            }),
+          ],
           spacing: { after: 400 },
         }),
 
-        // Seção: Usuário Interno
+        // ==================== CASOS DE USO ====================
         new Paragraph({
-          text: "1. Usuário Interno",
-          heading: HeadingLevel.HEADING_1,
-          spacing: { before: 400, after: 200 },
+          children: [
+            new TextRun({
+              text: "2. Casos de Uso",
+              bold: true,
+              color: PETROBRAS_DARK,
+              size: 28,
+              font: "Calibri",
+            }),
+          ],
+          spacing: { before: 200, after: 300 },
+        }),
+
+        // 2.1 Usuário Interno
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: "2.1 Usuário Interno",
+              bold: true,
+              color: PETROBRAS_DARK,
+              size: 26,
+              font: "Calibri",
+            }),
+          ],
+          spacing: { before: 200, after: 100 },
         }),
         new Paragraph({
           children: [
             new TextRun({
               text: "Objetivo: ",
               bold: true,
+              size: 22,
+              font: "Calibri",
             }),
-            new TextRun("Iniciar processos de compartilhamento de arquivos."),
+            new TextRun({
+              text: "Iniciar processos de compartilhamento de arquivos.",
+              size: 22,
+              font: "Calibri",
+            }),
           ],
           spacing: { after: 200 },
         }),
@@ -329,19 +523,32 @@ const doc = new Document({
           new Paragraph({ text: "", spacing: { after: 200 } }),
         ]),
 
-        // Seção: Supervisor
+        // 2.2 Supervisor
         new Paragraph({
-          text: "2. Supervisor",
-          heading: HeadingLevel.HEADING_1,
-          spacing: { before: 400, after: 200 },
+          children: [
+            new TextRun({
+              text: "2.2 Supervisor",
+              bold: true,
+              color: PETROBRAS_DARK,
+              size: 26,
+              font: "Calibri",
+            }),
+          ],
+          spacing: { before: 300, after: 100 },
         }),
         new Paragraph({
           children: [
             new TextRun({
               text: "Objetivo: ",
               bold: true,
+              size: 22,
+              font: "Calibri",
             }),
-            new TextRun("Realizar governança do compartilhamento."),
+            new TextRun({
+              text: "Realizar governança do compartilhamento.",
+              size: 22,
+              font: "Calibri",
+            }),
           ],
           spacing: { after: 200 },
         }),
@@ -350,19 +557,32 @@ const doc = new Document({
           new Paragraph({ text: "", spacing: { after: 200 } }),
         ]),
 
-        // Seção: Usuário Externo
+        // 2.3 Usuário Externo
         new Paragraph({
-          text: "3. Usuário Externo",
-          heading: HeadingLevel.HEADING_1,
-          spacing: { before: 400, after: 200 },
+          children: [
+            new TextRun({
+              text: "2.3 Usuário Externo",
+              bold: true,
+              color: PETROBRAS_DARK,
+              size: 26,
+              font: "Calibri",
+            }),
+          ],
+          spacing: { before: 300, after: 100 },
         }),
         new Paragraph({
           children: [
             new TextRun({
               text: "Objetivo: ",
               bold: true,
+              size: 22,
+              font: "Calibri",
             }),
-            new TextRun("Acessar arquivos autorizados de forma segura."),
+            new TextRun({
+              text: "Acessar arquivos autorizados de forma segura.",
+              size: 22,
+              font: "Calibri",
+            }),
           ],
           spacing: { after: 200 },
         }),
@@ -371,19 +591,32 @@ const doc = new Document({
           new Paragraph({ text: "", spacing: { after: 200 } }),
         ]),
 
-        // Seção: Administrador
+        // 2.4 Administrador
         new Paragraph({
-          text: "4. Administrador",
-          heading: HeadingLevel.HEADING_1,
-          spacing: { before: 400, after: 200 },
+          children: [
+            new TextRun({
+              text: "2.4 Administrador",
+              bold: true,
+              color: PETROBRAS_DARK,
+              size: 26,
+              font: "Calibri",
+            }),
+          ],
+          spacing: { before: 300, after: 100 },
         }),
         new Paragraph({
           children: [
             new TextRun({
               text: "Objetivo: ",
               bold: true,
+              size: 22,
+              font: "Calibri",
             }),
-            new TextRun("Auditoria e monitoramento do sistema."),
+            new TextRun({
+              text: "Auditoria e monitoramento do sistema.",
+              size: 22,
+              font: "Calibri",
+            }),
           ],
           spacing: { after: 200 },
         }),
@@ -391,6 +624,24 @@ const doc = new Document({
           createUseCaseTable(uc),
           new Paragraph({ text: "", spacing: { after: 200 } }),
         ]),
+
+        // ==================== FAQ ====================
+        new Paragraph({
+          children: [new PageBreak()],
+        }),
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: "3. Perguntas Frequentes (FAQ)",
+              bold: true,
+              color: PETROBRAS_DARK,
+              size: 28,
+              font: "Calibri",
+            }),
+          ],
+          spacing: { before: 200, after: 300 },
+        }),
+        ...faq.flatMap((item) => createFAQItem(item.pergunta, item.resposta)),
       ],
     },
   ],
