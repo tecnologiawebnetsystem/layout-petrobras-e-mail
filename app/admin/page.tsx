@@ -52,7 +52,13 @@ import {
   FileSpreadsheet,
   FileType,
   Filter,
+  Upload,
+  Share2,
+  Ban,
+  Calendar,
+  CheckCircle2,
 } from "lucide-react"
+import { AdminUploadForm } from "@/components/admin/admin-upload-form"
 import {
   Dialog,
   DialogContent,
@@ -232,6 +238,12 @@ const [trackingError, setTrackingError] = useState("")
   const [exportIncludeAll, setExportIncludeAll] = useState(true)
   const [exportLoading, setExportLoading] = useState(false)
 
+  // Meus Compartilhamentos state (admin)
+  const [myShares, setMyShares] = useState<ShareItem[]>([])
+  const [mySharesLoading, setMySharesLoading] = useState(false)
+  const [mySharesSearch, setMySharesSearch] = useState("")
+  const [mySharesStatusFilter, setMySharesStatusFilter] = useState("all")
+
   // Initial load
   useEffect(() => {
     if (!_hasHydrated) return
@@ -328,6 +340,27 @@ const [trackingError, setTrackingError] = useState("")
       setAvailableActions(data.actions)
     } catch (error) {
       console.error("[Admin] Erro ao carregar acoes:", error)
+    }
+  }
+
+  // Load my shares (admin's own shares)
+  const loadMyShares = async () => {
+    setMySharesLoading(true)
+    try {
+      const params = new URLSearchParams({ limit: "100" })
+      if (mySharesSearch) params.set("search", mySharesSearch)
+      if (mySharesStatusFilter !== "all") params.set("status", mySharesStatusFilter)
+      // Filter by current user (admin)
+      if (user?.id) params.set("created_by", String(user.id))
+
+      const data = await apiFetch<{ shares: ShareItem[] }>(
+        `/admin/shares?${params.toString()}`
+      )
+      setMyShares(data.shares)
+    } catch (error) {
+      console.error("[Admin] Erro ao carregar meus compartilhamentos:", error)
+    } finally {
+      setMySharesLoading(false)
     }
   }
 
@@ -637,6 +670,11 @@ const [trackingError, setTrackingError] = useState("")
     if (availableActions.length === 0) loadActions()
   }, [activeTab, logsPage, logsSearch, logsActionFilter, pageLoading])
 
+  useEffect(() => {
+    if (pageLoading || activeTab !== "meus-compartilhamentos") return
+    loadMyShares()
+  }, [activeTab, mySharesSearch, mySharesStatusFilter, pageLoading, user?.id])
+
   // Helpers
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "-"
@@ -859,10 +897,18 @@ const [trackingError, setTrackingError] = useState("")
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="compartilhar" className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              Compartilhar
+            </TabsTrigger>
+            <TabsTrigger value="meus-compartilhamentos" className="flex items-center gap-2">
+              <Share2 className="h-4 w-4" />
+              Meus Envios
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -870,7 +916,7 @@ const [trackingError, setTrackingError] = useState("")
             </TabsTrigger>
             <TabsTrigger value="shares" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Compartilhamentos
+              Todos Shares
             </TabsTrigger>
             <TabsTrigger value="logs" className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
@@ -1073,6 +1119,243 @@ const [trackingError, setTrackingError] = useState("")
                   </Card>
                 </div>
               </>
+            )}
+          </TabsContent>
+
+          {/* Compartilhar Tab */}
+          <TabsContent value="compartilhar" className="space-y-6">
+            <AdminUploadForm />
+          </TabsContent>
+
+          {/* Meus Compartilhamentos Tab */}
+          <TabsContent value="meus-compartilhamentos" className="space-y-6">
+            {/* Cards de Metricas */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              <Card
+                className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${mySharesStatusFilter === "all" ? "ring-2 ring-secondary shadow-lg" : ""}`}
+                onClick={() => setMySharesStatusFilter("all")}
+              >
+                <CardContent className="p-4 md:p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-secondary/10 to-secondary/5 flex items-center justify-center">
+                      <FileText className="h-6 w-6 text-secondary" />
+                    </div>
+                    <div>
+                      <p className="text-2xl md:text-3xl font-bold text-foreground">
+                        {myShares.length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Total</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card
+                className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${mySharesStatusFilter === "pending" ? "ring-2 ring-amber-500 shadow-lg" : ""}`}
+                onClick={() => setMySharesStatusFilter("pending")}
+              >
+                <CardContent className="p-4 md:p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 flex items-center justify-center">
+                      <Clock className="h-6 w-6 text-amber-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl md:text-3xl font-bold text-foreground">
+                        {myShares.filter((s) => s.status === "pending").length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Aguardando</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card
+                className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${mySharesStatusFilter === "approved" ? "ring-2 ring-emerald-500 shadow-lg" : ""}`}
+                onClick={() => setMySharesStatusFilter("approved")}
+              >
+                <CardContent className="p-4 md:p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 flex items-center justify-center">
+                      <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl md:text-3xl font-bold text-foreground">
+                        {myShares.filter((s) => s.status === "approved" || s.status === "active").length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Aprovados</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card
+                className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${mySharesStatusFilter === "rejected" ? "ring-2 ring-red-500 shadow-lg" : ""}`}
+                onClick={() => setMySharesStatusFilter("rejected")}
+              >
+                <CardContent className="p-4 md:p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-red-500/10 to-red-500/5 flex items-center justify-center">
+                      <XCircle className="h-6 w-6 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl md:text-3xl font-bold text-foreground">
+                        {myShares.filter((s) => s.status === "rejected").length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Rejeitados</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card
+                className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${mySharesStatusFilter === "expired" ? "ring-2 ring-gray-500 shadow-lg" : ""}`}
+                onClick={() => setMySharesStatusFilter("expired")}
+              >
+                <CardContent className="p-4 md:p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-gray-500/10 to-gray-500/5 flex items-center justify-center">
+                      <Ban className="h-6 w-6 text-gray-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl md:text-3xl font-bold text-foreground">
+                        {myShares.filter((s) => s.status === "expired" || s.status === "cancelled").length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Expirados</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Barra de busca */}
+            <Card className="bg-card/50 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Buscar por nome ou destinatario..."
+                      value={mySharesSearch}
+                      onChange={(e) => setMySharesSearch(e.target.value)}
+                      className="pl-10 h-12 text-base"
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={loadMyShares}
+                    className="gap-2 h-12"
+                    disabled={mySharesLoading}
+                  >
+                    <RefreshCw className={`h-4 w-4 ${mySharesLoading ? "animate-spin" : ""}`} />
+                    Atualizar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Lista de Compartilhamentos */}
+            {mySharesLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : myShares.length === 0 ? (
+              <Card className="p-12 text-center bg-card/50 backdrop-blur-sm">
+                <div className="h-20 w-20 rounded-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center mx-auto mb-6">
+                  <FileText className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">
+                  Nenhum compartilhamento encontrado
+                </h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Voce ainda nao realizou nenhum compartilhamento. Use a aba "Compartilhar" para enviar seus arquivos.
+                </p>
+                <Button
+                  onClick={() => setActiveTab("compartilhar")}
+                  className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Fazer Primeiro Compartilhamento
+                </Button>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {myShares
+                  .filter((s) => {
+                    if (mySharesStatusFilter === "all") return true
+                    if (mySharesStatusFilter === "approved") return s.status === "approved" || s.status === "active"
+                    if (mySharesStatusFilter === "expired") return s.status === "expired" || s.status === "cancelled"
+                    return s.status === mySharesStatusFilter
+                  })
+                  .map((share) => (
+                    <Card 
+                      key={share.id} 
+                      className={`overflow-hidden transition-all hover:shadow-lg border-l-4 ${
+                        share.status === "pending" ? "border-l-amber-500" :
+                        share.status === "approved" || share.status === "active" ? "border-l-emerald-500" :
+                        share.status === "rejected" ? "border-l-red-500" :
+                        "border-l-gray-400"
+                      }`}
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-4 flex-1">
+                            <div className={`p-3 rounded-xl ${
+                              share.status === "pending" ? "bg-amber-100" :
+                              share.status === "approved" || share.status === "active" ? "bg-emerald-100" :
+                              share.status === "rejected" ? "bg-red-100" :
+                              "bg-gray-100"
+                            }`}>
+                              <FileText className={`h-6 w-6 ${
+                                share.status === "pending" ? "text-amber-600" :
+                                share.status === "approved" || share.status === "active" ? "text-emerald-600" :
+                                share.status === "rejected" ? "text-red-600" :
+                                "text-gray-600"
+                              }`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="text-lg font-semibold text-foreground truncate">{share.name || "Sem nome"}</h3>
+                                {getStatusBadge(share.status)}
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                  <Mail className="h-4 w-4 flex-shrink-0" />
+                                  <span className="truncate">
+                                    <span className="font-medium">Destinatario:</span> {share.external_email}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                  <FileText className="h-4 w-4 flex-shrink-0" />
+                                  <span className="truncate">
+                                    <span className="font-medium">Arquivos:</span> {share.files_count}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  Criado: {formatDate(share.created_at)}
+                                </span>
+                                {share.expires_at && (
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    Expira: {formatDate(share.expires_at)}
+                                  </span>
+                                )}
+                              </div>
+                              {share.approver && (
+                                <div className="mt-2 text-xs text-muted-foreground">
+                                  <span className="font-medium">Aprovado por:</span> {share.approver.name}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
             )}
           </TabsContent>
 
