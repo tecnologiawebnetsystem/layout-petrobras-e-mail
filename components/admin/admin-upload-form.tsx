@@ -1,0 +1,422 @@
+"use client";
+
+import type React from "react";
+import { useState } from "react";
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { useWorkflowStore } from "@/lib/stores/workflow-store";
+import { DragDropZone } from "@/components/upload/drag-drop-zone";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { NotificationModal } from "@/components/shared/notification-modal";
+import { Lock, Send, Sparkles, Clock, AlertTriangle, Shield } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { UploadSuccessModal } from "@/components/upload/upload-success-modal";
+
+export function AdminUploadForm() {
+  const { user } = useAuthStore();
+  const { loadUploads } = useWorkflowStore();
+  const [recipient, setRecipient] = useState("");
+  const [description, setDescription] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [expirationHours, setExpirationHours] = useState<number>(168);
+  const [isLoading, setIsLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [notification, setNotification] = useState<{
+    show: boolean;
+    type: "success" | "error" | "warning" | "info";
+    title: string;
+    message: string;
+  }>({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+  });
+
+  const [uploadSuccessData, setUploadSuccessData] = useState<{
+    name: string;
+    recipient: string;
+    files: Array<{ name: string; size: string; type: string }>;
+    expirationHours: number;
+    senderEmail: string;
+  } | null>(null);
+
+  // O supervisor do admin (gerente do admin)
+  const supervisorDoAdmin = user?.manager;
+
+  const handleFilesSelected = async (newFiles: File[]) => {
+    const dangerousExtensions = [
+      ".exe",
+      ".dll",
+      ".bat",
+      ".cmd",
+      ".com",
+      ".msi",
+      ".scr",
+      ".vbs",
+      ".ps1",
+      ".sh",
+    ];
+    const blockedFiles: string[] = [];
+
+    for (const file of newFiles) {
+      const extension = "." + file.name.split(".").pop()?.toLowerCase();
+      if (dangerousExtensions.includes(extension)) {
+        blockedFiles.push(file.name);
+      }
+    }
+
+    if (blockedFiles.length > 0) {
+      setNotification({
+        show: true,
+        type: "error",
+        title: "Arquivos Bloqueados por Seguranca",
+        message: `Os seguintes arquivos nao podem ser enviados por motivos de seguranca: ${blockedFiles.join(", ")}. Extensoes bloqueadas: .exe, .dll, .bat, .cmd, .com, .msi, .scr, .vbs, .ps1, .sh`,
+      });
+      return;
+    }
+
+    setFiles((prev) => [...prev, ...newFiles]);
+  };
+
+  const handleFileRemove = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!recipient) {
+      setNotification({
+        show: true,
+        type: "warning",
+        title: "Campo obrigatorio",
+        message: "Por favor, informe o destinatario.",
+      });
+      return;
+    }
+
+    if (files.length === 0) {
+      setNotification({
+        show: true,
+        type: "warning",
+        title: "Nenhum arquivo",
+        message: "Por favor, selecione pelo menos um arquivo.",
+      });
+      return;
+    }
+
+    if (!description) {
+      setNotification({
+        show: true,
+        type: "warning",
+        title: "Campo obrigatorio",
+        message: "Por favor, descreva o conteudo dos arquivos.",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    setUploadProgress(0);
+
+    try {
+      const payload = JSON.stringify({
+        area_id: null,
+        external_email: recipient,
+        created_by_id: Number(user!.id),
+        expiration_hours: expirationHours,
+        name: description.substring(0, 255),
+        description,
+        consumption_policy: "apos_todos",
+        file_ids: [],
+      });
+
+      const formData = new FormData();
+      formData.append("payload", payload);
+      for (const file of files) {
+        formData.append("files", file, file.name);
+      }
+
+      const result = await new Promise<{
+        success?: boolean;
+        data?: unknown;
+        error?: { code: string; message: string };
+        _status: number;
+      }>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/shares/create");
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setUploadProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        };
+        xhr.onload = () => {
+          try {
+            const data = JSON.parse(xhr.responseText) as {
+              success?: boolean;
+              data?: unknown;
+              error?: { code: string; message: string };
+            };
+            resolve({ ...data, _status: xhr.status });
+          } catch {
+            resolve({ _status: xhr.status });
+          }
+        };
+        xhr.onerror = () =>
+          reject(new Error("Falha de rede ao enviar os arquivos."));
+        xhr.ontimeout = () =>
+          reject(new Error("Tempo de envio esgotado. Tente novamente."));
+        xhr.send(formData);
+      });
+
+      if (result._status >= 400 || result.success === false) {
+        const isS3Failure = result._status === 502;
+        setNotification({
+          show: true,
+          type: "error",
+          title: isS3Failure
+            ? "Falha no armazenamento seguro"
+            : "Erro ao enviar arquivos",
+          message: isS3Failure
+            ? "Os arquivos nao foram enviados ao armazenamento seguro (S3). Nenhum registro foi criado. Tente novamente ou contate o suporte."
+            : (result.error?.message ??
+              "Ocorreu um erro inesperado. Tente novamente."),
+        });
+        return;
+      }
+
+      loadUploads();
+
+      setUploadSuccessData({
+        name: description.substring(0, 50),
+        recipient,
+        files: files.map((f) => ({
+          name: f.name,
+          size: `${(f.size / (1024 * 1024)).toFixed(2)} MB`,
+          type: f.name.split(".").pop()?.toUpperCase() || "FILE",
+        })),
+        expirationHours,
+        senderEmail: user!.email,
+      });
+
+      setShowSuccess(true);
+
+      setTimeout(() => {
+        setRecipient("");
+        setDescription("");
+        setFiles([]);
+        setExpirationHours(168);
+        setShowSuccess(false);
+      }, 1000);
+    } catch (error) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel conectar ao servidor. Verifique sua conexao e tente novamente.";
+      setNotification({
+        show: true,
+        type: "error",
+        title: "Erro ao enviar arquivos",
+        message: msg,
+      });
+    } finally {
+      setIsLoading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  return (
+    <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-8 space-y-6">
+      <div className="flex items-center gap-4 mb-3">
+        <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+          <Shield className="h-7 w-7 text-white" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-foreground leading-tight">
+            Compartilhar Arquivos (Admin)
+          </h2>
+          <p className="text-muted-foreground text-base leading-relaxed">
+            Envie documentos para destinatarios externos com seguranca
+          </p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Aprovador - Supervisor do Admin */}
+        {supervisorDoAdmin ? (
+          <div className="bg-muted/30 border border-border/50 rounded-xl p-5 space-y-3">
+            <Label className="text-base font-medium flex items-center gap-2">
+              <Lock className="h-4 w-4 text-secondary" />
+              Aprovador Automatico
+            </Label>
+            <div className="bg-background/50 rounded-lg p-4 space-y-2">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <p className="font-semibold text-foreground">
+                    {supervisorDoAdmin.name}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {supervisorDoAdmin.email}
+                  </p>
+                  {supervisorDoAdmin.jobTitle && (
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-medium">Cargo:</span>{" "}
+                      {supervisorDoAdmin.jobTitle}
+                    </p>
+                  )}
+                </div>
+                <div className="px-3 py-1.5 bg-secondary/10 text-secondary rounded-full text-xs font-medium">
+                  Seu Superior
+                </div>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Como voce e um administrador, este compartilhamento sera enviado para
+              aprovacao do seu superior hierarquico.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-5 space-y-2">
+            <div className="flex items-start gap-3">
+              <div className="h-8 w-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+              </div>
+              <div className="space-y-1">
+                <p className="font-medium text-amber-800 dark:text-amber-500">
+                  Superior nao identificado
+                </p>
+                <p className="text-sm text-amber-700 dark:text-amber-600 leading-relaxed">
+                  Nao foi possivel identificar seu superior hierarquico. Voce
+                  pode continuar com o compartilhamento, mas recomendamos entrar
+                  em contato com o RH ou TI para atualizar seu cadastro.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <Label
+            htmlFor="recipient"
+            className="text-base font-medium flex items-center gap-2"
+          >
+            <Lock className="h-4 w-4 text-primary" />
+            Destinatario Externo
+          </Label>
+          <Input
+            id="recipient"
+            type="email"
+            placeholder="cliente@empresa.com"
+            value={recipient}
+            onChange={(e) => setRecipient(e.target.value)}
+            required
+          />
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            O destinatario recebera um email com link seguro para download
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <Label className="text-base font-medium">Anexar Arquivos</Label>
+          <DragDropZone
+            onFilesSelected={handleFilesSelected}
+            selectedFiles={files}
+            onRemoveFile={handleFileRemove}
+          />
+        </div>
+
+        <div className="space-y-3">
+          <Label
+            htmlFor="expiration"
+            className="text-base font-medium flex items-center gap-2"
+          >
+            <Clock className="h-4 w-4 text-accent" />
+            Tempo de Disponibilidade
+          </Label>
+          <Select
+            value={expirationHours.toString()}
+            onValueChange={(v) => setExpirationHours(Number(v))}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="24">24 horas (1 dia)</SelectItem>
+              <SelectItem value="48">48 horas (2 dias)</SelectItem>
+              <SelectItem value="72">72 horas (3 dias)</SelectItem>
+              <SelectItem value="96">96 horas (4 dias)</SelectItem>
+              <SelectItem value="120">120 horas (5 dias)</SelectItem>
+              <SelectItem value="144">144 horas (6 dias)</SelectItem>
+              <SelectItem value="168">168 horas (7 dias)</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Os arquivos ficarao disponiveis para download por {expirationHours}{" "}
+            horas apos a aprovacao.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <Label htmlFor="description" className="text-base font-medium">
+            Descricao do Envio (obrigatorio)
+          </Label>
+          <Textarea
+            id="description"
+            placeholder="Descreva o conteudo e a finalidade dos arquivos..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="min-h-[120px] resize-none text-base"
+            required
+          />
+        </div>
+
+        <div className="flex justify-end pt-4">
+          <Button
+            type="submit"
+            disabled={isLoading || showSuccess}
+            size="lg"
+            className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-semibold px-10 text-base shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading && (
+              <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+            )}
+            {showSuccess && <Sparkles className="h-5 w-5 mr-2" />}
+            <Send className="h-5 w-5 mr-2" />
+            {isLoading
+              ? "Enviando..."
+              : showSuccess
+                ? "Enviado!"
+                : "Enviar para Aprovacao"}
+          </Button>
+        </div>
+      </form>
+
+      <NotificationModal
+        open={notification.show}
+        onOpenChange={(show) => setNotification({ ...notification, show })}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+      />
+
+      {uploadSuccessData && (
+        <UploadSuccessModal
+          open={uploadSuccessData !== null}
+          onOpenChange={(open) => {
+            if (!open) setUploadSuccessData(null);
+          }}
+          uploadData={uploadSuccessData}
+        />
+      )}
+    </div>
+  );
+}

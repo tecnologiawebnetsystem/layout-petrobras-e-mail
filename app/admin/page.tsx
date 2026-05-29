@@ -49,7 +49,28 @@ import {
   AlertTriangle,
   User,
   Download,
+  FileSpreadsheet,
+  FileType,
+  Filter,
+  Upload,
+  Share2,
+  Ban,
+  Calendar,
+  CheckCircle2,
 } from "lucide-react"
+import { AdminUploadForm } from "@/components/admin/admin-upload-form"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Checkbox } from "@/components/ui/checkbox"
 
 // Tipos
 interface DashboardMetrics {
@@ -208,6 +229,21 @@ const [trackingData, setTrackingData] = useState<TrackingData | null>(null)
 const [trackingLoading, setTrackingLoading] = useState(false)
 const [trackingError, setTrackingError] = useState("")
 
+  // Export state
+  const [exportModalOpen, setExportModalOpen] = useState(false)
+  const [exportFormat, setExportFormat] = useState<"csv" | "txt" | "pdf">("csv")
+  const [exportDataType, setExportDataType] = useState<"users" | "shares" | "logs">("logs")
+  const [exportFilterUser, setExportFilterUser] = useState("")
+  const [exportFilterAction, setExportFilterAction] = useState("all")
+  const [exportIncludeAll, setExportIncludeAll] = useState(true)
+  const [exportLoading, setExportLoading] = useState(false)
+
+  // Meus Compartilhamentos state (admin)
+  const [myShares, setMyShares] = useState<ShareItem[]>([])
+  const [mySharesLoading, setMySharesLoading] = useState(false)
+  const [mySharesSearch, setMySharesSearch] = useState("")
+  const [mySharesStatusFilter, setMySharesStatusFilter] = useState("all")
+
   // Initial load
   useEffect(() => {
     if (!_hasHydrated) return
@@ -307,6 +343,27 @@ const [trackingError, setTrackingError] = useState("")
     }
   }
 
+  // Load my shares (admin's own shares)
+  const loadMyShares = async () => {
+    setMySharesLoading(true)
+    try {
+      const params = new URLSearchParams({ limit: "100" })
+      if (mySharesSearch) params.set("search", mySharesSearch)
+      if (mySharesStatusFilter !== "all") params.set("status", mySharesStatusFilter)
+      // Filter by current user (admin)
+      if (user?.id) params.set("created_by", String(user.id))
+
+      const data = await apiFetch<{ shares: ShareItem[] }>(
+        `/admin/shares?${params.toString()}`
+      )
+      setMyShares(data.shares)
+    } catch (error) {
+      console.error("[Admin] Erro ao carregar meus compartilhamentos:", error)
+    } finally {
+      setMySharesLoading(false)
+    }
+  }
+
   // Load tracking data
   const loadTracking = async () => {
     if (!trackingUserEmail || !trackingUserEmail.includes("@")) {
@@ -324,6 +381,271 @@ const [trackingError, setTrackingError] = useState("")
     } finally {
       setTrackingLoading(false)
     }
+  }
+
+  // Export report function
+  const handleExportReport = async () => {
+    setExportLoading(true)
+    try {
+      let dataToExport: any[] = []
+      let filename = ""
+      let headers: string[] = []
+
+      // Load data based on type
+      if (exportDataType === "users") {
+        const params = new URLSearchParams({ limit: "1000" })
+        if (exportFilterUser) params.set("search", exportFilterUser)
+        const data = await apiFetch<{ users: UserItem[] }>(`/admin/users?${params.toString()}`)
+        dataToExport = data.users
+        headers = ["ID", "Nome", "Email", "Tipo", "Departamento", "Cargo", "Supervisor", "Admin", "Status", "Criado em", "Ultimo Login"]
+        filename = `relatorio_usuarios_${new Date().toISOString().split("T")[0]}`
+      } else if (exportDataType === "shares") {
+        const params = new URLSearchParams({ limit: "1000" })
+        if (exportFilterUser) params.set("search", exportFilterUser)
+        const data = await apiFetch<{ shares: ShareItem[] }>(`/admin/shares?${params.toString()}`)
+        dataToExport = data.shares
+        headers = ["ID", "Nome", "Destinatario", "Status", "Arquivos", "Criado por", "Aprovado por", "Criado em", "Expira em"]
+        filename = `relatorio_compartilhamentos_${new Date().toISOString().split("T")[0]}`
+      } else if (exportDataType === "logs") {
+        const params = new URLSearchParams({ limit: "5000" })
+        if (exportFilterUser) params.set("search", exportFilterUser)
+        if (exportFilterAction !== "all") params.set("action", exportFilterAction)
+        const data = await apiFetch<{ logs: LogItem[] }>(`/admin/logs?${params.toString()}`)
+        dataToExport = data.logs
+        headers = ["ID", "Acao", "Usuario", "Email Usuario", "Detalhe", "IP", "Share ID", "Data/Hora"]
+        filename = `relatorio_logs_${new Date().toISOString().split("T")[0]}`
+      }
+
+      // Format data based on export format
+      if (exportFormat === "csv") {
+        const csvContent = generateCSV(dataToExport, exportDataType, headers)
+        downloadFile(csvContent, `${filename}.csv`, "text/csv;charset=utf-8;")
+      } else if (exportFormat === "txt") {
+        const txtContent = generateTXT(dataToExport, exportDataType, headers)
+        downloadFile(txtContent, `${filename}.txt`, "text/plain;charset=utf-8;")
+      } else if (exportFormat === "pdf") {
+        await generatePDF(dataToExport, exportDataType, headers, filename)
+      }
+
+      setExportModalOpen(false)
+    } catch (error) {
+      console.error("[Admin] Erro ao exportar relatorio:", error)
+    } finally {
+      setExportLoading(false)
+    }
+  }
+
+  // Generate CSV content
+  const generateCSV = (data: any[], dataType: string, headers: string[]) => {
+    const rows: string[] = []
+    rows.push(headers.join(";"))
+
+    data.forEach((item) => {
+      if (dataType === "users") {
+        rows.push([
+          item.id,
+          `"${item.name || ""}"`,
+          item.email,
+          item.type === "internal" ? "Interno" : "Externo",
+          `"${item.department || ""}"`,
+          `"${item.job_title || ""}"`,
+          item.is_supervisor ? "Sim" : "Nao",
+          item.is_admin ? "Sim" : "Nao",
+          item.status ? "Ativo" : "Inativo",
+          formatDate(item.created_at),
+          formatDate(item.last_login),
+        ].join(";"))
+      } else if (dataType === "shares") {
+        rows.push([
+          item.id,
+          `"${item.name || ""}"`,
+          item.external_email,
+          item.status,
+          item.files_count,
+          `"${item.creator?.name || ""}"`,
+          `"${item.approver?.name || ""}"`,
+          formatDate(item.created_at),
+          formatDate(item.expires_at),
+        ].join(";"))
+      } else if (dataType === "logs") {
+        rows.push([
+          item.id,
+          item.action,
+          `"${item.user?.name || ""}"`,
+          item.user?.email || "",
+          `"${(item.detail || "").replace(/"/g, '""')}"`,
+          item.ip || "",
+          item.share_id || "",
+          formatDate(item.created_at),
+        ].join(";"))
+      }
+    })
+
+    return "\uFEFF" + rows.join("\n")
+  }
+
+  // Generate TXT content
+  const generateTXT = (data: any[], dataType: string, headers: string[]) => {
+    const lines: string[] = []
+    const separator = "=".repeat(100)
+    
+    lines.push(separator)
+    lines.push(`RELATORIO DE ${dataType.toUpperCase()}`)
+    lines.push(`Gerado em: ${new Date().toLocaleString("pt-BR")}`)
+    lines.push(`Total de registros: ${data.length}`)
+    lines.push(separator)
+    lines.push("")
+
+    data.forEach((item, index) => {
+      lines.push(`--- Registro ${index + 1} ---`)
+      if (dataType === "users") {
+        lines.push(`ID: ${item.id}`)
+        lines.push(`Nome: ${item.name}`)
+        lines.push(`Email: ${item.email}`)
+        lines.push(`Tipo: ${item.type === "internal" ? "Interno" : "Externo"}`)
+        lines.push(`Departamento: ${item.department || "-"}`)
+        lines.push(`Cargo: ${item.job_title || "-"}`)
+        lines.push(`Supervisor: ${item.is_supervisor ? "Sim" : "Nao"}`)
+        lines.push(`Admin: ${item.is_admin ? "Sim" : "Nao"}`)
+        lines.push(`Status: ${item.status ? "Ativo" : "Inativo"}`)
+        lines.push(`Criado em: ${formatDate(item.created_at)}`)
+        lines.push(`Ultimo Login: ${formatDate(item.last_login)}`)
+      } else if (dataType === "shares") {
+        lines.push(`ID: ${item.id}`)
+        lines.push(`Nome: ${item.name || "-"}`)
+        lines.push(`Destinatario: ${item.external_email}`)
+        lines.push(`Status: ${item.status}`)
+        lines.push(`Arquivos: ${item.files_count}`)
+        lines.push(`Criado por: ${item.creator?.name || "-"}`)
+        lines.push(`Aprovado por: ${item.approver?.name || "-"}`)
+        lines.push(`Criado em: ${formatDate(item.created_at)}`)
+        lines.push(`Expira em: ${formatDate(item.expires_at)}`)
+      } else if (dataType === "logs") {
+        lines.push(`ID: ${item.id}`)
+        lines.push(`Acao: ${item.action}`)
+        lines.push(`Usuario: ${item.user?.name || "-"} (${item.user?.email || "-"})`)
+        lines.push(`Detalhe: ${item.detail || "-"}`)
+        lines.push(`IP: ${item.ip || "-"}`)
+        lines.push(`Share ID: ${item.share_id || "-"}`)
+        lines.push(`Data/Hora: ${formatDate(item.created_at)}`)
+      }
+      lines.push("")
+    })
+
+    return lines.join("\n")
+  }
+
+  // Generate PDF content
+  const generatePDF = async (data: any[], dataType: string, headers: string[], filename: string) => {
+    // Create a simple HTML table and use browser print to PDF
+    const printWindow = window.open("", "_blank")
+    if (!printWindow) {
+      alert("Por favor, permita popups para gerar o PDF")
+      return
+    }
+
+    let tableRows = ""
+    data.forEach((item) => {
+      if (dataType === "users") {
+        tableRows += `<tr>
+          <td>${item.id}</td>
+          <td>${item.name}</td>
+          <td>${item.email}</td>
+          <td>${item.type === "internal" ? "Interno" : "Externo"}</td>
+          <td>${item.department || "-"}</td>
+          <td>${item.job_title || "-"}</td>
+          <td>${item.is_supervisor ? "Sim" : "Nao"}</td>
+          <td>${item.is_admin ? "Sim" : "Nao"}</td>
+          <td>${item.status ? "Ativo" : "Inativo"}</td>
+          <td>${formatDate(item.created_at)}</td>
+          <td>${formatDate(item.last_login)}</td>
+        </tr>`
+      } else if (dataType === "shares") {
+        tableRows += `<tr>
+          <td>${item.id}</td>
+          <td>${item.name || "-"}</td>
+          <td>${item.external_email}</td>
+          <td>${item.status}</td>
+          <td>${item.files_count}</td>
+          <td>${item.creator?.name || "-"}</td>
+          <td>${item.approver?.name || "-"}</td>
+          <td>${formatDate(item.created_at)}</td>
+          <td>${formatDate(item.expires_at)}</td>
+        </tr>`
+      } else if (dataType === "logs") {
+        tableRows += `<tr>
+          <td>${item.id}</td>
+          <td>${item.action}</td>
+          <td>${item.user?.name || "-"}</td>
+          <td>${item.user?.email || "-"}</td>
+          <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${item.detail || "-"}</td>
+          <td>${item.ip || "-"}</td>
+          <td>${item.share_id || "-"}</td>
+          <td>${formatDate(item.created_at)}</td>
+        </tr>`
+      }
+    })
+
+    const dataTypeLabel = {
+      users: "Usuarios",
+      shares: "Compartilhamentos",
+      logs: "Logs de Auditoria",
+    }[dataType]
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Relatorio de ${dataTypeLabel}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; font-size: 11px; }
+          h1 { color: #333; font-size: 18px; margin-bottom: 5px; }
+          .meta { color: #666; margin-bottom: 20px; font-size: 10px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          th, td { border: 1px solid #ddd; padding: 6px; text-align: left; font-size: 10px; }
+          th { background-color: #005B9F; color: white; }
+          tr:nth-child(even) { background-color: #f9f9f9; }
+          @media print {
+            body { padding: 0; }
+            @page { margin: 1cm; size: landscape; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Relatorio de ${dataTypeLabel}</h1>
+        <p class="meta">Gerado em: ${new Date().toLocaleString("pt-BR")} | Total de registros: ${data.length}</p>
+        <table>
+          <thead>
+            <tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+        <script>
+          window.onload = function() {
+            window.print();
+          }
+        </script>
+      </body>
+      </html>
+    `
+
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
+  }
+
+  // Download file helper
+  const downloadFile = (content: string, filename: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   // Effects to load data based on active tab
@@ -347,6 +669,11 @@ const [trackingError, setTrackingError] = useState("")
     loadLogs()
     if (availableActions.length === 0) loadActions()
   }, [activeTab, logsPage, logsSearch, logsActionFilter, pageLoading])
+
+  useEffect(() => {
+    if (pageLoading || activeTab !== "meus-compartilhamentos") return
+    loadMyShares()
+  }, [activeTab, mySharesSearch, mySharesStatusFilter, pageLoading, user?.id])
 
   // Helpers
   const formatDate = (dateStr: string | null) => {
@@ -392,22 +719,196 @@ const [trackingError, setTrackingError] = useState("")
       <main className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Header com gradiente */}
         <div className="mb-8 mt-4">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
-              <Shield className="h-7 w-7 text-white" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
+                <Shield className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">Painel Administrativo</h1>
+                <p className="text-muted-foreground">Visao completa de todos os usuarios, compartilhamentos e logs do sistema</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Painel Administrativo</h1>
-              <p className="text-muted-foreground">Visao completa de todos os usuarios, compartilhamentos e logs do sistema</p>
-            </div>
+            
+            {/* Export Button */}
+            <Dialog open={exportModalOpen} onOpenChange={setExportModalOpen}>
+              <DialogTrigger asChild>
+                <Button variant="default" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Exportar Relatorio
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <FileSpreadsheet className="h-5 w-5" />
+                    Exportar Relatorio
+                  </DialogTitle>
+                  <DialogDescription>
+                    Configure os filtros e o formato de exportacao desejado
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-6 py-4">
+                  {/* Formato de Exportacao */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold flex items-center gap-2">
+                      <FileType className="h-4 w-4" />
+                      Formato de Exportacao
+                    </Label>
+                    <RadioGroup
+                      value={exportFormat}
+                      onValueChange={(v) => setExportFormat(v as "csv" | "txt" | "pdf")}
+                      className="flex gap-6"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="csv" id="format-csv" />
+                        <Label htmlFor="format-csv" className="font-normal cursor-pointer">
+                          CSV (Excel)
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="txt" id="format-txt" />
+                        <Label htmlFor="format-txt" className="font-normal cursor-pointer">
+                          TXT (Texto)
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="pdf" id="format-pdf" />
+                        <Label htmlFor="format-pdf" className="font-normal cursor-pointer">
+                          PDF
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {/* Tipo de Dados */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold flex items-center gap-2">
+                      <Filter className="h-4 w-4" />
+                      Tipo de Dados
+                    </Label>
+                    <RadioGroup
+                      value={exportDataType}
+                      onValueChange={(v) => setExportDataType(v as "users" | "shares" | "logs")}
+                      className="grid gap-3"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="users" id="data-users" />
+                        <Label htmlFor="data-users" className="font-normal cursor-pointer flex items-center gap-2">
+                          <Users className="h-4 w-4 text-blue-600" />
+                          Usuarios do Sistema
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="shares" id="data-shares" />
+                        <Label htmlFor="data-shares" className="font-normal cursor-pointer flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-green-600" />
+                          Compartilhamentos
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="logs" id="data-logs" />
+                        <Label htmlFor="data-logs" className="font-normal cursor-pointer flex items-center gap-2">
+                          <Activity className="h-4 w-4 text-purple-600" />
+                          Logs de Auditoria
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {/* Filtros */}
+                  <div className="space-y-3 border-t pt-4">
+                    <Label className="text-sm font-semibold">Filtros (Opcional)</Label>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="filter-user" className="text-sm text-muted-foreground">
+                          Filtrar por Usuario (nome ou email)
+                        </Label>
+                        <Input
+                          id="filter-user"
+                          placeholder="Digite nome ou email do usuario..."
+                          value={exportFilterUser}
+                          onChange={(e) => setExportFilterUser(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
+
+                      {exportDataType === "logs" && (
+                        <div>
+                          <Label htmlFor="filter-action" className="text-sm text-muted-foreground">
+                            Filtrar por Acao Especifica
+                          </Label>
+                          <Select
+                            value={exportFilterAction}
+                            onValueChange={setExportFilterAction}
+                          >
+                            <SelectTrigger id="filter-action" className="mt-1">
+                              <SelectValue placeholder="Selecione uma acao" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Todas as Acoes</SelectItem>
+                              {availableActions.map((action) => (
+                                <SelectItem key={action} value={action}>
+                                  {action}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      <div className="flex items-center space-x-2 pt-2">
+                        <Checkbox
+                          id="include-all"
+                          checked={exportIncludeAll}
+                          onCheckedChange={(checked) => setExportIncludeAll(!!checked)}
+                        />
+                        <Label htmlFor="include-all" className="font-normal cursor-pointer text-sm">
+                          Incluir todos os registros (ate 5000 para logs, 1000 para outros)
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setExportModalOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleExportReport} disabled={exportLoading} className="gap-2">
+                    {exportLoading ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        Gerando...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4" />
+                        Exportar
+                      </>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="compartilhar" className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              Compartilhar
+            </TabsTrigger>
+            <TabsTrigger value="meus-compartilhamentos" className="flex items-center gap-2">
+              <Share2 className="h-4 w-4" />
+              Meus Envios
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -415,7 +916,7 @@ const [trackingError, setTrackingError] = useState("")
             </TabsTrigger>
             <TabsTrigger value="shares" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Compartilhamentos
+              Todos Shares
             </TabsTrigger>
             <TabsTrigger value="logs" className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
@@ -618,6 +1119,243 @@ const [trackingError, setTrackingError] = useState("")
                   </Card>
                 </div>
               </>
+            )}
+          </TabsContent>
+
+          {/* Compartilhar Tab */}
+          <TabsContent value="compartilhar" className="space-y-6">
+            <AdminUploadForm />
+          </TabsContent>
+
+          {/* Meus Compartilhamentos Tab */}
+          <TabsContent value="meus-compartilhamentos" className="space-y-6">
+            {/* Cards de Metricas */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              <Card
+                className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${mySharesStatusFilter === "all" ? "ring-2 ring-secondary shadow-lg" : ""}`}
+                onClick={() => setMySharesStatusFilter("all")}
+              >
+                <CardContent className="p-4 md:p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-secondary/10 to-secondary/5 flex items-center justify-center">
+                      <FileText className="h-6 w-6 text-secondary" />
+                    </div>
+                    <div>
+                      <p className="text-2xl md:text-3xl font-bold text-foreground">
+                        {myShares.length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Total</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card
+                className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${mySharesStatusFilter === "pending" ? "ring-2 ring-amber-500 shadow-lg" : ""}`}
+                onClick={() => setMySharesStatusFilter("pending")}
+              >
+                <CardContent className="p-4 md:p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 flex items-center justify-center">
+                      <Clock className="h-6 w-6 text-amber-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl md:text-3xl font-bold text-foreground">
+                        {myShares.filter((s) => s.status === "pending").length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Aguardando</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card
+                className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${mySharesStatusFilter === "approved" ? "ring-2 ring-emerald-500 shadow-lg" : ""}`}
+                onClick={() => setMySharesStatusFilter("approved")}
+              >
+                <CardContent className="p-4 md:p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 flex items-center justify-center">
+                      <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl md:text-3xl font-bold text-foreground">
+                        {myShares.filter((s) => s.status === "approved" || s.status === "active").length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Aprovados</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card
+                className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${mySharesStatusFilter === "rejected" ? "ring-2 ring-red-500 shadow-lg" : ""}`}
+                onClick={() => setMySharesStatusFilter("rejected")}
+              >
+                <CardContent className="p-4 md:p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-red-500/10 to-red-500/5 flex items-center justify-center">
+                      <XCircle className="h-6 w-6 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl md:text-3xl font-bold text-foreground">
+                        {myShares.filter((s) => s.status === "rejected").length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Rejeitados</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card
+                className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${mySharesStatusFilter === "expired" ? "ring-2 ring-gray-500 shadow-lg" : ""}`}
+                onClick={() => setMySharesStatusFilter("expired")}
+              >
+                <CardContent className="p-4 md:p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-gray-500/10 to-gray-500/5 flex items-center justify-center">
+                      <Ban className="h-6 w-6 text-gray-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl md:text-3xl font-bold text-foreground">
+                        {myShares.filter((s) => s.status === "expired" || s.status === "cancelled").length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Expirados</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Barra de busca */}
+            <Card className="bg-card/50 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Buscar por nome ou destinatario..."
+                      value={mySharesSearch}
+                      onChange={(e) => setMySharesSearch(e.target.value)}
+                      className="pl-10 h-12 text-base"
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={loadMyShares}
+                    className="gap-2 h-12"
+                    disabled={mySharesLoading}
+                  >
+                    <RefreshCw className={`h-4 w-4 ${mySharesLoading ? "animate-spin" : ""}`} />
+                    Atualizar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Lista de Compartilhamentos */}
+            {mySharesLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : myShares.length === 0 ? (
+              <Card className="p-12 text-center bg-card/50 backdrop-blur-sm">
+                <div className="h-20 w-20 rounded-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center mx-auto mb-6">
+                  <FileText className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">
+                  Nenhum compartilhamento encontrado
+                </h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Voce ainda nao realizou nenhum compartilhamento. Use a aba "Compartilhar" para enviar seus arquivos.
+                </p>
+                <Button
+                  onClick={() => setActiveTab("compartilhar")}
+                  className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Fazer Primeiro Compartilhamento
+                </Button>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {myShares
+                  .filter((s) => {
+                    if (mySharesStatusFilter === "all") return true
+                    if (mySharesStatusFilter === "approved") return s.status === "approved" || s.status === "active"
+                    if (mySharesStatusFilter === "expired") return s.status === "expired" || s.status === "cancelled"
+                    return s.status === mySharesStatusFilter
+                  })
+                  .map((share) => (
+                    <Card 
+                      key={share.id} 
+                      className={`overflow-hidden transition-all hover:shadow-lg border-l-4 ${
+                        share.status === "pending" ? "border-l-amber-500" :
+                        share.status === "approved" || share.status === "active" ? "border-l-emerald-500" :
+                        share.status === "rejected" ? "border-l-red-500" :
+                        "border-l-gray-400"
+                      }`}
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-4 flex-1">
+                            <div className={`p-3 rounded-xl ${
+                              share.status === "pending" ? "bg-amber-100" :
+                              share.status === "approved" || share.status === "active" ? "bg-emerald-100" :
+                              share.status === "rejected" ? "bg-red-100" :
+                              "bg-gray-100"
+                            }`}>
+                              <FileText className={`h-6 w-6 ${
+                                share.status === "pending" ? "text-amber-600" :
+                                share.status === "approved" || share.status === "active" ? "text-emerald-600" :
+                                share.status === "rejected" ? "text-red-600" :
+                                "text-gray-600"
+                              }`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="text-lg font-semibold text-foreground truncate">{share.name || "Sem nome"}</h3>
+                                {getStatusBadge(share.status)}
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                  <Mail className="h-4 w-4 flex-shrink-0" />
+                                  <span className="truncate">
+                                    <span className="font-medium">Destinatario:</span> {share.external_email}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                  <FileText className="h-4 w-4 flex-shrink-0" />
+                                  <span className="truncate">
+                                    <span className="font-medium">Arquivos:</span> {share.files_count}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  Criado: {formatDate(share.created_at)}
+                                </span>
+                                {share.expires_at && (
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    Expira: {formatDate(share.expires_at)}
+                                  </span>
+                                )}
+                              </div>
+                              {share.approver && (
+                                <div className="mt-2 text-xs text-muted-foreground">
+                                  <span className="font-medium">Aprovado por:</span> {share.approver.name}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
             )}
           </TabsContent>
 
