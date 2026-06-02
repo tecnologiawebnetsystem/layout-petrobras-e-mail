@@ -587,6 +587,33 @@ export function LoginForm() {
             </div>
           )}
 
+          {/* Usuarios de Teste (somente para desenvolvimento) */}
+          <div className="border-t border-dashed border-amber-300 pt-6 mt-6">
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+              <p className="text-xs font-semibold text-amber-800 dark:text-amber-200 mb-3 text-center uppercase tracking-wide">
+                Usuarios de Teste (Dev Only)
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: "Admin", icon: "👑", route: "/evidencias-admin/preview/admin-dashboard" },
+                  { label: "Supervisor", icon: "📋", route: "/evidencias-admin/preview/supervisor" },
+                  { label: "Interno", icon: "🏢", route: "/evidencias-admin/preview/upload" },
+                  { label: "Externo", icon: "🌐", route: "/evidencias-admin/preview/compartilhamentos" },
+                ].map((testUser) => (
+                  <button
+                    key={testUser.label}
+                    type="button"
+                    onClick={() => router.push(testUser.route)}
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-700 rounded-md text-sm font-medium text-amber-900 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors shadow-sm"
+                  >
+                    <span>{testUser.icon}</span>
+                    <span>{testUser.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* Footer */}
           <footer className="text-center text-xs text-muted-foreground/60 pt-4">
             <p>2025 Petrobras. Todos os direitos reservados.</p>
