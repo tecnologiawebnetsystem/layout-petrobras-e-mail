@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server"
+import fs from "fs"
+import path from "path"
 import {
   Document,
   Packer,
@@ -12,17 +14,11 @@ import {
   TableCell,
   WidthType,
   ShadingType,
-  PageOrientation,
   Header,
   Footer,
   ImageRun,
   convertInchesToTwip,
   PageNumber,
-  NumberFormat,
-  HorizontalPositionAlign,
-  VerticalPositionAlign,
-  TableOfContents,
-  StyleLevel,
 } from "docx"
 
 // Cores Petrobras
@@ -135,6 +131,47 @@ function itemLista(texto: string, nivel = 0): Paragraph {
 
 function espaço(): Paragraph {
   return new Paragraph({ text: "", spacing: { before: 120, after: 120 } })
+}
+
+function legendaImagem(texto: string): Paragraph {
+  return new Paragraph({
+    children: [
+      new TextRun({ text: `Figura: ${texto}`, size: 18, italics: true, color: "888888", font: "Calibri" }),
+    ],
+    alignment: AlignmentType.CENTER,
+    spacing: { before: 60, after: 240 },
+  })
+}
+
+function inserirScreenshot(nomeArquivo: string, legenda: string, larguraCm = 15): Paragraph[] {
+  try {
+    const filePath = path.join(process.cwd(), "public", "evidencias-screenshots", nomeArquivo)
+    if (!fs.existsSync(filePath)) return [espaço()]
+    const imgBuffer = fs.readFileSync(filePath)
+    const larguraTwip = Math.round(larguraCm * 567) // 1 cm = 567 twip
+    return [
+      new Paragraph({
+        children: [
+          new ImageRun({
+            data: imgBuffer,
+            transformation: { width: larguraTwip, height: Math.round(larguraTwip * 0.6) },
+            type: "png",
+          }),
+        ],
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 200, after: 60 },
+        border: {
+          top: { style: BorderStyle.SINGLE, size: 4, color: "D0D5DD" },
+          bottom: { style: BorderStyle.SINGLE, size: 4, color: "D0D5DD" },
+          left: { style: BorderStyle.SINGLE, size: 4, color: "D0D5DD" },
+          right: { style: BorderStyle.SINGLE, size: 4, color: "D0D5DD" },
+        },
+      }),
+      legendaImagem(legenda),
+    ]
+  } catch {
+    return [espaço()]
+  }
 }
 
 function labelValor(label: string, valor: string, corValor?: string): Paragraph {
@@ -580,7 +617,14 @@ export async function GET() {
           titulo2("1.3 Metricas Verificadas no Dashboard"),
           tabelaMetricas(dadosMetricasDashboard),
           espaço(),
-          titulo2("1.4 Resultado do Teste"),
+          titulo2("1.4 Captura de Tela — Dashboard Admin"),
+          ...inserirScreenshot("ev-01-dashboard.png", "Aba Dashboard — visao geral de metricas do sistema"),
+          ...inserirScreenshot("ev-02-usuarios.png", "Aba Usuarios — lista de todos os usuarios cadastrados"),
+          ...inserirScreenshot("ev-03-upload.png", "Aba Upload — formulario de envio de arquivos"),
+          ...inserirScreenshot("ev-04-logs.png", "Aba Logs — historico de eventos do sistema"),
+          ...inserirScreenshot("ev-05-rastreamento.png", "Aba Rastreamento — busca de atividades por usuario"),
+          espaço(),
+          titulo2("1.5 Resultado do Teste"),
           ...caixaDestaque("APROVADO", [
             "O Dashboard Admin carregou corretamente com todas as metricas.",
             "Todas as abas (Dashboard, Usuarios, Compartilhamentos, Upload, Logs, Rastreamento) foram carregadas.",
@@ -616,7 +660,10 @@ export async function GET() {
           titulo2("2.4 Registros de Log — Evidencia"),
           tabelaLogs(dadosLogs),
           espaço(),
-          titulo2("2.5 Resultado do Teste"),
+          titulo2("2.5 Captura de Tela — Logs"),
+          ...inserirScreenshot("ev-06-logs-full.png", "Pagina de Logs — tabela completa com filtros ativos"),
+          espaço(),
+          titulo2("2.6 Resultado do Teste"),
           ...caixaDestaque("APROVADO", [
             "Todos os filtros funcionam corretamente e isolam os registros esperados.",
             "Os logs de erro (LOGIN_FALHA, OTP_MAX_TENTATIVAS) foram registrados e exibidos corretamente.",
@@ -661,7 +708,10 @@ export async function GET() {
           titulo2("3.5 Registros de Auditoria — Evidencia"),
           tabelaLogs(dadosAuditoria),
           espaço(),
-          titulo2("3.6 Funcionalidade de Exportacao"),
+          titulo2("3.6 Captura de Tela — Auditoria"),
+          ...inserirScreenshot("ev-07-auditoria.png", "Pagina de Auditoria — trilha de auditoria com cards de estatisticas"),
+          espaço(),
+          titulo2("3.7 Funcionalidade de Exportacao"),
           labelValor("Formato", "JSON"),
           labelValor("Nome do arquivo", `audit-logs-2025-06-02T08:00:00.000Z.json`),
           labelValor("Resultado", "Arquivo gerado e baixado com sucesso", COR_SUCESSO),
@@ -717,7 +767,10 @@ export async function GET() {
             ],
           }),
           espaço(),
-          titulo2("4.4 Cenarios Testados"),
+          titulo2("4.4 Captura de Tela — Upload"),
+          ...inserirScreenshot("ev-08-upload-full.png", "Pagina de Upload — formulario com drag-and-drop e lista de arquivos"),
+          espaço(),
+          titulo2("4.5 Cenarios Testados"),
           titulo3("Cenario 1: Upload de arquivo PDF valido"),
           itemLista("Arquivo: Contrato_Fornecedor_2025.pdf (4.2 MB)"),
           itemLista("Resultado: Upload realizado com sucesso"),
@@ -743,9 +796,6 @@ export async function GET() {
             "Barra de progresso exibe o percentual de envio em tempo real.",
             "Apos o upload, o modal de sucesso exibe os detalhes do compartilhamento criado.",
           ], COR_SUCESSO),
-
-          // ============================================================
-          // SECAO 5 — MEUS COMPARTILHAMENTOS
           // ============================================================
           ...paginaSeparadora("5. Meus Compartilhamentos", "Compartilhamentos criados pelo Admin"),
 
@@ -771,7 +821,10 @@ export async function GET() {
           titulo2("5.4 Compartilhamentos do Admin — Evidencia"),
           tabelaCompartilhamentos(dadosMeusCompartilhamentos),
           espaço(),
-          titulo2("5.5 Cenarios Testados"),
+          titulo2("5.5 Captura de Tela — Meus Compartilhamentos"),
+          ...inserirScreenshot("ev-09-compartilhamentos.png", "Pagina Meus Compartilhamentos — lista de compartilhamentos com filtros e status"),
+          espaço(),
+          titulo2("5.6 Cenarios Testados"),
           titulo3("Cenario 1: Visualizacao da lista de compartilhamentos"),
           itemLista("Resultado: Lista carregada com os 3 compartilhamentos do Admin"),
           itemLista("Cards de metricas exibem os valores corretos"),
