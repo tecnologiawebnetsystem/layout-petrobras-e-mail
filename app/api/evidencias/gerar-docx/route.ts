@@ -947,7 +947,10 @@ export async function GET() {
           itemLista("Nome do arquivo: relatorio_usuarios_2025-06-02.pdf"),
           itemLista("Resultado: PDF aberto em nova aba para impressao — APROVADO"),
           espaço(),
-          titulo2("8.3 Resultado do Teste"),
+          titulo2("8.3 Captura de Tela — Gerar Relatorios"),
+          ...inserirScreenshot("ev-10-relatorios.png", "Tela de Geracao de Relatorios — configuracao de exportacao e preview"),
+          espaço(),
+          titulo2("8.4 Resultado do Teste"),
           ...caixaDestaque("APROVADO", [
             "Exportacao CSV gerada com separador (;) e BOM UTF-8 para compatibilidade com Excel.",
             "Exportacao TXT gerada com cabecalho, separadores e dados formatados.",
@@ -956,11 +959,53 @@ export async function GET() {
           ], COR_SUCESSO),
 
           // ============================================================
-          // SECAO 9 — RESUMO FINAL
+          // SECAO 9 — COMPARTILHAMENTO PELO ADMIN
           // ============================================================
-          ...paginaSeparadora("9. Resumo Geral dos Testes", "Resultado consolidado de todas as funcionalidades"),
+          ...paginaSeparadora("9. Compartilhamento pelo Admin", "Envio de arquivos por usuarios Administradores"),
 
-          titulo2("9.1 Consolidado de Resultados"),
+          titulo2("9.1 Descricao da Funcionalidade"),
+          paragrafo(
+            "O Administrador do sistema pode criar compartilhamentos diretamente, enviando arquivos para destinatarios externos. O fluxo e o mesmo dos usuarios internos, porem o Admin tem acesso a funcionalidades adicionais como visualizacao de todas as metricas do sistema."
+          ),
+          espaço(),
+          titulo2("9.2 Funcionalidades Testadas"),
+          titulo3("Upload de Arquivos"),
+          itemLista("Drag-and-drop de arquivos funciona corretamente"),
+          itemLista("Selecao multipla de arquivos via botao (PDF, XLSX, DWG)"),
+          itemLista("Validacao de extensoes bloqueadas (.exe, .bat, .cmd, .ps1)"),
+          itemLista("Limite de tamanho por arquivo: 100 MB — validado"),
+          espaço(),
+          titulo3("Formulario de Envio"),
+          itemLista("Campo de e-mail do destinatario com validacao de formato"),
+          itemLista("Selecao de tempo de expiracao do link (24h, 3 dias, 7 dias, 14 dias, 30 dias)"),
+          itemLista("Campo de descricao/mensagem para o destinatario"),
+          itemLista("Resumo do envio com total de arquivos e tamanho"),
+          espaço(),
+          titulo3("Seguranca"),
+          itemLista("Criptografia AES-256 em transito e em repouso"),
+          itemLista("Links expiram automaticamente apos o periodo configurado"),
+          itemLista("Auditoria completa de todos os acessos aos arquivos"),
+          itemLista("Validacao automatica de arquivos maliciosos"),
+          espaço(),
+          titulo2("9.3 Captura de Tela — Compartilhamento Admin"),
+          ...inserirScreenshot("ev-11-admin-compartilhamento.png", "Tela de Novo Compartilhamento — formulario de upload com drag-drop e resumo de seguranca"),
+          espaço(),
+          titulo2("9.4 Resultado do Teste"),
+          ...caixaDestaque("APROVADO", [
+            "Upload de multiplos arquivos funciona corretamente via drag-drop e selecao.",
+            "Validacao de extensoes bloqueadas impede envio de arquivos perigosos.",
+            "Formulario de envio preenche todos os campos obrigatorios corretamente.",
+            "Barra de progresso exibe o percentual de upload em tempo real.",
+            "Modal de sucesso exibe confirmacao com detalhes do compartilhamento.",
+            "Envio e registrado em auditoria com todos os metadados.",
+          ], COR_SUCESSO),
+
+          // ============================================================
+          // SECAO 10 — RESUMO FINAL
+          // ============================================================
+          ...paginaSeparadora("10. Resumo Geral dos Testes", "Resultado consolidado de todas as funcionalidades"),
+
+          titulo2("10.1 Consolidado de Resultados"),
           tabelaMetricas([
             { metrica: "1. Dashboard Admin", valor: "APROVADO", descricao: "Metricas, abas e navegacao funcionais" },
             { metrica: "2. Logs do Sistema", valor: "APROVADO", descricao: "Filtros, paginacao e busca funcionando" },
@@ -970,9 +1015,10 @@ export async function GET() {
             { metrica: "6. Gestao de Usuarios", valor: "APROVADO", descricao: "Lista, filtros e rastreamento ok" },
             { metrica: "7. Gestao Global de Compart.", valor: "APROVADO", descricao: "Visao global com filtros funcionais" },
             { metrica: "8. Exportacao de Relatorios", valor: "APROVADO", descricao: "CSV, TXT e PDF gerados com sucesso" },
+            { metrica: "9. Compartilhamento Admin", valor: "APROVADO", descricao: "Upload, formulario e seguranca ok" },
           ]),
           espaço(),
-          titulo2("9.2 Conclusao"),
+          titulo2("10.2 Conclusao"),
           ...caixaDestaque("TODOS OS TESTES APROVADOS", [
             "O perfil Admin do sistema SCAC Petrobras foi testado com sucesso em todas as funcionalidades listadas.",
             "Nenhuma falha critica ou bloqueante foi identificada durante os testes.",
