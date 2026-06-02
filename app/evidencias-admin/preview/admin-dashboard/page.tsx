@@ -6,6 +6,7 @@ import {
   ChevronLeft, ChevronRight, Eye, RefreshCw, BarChart3,
   Clock, CheckCircle, XCircle, AlertTriangle, User,
   Download, Upload, TrendingUp, Calendar, Search,
+  Share2, FileSpreadsheet, FileType, Filter,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -15,12 +16,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table"
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select"
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+
+// Dados mockados
+const METRICS_MOCK = {
+  users: { total: 48, internal: 32, external: 12, supervisors: 3, admins: 1, active: 45 },
+  shares: { total: 127, pending: 8, approved: 89, active: 42, rejected: 12, expired: 18 },
+  files: { total: 342, storage_bytes: 1258291200, storage_mb: 1200.12 },
+  audit: { total_logs: 4521, logs_last_7_days: 312 },
+  emails: { total_sent: 89 },
+}
 
 const LOGS_MOCK = [
   { id: 1, action: "LOGIN", user: "admin@petrobras.com.br", ip: "10.15.22.101", detail: "Login via Entra ID (SSO)", time: "08:14:33", level: "Sucesso" },
   { id: 2, action: "UPLOAD_ARQUIVO", user: "carlos.silva@petrobras.com.br", ip: "10.15.22.45", detail: "Contrato_Fornecedor_2025.pdf (4.2 MB)", time: "08:22:17", level: "Sucesso" },
   { id: 3, action: "APROVAR_COMPARTILHAMENTO", user: "ana.santos@petrobras.com.br", ip: "10.15.23.88", detail: "Compartilhamento #122 aprovado", time: "08:31:45", level: "Sucesso" },
-  { id: 4, action: "OTP_VALIDADO", user: "externo@parceiro.com", ip: "189.45.67.201", detail: "OTP validado — 1ª tentativa — Share #122", time: "08:34:22", level: "Sucesso" },
+  { id: 4, action: "OTP_VALIDADO", user: "externo@parceiro.com", ip: "189.45.67.201", detail: "OTP validado — 1a tentativa — Share #122", time: "08:34:22", level: "Sucesso" },
   { id: 5, action: "DOWNLOAD_ARQUIVO", user: "externo@parceiro.com", ip: "189.45.67.201", detail: "RelatorioTecnico_Q1_2025.pdf — Share #122", time: "08:35:11", level: "Sucesso" },
   { id: 6, action: "REJEITAR_COMPARTILHAMENTO", user: "paulo.lima@petrobras.com.br", ip: "10.15.24.33", detail: "Share #119 — documentacao incompleta", time: "09:05:48", level: "Aviso" },
   { id: 7, action: "LOGIN_FALHA", user: "teste@petrobras.com.br", ip: "10.15.19.77", detail: "Token expirado ou usuario inativo", time: "09:17:33", level: "Erro" },
@@ -47,6 +65,13 @@ const USERS_MOCK = [
   { name: "Externo Construtora", email: "eng@construtora.com", type: "Externo", status: "Ativo", last: "02/06/2025" },
 ]
 
+const MEUS_SHARES_MOCK = [
+  { id: "#130", name: "Documentos Fiscais 2025", dest: "contabil@parceiro.com", files: 5, status: "Aprovado", created: "02/06/2025", exp: "16/06/2025", downloads: 2 },
+  { id: "#131", name: "Projeto Expansao Norte", dest: "engenharia@construtora.com", files: 12, status: "Pendente", created: "02/06/2025", exp: "09/06/2025", downloads: 0 },
+  { id: "#118", name: "Relatorio Mensal Maio", dest: "diretoria@parceiro.com", files: 3, status: "Aprovado", created: "28/05/2025", exp: "04/06/2025", downloads: 5 },
+  { id: "#115", name: "Plantas Arquitetonicas", dest: "arquitetura@empresa.com", files: 8, status: "Expirado", created: "20/05/2025", exp: "27/05/2025", downloads: 3 },
+]
+
 const levelColor: Record<string, string> = {
   Sucesso: "bg-green-100 text-green-800",
   Aviso: "bg-yellow-100 text-yellow-800",
@@ -59,10 +84,15 @@ const statusColor: Record<string, string> = {
   Pendente: "bg-yellow-100 text-yellow-800",
   Rejeitado: "bg-red-100 text-red-800",
   Cancelado: "bg-gray-100 text-gray-700",
+  Expirado: "bg-gray-100 text-gray-500",
 }
 
 export default function AdminDashboardPreview() {
   const [activeTab, setActiveTab] = useState("dashboard")
+  const [exportModalOpen, setExportModalOpen] = useState(false)
+  const [exportFormat, setExportFormat] = useState("csv")
+  const [exportDataType, setExportDataType] = useState("users")
+  const metrics = METRICS_MOCK
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -88,90 +118,337 @@ export default function AdminDashboardPreview() {
       </header>
 
       <div className="p-6 max-w-7xl mx-auto">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          {[
-            { label: "Usuarios Totais", value: "48", sub: "+3 esta semana", icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
-            { label: "Compartilhamentos", value: "127", sub: "8 pendentes aprovacao", icon: FileText, color: "text-green-600", bg: "bg-green-50" },
-            { label: "Arquivos no Sistema", value: "342", sub: "12 enviados hoje", icon: HardDrive, color: "text-purple-600", bg: "bg-purple-50" },
-            { label: "E-mails Enviados", value: "89", sub: "Ultimos 7 dias", icon: Mail, color: "text-orange-600", bg: "bg-orange-50" },
-          ].map((stat) => (
-            <Card key={stat.label} className="border-0 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium">{stat.label}</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{stat.sub}</p>
-                  </div>
-                  <div className={`${stat.bg} p-2 rounded-lg`}>
-                    <stat.icon className={`w-5 h-5 ${stat.color}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-white border border-gray-200 mb-4">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
-            <TabsTrigger value="upload">Upload de Arquivos</TabsTrigger>
-            <TabsTrigger value="logs">Logs do Sistema</TabsTrigger>
-            <TabsTrigger value="rastreamento">Rastreamento</TabsTrigger>
+          <TabsList className="bg-white border border-gray-200 mb-6 flex-wrap h-auto gap-1 p-1">
+            <TabsTrigger value="dashboard" className="flex items-center gap-1.5 text-xs">
+              <BarChart3 className="w-3.5 h-3.5" /> Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="compartilhar" className="flex items-center gap-1.5 text-xs">
+              <Upload className="w-3.5 h-3.5" /> Compartilhar
+            </TabsTrigger>
+            <TabsTrigger value="meus-compartilhamentos" className="flex items-center gap-1.5 text-xs">
+              <Share2 className="w-3.5 h-3.5" /> Meus Compartilhamentos
+            </TabsTrigger>
+            <TabsTrigger value="usuarios" className="flex items-center gap-1.5 text-xs">
+              <Users className="w-3.5 h-3.5" /> Usuarios
+            </TabsTrigger>
+            <TabsTrigger value="shares" className="flex items-center gap-1.5 text-xs">
+              <FileText className="w-3.5 h-3.5" /> Gestao Global
+            </TabsTrigger>
+            <TabsTrigger value="logs" className="flex items-center gap-1.5 text-xs">
+              <Activity className="w-3.5 h-3.5" /> Logs
+            </TabsTrigger>
+            <TabsTrigger value="rastreamento" className="flex items-center gap-1.5 text-xs">
+              <Eye className="w-3.5 h-3.5" /> Rastreamento
+            </TabsTrigger>
+            <TabsTrigger value="relatorios" className="flex items-center gap-1.5 text-xs">
+              <FileSpreadsheet className="w-3.5 h-3.5" /> Relatorios
+            </TabsTrigger>
           </TabsList>
 
           {/* Tab: Dashboard */}
-          <TabsContent value="dashboard">
-            <div className="grid grid-cols-2 gap-4">
-              {/* Atividade recente */}
-              <Card className="border-0 shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-[#009933]" /> Atividade Recente
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {LOGS_MOCK.slice(0, 5).map((log) => (
-                      <div key={log.id} className="flex items-center gap-3 py-1.5 border-b border-gray-50 last:border-0">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${levelColor[log.level] || "bg-gray-100 text-gray-600"}`}>{log.level}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-gray-800 truncate">{log.action}</p>
-                          <p className="text-xs text-gray-500 truncate">{log.user}</p>
-                        </div>
-                        <span className="text-xs text-gray-400 whitespace-nowrap">{log.time}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Compartilhamentos recentes */}
-              <Card className="border-0 shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-[#009933]" /> Compartilhamentos Recentes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {SHARES_MOCK.slice(0, 5).map((s) => (
-                      <div key={s.id} className="flex items-center gap-3 py-1.5 border-b border-gray-50 last:border-0">
-                        <span className="text-xs font-mono text-gray-400 w-10">{s.id}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-gray-800 truncate">{s.name}</p>
-                          <p className="text-xs text-gray-500 truncate">{s.dest}</p>
-                        </div>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor[s.status] || "bg-gray-100 text-gray-600"}`}>{s.status}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+          <TabsContent value="dashboard" className="space-y-6">
+            <div className="flex justify-end">
+              <Button variant="outline" size="sm">
+                <RefreshCw className="h-4 w-4 mr-2" /> Atualizar
+              </Button>
             </div>
+
+            {/* Users Metrics - 6 cards */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <Users className="w-4 h-4 text-[#009933]" /> Metricas de Usuarios
+              </h3>
+              <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-medium text-muted-foreground">Total Usuarios</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{metrics.users.total}</div>
+                  </CardContent>
+                </Card>
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-medium text-muted-foreground">Internos</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-blue-600">{metrics.users.internal}</div>
+                  </CardContent>
+                </Card>
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-medium text-muted-foreground">Externos</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-purple-600">{metrics.users.external}</div>
+                  </CardContent>
+                </Card>
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-medium text-muted-foreground">Supervisores</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-600">{metrics.users.supervisors}</div>
+                  </CardContent>
+                </Card>
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-medium text-muted-foreground">Admins</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-red-600">{metrics.users.admins}</div>
+                  </CardContent>
+                </Card>
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-medium text-muted-foreground">Ativos</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-emerald-600">{metrics.users.active}</div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Shares Metrics - 6 cards */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[#009933]" /> Metricas de Compartilhamentos
+              </h3>
+              <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-medium text-muted-foreground">Total Shares</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{metrics.shares.total}</div>
+                  </CardContent>
+                </Card>
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-3 w-3" /> Pendentes
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-amber-600">{metrics.shares.pending}</div>
+                  </CardContent>
+                </Card>
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3" /> Aprovados
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-600">{metrics.shares.approved}</div>
+                  </CardContent>
+                </Card>
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-medium text-muted-foreground">Ativos</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-blue-600">{metrics.shares.active}</div>
+                  </CardContent>
+                </Card>
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      <XCircle className="h-3 w-3" /> Rejeitados
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-red-600">{metrics.shares.rejected}</div>
+                  </CardContent>
+                </Card>
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" /> Expirados
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-gray-500">{metrics.shares.expired}</div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Files & Audit Metrics - 4 cards */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <HardDrive className="w-4 h-4 text-[#009933]" /> Arquivos e Auditoria
+              </h3>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      <FileText className="h-3 w-3" /> Total Arquivos
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{metrics.files.total}</div>
+                  </CardContent>
+                </Card>
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      <HardDrive className="h-3 w-3" /> Storage Usado
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{metrics.files.storage_mb.toFixed(2)} MB</div>
+                  </CardContent>
+                </Card>
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      <Activity className="h-3 w-3" /> Total Logs
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{metrics.audit.total_logs}</div>
+                    <p className="text-xs text-muted-foreground">{metrics.audit.logs_last_7_days} nos ultimos 7 dias</p>
+                  </CardContent>
+                </Card>
+                <Card className="border shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      <Mail className="h-3 w-3" /> Emails Enviados
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{metrics.emails.total_sent}</div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Tab: Compartilhar */}
+          <TabsContent value="compartilhar" className="space-y-6">
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Upload className="w-4 h-4 text-[#009933]" /> Novo Compartilhamento
+                </CardTitle>
+                <CardDescription className="text-xs">Envie arquivos para destinatarios externos de forma segura.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center mb-4 bg-gray-50">
+                  <Upload className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-gray-600">Arraste arquivos ou clique para selecionar</p>
+                  <p className="text-xs text-gray-400 mt-1">PDF, XLSX, DWG — maximo 500 MB por arquivo</p>
+                  <Button size="sm" className="mt-3 bg-[#009933] hover:bg-[#007a2a] text-white text-xs">Selecionar Arquivos</Button>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    { name: "Contrato_Fornecedor_2025.pdf", size: "4.2 MB", status: "Concluido", pct: 100 },
+                    { name: "Plantas_Bloco_A-D.dwg", size: "18.7 MB", status: "Concluido", pct: 100 },
+                    { name: "Relatorio_Q1_2025.xlsx", size: "1.1 MB", status: "Enviando", pct: 67 },
+                  ].map((f) => (
+                    <div key={f.name} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg">
+                      <FileText className="w-5 h-5 text-[#009933] flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-medium text-gray-800 truncate">{f.name}</p>
+                          <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">{f.size}</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-1.5">
+                          <div className="h-1.5 rounded-full bg-[#009933]" style={{ width: `${f.pct}%` }} />
+                        </div>
+                      </div>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${f.status === "Concluido" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}`}>{f.status}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-6 space-y-4">
+                  <div>
+                    <Label className="text-xs font-medium">E-mail do Destinatario</Label>
+                    <Input className="mt-1" placeholder="email@empresa.com" />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-medium">Validade do Link</Label>
+                    <Select defaultValue="7">
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">24 horas</SelectItem>
+                        <SelectItem value="3">3 dias</SelectItem>
+                        <SelectItem value="7">7 dias</SelectItem>
+                        <SelectItem value="14">14 dias</SelectItem>
+                        <SelectItem value="30">30 dias</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button className="w-full bg-[#009933] hover:bg-[#007a2a] text-white">
+                    <Share2 className="w-4 h-4 mr-2" /> Criar Compartilhamento
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab: Meus Compartilhamentos */}
+          <TabsContent value="meus-compartilhamentos" className="space-y-6">
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                      <Share2 className="w-4 h-4 text-[#009933]" /> Meus Compartilhamentos
+                    </CardTitle>
+                    <CardDescription className="text-xs">Acompanhe todos os compartilhamentos que voce criou.</CardDescription>
+                  </div>
+                  <Badge variant="outline" className="text-xs">{MEUS_SHARES_MOCK.length} compartilhamentos</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="text-xs">ID</TableHead>
+                      <TableHead className="text-xs">Nome</TableHead>
+                      <TableHead className="text-xs">Destinatario</TableHead>
+                      <TableHead className="text-xs">Arquivos</TableHead>
+                      <TableHead className="text-xs">Status</TableHead>
+                      <TableHead className="text-xs">Downloads</TableHead>
+                      <TableHead className="text-xs">Expira em</TableHead>
+                      <TableHead className="text-xs">Acoes</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {MEUS_SHARES_MOCK.map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell className="text-xs font-mono font-medium">{s.id}</TableCell>
+                        <TableCell className="text-xs font-medium text-gray-800">{s.name}</TableCell>
+                        <TableCell className="text-xs text-gray-500">{s.dest}</TableCell>
+                        <TableCell className="text-xs text-center">{s.files}</TableCell>
+                        <TableCell>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor[s.status] || "bg-gray-100 text-gray-600"}`}>{s.status}</span>
+                        </TableCell>
+                        <TableCell className="text-xs text-center">{s.downloads}</TableCell>
+                        <TableCell className="text-xs text-gray-500">{s.exp}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                              <Eye className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                              <Mail className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Tab: Usuarios */}
@@ -183,7 +460,7 @@ export default function AdminDashboardPreview() {
                   <div className="flex items-center gap-2">
                     <div className="relative">
                       <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
-                      <Input className="pl-7 h-7 text-xs w-48" placeholder="Buscar usuario..." defaultValue="" />
+                      <Input className="pl-7 h-7 text-xs w-48" placeholder="Buscar usuario..." />
                     </div>
                   </div>
                 </div>
@@ -224,49 +501,46 @@ export default function AdminDashboardPreview() {
             </Card>
           </TabsContent>
 
-          {/* Tab: Upload */}
-          <TabsContent value="upload">
+          {/* Tab: Gestao Global */}
+          <TabsContent value="shares">
             <Card className="border-0 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Upload className="w-4 h-4 text-[#009933]" /> Upload de Arquivos
-                </CardTitle>
-                <CardDescription className="text-xs">Envio de documentos com validacao de tipo, barra de progresso e validacao de arquivos ZIP.</CardDescription>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-[#009933]" /> Gestao Global de Compartilhamentos
+                  </CardTitle>
+                  <Badge variant="outline" className="text-xs">127 compartilhamentos</Badge>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center mb-4 bg-gray-50">
-                  <Upload className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm font-medium text-gray-600">Arraste arquivos ou clique para selecionar</p>
-                  <p className="text-xs text-gray-400 mt-1">PDF, XLSX, DWG — maximo 500 MB por arquivo</p>
-                  <Button size="sm" className="mt-3 bg-[#009933] text-white text-xs">Selecionar Arquivos</Button>
-                </div>
-                <div className="space-y-3">
-                  {[
-                    { name: "Contrato_Fornecedor_2025.pdf", size: "4.2 MB", status: "Concluido", pct: 100 },
-                    { name: "Plantas_Bloco_A-D.dwg", size: "18.7 MB", status: "Concluido", pct: 100 },
-                    { name: "Relatorio_Q1_2025.xlsx", size: "1.1 MB", status: "Concluido", pct: 100 },
-                    { name: "Memorial_Descritivo_v2.pdf", size: "2.9 MB", status: "Enviando", pct: 67 },
-                  ].map((f) => (
-                    <div key={f.name} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg">
-                      <FileText className="w-5 h-5 text-[#009933] flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="text-xs font-medium text-gray-800 truncate">{f.name}</p>
-                          <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">{f.size}</span>
-                        </div>
-                        <div className="w-full bg-gray-100 rounded-full h-1.5">
-                          <div
-                            className="h-1.5 rounded-full bg-[#009933]"
-                            style={{ width: `${f.pct}%` }}
-                          />
-                        </div>
-                      </div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${
-                        f.status === "Concluido" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"
-                      }`}>{f.status}</span>
-                    </div>
-                  ))}
-                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="text-xs">ID</TableHead>
+                      <TableHead className="text-xs">Nome</TableHead>
+                      <TableHead className="text-xs">Destinatario</TableHead>
+                      <TableHead className="text-xs">Arquivos</TableHead>
+                      <TableHead className="text-xs">Status</TableHead>
+                      <TableHead className="text-xs">Criado por</TableHead>
+                      <TableHead className="text-xs">Expira em</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {SHARES_MOCK.map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell className="text-xs font-mono font-medium">{s.id}</TableCell>
+                        <TableCell className="text-xs font-medium text-gray-800">{s.name}</TableCell>
+                        <TableCell className="text-xs text-gray-500">{s.dest}</TableCell>
+                        <TableCell className="text-xs text-center">{s.files}</TableCell>
+                        <TableCell>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor[s.status] || "bg-gray-100 text-gray-600"}`}>{s.status}</span>
+                        </TableCell>
+                        <TableCell className="text-xs text-gray-500">{s.by}</TableCell>
+                        <TableCell className="text-xs text-gray-500">{s.exp}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </TabsContent>
@@ -279,7 +553,7 @@ export default function AdminDashboardPreview() {
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                     <Activity className="w-4 h-4 text-[#009933]" /> Logs do Sistema
                   </CardTitle>
-                  <Badge variant="outline" className="text-xs">1.247 registros</Badge>
+                  <Badge variant="outline" className="text-xs">4.521 registros</Badge>
                 </div>
               </CardHeader>
               <CardContent>
@@ -318,9 +592,9 @@ export default function AdminDashboardPreview() {
             <Card className="border-0 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-[#009933]" /> Rastreamento de Compartilhamentos
+                  <Eye className="w-4 h-4 text-[#009933]" /> Rastreamento de Atividades
                 </CardTitle>
-                <CardDescription className="text-xs">Historico completo de acoes por compartilhamento — quem acessou, quando e de qual IP.</CardDescription>
+                <CardDescription className="text-xs">Historico completo de acoes por compartilhamento.</CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -345,12 +619,115 @@ export default function AdminDashboardPreview() {
                         <TableCell>
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor[s.status] || "bg-gray-100 text-gray-600"}`}>{s.status}</span>
                         </TableCell>
-                        <TableCell className="text-xs text-gray-600">{s.by}</TableCell>
+                        <TableCell className="text-xs text-gray-500">{s.by}</TableCell>
                         <TableCell className="text-xs text-gray-500">{s.exp}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab: Relatorios */}
+          <TabsContent value="relatorios">
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <FileSpreadsheet className="w-4 h-4 text-[#009933]" /> Gerar Relatorios
+                </CardTitle>
+                <CardDescription className="text-xs">Exporte dados do sistema em diferentes formatos.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-3 gap-4">
+                  <Card className="border cursor-pointer hover:border-[#009933] transition-colors">
+                    <CardContent className="p-4 text-center">
+                      <Users className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                      <p className="text-sm font-medium">Usuarios</p>
+                      <p className="text-xs text-muted-foreground">48 registros</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="border cursor-pointer hover:border-[#009933] transition-colors">
+                    <CardContent className="p-4 text-center">
+                      <FileText className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                      <p className="text-sm font-medium">Compartilhamentos</p>
+                      <p className="text-xs text-muted-foreground">127 registros</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="border cursor-pointer hover:border-[#009933] transition-colors">
+                    <CardContent className="p-4 text-center">
+                      <Activity className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+                      <p className="text-sm font-medium">Logs de Auditoria</p>
+                      <p className="text-xs text-muted-foreground">4.521 registros</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="border rounded-lg p-4 bg-gray-50">
+                  <h4 className="text-sm font-medium mb-4">Configurar Exportacao</h4>
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-xs font-medium">Tipo de Dados</Label>
+                      <Select defaultValue="users">
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="users">Usuarios</SelectItem>
+                          <SelectItem value="shares">Compartilhamentos</SelectItem>
+                          <SelectItem value="logs">Logs de Auditoria</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium">Formato de Exportacao</Label>
+                      <RadioGroup defaultValue="csv" className="flex gap-4 mt-2">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="csv" id="csv" />
+                          <Label htmlFor="csv" className="text-sm">CSV</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="txt" id="txt" />
+                          <Label htmlFor="txt" className="text-sm">TXT</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="pdf" id="pdf" />
+                          <Label htmlFor="pdf" className="text-sm">PDF</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                    <Button className="w-full bg-[#009933] hover:bg-[#007a2a] text-white">
+                      <Download className="w-4 h-4 mr-2" /> Exportar Relatorio
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium mb-3">Exportacoes Recentes</h4>
+                  <div className="space-y-2">
+                    {[
+                      { name: "relatorio_usuarios_2025-06-02.csv", date: "02/06/2025 08:45", size: "12 KB" },
+                      { name: "relatorio_compartilhamentos_2025-06-01.pdf", date: "01/06/2025 16:22", size: "89 KB" },
+                      { name: "relatorio_logs_2025-05-30.txt", date: "30/05/2025 14:10", size: "234 KB" },
+                    ].map((exp) => (
+                      <div key={exp.name} className="flex items-center justify-between p-3 bg-white border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <FileType className="w-4 h-4 text-[#009933]" />
+                          <div>
+                            <p className="text-xs font-medium">{exp.name}</p>
+                            <p className="text-xs text-muted-foreground">{exp.date}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{exp.size}</span>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            <Download className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
