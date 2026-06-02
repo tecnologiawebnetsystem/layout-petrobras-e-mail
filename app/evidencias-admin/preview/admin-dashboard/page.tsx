@@ -92,28 +92,110 @@ export default function AdminDashboardPreview() {
   const [exportModalOpen, setExportModalOpen] = useState(false)
   const [exportFormat, setExportFormat] = useState("csv")
   const [exportDataType, setExportDataType] = useState("users")
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [destinatario, setDestinatario] = useState("")
+  const [validade, setValidade] = useState("7")
   const metrics = METRICS_MOCK
+
+  // Handler para selecionar arquivos
+  const handleFileSelect = () => {
+    const input = document.createElement("input")
+    input.type = "file"
+    input.multiple = true
+    input.accept = ".pdf,.xlsx,.xls,.dwg,.doc,.docx,.zip"
+    input.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files
+      if (files) {
+        setSelectedFiles(prev => [...prev, ...Array.from(files)])
+      }
+    }
+    input.click()
+  }
+
+  // Handler para criar compartilhamento
+  const handleCreateShare = () => {
+    if (!destinatario) {
+      alert("Por favor, informe o e-mail do destinatario.")
+      return
+    }
+    setShareModalOpen(true)
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#009933] rounded-lg flex items-center justify-center">
-            <Shield className="w-4 h-4 text-white" />
+      <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-[#009933] rounded-lg flex items-center justify-center">
+              <Shield className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-medium">PETROBRAS — SCAC</p>
+              <h1 className="text-base font-bold text-gray-900">Painel Administrativo</h1>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-gray-500 font-medium">PETROBRAS — SCAC</p>
-            <h1 className="text-base font-bold text-gray-900">Painel Administrativo</h1>
+          <div className="flex items-center gap-3">
+            <Badge className="bg-[#009933] text-white text-xs px-2 py-0.5">Admin</Badge>
+            <div className="text-right">
+              <p className="text-sm font-medium text-gray-800">Admin SCAC</p>
+              <p className="text-xs text-gray-500">admin@petrobras.com.br</p>
+            </div>
+            <div className="w-8 h-8 bg-[#009933] rounded-full flex items-center justify-center text-white text-sm font-bold">A</div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Badge className="bg-[#009933] text-white text-xs px-2 py-0.5">Admin</Badge>
-          <div className="text-right">
-            <p className="text-sm font-medium text-gray-800">Admin SCAC</p>
-            <p className="text-xs text-gray-500">admin@petrobras.com.br</p>
+        
+        {/* Info do usuario e Meus Compartilhamentos */}
+        <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Supervisor */}
+          <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+            <p className="text-xs font-medium text-blue-700 mb-1">Supervisor Responsavel</p>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">D</div>
+              <div>
+                <p className="text-sm font-medium text-gray-800">Diretor Geral</p>
+                <p className="text-xs text-gray-500">diretor@petrobras.com.br</p>
+              </div>
+            </div>
           </div>
-          <div className="w-8 h-8 bg-[#009933] rounded-full flex items-center justify-center text-white text-sm font-bold">A</div>
+          
+          {/* Subordinados */}
+          <div className="bg-green-50 rounded-lg p-3 border border-green-100">
+            <p className="text-xs font-medium text-green-700 mb-1">Subordinados Diretos</p>
+            <div className="flex items-center gap-2">
+              <div className="flex -space-x-2">
+                <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white">A</div>
+                <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white">C</div>
+                <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white">M</div>
+              </div>
+              <p className="text-xs text-gray-600">Ana Santos, Carlos Silva, Maria Costa <span className="text-gray-400">+44 usuarios</span></p>
+            </div>
+          </div>
+          
+          {/* Meus Compartilhamentos - Resumo */}
+          <div className="bg-amber-50 rounded-lg p-3 border border-amber-100">
+            <p className="text-xs font-medium text-amber-700 mb-1">Meus Compartilhamentos</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="text-center">
+                  <p className="text-lg font-bold text-gray-800">4</p>
+                  <p className="text-xs text-gray-500">Total</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-amber-600">1</p>
+                  <p className="text-xs text-gray-500">Pendente</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-green-600">2</p>
+                  <p className="text-xs text-gray-500">Aprovados</p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setActiveTab("meus-compartilhamentos")}>
+                <Eye className="w-3 h-3 mr-1" /> Ver Todos
+              </Button>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -123,12 +205,6 @@ export default function AdminDashboardPreview() {
           <TabsList className="bg-white border border-gray-200 mb-6 flex-wrap h-auto gap-1 p-1">
             <TabsTrigger value="dashboard" className="flex items-center gap-1.5 text-xs">
               <BarChart3 className="w-3.5 h-3.5" /> Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="compartilhar" className="flex items-center gap-1.5 text-xs">
-              <Upload className="w-3.5 h-3.5" /> Compartilhar
-            </TabsTrigger>
-            <TabsTrigger value="meus-compartilhamentos" className="flex items-center gap-1.5 text-xs">
-              <Share2 className="w-3.5 h-3.5" /> Meus Compartilhamentos
             </TabsTrigger>
             <TabsTrigger value="usuarios" className="flex items-center gap-1.5 text-xs">
               <Users className="w-3.5 h-3.5" /> Usuarios
@@ -141,6 +217,9 @@ export default function AdminDashboardPreview() {
             </TabsTrigger>
             <TabsTrigger value="rastreamento" className="flex items-center gap-1.5 text-xs">
               <Eye className="w-3.5 h-3.5" /> Rastreamento
+            </TabsTrigger>
+            <TabsTrigger value="compartilhar" className="flex items-center gap-1.5 text-xs">
+              <Upload className="w-3.5 h-3.5" /> Compartilhar
             </TabsTrigger>
             <TabsTrigger value="relatorios" className="flex items-center gap-1.5 text-xs">
               <FileSpreadsheet className="w-3.5 h-3.5" /> Relatorios
@@ -338,19 +417,27 @@ export default function AdminDashboardPreview() {
                 <CardDescription className="text-xs">Envie arquivos para destinatarios externos de forma segura.</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center mb-4 bg-gray-50">
+                <div 
+                  className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center mb-4 bg-gray-50 hover:bg-gray-100 hover:border-[#009933] cursor-pointer transition-colors"
+                  onClick={handleFileSelect}
+                >
                   <Upload className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                   <p className="text-sm font-medium text-gray-600">Arraste arquivos ou clique para selecionar</p>
                   <p className="text-xs text-gray-400 mt-1">PDF, XLSX, DWG — maximo 500 MB por arquivo</p>
-                  <Button size="sm" className="mt-3 bg-[#009933] hover:bg-[#007a2a] text-white text-xs">Selecionar Arquivos</Button>
+                  <Button size="sm" className="mt-3 bg-[#009933] hover:bg-[#007a2a] text-white text-xs" onClick={(e) => { e.stopPropagation(); handleFileSelect(); }}>
+                    Selecionar Arquivos
+                  </Button>
                 </div>
+                
+                {/* Lista de arquivos mockados + arquivos selecionados */}
                 <div className="space-y-3">
                   {[
                     { name: "Contrato_Fornecedor_2025.pdf", size: "4.2 MB", status: "Concluido", pct: 100 },
                     { name: "Plantas_Bloco_A-D.dwg", size: "18.7 MB", status: "Concluido", pct: 100 },
                     { name: "Relatorio_Q1_2025.xlsx", size: "1.1 MB", status: "Enviando", pct: 67 },
-                  ].map((f) => (
-                    <div key={f.name} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg">
+                    ...selectedFiles.map(f => ({ name: f.name, size: `${(f.size / 1024 / 1024).toFixed(1)} MB`, status: "Novo", pct: 0 }))
+                  ].map((f, idx) => (
+                    <div key={`${f.name}-${idx}`} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg">
                       <FileText className="w-5 h-5 text-[#009933] flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
@@ -361,18 +448,28 @@ export default function AdminDashboardPreview() {
                           <div className="h-1.5 rounded-full bg-[#009933]" style={{ width: `${f.pct}%` }} />
                         </div>
                       </div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${f.status === "Concluido" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}`}>{f.status}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${
+                        f.status === "Concluido" ? "bg-green-100 text-green-800" : 
+                        f.status === "Novo" ? "bg-purple-100 text-purple-800" :
+                        "bg-blue-100 text-blue-800"
+                      }`}>{f.status}</span>
                     </div>
                   ))}
                 </div>
+                
                 <div className="mt-6 space-y-4">
                   <div>
                     <Label className="text-xs font-medium">E-mail do Destinatario</Label>
-                    <Input className="mt-1" placeholder="email@empresa.com" />
+                    <Input 
+                      className="mt-1" 
+                      placeholder="email@empresa.com" 
+                      value={destinatario}
+                      onChange={(e) => setDestinatario(e.target.value)}
+                    />
                   </div>
                   <div>
                     <Label className="text-xs font-medium">Validade do Link</Label>
-                    <Select defaultValue="7">
+                    <Select value={validade} onValueChange={setValidade}>
                       <SelectTrigger className="mt-1">
                         <SelectValue />
                       </SelectTrigger>
@@ -385,12 +482,50 @@ export default function AdminDashboardPreview() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button className="w-full bg-[#009933] hover:bg-[#007a2a] text-white">
+                  <Button className="w-full bg-[#009933] hover:bg-[#007a2a] text-white" onClick={handleCreateShare}>
                     <Share2 className="w-4 h-4 mr-2" /> Criar Compartilhamento
                   </Button>
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Modal de sucesso */}
+            <Dialog open={shareModalOpen} onOpenChange={setShareModalOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-green-600">
+                    <CheckCircle className="w-5 h-5" /> Compartilhamento Criado!
+                  </DialogTitle>
+                  <DialogDescription>
+                    O compartilhamento foi criado com sucesso e o destinatario recebera um e-mail com o link de acesso.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Destinatario:</span>
+                    <span className="font-medium">{destinatario || "email@empresa.com"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Arquivos:</span>
+                    <span className="font-medium">3 arquivos</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Validade:</span>
+                    <span className="font-medium">{validade} dias</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">ID:</span>
+                    <span className="font-mono font-medium">#132</span>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShareModalOpen(false)}>Fechar</Button>
+                  <Button className="bg-[#009933] hover:bg-[#007a2a] text-white" onClick={() => { setShareModalOpen(false); setActiveTab("meus-compartilhamentos"); }}>
+                    Ver Meus Compartilhamentos
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           {/* Tab: Meus Compartilhamentos */}
