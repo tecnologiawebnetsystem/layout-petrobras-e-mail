@@ -122,6 +122,11 @@ export default function AdminDashboardPreview() {
     setShareModalOpen(true)
   }
 
+  // Handler para exportar relatorio
+  const handleExportReport = () => {
+    setExportModalOpen(true)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -147,7 +152,7 @@ export default function AdminDashboardPreview() {
         </div>
         
         {/* Info do usuario e Meus Compartilhamentos */}
-        <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Supervisor */}
           <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
             <p className="text-xs font-medium text-blue-700 mb-1">Supervisor Responsavel</p>
@@ -157,19 +162,6 @@ export default function AdminDashboardPreview() {
                 <p className="text-sm font-medium text-gray-800">Diretor Geral</p>
                 <p className="text-xs text-gray-500">diretor@petrobras.com.br</p>
               </div>
-            </div>
-          </div>
-          
-          {/* Subordinados */}
-          <div className="bg-green-50 rounded-lg p-3 border border-green-100">
-            <p className="text-xs font-medium text-green-700 mb-1">Subordinados Diretos</p>
-            <div className="flex items-center gap-2">
-              <div className="flex -space-x-2">
-                <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white">A</div>
-                <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white">C</div>
-                <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white">M</div>
-              </div>
-              <p className="text-xs text-gray-600">Ana Santos, Carlos Silva, Maria Costa <span className="text-gray-400">+44 usuarios</span></p>
             </div>
           </div>
           
@@ -526,6 +518,44 @@ export default function AdminDashboardPreview() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            
+            {/* Modal de sucesso de exportacao */}
+            <Dialog open={exportModalOpen} onOpenChange={setExportModalOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-green-600">
+                    <CheckCircle className="w-5 h-5" /> Relatorio Exportado!
+                  </DialogTitle>
+                  <DialogDescription>
+                    O relatorio foi gerado com sucesso e esta pronto para download.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Tipo:</span>
+                    <span className="font-medium">{exportDataType === "users" ? "Usuarios" : exportDataType === "shares" ? "Compartilhamentos" : "Logs de Auditoria"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Formato:</span>
+                    <span className="font-medium">{exportFormat.toUpperCase()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Registros:</span>
+                    <span className="font-medium">{exportDataType === "users" ? "48" : exportDataType === "shares" ? "127" : "4.521"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Arquivo:</span>
+                    <span className="font-mono font-medium text-xs">relatorio_{exportDataType}_2025-06-02.{exportFormat}</span>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setExportModalOpen(false)}>Fechar</Button>
+                  <Button className="bg-[#009933] hover:bg-[#007a2a] text-white" onClick={() => setExportModalOpen(false)}>
+                    <Download className="w-4 h-4 mr-2" /> Baixar Arquivo
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           {/* Tab: Meus Compartilhamentos */}
@@ -831,7 +861,7 @@ export default function AdminDashboardPreview() {
                         </div>
                       </RadioGroup>
                     </div>
-                    <Button className="w-full bg-[#009933] hover:bg-[#007a2a] text-white">
+                    <Button className="w-full bg-[#009933] hover:bg-[#007a2a] text-white" onClick={handleExportReport}>
                       <Download className="w-4 h-4 mr-2" /> Exportar Relatorio
                     </Button>
                   </div>
@@ -865,6 +895,44 @@ export default function AdminDashboardPreview() {
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Modal de sucesso de exportacao */}
+            <Dialog open={exportModalOpen} onOpenChange={setExportModalOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-green-600">
+                    <CheckCircle className="w-5 h-5" /> Relatorio Exportado!
+                  </DialogTitle>
+                  <DialogDescription>
+                    O relatorio foi gerado com sucesso e esta pronto para download.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Tipo:</span>
+                    <span className="font-medium">{exportDataType === "users" ? "Usuarios" : exportDataType === "shares" ? "Compartilhamentos" : "Logs de Auditoria"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Formato:</span>
+                    <span className="font-medium">{exportFormat.toUpperCase()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Registros:</span>
+                    <span className="font-medium">{exportDataType === "users" ? "48" : exportDataType === "shares" ? "127" : "4.521"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Arquivo:</span>
+                    <span className="font-mono font-medium text-xs">relatorio_{exportDataType}_2025-06-02.{exportFormat}</span>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setExportModalOpen(false)}>Fechar</Button>
+                  <Button className="bg-[#009933] hover:bg-[#007a2a] text-white" onClick={() => setExportModalOpen(false)}>
+                    <Download className="w-4 h-4 mr-2" /> Baixar Arquivo
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
         </Tabs>
       </div>
