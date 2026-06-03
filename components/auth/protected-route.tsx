@@ -17,14 +17,30 @@ interface ProtectedRouteProps {
 // IMPORTANTE: Mudar para false em producao!
 const HOMOLOGATION_MODE = true
 
+// Usuario mock para homologacao
+const MOCK_ADMIN_USER = {
+  id: "homologacao-admin-001",
+  email: "admin.homologacao@petrobras.com.br",
+  name: "Admin Homologacao",
+  userType: "admin" as const,
+  isAdmin: true,
+  jobTitle: "Administrador do Sistema",
+  department: "TI - Desenvolvimento",
+  officeLocation: "EDISE",
+}
+
 export function ProtectedRoute({ children, allowedUserTypes }: ProtectedRouteProps) {
-  const { user, isAuthenticated, _hasHydrated } = useAuthStore()
+  const { user, isAuthenticated, _hasHydrated, setAuth } = useAuthStore()
   const router = useRouter()
   const [isChecking, setIsChecking] = useState(!HOMOLOGATION_MODE)
 
   useEffect(() => {
-    // Se modo homologacao esta ativo, permite acesso direto
+    // Se modo homologacao esta ativo, configura usuario mock e permite acesso direto
     if (HOMOLOGATION_MODE) {
+      // Se nao ha usuario autenticado, configura o mock admin
+      if (!user) {
+        setAuth(MOCK_ADMIN_USER, "homologacao-token", "homologacao-refresh")
+      }
       return
     }
 
