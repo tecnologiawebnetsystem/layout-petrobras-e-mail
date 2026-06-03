@@ -753,111 +753,252 @@ export default function AdminDashboardPreview() {
             </TabsContent>
 
             {/* ======================================================
-                ABA: RELATÓRIOS
+                ABA: RELATÓRIOS — Design moderno e bonito
             ====================================================== */}
-            <TabsContent value="relatorios" className="space-y-4">
-              <Card className="border border-border shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <FileSpreadsheet className="w-4 h-4 text-primary" /> Gerar Relatórios
-                  </CardTitle>
-                  <CardDescription className="text-xs">Exporte dados do sistema em diferentes formatos.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  {/* Cards de tipo de dado */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {[
-                      { key: "users",  label: "Usuários",             count: 48,    icon: <Users className="w-7 h-7 text-secondary" />,       color: "text-secondary" },
-                      { key: "shares", label: "Compartilhamentos",    count: 127,   icon: <Share2 className="w-7 h-7 text-primary" />,         color: "text-primary" },
-                      { key: "audit",  label: "Logs de Auditoria",    count: 4521,  icon: <Activity className="w-7 h-7 text-destructive" />,   color: "text-destructive" },
-                    ].map(t => (
-                      <div
-                        key={t.key}
-                        onClick={() => setExportDataType(t.key)}
-                        className={`cursor-pointer rounded-xl border-2 p-5 text-center transition-all hover:shadow-md ${exportDataType === t.key ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/50"}`}
-                      >
-                        <div className="flex justify-center mb-2">{t.icon}</div>
-                        <p className={`text-sm font-semibold ${exportDataType === t.key ? "text-primary" : "text-foreground"}`}>{t.label}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{t.count.toLocaleString()} registros</p>
-                      </div>
-                    ))}
+            <TabsContent value="relatorios" className="space-y-6">
+              {/* Header da seção */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                    <FileSpreadsheet className="w-6 h-6 text-primary" />
                   </div>
-
-                  {/* Configuração de exportação */}
-                  <div className="border border-border rounded-lg p-4 space-y-3">
-                    <p className="text-xs font-semibold text-foreground">Configurar Exportação</p>
-                    <div>
-                      <Label className="text-xs font-medium text-muted-foreground">Formato</Label>
-                      <RadioGroup
-                        value={exportFormat}
-                        onValueChange={setExportFormat}
-                        className="flex gap-4 mt-2"
-                      >
-                        {[
-                          { value: "csv", label: "CSV (Excel)" },
-                          { value: "txt", label: "TXT" },
-                          { value: "pdf", label: "PDF" },
-                        ].map(f => (
-                          <div key={f.value} className="flex items-center gap-2">
-                            <RadioGroupItem value={f.value} id={`fmt-${f.value}`} />
-                            <Label htmlFor={`fmt-${f.value}`} className="text-xs cursor-pointer">{f.label}</Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </div>
-                    <Button
-                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                      onClick={() => setExportModalOpen(true)}
-                    >
-                      <Download className="w-4 h-4 mr-2" /> Exportar Relatório
-                    </Button>
-                  </div>
-
-                  {/* Histórico de exportações */}
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground mb-2">Exportações Recentes</p>
-                    <div className="space-y-2">
+                    <h2 className="text-xl font-bold text-foreground">Central de Relatorios</h2>
+                    <p className="text-sm text-muted-foreground">Exporte dados do sistema em diferentes formatos</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Cards de seleção de tipo de relatório */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[
+                  { 
+                    key: "users", 
+                    label: "Usuarios", 
+                    desc: "Lista completa de usuarios do sistema",
+                    count: 48, 
+                    icon: <Users className="w-8 h-8" />,
+                    gradient: "from-blue-500 to-blue-600",
+                    lightBg: "bg-blue-50 dark:bg-blue-950/30",
+                    iconColor: "text-blue-600 dark:text-blue-400"
+                  },
+                  { 
+                    key: "shares", 
+                    label: "Compartilhamentos", 
+                    desc: "Historico de todos os compartilhamentos",
+                    count: 127, 
+                    icon: <Share2 className="w-8 h-8" />,
+                    gradient: "from-emerald-500 to-emerald-600",
+                    lightBg: "bg-emerald-50 dark:bg-emerald-950/30",
+                    iconColor: "text-emerald-600 dark:text-emerald-400"
+                  },
+                  { 
+                    key: "audit", 
+                    label: "Logs de Auditoria", 
+                    desc: "Registro de todas as acoes do sistema",
+                    count: 4521, 
+                    icon: <Activity className="w-8 h-8" />,
+                    gradient: "from-purple-500 to-purple-600",
+                    lightBg: "bg-purple-50 dark:bg-purple-950/30",
+                    iconColor: "text-purple-600 dark:text-purple-400"
+                  },
+                ].map(t => (
+                  <div
+                    key={t.key}
+                    onClick={() => setExportDataType(t.key)}
+                    className={`group cursor-pointer rounded-2xl border-2 p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+                      exportDataType === t.key 
+                        ? `border-primary bg-gradient-to-br ${t.gradient} text-white shadow-lg` 
+                        : `border-border bg-card hover:border-primary/50 ${t.lightBg}`
+                    }`}
+                  >
+                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${
+                      exportDataType === t.key 
+                        ? "bg-white/20" 
+                        : "bg-white dark:bg-gray-800 shadow-sm"
+                    }`}>
+                      <div className={exportDataType === t.key ? "text-white" : t.iconColor}>
+                        {t.icon}
+                      </div>
+                    </div>
+                    <h3 className={`text-lg font-bold mb-1 ${exportDataType === t.key ? "text-white" : "text-foreground"}`}>
+                      {t.label}
+                    </h3>
+                    <p className={`text-sm mb-3 ${exportDataType === t.key ? "text-white/80" : "text-muted-foreground"}`}>
+                      {t.desc}
+                    </p>
+                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${
+                      exportDataType === t.key 
+                        ? "bg-white/20 text-white" 
+                        : "bg-white dark:bg-gray-800 text-foreground shadow-sm"
+                    }`}>
+                      <HardDrive className="w-4 h-4" />
+                      {t.count.toLocaleString()} registros
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Configuração de exportação */}
+              <Card className="border border-border shadow-sm bg-card/50 backdrop-blur-sm">
+                <CardContent className="p-6 space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                      <Filter className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">Configurar Exportacao</h3>
+                      <p className="text-sm text-muted-foreground">Escolha o formato e personalize o relatorio</p>
+                    </div>
+                  </div>
+
+                  {/* Seleção de formato com cards visuais */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Formato do Arquivo</Label>
+                    <div className="grid grid-cols-3 gap-3">
                       {[
-                        { file: "relatorio_users_2025-06-01.csv",  type: "Usuários",          size: "12 KB",  date: "01/06 14:32" },
-                        { file: "relatorio_shares_2025-06-01.pdf", type: "Compartilhamentos", size: "48 KB",  date: "01/06 09:15" },
-                        { file: "relatorio_audit_2025-05-31.csv",  type: "Auditoria",         size: "256 KB", date: "31/05 17:48" },
-                      ].map(r => (
-                        <div key={r.file} className="flex items-center justify-between p-3 bg-card border border-border rounded-lg hover:bg-muted/30 transition-colors">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <FileSpreadsheet className="w-4 h-4 text-primary flex-shrink-0" />
-                            <div className="min-w-0">
-                              <p className="text-xs font-medium text-foreground truncate">{r.file}</p>
-                              <p className="text-xs text-muted-foreground">{r.type} · {r.size} · {r.date}</p>
-                            </div>
-                          </div>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary flex-shrink-0">
-                            <Download className="w-4 h-4" />
-                          </Button>
+                        { value: "csv", label: "CSV", desc: "Excel / Planilhas", icon: <FileSpreadsheet className="w-6 h-6" />, color: "text-green-600" },
+                        { value: "pdf", label: "PDF", desc: "Documento formatado", icon: <FileText className="w-6 h-6" />, color: "text-red-600" },
+                        { value: "txt", label: "TXT", desc: "Texto simples", icon: <FileText className="w-6 h-6" />, color: "text-gray-600" },
+                      ].map(f => (
+                        <div
+                          key={f.value}
+                          onClick={() => setExportFormat(f.value)}
+                          className={`cursor-pointer rounded-xl border-2 p-4 text-center transition-all duration-200 hover:shadow-md ${
+                            exportFormat === f.value 
+                              ? "border-primary bg-primary/5" 
+                              : "border-border bg-card hover:border-primary/50"
+                          }`}
+                        >
+                          <div className={`${f.color} mb-2 flex justify-center`}>{f.icon}</div>
+                          <p className="font-semibold text-foreground">{f.label}</p>
+                          <p className="text-xs text-muted-foreground">{f.desc}</p>
                         </div>
                       ))}
                     </div>
                   </div>
+
+                  {/* Período (opcional) */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Data Inicial</Label>
+                      <Input type="date" className="h-11" defaultValue="2025-01-01" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Data Final</Label>
+                      <Input type="date" className="h-11" defaultValue="2025-06-02" />
+                    </div>
+                  </div>
+
+                  {/* Botão de exportação */}
+                  <Button
+                    size="lg"
+                    className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300"
+                    onClick={() => setExportModalOpen(true)}
+                  >
+                    <Download className="w-5 h-5 mr-2" /> Gerar e Baixar Relatorio
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Histórico de exportações */}
+              <Card className="border border-border shadow-sm">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-950 dark:to-orange-950 flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base font-semibold">Exportacoes Recentes</CardTitle>
+                        <CardDescription className="text-sm">Ultimos relatorios gerados</CardDescription>
+                      </div>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">Ultimos 7 dias</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {[
+                    { file: "relatorio_users_2025-06-01.csv",  type: "Usuarios",          size: "12 KB",  date: "Hoje, 14:32", status: "success", icon: <Users className="w-4 h-4" />, color: "bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400" },
+                    { file: "relatorio_shares_2025-06-01.pdf", type: "Compartilhamentos", size: "48 KB",  date: "Hoje, 09:15", status: "success", icon: <Share2 className="w-4 h-4" />, color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400" },
+                    { file: "relatorio_audit_2025-05-31.csv",  type: "Auditoria",         size: "256 KB", date: "Ontem, 17:48", status: "success", icon: <Activity className="w-4 h-4" />, color: "bg-purple-100 text-purple-600 dark:bg-purple-950 dark:text-purple-400" },
+                    { file: "relatorio_users_2025-05-30.pdf",  type: "Usuarios",          size: "15 KB",  date: "30/05, 11:20", status: "success", icon: <Users className="w-4 h-4" />, color: "bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400" },
+                  ].map((r, idx) => (
+                    <div 
+                      key={`${r.file}-${idx}`} 
+                      className="flex items-center justify-between p-4 bg-gradient-to-r from-card to-card/50 border border-border rounded-xl hover:shadow-lg hover:border-primary/30 transition-all duration-300 group"
+                    >
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${r.color}`}>
+                          {r.icon}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-foreground truncate">{r.file}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-muted-foreground">{r.type}</span>
+                            <span className="text-xs text-muted-foreground">•</span>
+                            <span className="text-xs text-muted-foreground">{r.size}</span>
+                            <span className="text-xs text-muted-foreground">•</span>
+                            <span className="text-xs text-muted-foreground">{r.date}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800">
+                          <CheckCircle className="w-3 h-3 mr-1" /> Pronto
+                        </Badge>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-muted-foreground hover:text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-all"
+                        >
+                          <Download className="w-4 h-4 mr-1" /> Baixar
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </CardContent>
               </Card>
 
               {/* Modal de sucesso — exportação */}
               <Dialog open={exportModalOpen} onOpenChange={setExportModalOpen}>
-                <DialogContent>
+                <DialogContent className="sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-primary">
-                      <CheckCircle className="w-5 h-5" /> Relatório Exportado!
-                    </DialogTitle>
-                    <DialogDescription>O relatório foi gerado e está pronto para download.</DialogDescription>
+                    <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center mb-4">
+                      <CheckCircle className="w-8 h-8 text-primary" />
+                    </div>
+                    <DialogTitle className="text-center text-xl">Relatorio Gerado com Sucesso!</DialogTitle>
+                    <DialogDescription className="text-center">Seu arquivo esta pronto para download.</DialogDescription>
                   </DialogHeader>
-                  <div className="bg-muted rounded-lg p-4 space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Tipo:</span><span className="font-medium">{exportDataType === "users" ? "Usuários" : exportDataType === "shares" ? "Compartilhamentos" : "Logs de Auditoria"}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Formato:</span><span className="font-medium">{exportFormat.toUpperCase()}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Registros:</span><span className="font-medium">{exportDataType === "users" ? "48" : exportDataType === "shares" ? "127" : "4.521"}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Arquivo:</span><span className="font-mono text-xs font-medium">relatorio_{exportDataType}_2025-06-02.{exportFormat}</span></div>
+                  <div className="bg-gradient-to-r from-muted to-muted/50 rounded-xl p-5 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Tipo de Dados</span>
+                      <span className="font-semibold text-foreground">{exportDataType === "users" ? "Usuarios" : exportDataType === "shares" ? "Compartilhamentos" : "Logs de Auditoria"}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Formato</span>
+                      <Badge variant="secondary">{exportFormat.toUpperCase()}</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Total de Registros</span>
+                      <span className="font-semibold text-foreground">{exportDataType === "users" ? "48" : exportDataType === "shares" ? "127" : "4.521"}</span>
+                    </div>
+                    <div className="pt-2 border-t border-border">
+                      <div className="flex items-center gap-3 p-3 bg-card rounded-lg">
+                        <FileSpreadsheet className="w-8 h-8 text-primary" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground text-sm truncate">relatorio_{exportDataType}_2025-06-02.{exportFormat}</p>
+                          <p className="text-xs text-muted-foreground">Pronto para download</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setExportModalOpen(false)}>Fechar</Button>
-                    <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setExportModalOpen(false)}>
+                  <DialogFooter className="flex gap-2 sm:gap-2">
+                    <Button variant="outline" onClick={() => setExportModalOpen(false)} className="flex-1">Fechar</Button>
+                    <Button 
+                      className="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white" 
+                      onClick={() => setExportModalOpen(false)}
+                    >
                       <Download className="w-4 h-4 mr-2" /> Baixar Arquivo
                     </Button>
                   </DialogFooter>
