@@ -147,6 +147,8 @@ const sections: Section[] = [
       { id: "admin-acesso", title: "1. Acessando o Admin" },
       { id: "admin-logs", title: "2. Logs do Sistema" },
       { id: "admin-rastreamento", title: "3. Rastreamento por Usuário" },
+      { id: "admin-compartilhar", title: "4. Compartilhamento Rapido" },
+      { id: "admin-relatorios", title: "5. Central de Relatorios" },
     ]
   },
 ]
@@ -2368,6 +2370,303 @@ function AdminGlobalSection() {
           <InfoBox type="info" title="Funcionalidade">
             O rastreamento permite visualizar todo o histórico de atividades de um usuário específico, 
             incluindo logins, uploads, compartilhamentos criados e downloads realizados.
+          </InfoBox>
+        </div>
+      </section>
+
+      {/* 4. Compartilhamento Rapido */}
+      <section id="admin-compartilhar" className="scroll-mt-20">
+        <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+            <Upload className="h-5 w-5 text-purple-600" />
+          </div>
+          4. Compartilhamento Rapido (Admin)
+        </h2>
+
+        <p className="text-muted-foreground mb-6">
+          O Administrador possui a funcionalidade de <strong>Compartilhamento Rapido</strong>, que permite enviar 
+          arquivos para destinatarios externos com <strong>aprovacao automatica</strong>, sem necessidade de validacao 
+          por supervisor.
+        </p>
+
+        <InfoBox type="important" title="Aprovacao Automatica">
+          Como administrador, seus compartilhamentos sao aprovados automaticamente e o destinatario 
+          recebe acesso aos arquivos assim que o envio for concluido.
+        </InfoBox>
+
+        <ScreenMockup title="Aba Compartilhar - /admin" description="Envio rapido de arquivos para usuarios externos" variant="desktop">
+          <div className="space-y-6">
+            {/* Campo destinatario */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Mail className="h-4 w-4 text-primary" />
+                Destinatario Externo
+              </label>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-background">
+                <input placeholder="cliente@empresa.com" className="flex-1 bg-transparent outline-none text-sm" />
+              </div>
+              <p className="text-xs text-muted-foreground">O destinatario recebera um e-mail com link seguro para download</p>
+            </div>
+
+            {/* Zona de upload */}
+            <div className="border-2 border-dashed rounded-2xl p-8 text-center">
+              <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-4">
+                <Upload className="h-10 w-10 text-primary" />
+              </div>
+              <h4 className="font-semibold mb-2">Arraste e solte os arquivos</h4>
+              <p className="text-sm text-muted-foreground mb-4">ou clique para selecionar do seu computador</p>
+              <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground mb-4">
+                <span className="flex items-center gap-1"><FileText className="h-4 w-4" /> PDF</span>
+                <span className="flex items-center gap-1"><HardDrive className="h-4 w-4" /> Excel</span>
+                <span className="flex items-center gap-1"><Eye className="h-4 w-4" /> DWG</span>
+              </div>
+              <ActionButton icon={<Upload className="h-4 w-4" />} label="Selecionar Arquivos" />
+            </div>
+
+            {/* Arquivos selecionados */}
+            <div className="space-y-2">
+              <h4 className="font-semibold flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                Arquivos Prontos (2)
+              </h4>
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 p-3 rounded-xl border bg-card">
+                  <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-red-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">Contrato_Fornecedor.pdf</p>
+                    <p className="text-xs text-muted-foreground">2.4 MB</p>
+                  </div>
+                  <Badge variant="success">Pronto</Badge>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-xl border bg-card">
+                  <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                    <HardDrive className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">Planilha_Orcamento.xlsx</p>
+                    <p className="text-xs text-muted-foreground">856 KB</p>
+                  </div>
+                  <Badge variant="success">Pronto</Badge>
+                </div>
+              </div>
+            </div>
+
+            {/* Tempo e descricao */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-primary" />
+                  Tempo de Disponibilidade
+                </label>
+                <select className="w-full px-3 py-2 rounded-lg border bg-background text-sm">
+                  <option>24 horas (1 dia)</option>
+                  <option>48 horas (2 dias)</option>
+                  <option>72 horas (3 dias)</option>
+                  <option>168 horas (7 dias)</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Descricao do Envio</label>
+                <input placeholder="Descreva o conteudo..." className="w-full px-3 py-2 rounded-lg border bg-background text-sm" />
+              </div>
+            </div>
+
+            {/* Botao enviar */}
+            <ActionButton icon={<Send className="h-4 w-4" />} label="Enviar para Aprovacao" variant="success" />
+          </div>
+        </ScreenMockup>
+
+        <div className="mt-6 grid md:grid-cols-2 gap-4">
+          <InfoBox type="tip" title="Dica">
+            Voce pode arrastar multiplos arquivos de uma vez para a zona de upload. 
+            Formatos suportados: PDF, Excel (XLSX), DWG, DOC, ZIP.
+          </InfoBox>
+          <InfoBox type="info" title="Notificacao">
+            O destinatario recebera um e-mail automatico com o link de acesso assim 
+            que o compartilhamento for criado.
+          </InfoBox>
+        </div>
+      </section>
+
+      {/* 5. Central de Relatorios */}
+      <section id="admin-relatorios" className="scroll-mt-20">
+        <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+            <BarChart3 className="h-5 w-5 text-purple-600" />
+          </div>
+          5. Central de Relatorios
+        </h2>
+
+        <p className="text-muted-foreground mb-6">
+          A Central de Relatorios permite exportar dados do sistema em diferentes formatos para 
+          analise, auditoria e conformidade.
+        </p>
+
+        <ScreenMockup title="Aba Relatorios - /admin" description="Exportacao de dados do sistema" variant="desktop">
+          <div className="space-y-6">
+            {/* Cards de tipo de dados */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="p-5 rounded-xl border-2 border-blue-500 bg-gradient-to-br from-blue-500/20 to-blue-500/5">
+                <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center mb-3">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
+                <h4 className="font-semibold text-blue-700 dark:text-blue-400">Usuarios</h4>
+                <p className="text-xs text-muted-foreground mt-1">Lista completa de usuarios</p>
+                <div className="mt-3 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-500/20 text-xs font-medium text-blue-700 dark:text-blue-400">
+                  <HardDrive className="h-3 w-3" /> 48 registros
+                </div>
+              </div>
+              <div className="p-5 rounded-xl border bg-card hover:border-primary/50 transition-colors cursor-pointer">
+                <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center mb-3">
+                  <FolderOpen className="h-6 w-6 text-green-600" />
+                </div>
+                <h4 className="font-semibold">Compartilhamentos</h4>
+                <p className="text-xs text-muted-foreground mt-1">Historico completo</p>
+                <div className="mt-3 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-xs font-medium">
+                  <HardDrive className="h-3 w-3" /> 127 registros
+                </div>
+              </div>
+              <div className="p-5 rounded-xl border bg-card hover:border-primary/50 transition-colors cursor-pointer">
+                <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center mb-3">
+                  <Activity className="h-6 w-6 text-purple-600" />
+                </div>
+                <h4 className="font-semibold">Logs de Auditoria</h4>
+                <p className="text-xs text-muted-foreground mt-1">Registro de acoes</p>
+                <div className="mt-3 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-xs font-medium">
+                  <HardDrive className="h-3 w-3" /> 4.521 registros
+                </div>
+              </div>
+            </div>
+
+            {/* Configuracao */}
+            <div className="p-5 rounded-xl border bg-card space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Filter className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-semibold">Configurar Exportacao</h4>
+                  <p className="text-xs text-muted-foreground">Escolha o formato e periodo</p>
+                </div>
+              </div>
+
+              {/* Formato */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Formato do Arquivo</label>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="p-3 rounded-lg border-2 border-primary bg-primary/5 text-center cursor-pointer">
+                    <HardDrive className="h-5 w-5 text-green-600 mx-auto mb-1" />
+                    <p className="text-sm font-medium">CSV</p>
+                    <p className="text-xs text-muted-foreground">Excel / Planilhas</p>
+                  </div>
+                  <div className="p-3 rounded-lg border bg-card text-center cursor-pointer hover:border-primary/50 transition-colors">
+                    <FileText className="h-5 w-5 text-red-600 mx-auto mb-1" />
+                    <p className="text-sm font-medium">PDF</p>
+                    <p className="text-xs text-muted-foreground">Documento</p>
+                  </div>
+                  <div className="p-3 rounded-lg border bg-card text-center cursor-pointer hover:border-primary/50 transition-colors">
+                    <FileText className="h-5 w-5 text-gray-600 mx-auto mb-1" />
+                    <p className="text-sm font-medium">TXT</p>
+                    <p className="text-xs text-muted-foreground">Texto simples</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Periodo */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Data Inicial</label>
+                  <input type="date" className="w-full px-3 py-2 rounded-lg border bg-background text-sm" defaultValue="2025-01-01" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Data Final</label>
+                  <input type="date" className="w-full px-3 py-2 rounded-lg border bg-background text-sm" defaultValue="2025-06-02" />
+                </div>
+              </div>
+
+              {/* Botao */}
+              <ActionButton icon={<Download className="h-4 w-4" />} label="Gerar e Baixar Relatorio" variant="success" />
+            </div>
+
+            {/* Historico */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-amber-500" />
+                  Exportacoes Recentes
+                </h4>
+                <Badge variant="default">Ultimos 7 dias</Badge>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                      <Users className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">relatorio_users_2025-06-01.csv</p>
+                      <p className="text-xs text-muted-foreground">Usuarios • 12 KB • Hoje, 14:32</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="success"><CheckCircle className="h-3 w-3 mr-1" /> Pronto</Badge>
+                    <button className="px-3 py-1 rounded-lg text-xs text-primary hover:bg-primary/10 transition-colors opacity-0 group-hover:opacity-100">
+                      <Download className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
+                      <FolderOpen className="h-4 w-4 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">relatorio_shares_2025-06-01.pdf</p>
+                      <p className="text-xs text-muted-foreground">Compartilhamentos • 48 KB • Hoje, 09:15</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="success"><CheckCircle className="h-3 w-3 mr-1" /> Pronto</Badge>
+                    <button className="px-3 py-1 rounded-lg text-xs text-primary hover:bg-primary/10 transition-colors opacity-0 group-hover:opacity-100">
+                      <Download className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ScreenMockup>
+
+        <div className="mt-6">
+          <h4 className="font-semibold mb-4">Tipos de Relatorios Disponiveis</h4>
+          <div className="grid md:grid-cols-3 gap-4">
+            <FeatureCard
+              icon={<Users className="h-6 w-6" />}
+              title="Relatorio de Usuarios"
+              description="Lista completa de usuarios internos e externos, com status, perfil e ultimo acesso."
+              color="blue"
+            />
+            <FeatureCard
+              icon={<FolderOpen className="h-6 w-6" />}
+              title="Relatorio de Compartilhamentos"
+              description="Historico de todos os compartilhamentos, incluindo status, destinatarios e datas."
+              color="green"
+            />
+            <FeatureCard
+              icon={<Activity className="h-6 w-6" />}
+              title="Relatorio de Auditoria"
+              description="Logs detalhados de todas as acoes do sistema para fins de compliance."
+              color="purple"
+            />
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <InfoBox type="tip" title="Dica de Exportacao">
+            Para relatorios grandes (mais de 1000 registros), recomendamos usar o formato CSV 
+            que e mais rapido para gerar e pode ser aberto diretamente no Excel.
           </InfoBox>
         </div>
       </section>
