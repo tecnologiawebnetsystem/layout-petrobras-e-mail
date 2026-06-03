@@ -156,18 +156,76 @@ export default function AdminDashboardPreview() {
             </span>
           </div>
 
-          {/* Direita: Avatar + Nome + Cargo */}
-          <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9 bg-[#00a859]">
-              <AvatarFallback className="bg-[#00a859] text-white text-sm font-bold">
-                {getInitials(MOCK_USER.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="hidden sm:flex flex-col items-start">
-              <span className="text-sm font-semibold text-gray-900">{MOCK_USER.name}</span>
-              <span className="text-xs text-gray-500">{MOCK_USER.jobTitle}</span>
-            </div>
-          </div>
+          {/* Direita: Avatar + Nome + Cargo — com Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-2 py-1 transition-colors cursor-pointer">
+                <Avatar className="h-9 w-9 bg-[#00a859]">
+                  <AvatarFallback className="bg-[#00a859] text-white text-sm font-bold">
+                    {getInitials(MOCK_USER.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden sm:flex flex-col items-start">
+                  <span className="text-sm font-semibold text-gray-900">{MOCK_USER.name}</span>
+                  <span className="text-xs text-gray-500">{MOCK_USER.jobTitle}</span>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72 shadow-xl">
+              {/* Info do usuario */}
+              <DropdownMenuLabel className="pb-3">
+                <div className="flex items-start gap-3">
+                  <Avatar className="h-12 w-12 ring-2 ring-[#00a859]/20">
+                    <AvatarFallback className="bg-[#00a859] text-white text-sm font-bold">
+                      {getInitials(MOCK_USER.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900">{MOCK_USER.name}</p>
+                    <p className="text-xs text-gray-500 truncate mt-0.5">{MOCK_USER.email}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Building2 className="h-3 w-3 text-gray-400" />
+                      <p className="text-xs text-gray-500">{MOCK_USER.jobTitle}</p>
+                    </div>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <MapPin className="h-3 w-3 text-gray-400" />
+                      <p className="text-xs text-gray-500">{MOCK_USER.department}</p>
+                    </div>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+
+              {/* Supervisor */}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="py-2">
+                <div className="flex items-start gap-2">
+                  <User className="h-4 w-4 text-gray-400 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-400">Supervisor</p>
+                    <p className="text-sm font-semibold text-gray-900">{MOCK_USER.manager.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{MOCK_USER.manager.email}</p>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setActiveTab("meus-compartilhamentos")}
+                className="flex items-center gap-2 cursor-pointer hover:bg-blue-50 min-h-[44px]"
+              >
+                <FolderOpen className="h-4 w-4" />
+                <span>Meus Compartilhamentos</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => alert("Logout — apenas demonstracao")}
+                className="flex items-center gap-2 cursor-pointer text-red-600 hover:bg-red-50 min-h-[44px]"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Sair</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
