@@ -587,32 +587,25 @@ export function LoginForm() {
             </div>
           )}
 
-          {/* Usuarios de Teste (somente para desenvolvimento) */}
-          <div className="border-t border-dashed border-amber-300 pt-6 mt-6">
-            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-              <p className="text-xs font-semibold text-amber-800 dark:text-amber-200 mb-3 text-center uppercase tracking-wide">
-                Usuarios de Teste (Dev Only)
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { label: "Admin", icon: "👑", route: "/evidencias-admin/preview/admin-dashboard" },
-                  { label: "Supervisor", icon: "📋", route: "/evidencias-admin/preview/supervisor" },
-                  { label: "Interno", icon: "🏢", route: "/evidencias-admin/preview/upload" },
-                  { label: "Externo", icon: "🌐", route: "/evidencias-admin/preview/compartilhamentos" },
-                ].map((testUser) => (
-                  <button
-                    key={testUser.label}
-                    type="button"
-                    onClick={() => router.push(testUser.route)}
-                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-700 rounded-md text-sm font-medium text-amber-900 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors shadow-sm"
-                  >
-                    <span>{testUser.icon}</span>
-                    <span>{testUser.label}</span>
-                  </button>
-                ))}
+          {/* Info de Usuarios de Teste (somente para desenvolvimento) */}
+          {isDevMode && (
+            <div className="border-t border-dashed border-amber-300 pt-6 mt-6">
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                <p className="text-xs font-semibold text-amber-800 dark:text-amber-200 mb-2 text-center uppercase tracking-wide">
+                  Usuarios de Teste (Dev Only)
+                </p>
+                <p className="text-xs text-amber-700 dark:text-amber-300 text-center mb-3">
+                  Para testar, faca login via &quot;Login corporativo&quot; com um usuario de teste do Entra ID.
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs text-amber-600 dark:text-amber-400">
+                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">👑 Admin → /admin</div>
+                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">📋 Supervisor → /supervisor</div>
+                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">🏢 Interno → /upload</div>
+                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">🌐 Externo → /download</div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Footer */}
           <footer className="text-center text-xs text-muted-foreground/60 pt-4">
