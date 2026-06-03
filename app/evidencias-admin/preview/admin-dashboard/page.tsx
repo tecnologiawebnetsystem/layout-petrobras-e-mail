@@ -219,7 +219,7 @@ export default function AdminDashboardPreview() {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => alert("Logout — apenas demonstracao")}
+                onClick={() => window.location.href = "/"}
                 className="flex items-center gap-2 cursor-pointer text-red-600 hover:bg-red-50 min-h-[44px]"
               >
                 <LogOut className="h-4 w-4" />
