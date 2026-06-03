@@ -53,6 +53,15 @@ export function LoginForm() {
 
   const AUTH_MODE = getClientEnv("NEXT_PUBLIC_AUTH_MODE") || "entra";
   const isDevMode = AUTH_MODE !== "entra";
+  
+  // Detecta ambiente de desenvolvimento (localhost)
+  const [isLocalhost, setIsLocalhost] = useState(false);
+  useEffect(() => {
+    setIsLocalhost(
+      typeof window !== "undefined" && 
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    );
+  }, []);
 
   // Guard: se já autenticado, redirecionar para a página correta
   useEffect(() => {
@@ -587,22 +596,42 @@ export function LoginForm() {
             </div>
           )}
 
-          {/* Info de Usuarios de Teste (somente para desenvolvimento) */}
-          {isDevMode && (
+          {/* Botao de Teste Admin (somente em localhost) */}
+          {isLocalhost && (
             <div className="border-t border-dashed border-amber-300 pt-6 mt-6">
               <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                <p className="text-xs font-semibold text-amber-800 dark:text-amber-200 mb-2 text-center uppercase tracking-wide">
-                  Usuarios de Teste (Dev Only)
+                <p className="text-xs font-semibold text-amber-800 dark:text-amber-200 mb-3 text-center uppercase tracking-wide">
+                  Teste (Dev Only)
                 </p>
-                <p className="text-xs text-amber-700 dark:text-amber-300 text-center mb-3">
-                  Para testar, faca login via &quot;Login corporativo&quot; com um usuario de teste do Entra ID.
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-xs text-amber-600 dark:text-amber-400">
-                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">👑 Admin → /admin</div>
-                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">📋 Supervisor → /supervisor</div>
-                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">🏢 Interno → /upload</div>
-                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">🌐 Externo → /download</div>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Simula login de admin para teste
+                    const testAdminUser = {
+                      id: "test-admin-001",
+                      email: "admin@petrobras.com.br",
+                      name: "Admin SCAC",
+                      userType: "admin" as const,
+                      isAdmin: true,
+                      jobTitle: "Administrador do Sistema",
+                      department: "TI - Sistemas Corporativos",
+                      officeLocation: "EDISE",
+                      manager: {
+                        id: "mgr-001",
+                        name: "Diretor Geral",
+                        email: "diretor@petrobras.com.br",
+                        jobTitle: "Diretor",
+                        department: "Diretoria"
+                      }
+                    }
+                    setAuth(testAdminUser, "test-token-admin", "test-refresh-admin")
+                    router.push("/admin")
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg font-semibold shadow-md transition-all"
+                >
+                  <span className="text-lg">👑</span>
+                  <span>Entrar como Admin</span>
+                </button>
               </div>
             </div>
           )}
