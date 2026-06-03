@@ -13,12 +13,21 @@ interface ProtectedRouteProps {
   allowedUserTypes: Array<"internal" | "external" | "supervisor" | "admin" | "support">
 }
 
+// Flag para bypass de autenticacao em homologacao
+const HOMOLOGATION_BYPASS = process.env.NEXT_PUBLIC_HOMOLOGATION_BYPASS === "true"
+
 export function ProtectedRoute({ children, allowedUserTypes }: ProtectedRouteProps) {
   const { user, isAuthenticated, _hasHydrated } = useAuthStore()
   const router = useRouter()
   const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
+    // Se bypass de homologacao esta ativo, permite acesso direto
+    if (HOMOLOGATION_BYPASS) {
+      setIsChecking(false)
+      return
+    }
+
     if (!_hasHydrated) return
 
     initializeSessionBinding()

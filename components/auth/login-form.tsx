@@ -3,7 +3,7 @@
 import type { FormEvent } from "react";
 import type React from "react";
 import { useState, useEffect, useRef } from "react";
-import { User, Lock, ArrowLeft, BookOpen } from "lucide-react";
+import { User, Lock, ArrowLeft, BookOpen, Shield } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -606,6 +606,23 @@ export function LoginForm() {
               </div>
             </div>
           )}
+
+          {/* Botao Homologacao Admin - Acesso Direto */}
+          <div className="border-t border-dashed border-blue-300 pt-6 mt-6">
+            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <p className="text-xs font-semibold text-blue-800 dark:text-blue-200 mb-3 text-center uppercase tracking-wide">
+                Acesso para Homologacao
+              </p>
+              <Button
+                type="button"
+                onClick={() => router.push("/admin")}
+                className="w-full h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                <Shield className="mr-2 h-5 w-5" />
+                Acessar Painel Admin
+              </Button>
+            </div>
+          </div>
 
           {/* Footer */}
           <footer className="text-center text-xs text-muted-foreground/60 pt-4">
