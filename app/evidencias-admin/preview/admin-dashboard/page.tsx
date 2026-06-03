@@ -5,8 +5,8 @@ import {
   Users, FileText, Activity, HardDrive, Mail, Shield,
   Eye, BarChart3, Clock, CheckCircle, XCircle, AlertTriangle,
   Download, Upload, TrendingUp, Search, Share2, FileSpreadsheet,
-  Filter, LogOut, Moon, Sun, Building2, MapPin, User, FolderOpen,
-  ChevronDown,
+  Filter, LogOut, Building2, MapPin, User, FolderOpen,
+  ChevronDown, RefreshCw,
 } from "lucide-react"
 import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -103,7 +103,6 @@ function getInitials(name: string) {
 // ---------- componente principal ----------
 export default function AdminDashboardPreview() {
   const [activeTab,       setActiveTab]       = useState("dashboard")
-  const [isDark,          setIsDark]          = useState(false)
   const [selectedFiles,   setSelectedFiles]   = useState<File[]>([])
   const [destinatario,    setDestinatario]    = useState("")
   const [validade,        setValidade]        = useState("7")
@@ -135,140 +134,66 @@ export default function AdminDashboardPreview() {
   const filteredUsers = USERS.filter(u => userSearch === "" || u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.includes(userSearch))
 
   return (
-    <div className={isDark ? "dark" : ""}>
-      <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-[#f8f9fa]">
 
-        {/* ============================================================
-            CABEÇALHO — idêntico ao AppHeader do sistema real
-        ============================================================ */}
-        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85 shadow-sm">
-          <div className="container flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
-
-            {/* Logo + subtítulo */}
-            <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
-              <div className="flex items-center justify-center hover:opacity-90 transition-opacity">
-                <Image
-                  src="/images/petrobras-logo.png"
-                  alt="Petrobras"
-                  width={40}
-                  height={40}
-                  className="object-contain"
-                  priority
-                />
-              </div>
-              <div className="h-6 w-px bg-border hidden sm:block" />
-              <span className="text-foreground font-semibold text-sm sm:text-base tracking-tight truncate">
-                Painel Administrativo
-              </span>
-            </div>
-
-            {/* Ações direita */}
-            <TooltipProvider>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {/* Toggle tema */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setIsDark(d => !d)}
-                      className="h-10 w-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all duration-300"
-                    >
-                      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{isDark ? "Modo Claro" : "Modo Escuro"}</TooltipContent>
-                </Tooltip>
-
-                <div className="h-8 w-px bg-border mx-1" />
-
-                {/* Dropdown de perfil — exato mesmo design do sistema */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="gap-3 px-3 h-12 text-foreground hover:bg-accent/10 transition-all duration-300 rounded-full"
-                    >
-                      <Avatar className="h-9 w-9 ring-2 ring-primary/20">
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                          {getInitials(MOCK_USER.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col items-start min-w-0 hidden sm:flex">
-                        <span className="text-sm font-semibold text-foreground truncate max-w-[160px]">
-                          {MOCK_USER.name}
-                        </span>
-                        <span className="text-xs text-muted-foreground truncate max-w-[160px]">
-                          {MOCK_USER.jobTitle}
-                        </span>
-                      </div>
-                    </Button>
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent align="end" className="w-72 shadow-xl">
-                    {/* Info do usuário */}
-                    <DropdownMenuLabel className="pb-3">
-                      <div className="flex items-start gap-3">
-                        <Avatar className="h-12 w-12 ring-2 ring-primary/20">
-                          <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
-                            {getInitials(MOCK_USER.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground">{MOCK_USER.name}</p>
-                          <p className="text-xs text-muted-foreground truncate mt-0.5">{MOCK_USER.email}</p>
-                          <div className="flex items-center gap-1 mt-1">
-                            <Building2 className="h-3 w-3 text-muted-foreground" />
-                            <p className="text-xs text-muted-foreground">{MOCK_USER.jobTitle}</p>
-                          </div>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <MapPin className="h-3 w-3 text-muted-foreground" />
-                            <p className="text-xs text-muted-foreground">{MOCK_USER.department}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </DropdownMenuLabel>
-
-                    {/* Supervisor */}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="py-2">
-                      <div className="flex items-start gap-2">
-                        <User className="h-4 w-4 text-muted-foreground mt-0.5" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-muted-foreground">Supervisor</p>
-                          <p className="text-sm font-semibold text-foreground">{MOCK_USER.manager.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{MOCK_USER.manager.email}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{MOCK_USER.manager.jobTitle}</p>
-                        </div>
-                      </div>
-                    </DropdownMenuLabel>
-
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => setActiveTab("meus-compartilhamentos")}
-                      className="flex items-center gap-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 min-h-[44px]"
-                    >
-                      <FolderOpen className="h-4 w-4" />
-                      <span>Meus Compartilhamentos</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => alert("Logout — apenas demonstração")}
-                      className="flex items-center gap-2 cursor-pointer text-destructive hover:bg-red-100 dark:hover:bg-red-900/40 min-h-[44px]"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Sair</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </TooltipProvider>
+      {/* ============================================================
+          CABEÇALHO — padrão exato da imagem (logo BR + breadcrumb + avatar)
+      ============================================================ */}
+      <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
+        <div className="flex h-14 items-center justify-between px-4 sm:px-6">
+          {/* Esquerda: Logo BR + Breadcrumb */}
+          <div className="flex items-center gap-3">
+            <Image
+              src="/images/petrobras-logo.png"
+              alt="Petrobras"
+              width={36}
+              height={36}
+              className="object-contain"
+              priority
+            />
+            <span className="text-sm text-gray-600">
+              Inicio &gt; <span className="text-gray-800 font-medium">Administracao</span>
+            </span>
           </div>
-        </header>
 
-        {/* ============================================================
-            CONTEÚDO PRINCIPAL
-        ============================================================ */}
+          {/* Direita: Avatar + Nome + Cargo */}
+          <div className="flex items-center gap-3">
+            <Avatar className="h-9 w-9 bg-[#00a859]">
+              <AvatarFallback className="bg-[#00a859] text-white text-sm font-bold">
+                {getInitials(MOCK_USER.name)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="hidden sm:flex flex-col items-start">
+              <span className="text-sm font-semibold text-gray-900">{MOCK_USER.name}</span>
+              <span className="text-xs text-gray-500">{MOCK_USER.jobTitle}</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* ============================================================
+          TITULO DA PÁGINA — ícone + título + descrição + botão Atualizar
+      ============================================================ */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-[#00a859]/10 flex items-center justify-center">
+              <Shield className="w-5 h-5 text-[#00a859]" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">Painel Administrativo</h1>
+              <p className="text-sm text-gray-500">Gerencie usuarios, compartilhamentos e configuracoes do sistema</p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => window.location.reload()}>
+            <RefreshCw className="w-4 h-4" /> Atualizar
+          </Button>
+        </div>
+      </div>
+
+      {/* ============================================================
+          CONTEUDO PRINCIPAL
+      ============================================================ */}
         <main className="container px-4 sm:px-6 py-6">
 
           {/* Badge de perfil */}
@@ -862,6 +787,5 @@ export default function AdminDashboardPreview() {
           </Tabs>
         </main>
       </div>
-    </div>
   )
 }
