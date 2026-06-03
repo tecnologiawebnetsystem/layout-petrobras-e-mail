@@ -770,7 +770,7 @@ const [trackingError, setTrackingError] = useState("")
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Dashboard
@@ -786,6 +786,10 @@ const [trackingError, setTrackingError] = useState("")
             <TabsTrigger value="tracking" className="flex items-center gap-2">
               <Eye className="h-4 w-4" />
               Rastreamento
+            </TabsTrigger>
+            <TabsTrigger value="upload" className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              Upload
             </TabsTrigger>
           </TabsList>
 
@@ -1439,6 +1443,11 @@ const [trackingError, setTrackingError] = useState("")
                 )}
               </div>
             )}
+          </TabsContent>
+
+          {/* Upload Tab */}
+          <TabsContent value="upload" className="space-y-6">
+            <AdminUploadForm />
           </TabsContent>
         </Tabs>
       </main>
