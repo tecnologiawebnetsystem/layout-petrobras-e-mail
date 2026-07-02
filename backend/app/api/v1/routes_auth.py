@@ -6,15 +6,12 @@ Endpoints:
 - POST /v1/auth/login - Login com email/senha
 - POST /v1/auth/logout - Logout (invalida token)
 - POST /v1/auth/refresh - Renovar token JWT
-- POST /v1/auth/forgot-password - Solicitar reset de senha
-- POST /v1/auth/reset-password - Resetar senha com token
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr
 from sqlmodel import Session, select
 from datetime import datetime, timedelta, UTC
-from typing import Optional
 import secrets
 import hashlib
 
@@ -24,7 +21,6 @@ from app.models.credencial_local import CredentialLocal
 from app.models.session_token import SessionToken, TokenType
 from app.services.audit_service import log_event
 from app.utils.session_jwt import create_session_jwt, decode_session_jwt
-from app.core.config import settings
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -48,19 +44,6 @@ class LoginResponse(BaseModel):
 
 class RefreshRequest(BaseModel):
     refresh_token: str
-
-
-class ForgotPasswordRequest(BaseModel):
-    email: EmailStr
-
-
-class ResetPasswordRequest(BaseModel):
-    token: str
-    new_password: str
-
-
-class LogoutRequest(BaseModel):
-    session_id: Optional[str] = None
 
 
 # =====================================================
@@ -198,7 +181,6 @@ def login(
 
 @router.post("/logout")
 def logout(
-    payload: LogoutRequest = None,
     session: Session = Depends(get_session),
     request: Request = None,
 ):
@@ -335,141 +317,3 @@ def refresh_token(
     }
 
 
-# =====================================================
-# POST /v1/auth/forgot-password
-# =====================================================
-
-@router.post("/forgot-password")
-def forgot_password(
-    payload: ForgotPasswordRequest,
-    session: Session = Depends(get_session),
-    request: Request = None,
-):
-    """
-    Envia email com link para redefinir senha.
-    Por seguranca, sempre retorna sucesso mesmo se email nao existir.
-    """
-    user = session.exec(
-        select(User).where(User.email == payload.email)
-    ).first()
-    
-    if user:
-        # Gera token de reset
-        reset_token = secrets.token_urlsafe(32)
-        
-        # Persiste reset token hashado no banco
-        session_token = SessionToken(
-            user_id=user.id,
-            token_hash=_hash_token(reset_token),
-            token_type=TokenType.RESET,
-            expires_at=datetime.now(UTC) + timedelta(hours=1),
-            ip_address=request.client.host if request else None,
-            user_agent=request.headers.get("User-Agent")[:500] if request and request.headers.get("User-Agent") else None,
-            email=user.email,
-        )
-        session.add(session_token)
-        session.commit()
-        
-        # Enviar email com link de reset
-        reset_url = f"{settings.frontend_external_portal_url}/reset-password?token={reset_token}"
-        try:
-            from app.services.email_service import send_email, render_email_template
-            html = render_email_template(
-                "email/password_reset.html",
-                {
-                    "subject": "Redefinicao de Senha",
-                    "user_name": user.name or user.email,
-                    "reset_url": reset_url,
-                    "expires_in": "1 hora",
-                }
-            )
-            import asyncio
-            try:
-                loop = asyncio.get_running_loop()
-                loop.create_task(send_email("Redefinicao de Senha", [user.email], html))
-            except RuntimeError:
-                asyncio.run(send_email("Redefinicao de Senha", [user.email], html))
-        except Exception as e:
-            # Nao falha o endpoint se o email nao for enviado
-            import logging
-            logging.getLogger(__name__).error(f"Falha ao enviar email de reset: {e}")
-        
-        log_event(
-            session=session,
-            action="FORGOT_PASSWORD",
-            user_id=user.id,
-            detail=f"email={user.email}",
-            ip=request.client.host if request else None,
-            user_agent=request.headers.get("User-Agent") if request else None
-        )
-    
-    # Sempre retorna sucesso por seguranca
-    return {
-        "success": True,
-        "message": "Se o email estiver cadastrado, voce recebera instrucoes para redefinir sua senha"
-    }
-
-
-# =====================================================
-# POST /v1/auth/reset-password
-# =====================================================
-
-@router.post("/reset-password")
-def reset_password(
-    payload: ResetPasswordRequest,
-    session: Session = Depends(get_session),
-    request: Request = None,
-):
-    """
-    Reseta a senha usando o token recebido por email.
-    """
-    token_hash = _hash_token(payload.token)
-    
-    # Busca token no banco
-    token_record = session.exec(
-        select(SessionToken).where(
-            SessionToken.token_hash == token_hash,
-            SessionToken.token_type == TokenType.RESET,
-            SessionToken.used == False,
-            SessionToken.revoked == False,
-        )
-    ).first()
-    
-    if not token_record:
-        raise HTTPException(status_code=400, detail="Token invalido ou expirado")
-    
-    expires_at = token_record.expires_at.replace(tzinfo=UTC) if token_record.expires_at.tzinfo is None else token_record.expires_at
-    if datetime.now(UTC) > expires_at:
-        token_record.used = True
-        session.add(token_record)
-        session.commit()
-        raise HTTPException(status_code=400, detail="Token expirado")
-    
-    user = session.get(User, token_record.user_id)
-    if not user:
-        raise HTTPException(status_code=400, detail="Usuario nao encontrado")
-    
-    # Atualiza senha
-    credential = session.exec(
-        select(CredentialLocal).where(CredentialLocal.user_id == user.id)
-    ).first()
-    
-    if credential:
-        credential.set_password(payload.new_password)
-        session.add(credential)
-    
-    # Marca token como usado
-    token_record.used = True
-    session.add(token_record)
-    session.commit()
-    
-    log_event(
-        session=session,
-        action="RESET_PASSWORD",
-        user_id=user.id,
-        detail="password_reset_success",
-        ip=request.client.host if request else None,
-        user_agent=request.headers.get("User-Agent") if request else None
-    )
-    
-    return {"success": True, "message": "Senha alterada com sucesso"}

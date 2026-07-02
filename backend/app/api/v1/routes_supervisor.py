@@ -9,10 +9,15 @@ import re
 import unicodedata
 import tempfile
 import shutil
+import os
 
 from app.db.session import get_session
 from app.utils.authz import require_supervisor, get_current_user
-from app.services.token_service import deactivate_external_if_no_active_share
+from app.services.token_service import (
+    deactivate_external_if_no_active_share,
+    deactivate_supervisor_if_no_pending,
+    deactivate_internal_if_all_shares_done,
+)
 from app.models.area import SharedArea
 from app.models.areasupervisors import AreaSupervisor
 from app.models.share import Share, ShareStatus
@@ -276,6 +281,11 @@ async def approve_file(
         user_agent=request.headers.get("User-Agent") if request else None
     )
 
+    # Após aprovação, share fica ACTIVE — o upload user só é desativado quando o share expirar.
+    # Verifica se o supervisor ainda possui outros compartilhamentos pendentes de aprovação.
+    meta = {"ip": request.client.host if request else None, "ua": request.headers.get("User-Agent") if request else None}
+    deactivate_supervisor_if_no_pending(session, user, meta)
+
     return {
         "file_id": share.id,
         "status": share.status,
@@ -369,6 +379,8 @@ async def reject_file(
         user_agent=request.headers.get("User-Agent") if request else None
     )
 
+    meta = {"ip": request.client.host if request else None, "ua": request.headers.get("User-Agent") if request else None}
+
     # Após rejeição, verifica se o destinatário externo tem outro share ativo.
     # Se não tiver, desativa o usuário para revogar qualquer acesso remanescente.
     if share.recipient_user_id:
@@ -380,9 +392,15 @@ async def reject_file(
     if recipient:
         deactivate_external_if_no_active_share(
             session, recipient,
-            {"ip": request.client.host if request else None,
-             "ua": request.headers.get("User-Agent") if request else None},
+            meta,
         )
+
+    # Share rejeitado é estado terminal: verifica se o criador pode ser desativado.
+    if creator:
+        deactivate_internal_if_all_shares_done(session, creator, meta)
+
+    # Verifica se o supervisor ainda possui outros compartilhamentos pendentes de aprovação.
+    deactivate_supervisor_if_no_pending(session, user, meta)
 
     return {
         "file_id": share.id,
@@ -485,7 +503,7 @@ def relatorio_area(
     if not area:
         raise HTTPException(status_code=404, detail="Area nao encontrada.")
 
-    # valida que o supervisor esta vinculado a esta area
+    # valida que o supervisor esteja vinculado a esta area
     link = session.exec(select(AreaSupervisor).where(
         AreaSupervisor.area_id == area_id,
         AreaSupervisor.supervisor_id == user.id
@@ -1029,9 +1047,11 @@ def download_share_zip(
     def generate_zip():
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".zip") as temp_zip:
-
+            temp_zip_path = temp_zip.name
+            
+        try:
             with _zipfile.ZipFile(
-                temp_zip,
+                temp_zip_path,
                 mode="w",
                 compression=_zipfile.ZIP_DEFLATED,
             ) as zf:
@@ -1055,10 +1075,14 @@ def download_share_zip(
                             f"Erro ao adicionar arquivo {rfile.name} ao ZIP"
                         )
 
-            temp_zip.seek(0)
-
-            while chunk := temp_zip.read(1024 * 1024):
-                yield chunk
+            with open(temp_zip_path, "rb") as f:
+                while chunk := f.read(1024 * 1024):
+                    yield chunk
+        finally:
+            try:
+                os.remove(temp_zip_path)
+            except Exception:
+                pass
 
     share_name_safe = sanitize_filename(share.name or f"share-{share_id}")
 

@@ -1,589 +1,523 @@
-# Petrobras File Transfer API - Backend
+# SCAC — Solução de Compartilhamento Seguro de Arquivos Confidenciais · Backend
 
-## Sobre o Projeto
-
-API RESTful desenvolvida com **FastAPI** para compartilhamento seguro de arquivos da Petrobras com usuarios externos. O sistema permite que usuarios internos enviem arquivos para destinatarios externos atraves de um fluxo seguro com aprovacao de supervisores e autenticacao via OTP (One-Time Password).
+> API RESTful desenvolvida com **FastAPI** para compartilhamento seguro de arquivos confidenciais da Petrobras com usuários externos.
+> Usuários internos autenticam via **CAv4** (OIDC/PKCE), fazem upload de arquivos e criam compartilhamentos que passam por aprovação de supervisores antes de serem disponibilizados ao destinatário externo via autenticação OTP.
 
 ---
 
-## Stack Tecnologica
+## Sobre o Projeto
 
-### Linguagem e Framework
+O **SCAC** (Solução de Compartilhamento de Arquivos Confidenciais) é o backend do sistema corporativo de transferência segura de arquivos da Petrobras. O sistema permite que colaboradores internos autenticados via **CAv4** (OIDC Authorization Code + PKCE) compartilhem arquivos com destinatários externos que recebem acesso via **OTP** (One-Time Password) por e-mail. Todo o fluxo é auditado e supervisionado.
 
-| Tecnologia | Versao | Descricao |
+### Autenticação
+
+| Modo | Provider | Quando usar |
+|------|----------|-------------|
+| `cav4` | CAv4 (OIDC/PKCE) | **Produção** — autenticação corporativa padrão |
+| `local` | Email + senha (bcrypt) | **Desenvolvimento** apenas |
+
+> ⚠️ O suporte ao Microsoft Entra ID foi **removido** na Fase 3 da migração CAv4 (2026-06).
+> Variáveis `ENTRA_*` de autenticação não são mais aceitas. Use `CA_*` para CAv4.
+> As variáveis `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID` e `ENTRA_CLIENT_SECRET` ainda existem
+> **opcionalmente** para integração com Microsoft Graph (enriquecimento de perfil / Fase 4).
+
+---
+
+## Stack Tecnológica
+
+### Core
+
+| Tecnologia | Versão | Descrição |
 |------------|--------|-----------|
-| **Python** | 3.12+ | Linguagem principal |
-| **FastAPI** | 0.120.1 | Framework web assincrono de alta performance |
-| **Uvicorn** | 0.38.0 | Servidor ASGI para producao |
-| **Pydantic** | 2.12.5 | Validacao de dados e serializacao |
-| **SQLAlchemy** | 2.0.44 | ORM para banco de dados |
-| **SQLModel** | 0.0.27 | Integracao SQLAlchemy + Pydantic |
-| **Alembic** | 1.17.0 | Migrations de banco de dados |
+| **Python** | 3.13 | Linguagem principal |
+| **FastAPI** | 0.120.1 | Framework web de alta performance |
+| **Uvicorn** | 0.38.0 | Servidor ASGI |
+| **Pydantic** | 2.12.5 | Validação de dados |
+| **SQLModel** | 0.0.27 | ORM — integração SQLAlchemy + Pydantic |
+| **Alembic** | 1.17.0 | Migrações de banco de dados |
 
 ### Banco de Dados
 
-| Tecnologia | Descricao |
-|------------|-----------|
-| **PostgreSQL** | Banco de dados principal (Aurora PostgreSQL na AWS) |
-| **psycopg** | 3.2.12 | Driver PostgreSQL assincrono |
-| **SQLite** | Banco local para desenvolvimento |
+| Tecnologia | Versão | Descrição |
+|------------|--------|------------|
+| **PostgreSQL** | Aurora | Banco de dados principal (produção) |
+| **psycopg[binary]** | 3.2.12 | Driver PostgreSQL síncrono |
+| **SQLite** | — | Banco local para desenvolvimento |
 
-### Autenticacao e Seguranca
+### Autenticação e Segurança
 
-| Tecnologia | Versao | Descricao |
+| Tecnologia | Versão | Descrição |
+|------------|--------|------------|
+| **PyJWT** | 2.10.1 | Tokens JWT internos (HS256, issuer `secure-share`) + validação JWKS CAv4 (RS256) |
+| **truststore** | — | Truststore do SO para TLS corporativo |
+| **bcrypt** | 4.0.1 | Hash de senhas para AUTH_MODE=local |
+| **cryptography** | 46.0.3 | Operações criptográficas |
+
+### AWS / Infraestrutura
+
+| Tecnologia | Versão | Descrição |
 |------------|--------|-----------|
-| **MSAL** | 1.35.1 | Microsoft Authentication Library (Entra ID) |
-| **PyJWT** | 2.10.1 | Tokens JWT para sessoes |
-| **python-jose** | 3.5.0 | Assinatura e verificacao de tokens |
-| **bcrypt** | 4.0.1 | Hash de senhas |
-| **passlib** | 1.7.4 | Utilitarios de hash |
-| **cryptography** | 46.0.3 | Operacoes criptograficas |
-
-### AWS SDK e Integracao
-
-| Tecnologia | Versao | Descricao |
-|------------|--------|-----------|
-| **boto3** | 1.40.60 | AWS SDK para Python |
-| **botocore** | 1.40.60 | Core do SDK AWS |
-| **s3transfer** | 0.14.0 | Transferencia de arquivos S3 |
+| **boto3** | 1.40.60 | AWS SDK — S3, Secrets Manager |
 | **moto** | 5.1.5 | Mock AWS para testes |
 
-### Email
+### E-mail
 
-| Tecnologia | Versao | Descricao |
+| Tecnologia | Versão | Descrição |
 |------------|--------|-----------|
-| **fastapi-mail** | 1.6.1 | Envio de emails |
-| **aiosmtplib** | 5.0.0 | Cliente SMTP assincrono |
-| **Jinja2** | 3.1.6 | Templates de email |
+| **fastapi-mail** | 1.6.1 | Integração SMTP/SES |
+| **Jinja2** | 3.1.6 | Templates HTML de e-mail |
 
 ### Observabilidade
 
-| Tecnologia | Versao | Descricao |
+| Tecnologia | Versão | Descrição |
 |------------|--------|-----------|
 | **Sentry SDK** | 2.42.1 | Monitoramento de erros |
 | **structlog** | 25.5.0 | Logging estruturado |
 
 ### Testes
 
-| Tecnologia | Versao | Descricao |
+| Tecnologia | Versão | Descrição |
 |------------|--------|-----------|
 | **pytest** | 9.0.2 | Framework de testes |
-| **pytest-cov** | 6.1.0 | Cobertura de codigo |
-| **pytest-anyio** | 0.0.0 | Testes assincronos |
-| **httpx** | 0.28.1 | Cliente HTTP para testes |
+| **pytest-cov** | 6.1.0 | Cobertura de código |
+| **httpx** | 0.28.1 | Cliente HTTP nos testes |
 
 ---
 
 ## Arquitetura do Sistema
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              FRONTEND (Next.js)                             │
-│                          https://app.petrobras.com.br                       │
-└─────────────────────────────────────┬───────────────────────────────────────┘
-                                      │
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            AWS LOAD BALANCER (ALB)                          │
-│                              HTTPS / TLS 1.3                                │
-└─────────────────────────────────────┬───────────────────────────────────────┘
-                                      │
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              AWS ECS (Fargate)                              │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │                        BACKEND (FastAPI)                              │  │
-│  │                         Porta 8080                                    │  │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  │  │
-│  │  │   Routes    │  │  Services   │  │   Models    │  │   Schemas   │  │  │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘  │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-└────────┬──────────────────┬──────────────────┬──────────────────┬───────────┘
-         │                  │                  │                  │
-         ▼                  ▼                  ▼                  ▼
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│  Aurora PostgreSQL │ │      S3        │ │      SES       │ │  Secrets Manager │
-│  (RDS)          │ │  (Arquivos)    │ │   (Emails)     │ │  (Credenciais)  │
-└─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘
+HTTP Request
+    ↓
+FastAPI Router (routes_*.py)   ← sem lógica de negócio
+    ↓
+Service (services/)            ← implementa casos de uso
+    ↓
+SQLModel Session (db/session)  ← acesso ao banco
+    ↓
+Infraestrutura                 ← AWS S3 · SMTP/SES · CAv4 (OIDC) · Microsoft Graph (opcional) · PyJWT
 ```
+
+### Infraestrutura AWS (Produção)
+
+| Serviço | Função |
+|---------|--------|
+| **Amazon ECS (Fargate)** | Hospedagem do container |
+| **Amazon Aurora PostgreSQL** | Banco de dados relacional |
+| **Amazon S3** | Armazenamento de arquivos |
+| **Amazon SES** | Envio de e-mails |
+| **AWS Secrets Manager** | Credenciais sensíveis |
+| **AWS Systems Manager (SSM)** | Parameter Store |
+| **Amazon CloudWatch** | Logs e monitoramento |
 
 ### Fluxo Principal de Compartilhamento
 
 ```
-┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
-│  Usuario Interno │───▶│  Cria Share +    │───▶│   Supervisor     │
-│   (Entra ID)     │    │  Upload Arquivos │    │   Aprova/Rejeita │
-└──────────────────┘    └──────────────────┘    └────────┬─────────┘
-                                                         │
-                        ┌────────────────────────────────┘
-                        ▼
-┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
-│  Email com Link  │───▶│  Usuario Externo │───▶│  Download com    │
-│  + Instrucoes    │    │  Valida OTP      │    │  Confirmacao     │
-└──────────────────┘    └──────────────────┘    └──────────────────┘
+┌─────────────────┐   ┌──────────────────┐   ┌────────────────┐
+│ Usuário Interno │──▶│  Cria Share +    │──▶│  Supervisor    │
+│    (CAv4)       │   │  Upload Arquivos │   │  Aprova/Rejeita│
+└─────────────────┘   └──────────────────┘   └───────┬────────┘
+                                                     │
+                      ┌──────────────────────────────┘
+                      ▼
+┌─────────────────┐   ┌──────────────────┐   ┌────────────────┐
+│  E-mail com     │──▶│ Usuário Externo  │──▶│ Download dos   │
+│  Link + OTP     │   │  Valida OTP      │   │ Arquivos (S3)  │
+└─────────────────┘   └──────────────────┘   └────────────────┘
 ```
+
+> **Aprovação automática**: usuários com cargos executivos (Diretor, Gerente Geral, Presidente, etc.)
+> não precisam de aprovação de supervisor — o share é disponibilizado imediatamente.
+> A lista de cargos é configurável via `AUTO_APPROVE_JOB_TITLES` no `.env`.
 
 ---
 
-## Estrutura do Projeto
+## Segurança
 
-```
-backend/
-├── app/
-│   ├── api/
-│   │   └── v1/
-│   │       ├── routes_admin.py          # Endpoints de administracao
-│   │       ├── routes_areas.py          # Gerenciamento de areas
-│   │       ├── routes_audit.py          # Logs de auditoria
-│   │       ├── routes_auth.py           # Autenticacao unificada
-│   │       ├── routes_diagnostico.py    # Health checks e diagnosticos
-│   │       ├── routes_download.py       # Portal de download externo
-│   │       ├── routes_emails.py         # Envio e historico de emails
-│   │       ├── routes_entra_auth.py     # OAuth Microsoft Entra ID
-│   │       ├── routes_external.py       # Acesso de usuarios externos
-│   │       ├── routes_external_auth.py  # Autenticacao externa (OTP)
-│   │       ├── routes_files.py          # Upload/download de arquivos
-│   │       ├── routes_internal_auth.py  # Auth local (desenvolvimento)
-│   │       ├── routes_notifications.py  # Sistema de notificacoes
-│   │       ├── routes_shares.py         # Gerenciamento de compartilhamentos
-│   │       ├── routes_supervisor.py     # Aprovacao de compartilhamentos
-│   │       ├── routes_support.py        # Suporte tecnico
-│   │       └── routes_users.py          # Gerenciamento de usuarios
-│   │
-│   ├── core/
-│   │   ├── aws_utils.py                 # Utilitarios AWS (S3, SES)
-│   │   ├── config.py                    # Configuracoes (pydantic-settings)
-│   │   ├── scheduler.py                 # Tarefas agendadas
-│   │   └── security.py                  # Funcoes de seguranca
-│   │
-│   ├── db/
-│   │   ├── base.py                      # Classe base SQLAlchemy
-│   │   ├── init_db.py                   # Inicializacao do banco
-│   │   └── session.py                   # Gerenciamento de sessoes
-│   │
-│   ├── deps/
-│   │   └── auth.py                      # Dependencias de autenticacao
-│   │
-│   ├── models/
-│   │   ├── area.py                      # Modelo de areas/departamentos
-│   │   ├── areasupervisors.py           # Relacao area-supervisor
-│   │   ├── audit.py                     # Log de auditoria
-│   │   ├── credencial_local.py          # Credenciais locais (dev)
-│   │   ├── email_log.py                 # Historico de emails
-│   │   ├── notification.py              # Notificacoes
-│   │   ├── restricted_file.py           # Arquivos restritos
-│   │   ├── session_token.py             # Tokens de sessao
-│   │   ├── share.py                     # Compartilhamentos
-│   │   ├── share_file.py                # Relacao share-arquivo
-│   │   ├── support_audit.py             # Auditoria de suporte
-│   │   ├── support_registration.py      # Registro de suporte
-│   │   ├── token_access.py              # Tokens de acesso externo
-│   │   └── user.py                      # Usuarios
-│   │
-│   ├── schemas/
-│   │   ├── area_schema.py               # Schemas de areas
-│   │   ├── file_schema.py               # Schemas de arquivos
-│   │   ├── share_schema.py              # Schemas de compartilhamentos
-│   │   ├── token_schema.py              # Schemas de tokens
-│   │   └── user_schema.py               # Schemas de usuarios
-│   │
-│   ├── services/
-│   │   ├── approval_hierarchy_service.py # Hierarquia de aprovacao
-│   │   ├── audit_service.py             # Servico de auditoria
-│   │   ├── auth_service.py              # Servico de autenticacao
-│   │   ├── email_service.py             # Servico de email
-│   │   ├── file_service.py              # Servico de arquivos
-│   │   ├── group_sync_service.py        # Sincronizacao de grupos Entra
-│   │   ├── local_auth_service.py        # Autenticacao local
-│   │   ├── s3_service.py                # Operacoes S3
-│   │   ├── share_service.py             # Logica de compartilhamentos
-│   │   ├── supervisor_sync_service.py   # Sincronizacao de supervisores
-│   │   ├── task_service.py              # Tarefas em background
-│   │   └── token_service.py             # Gerenciamento de tokens/OTP
-│   │
-│   ├── utils/
-│   │   ├── authz.py                     # Autorizacao
-│   │   ├── logger.py                    # Configuracao de logs
-│   │   └── session_jwt.py               # Utilitarios JWT
-│   │
-│   └── main.py                          # Ponto de entrada da aplicacao
-│
-├── alembic/
-│   ├── versions/                        # Migrations do banco
-│   └── env.py                           # Configuracao Alembic
-│
-├── docs/
-│   ├── README.md                        # Documentacao adicional
-│   ├── database_model.md                # Modelo de dados detalhado
-│   ├── database_schema.sql              # Schema SQL completo
-│   ├── dynamodb_modelos_especificacao.md # Especificacao DynamoDB
-│   ├── openapi.yaml                     # Especificacao OpenAPI
-│   └── postgresql_relationships.md      # Relacionamentos do banco
-│
-├── scripts_data/
-│   └── seed_dev.py                      # Dados de desenvolvimento
-│
-├── templates/
-│   └── email/                           # Templates HTML de email
-│
-├── tests/                               # Testes unitarios e integracao
-│
-├── Dockerfile                           # Imagem Docker (multi-stage)
-├── docker-compose.yml                   # Orquestracao local
-├── entrypoint.sh                        # Script de inicializacao
-├── requirements.txt                     # Dependencias Python
-├── alembic.ini                          # Configuracao Alembic
-├── pytest.ini                           # Configuracao pytest
-└── pip.ini                              # Configuracao pip (Nexus Petrobras)
-```
-
----
-
-## Instalacao e Configuracao
-
-### Pre-requisitos
-
-- Python 3.12 ou superior
-- pip ou pipenv
-- Docker e Docker Compose (opcional)
-- Acesso ao Nexus Petrobras (para dependencias)
-
-### Instalacao Local
-
-#### 1. Clonar o Repositorio
-
-```bash
-git clone ...
-```
-
-#### 2. Criar Ambiente Virtual
-
-```bash
-python -m venv venv
-```
-
-#### 3. Ativar Ambiente Virtual
-
-**Windows:**
-```bash
-venv\Scripts\activate
-```
-
-**Linux/Mac:**
-```bash
-source venv/bin/activate
-```
-
-#### 4. Instalar Dependencias
-
-```bash
-pip install -r requirements.txt
-```
-
-> **Nota:** O arquivo `pip.ini` configura o repositorio Nexus da Petrobras como fonte de pacotes.
-
-#### 5. Configurar Variaveis de Ambiente
-
-Crie um arquivo `.env` na pasta `backend/`:
+### CORS
+Configurado via variável `CORS_ALLOW_ORIGINS` (CSV de origens permitidas).
+Em `DEBUG=true`, aceita `localhost:3000` por padrão.
+Em produção, **obrigatório** definir `CORS_ALLOW_ORIGINS` explicitamente.
 
 ```env
-# ============================================
-# BANCO DE DADOS
-# ============================================
-# Desenvolvimento local (SQLite)
+CORS_ALLOW_ORIGINS=https://app.petrobras.com.br,https://portal.petrobras.com.br
+```
+
+### Documentação da API (Swagger/ReDoc)
+`/docs` e `/redoc` são **desabilitados automaticamente** quando `DEBUG=false`.
+Nunca habilitar documentação pública em produção.
+
+### Variáveis sensíveis
+Em produção, usar **AWS Secrets Manager** para:
+- `RDS_AURORA_POSTGRES_PASSWORD`
+- `JWT_SECRET`
+- `CA_CLIENT_SECRET`
+- `MIP_SDK_API_TOKEN`
+
+---
+
+## Instalação e Configuração
+
+### Pré-requisitos
+
+- Python 3.13
+- Docker e Docker Compose (opcional)
+- Acesso ao Nexus Petrobras (para instalação de dependências via `pip.ini`)
+
+### Instalação Local
+
+```bash
+# 1. Clonar o repositório
+git clone ...
+cd csa-backend
+
+# 2. Criar e ativar o ambiente virtual
+python -m venv venv
+
+# Windows
+venv\Scripts\activate
+# Linux/Mac
+source venv/bin/activate
+
+# 3. Instalar dependências
+pip install -r requirements.txt
+
+# 4. Criar arquivo .env (ver tabela abaixo)
+
+# 5. Executar migrações
+alembic upgrade heads
+
+# 6. Popular banco com dados de desenvolvimento (opcional)
+python -m scripts_data.seed_dev
+
+# 7. Iniciar a aplicação
+uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload --lifespan off
+```
+
+### Variáveis de Ambiente
+
+```env
+# ─── APLICAÇÃO ──────────────────────────────────────────
+APP_PORT=8080
+DEBUG=false                         # true = Swagger habilitado + CORS localhost
+AUTH_MODE=cav4                      # cav4 | local (local apenas para desenvolvimento)
+JWT_SECRET=sua-chave-secreta-256bits
+
+# ─── CORS ────────────────────────────────────────────────
+# Lista de origens permitidas separadas por vírgula.
+# Os ambientes Petrobras abaixo são sempre incluídos automaticamente.
+# Em dev com DEBUG=true, localhost:3000 é incluído automaticamente.
+# Defina esta variável para adicionar origens extras (ex: hmg quando disponível).
+#
+# Ambientes incluídos automaticamente:
+#   https://scac-dsv.petrobras.com.br  (desenvolvimento)
+#   https://scac-tst.petrobras.com.br  (teste)
+#   https://scac.petrobras.com.br      (produção)
+#
+# Para adicionar hmg quando subir:
+# CORS_ALLOW_ORIGINS=https://scac-hmg.petrobras.com.br
+
+# ─── BANCO DE DADOS ─────────────────────────────────────
+# Desenvolvimento (SQLite)
 DATABASE_URL=sqlite:///./dev.db
 
-# Producao (Aurora PostgreSQL)
-# DATABASE_URL=postgresql+psycopg://user:pass@host/dbname?options=-csearch_path%3Dscac
+# Produção (Aurora PostgreSQL — host fornecido pelo Parameter Store)
+# DATABASE_URL=scac-dsv.petrobras.com.br    (apenas o host; URL montada automaticamente)
+RDS_AURORA_POSTGRES_USERNAME=usuario
+RDS_AURORA_POSTGRES_PASSWORD=senha
+RDS_AURORA_POSTGRES_DBNAME=nome_do_banco
+DB_SCHEMA=public
 
-# ============================================
-# AUTENTICACAO
-# ============================================
-AUTH_MODE=local                    # local | entra
-JWT_SECRET=sua-chave-secreta-aqui  # Obrigatorio em producao
+# ─── AUTENTICAÇÃO CAv4 (OIDC/PKCE) ─────────────────────
+# Obter no portal do CAv4 / equipe de identidade corporativa
+CA_CLIENT_ID=seu-client-id
+CA_CLIENT_SECRET=seu-client-secret
+OIDC_DISCOVERY_URL=https://caauthz.petrobras.com.br/.well-known/openid-configuration
+CA_API_BASE_URL=https://fwca.petrobras.com.br
+CA_SSL_USE_TRUSTSTORE=true          # usa truststore do SO (recomendado em produção)
+CA_SSL_VERIFY=true
 
-# Microsoft Entra ID (Azure AD)
-ENTRA_APP_NAME=SCAC Backend
-ENTRA_TENANT_ID=seu-tenant-id
-ENTRA_CLIENT_ID=seu-client-id
-ENTRA_CLIENT_SECRET=seu-client-secret
-ENTRA_REDIRECT_URI=http://localhost:3000/auth/entra-callback
+# Callback configurado no App Registration do CAv4 (um por ambiente):
+CA_REDIRECT_URI=https://scac-dsv.petrobras.com.br/auth/cav4-callback
+# TST: CA_REDIRECT_URI=https://scac-tst.petrobras.com.br/auth/cav4-callback
+# PRD: CA_REDIRECT_URI=https://scac.petrobras.com.br/auth/cav4-callback
+# DEV: CA_REDIRECT_URI=http://localhost:3000/auth/cav4-callback
 
-# Grupo obrigatorio para acesso
-ENTRA_REQUIRED_GROUP_ID=ccc28110-a7ad-45df-94ca-439cf7ff0c55
-ENTRA_REQUIRED_GROUP_NAME=GN_CLOUD_AWS_SCAC_USERS
+# Mapeamento de roles CAv4 para perfis internos (JSON array ou CSV)
+CAV4_ADMIN_ROLE_NAMES=["cd_papel_auditor"]
+CAV4_SUPERVISOR_ROLE_NAMES=["cd_papel_supervisor"]
+CAV4_INTERNAL_ROLE_NAMES=["cd_papel_usuario"]
 
-# IDs dos grupos de supervisores (JSON array)
-ENTRA_SUPERVISOR_GROUP_IDS=["id-grupo-1","id-grupo-2"]
+# Cargos com aprovação automática (sem necessidade de supervisor)
+# AUTO_APPROVE_JOB_TITLES=["gerente geral","diretor","presidente"]
 
-# ============================================
-# OTP (One-Time Password)
-# ============================================
+# ─── MICROSOFT GRAPH (opcional, Fase 4) ─────────────────
+# Necessário apenas para enriquecer perfil de usuário (cargo, gestor, foto).
+# Não é mais usado para autenticação ou controle de acesso.
+ENTRA_TENANT_ID=5b6f6241-...
+ENTRA_CLIENT_ID=seu-app-registration-id
+ENTRA_CLIENT_SECRET=seu-secret
+# App Purview separado (para operações MIP):
+# ENTRA_CLIENT_ID_PURVIEW=...
+# ENTRA_CLIENT_SECRET_PURVIEW=...
+
+# ─── OTP ────────────────────────────────────────────────
 OTP_MAX_ATTEMPTS=5
 OTP_COOLDOWN_MINUTES=15
 OTP_VALIDITY_MINUTES=5
 ACCESS_VALID_HOURS=24
 
-# ============================================
-# ARMAZENAMENTO
-# ============================================
-STORAGE_PROVIDER=local             # local | aws
+# ─── ARMAZENAMENTO ──────────────────────────────────────
+STORAGE_PROVIDER=aws                # aws | local
+AWS_REGION=sa-east-1
+AWS_S3_BUCKET=s3-a12022-dsv-...
 
-# AWS S3 (producao)
-AWS_REGION=us-east-1
-AWS_S3_BUCKET=petrobras-scac-files
-AWS_ACCESS_KEY_ID=sua-access-key
-AWS_SECRET_ACCESS_KEY=sua-secret-key
+# Em produção via AWS IAM Role — não definir chaves diretamente:
+# AWS_ACCESS_KEY_ID=...
+# AWS_SECRET_ACCESS_KEY=...
+# AWS_SESSION_TOKEN=...
 
-# ============================================
-# EMAIL
-# ============================================
-EMAIL_PROVIDER=dev                 # dev | smtp_internal | ses
-MAIL_FROM=noreply@petrobras.com.br
+# ─── MIP SDK ────────────────────────────────────────────
+MIP_PROCESSING_ENABLED=false        # true em produção com MIP SDK disponível
+MIP_FAIL_CLOSED=false
+MIP_SDK_BASE_URL=http://localhost:5000
+MIP_SDK_API_TOKEN=seu-token
+MIP_SDK_VERIFY_TLS=false
+MIP_PROCESSING_TIMEOUT_SECONDS=120
 
-# SMTP Interno Petrobras
-# Servidor: smtp.petrobras.com.br
-# Porta: 25 (sem autenticacao, TLS via STARTTLS)
-MAIL_ROUTE=TESTE_TIC              # Header X-Route (desvio em nao-producao)
-MAIL_PROTECTION=CONFIDENCIAL      # Header X-Protecao (criptografia MIP)
+# ─── E-MAIL ─────────────────────────────────────────────
+EMAIL_PROVIDER=smtp_internal        # smtp_internal | ses | dev
+MAIL_FROM=noreply-csa@petrobras.com.br
+# MAIL_ROUTE=TESTE_TIC              # desvio em não-produção
+# MAIL_PROTECTION=CONFIDENCIAL      # criptografia MIP via Exchange
 
-# ============================================
-# URLs DO FRONTEND
-# ============================================
-FRONTEND_EXTERNAL_PORTAL_URL=http://localhost:3000
-FRONTEND_SHARE_DETAILS_URL=http://localhost:3000/compartilhamentos
-FRONTEND_SUPERVISOR_URL=http://localhost:3000/supervisor
+# ─── URLS DO FRONTEND (para e-mails) ────────────────────
+FRONTEND_EXTERNAL_PORTAL_URL=https://scac-dsv.petrobras.com.br
+FRONTEND_SHARE_DETAILS_URL=https://scac-dsv.petrobras.com.br/compartilhamentos/{share_id}
+FRONTEND_SUPERVISOR_URL=https://scac-dsv.petrobras.com.br/supervisor
 
-# ============================================
-# APLICACAO
-# ============================================
-APP_PORT=8080
-APP_NAME=Compartilhamento Seguro de Arquivos
+# ─── BRANDING ───────────────────────────────────────────
+APP_NAME=Solução de Compartilhamento de Arquivos Confidenciais - CSAC
 COMPANY_NAME=Petrobras
 SUPPORT_EMAIL=suporte@petrobras.com.br
 ```
 
-#### 6. Executar Migrations
-
-```bash
-alembic upgrade heads
-```
-
-#### 7. Popular Banco com Dados de Desenvolvimento (Opcional)
-
-```bash
-python -m scripts_data.seed_dev
-```
-
-#### 8. Iniciar a Aplicacao
-
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload --lifespan off
-```
-
-### Instalacao com Docker
-
-#### 1. Build da Imagem
+### Docker
 
 ```bash
 docker-compose build
-```
-
-#### 2. Executar
-
-**Modo interativo:**
-```bash
-docker-compose up
-```
-
-**Modo background:**
-```bash
-docker-compose up -d
+docker-compose up          # interativo
+docker-compose up -d       # background
 ```
 
 ---
 
-## Documentacao da API
+## Documentação da API
 
-Apos iniciar a aplicacao, acesse:
+Após iniciar a aplicação (**somente com `DEBUG=true`**), acesse:
 
-| Recurso | URL | Descricao |
+| Recurso | URL | Descrição |
 |---------|-----|-----------|
-| **Swagger UI** | http://localhost:8080/docs | Documentacao interativa |
-| **ReDoc** | http://localhost:8080/redoc | Documentacao alternativa |
-| **OpenAPI JSON** | http://localhost:8080/openapi.json | Especificacao OpenAPI |
-| **Health Check** | http://localhost:8080/api | Status da API |
-| **Versao** | http://localhost:8080/api/v1 | Versao da API |
+| **Swagger UI** | http://localhost:8080/docs | Documentação interativa |
+| **ReDoc** | http://localhost:8080/redoc | Documentação alternativa |
+| **OpenAPI JSON** | http://localhost:8080/openapi.json | Especificação OpenAPI |
+| **Health Check** | http://localhost:8080/api/v1/status | Status da API |
+
+> ⚠️ Em `DEBUG=false` (produção), `/docs`, `/redoc` e `/openapi.json` são desabilitados automaticamente.
 
 ---
 
 ## Endpoints da API
 
-### Autenticacao Unificada (`/api/v1/auth`)
+> Todos os prefixos abaixo são relativos a `/api/v1`.
 
-| Metodo | Endpoint | Descricao |
+### Autenticação — Geral (`/api/v1/auth`)
+
+| Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| POST | `/auth/login` | Login com email/senha |
-| POST | `/auth/logout` | Logout (invalida sessao) |
+| POST | `/auth/login` | Login por email/senha (fluxo local) |
+| POST | `/auth/logout` | Logout (invalida sessão) |
 | POST | `/auth/refresh` | Renova token JWT |
-| POST | `/auth/forgot-password` | Solicita reset de senha |
-| POST | `/auth/reset-password` | Reseta senha com token |
 
-### Autenticacao Entra ID (`/api/v1/auth/entra`)
+### Autenticação CAv4 — OIDC/PKCE (`/api/v1/auth/cav4`)
 
-| Metodo | Endpoint | Descricao |
+| Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| GET | `/auth/entra/login` | Inicia fluxo OAuth |
-| GET | `/auth/entra/callback` | Callback do Entra ID |
-| POST | `/auth/entra/logout` | Logout do Entra ID |
+| GET | `/auth/cav4/login` | Inicia fluxo OIDC — gera PKCE e redireciona para CAv4 |
+| POST | `/auth/cav4/token` | Recebe `code`+`state` do frontend e troca por JWT interno |
+| POST | `/auth/cav4/refresh` | Renova token usando refresh_token |
+| GET | `/auth/cav4/session-check` | Verifica se o JWT interno está válido |
+| POST | `/auth/cav4/logout` | Invalida sessão interna |
 
-### Autenticacao Interna - Dev (`/api/v1/auth/internal`)
+**Callback URL configurada:**
+- Local: `http://localhost:3000/auth/cav4-callback`
+- DSV: `https://scac-dsv.petrobras.com.br/auth/cav4-callback`
+- TST: `https://scac-tst.petrobras.com.br/auth/cav4-callback`
+- PRD: `https://scac.petrobras.com.br/auth/cav4-callback`
 
-| Metodo | Endpoint | Descricao |
+### Autenticação Interna — Dev (`/api/v1/auth/internal`)
+
+| Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| POST | `/auth/internal/login` | Login local (desenvolvimento) |
-| POST | `/auth/internal/signup` | Cadastro local (desenvolvimento) |
+| POST | `/auth/internal/login` | Login local (somente `AUTH_MODE=local`) |
+| POST | `/auth/internal/signup` | Cadastro local (somente `AUTH_MODE=local`) |
 | POST | `/auth/internal/logout` | Logout local |
 
-### Autenticacao Externa - OTP (`/api/v1/auth/external`)
+### Autenticação Externa — OTP (`/api/v1/auth/external`)
 
-| Metodo | Endpoint | Descricao |
+| Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| POST | `/auth/external/request-code` | Solicita codigo OTP |
-| POST | `/auth/external/verify-code` | Valida codigo OTP |
+| POST | `/auth/external/request-code` | Solicita código OTP para e-mail externo |
+| POST | `/auth/external/verify-code` | Valida OTP e retorna token de acesso |
 
-### Usuarios (`/api/v1/users`)
+### Usuários (`/api/v1/users`)
 
-| Metodo | Endpoint | Descricao |
+| Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| GET | `/users/me` | Dados do usuario autenticado |
-| PUT | `/users/me` | Atualiza perfil |
-| GET | `/users` | Lista usuarios (admin) |
-| GET | `/users/{id}` | Detalhes do usuario |
-| POST | `/users` | Cria usuario |
-| PATCH | `/users/{id}` | Atualiza usuario |
+| GET | `/users/me` | Dados do usuário autenticado |
+| PUT | `/users/me` | Atualiza perfil do usuário |
+| GET | `/users/{userId}` | Dados de um usuário por ID (admin) |
+| PATCH | `/users/{userId}` | Atualiza usuário por ID (admin) |
 
 ### Compartilhamentos (`/api/v1/shares`)
 
-| Metodo | Endpoint | Descricao |
-|--------|----------|-----------|
-| POST | `/shares/create` | Cria compartilhamento |
-| GET | `/shares/my-shares` | Lista meus compartilhamentos |
-| GET | `/shares/{id}` | Detalhes do compartilhamento |
-| PATCH | `/shares/{id}/cancel` | Cancela compartilhamento |
+| Método | Endpoint | Corpo | Descrição |
+|--------|----------|-------|-----------|
+| POST | `/shares/create` | `multipart/form-data` | **Upload + criação** — campo `payload` (JSON) + `files[]` |
+| POST | `/shares/` | JSON | Cria share com `file_ids` já existentes (sem upload) |
+| GET | `/shares/` | — | Lista compartilhamentos do usuário autenticado |
+| GET | `/shares/my-shares` | — | Lista simplificada dos shares do usuário |
+| GET | `/shares/{shareId}` | — | Detalhes de um compartilhamento |
+| DELETE | `/shares/{shareId}` | — | Remove compartilhamento |
+| PATCH | `/shares/{shareId}/cancel` | JSON | Cancela compartilhamento |
+| POST | `/shares/{shareId}/resend` | JSON | Reenvia e-mail ao destinatário |
+| POST | `/shares/{shareId}/resend-notification` | JSON | Reenvia notificação ao supervisor |
+| GET | `/shares/{shareId}/email-logs` | — | Histórico de e-mails do compartilhamento |
+
+#### Fluxo de upload (frontend → backend)
+
+```
+Tela Web  POST /api/shares/create (Next.js BFF)
+             ↓
+  Route Handler: app/api/shares/create/route.ts
+             ↓
+  Backend FastAPI  POST /api/v1/shares/create
+```
 
 ### Supervisor (`/api/v1/supervisor`)
 
-| Metodo | Endpoint | Descricao |
+| Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| GET | `/supervisor/pending` | Lista pendentes de aprovacao |
-| POST | `/supervisor/approve/{id}` | Aprova compartilhamento |
-| POST | `/supervisor/reject/{id}` | Rejeita compartilhamento |
-| PUT | `/supervisor/extend/{id}` | Estende prazo |
-| GET | `/supervisor/areas/{id}/report` | Relatorio da area |
-
-### Download - Portal Externo (`/api/v1/download`)
-
-| Metodo | Endpoint | Descricao |
-|--------|----------|-----------|
-| POST | `/download/verify` | Verifica email e envia OTP |
-| POST | `/download/authenticate` | Autentica com OTP |
-| GET | `/download/files` | Lista arquivos disponiveis |
-| GET | `/download/files/{id}/url` | Gera URL de download |
+| GET | `/supervisor/pending` | Lista compartilhamentos pendentes |
+| GET | `/supervisor/shares` | Lista todos os shares dos supervisionados |
+| POST | `/supervisor/approve/{shareId}` | Aprova compartilhamento |
+| POST | `/supervisor/reject/{shareId}` | Rejeita compartilhamento |
+| PUT | `/supervisor/extend/{shareId}` | Estende prazo |
+| GET | `/supervisor/areas/{areaId}/report` | Relatório de uma área |
+| GET | `/supervisor/shares/{shareId}/download-zip` | ZIP de arquivos do share (PENDING) |
+| GET | `/supervisor/shares/{shareId}/email-logs` | Histórico de e-mails |
+| DELETE | `/supervisor/shares/{shareId}/files/{fileId}` | Remove arquivo de share pendente |
+| POST | `/supervisor/shares/{shareId}/resend-notification` | Reenvia notificação de aprovação |
 
 ### Arquivos (`/api/v1/files`)
 
-| Metodo | Endpoint | Descricao |
+| Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| POST | `/files` | Cria metadata do arquivo |
-| GET | `/files` | Lista arquivos |
-| GET | `/files/{id}` | Detalhes do arquivo |
-| POST | `/files/upload-local` | Upload local (dev) |
-| GET | `/files/{id}/presigned-upload` | URL pre-assinada para upload |
-| GET | `/files/{id}/presigned-download` | URL pre-assinada para download |
+| GET | `/files/` | Lista arquivos do usuário autenticado |
+| POST | `/files/` | Cria registro de arquivo |
+| POST | `/files/upload` | Upload via `multipart/form-data` |
+| POST | `/files/upload-local` | Upload local (dev sem S3) |
+| GET | `/files/{fileId}` | Detalhes de um arquivo |
+| DELETE | `/files/{fileId}` | Remove arquivo |
+| GET | `/files/{fileId}/presigned-download` | URL presignada de download S3 |
+| GET | `/files/{fileId}/presigned-upload` | URL presignada de upload S3 |
 
-### Notificacoes (`/api/v1/notifications`)
+### Download — Acesso Externo (`/api/v1/download`)
 
-| Metodo | Endpoint | Descricao |
+| Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| GET | `/notifications` | Lista notificacoes |
-| PATCH | `/notifications/{id}/read` | Marca como lida |
+| POST | `/download/verify` | Verifica token e inicia sessão externa |
+| POST | `/download/authenticate` | Autentica com OTP |
+| GET | `/download/files` | Lista arquivos disponíveis |
+| GET | `/download/files/zip` | Download ZIP de todos os arquivos |
+| GET | `/download/files/{fileId}/url` | URL de download de arquivo específico |
+
+### Portal Externo (`/api/v1/external`)
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/external/list-files` | Lista arquivos do externo autenticado |
+| POST | `/external/ack` | Confirma download dos arquivos |
+| POST | `/external/logout` | Logout do usuário externo |
+
+### Notificações (`/api/v1/notifications`)
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/notifications` | Lista notificações do usuário |
 | PUT | `/notifications/read-all` | Marca todas como lidas |
+| PATCH | `/notifications/{notificationId}/read` | Marca uma notificação como lida |
 
 ### Auditoria (`/api/v1/audit`)
 
-| Metodo | Endpoint | Descricao |
+| Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| GET | `/audit/logs` | Lista logs de auditoria |
-| POST | `/audit/logs` | Cria log de auditoria |
-| GET | `/audit/metrics` | Metricas do sistema |
+| GET | `/audit/` | Lista logs de auditoria |
+| GET | `/audit/logs` | Lista logs (alias) |
+| POST | `/audit/logs` | Registra evento de auditoria |
+| GET | `/audit/metrics` | Métricas consolidadas |
 
-### Emails (`/api/v1/emails`)
+### E-mails (`/api/v1/emails`)
 
-| Metodo | Endpoint | Descricao |
+| Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| POST | `/emails/send` | Envia email customizado |
-| GET | `/emails/history` | Historico de emails |
-| GET | `/emails/{messageId}/status` | Status de um email |
-| POST | `/emails/otp` | Envia email com OTP |
+| POST | `/emails/send` | Envia e-mail |
+| GET | `/emails/history` | Histórico de e-mails |
+| GET | `/emails/{messageId}/status` | Status de um e-mail |
+| POST | `/emails/log-external` | Registra e-mail externo |
+| POST | `/emails/otp` | Envia OTP por e-mail |
 
-### Areas (`/api/v1/areas`)
+### Áreas (`/api/v1/areas`)
 
-| Metodo | Endpoint | Descricao |
+| Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| GET | `/areas` | Lista areas |
-| GET | `/areas/{id}` | Detalhes da area |
-| POST | `/areas` | Cria area |
-| PATCH | `/areas/{id}` | Atualiza area |
+| GET | `/areas/` | Lista áreas do usuário |
+| POST | `/areas/` | Cria nova área |
+| GET | `/areas/{areaId}` | Detalhes de uma área |
+| POST | `/areas/{areaId}/close` | Fecha uma área |
 
 ### Admin (`/api/v1/admin`)
 
-| Metodo | Endpoint | Descricao |
+| Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| GET | `/admin/users` | Lista todos os usuarios |
-| POST | `/admin/users/{id}/deactivate` | Desativa usuario |
-| POST | `/admin/sync-groups` | Sincroniza grupos Entra |
+| GET | `/admin/dashboard` | Métricas globais completas |
+| GET | `/admin/users` | Lista todos os usuários |
+| PATCH | `/admin/users/{userId}/admin` | Promover/rebaixar admin |
+| GET | `/admin/shares` | Lista todos os compartilhamentos |
+| GET | `/admin/logs` | Logs do sistema |
+| GET | `/admin/actions` | Ações administrativas registradas |
+| GET | `/admin/tracking/by-email` | Rastreamento por e-mail |
+| GET | `/admin/tracking/{userId}` | Rastreamento por ID |
+| GET | `/admin/mip-diagnostico` | Diagnóstico da integração MIP SDK |
+| POST | `/admin/run-cleanup` | Executa job de limpeza (expiração, desativação) |
 
 ---
 
-## Integracao com AWS
+## Perfis de Acesso
 
-### Servicos Utilizados
+| Perfil | Critério no banco | CAv4 Role | Permissões |
+|--------|-------------------|-----------|------------|
+| **Externo** | `type=EXTERNAL` | — | Download via OTP |
+| **Interno** | `type=INTERNAL` | `cd_papel_usuario` | Upload, criar shares |
+| **Supervisor** | `INTERNAL + is_supervisor=True` | `cd_papel_supervisor` | Aprovar/rejeitar shares dos supervisionados |
+| **Admin** | `INTERNAL + is_admin=True` | `cd_papel_auditor` | Painel global, administrar usuários |
 
-| Servico | Funcao |
-|---------|--------|
-| **Amazon ECS (Fargate)** | Hospedagem de containers |
-| **Amazon Aurora PostgreSQL** | Banco de dados relacional |
-| **Amazon S3** | Armazenamento de arquivos |
-| **Amazon SES** | Envio de emails |
-| **AWS Secrets Manager** | Gerenciamento de credenciais |
-| **AWS Systems Manager (SSM)** | Parameter Store para configuracoes |
-| **Amazon CloudWatch** | Logs e monitoramento |
-| **AWS IAM** | Controle de acesso |
-| **AWS KMS** | Criptografia de dados |
+**Aprovação automática de shares** (sem necessidade de supervisor):
+Usuários com cargos executivos (Diretor, Gerente Geral, Presidente, etc.) têm seus compartilhamentos aprovados imediatamente.
+A lista de cargos elegíveis é configurável via `AUTO_APPROVE_JOB_TITLES` no `.env` ou `app/core/config.py`.
 
-### Configuracao ECS
-
-O backend e implantado como container no Amazon ECS Fargate. As variaveis de ambiente sao injetadas automaticamente pela Task Definition a partir do:
-
-1. **Secrets Manager**: Credenciais sensiveis (banco, Entra ID)
-2. **Parameter Store (SSM)**: Configuracoes de ambiente
-
-### Fluxo de Deploy
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Git Push      │───▶│  Pipeline CDK   │───▶│  Build Docker   │
-│   (main/dev)    │    │   Petrobras     │    │   (ECR)         │
-└─────────────────┘    └─────────────────┘    └────────┬────────┘
-                                                       │
-                       ┌───────────────────────────────┘
-                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  Task Definition│───▶│   ECS Service   │───▶│   ALB/Target    │
-│  + Secrets      │    │   Fargate       │    │   Group         │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
+> **Autorização baseada em roles CAv4** — não são mais utilizados grupos do Azure AD.
+> O mapeamento de roles para perfis internos é configurado via `CAV4_*_ROLE_NAMES` no `.env`.
 
 ---
 
@@ -591,128 +525,88 @@ O backend e implantado como container no Amazon ECS Fargate. As variaveis de amb
 
 ### Tabelas Principais
 
-| Tabela | Descricao |
-|--------|-----------|
-| `users` | Usuarios do sistema (internos e externos) |
-| `areas` | Areas/departamentos da empresa |
-| `area_supervisors` | Relacao M:N entre areas e supervisores |
-| `shares` | Compartilhamentos de arquivos |
-| `share_files` | Relacao M:N entre shares e arquivos |
-| `restricted_files` | Metadados dos arquivos |
-| `token_access` | Tokens de acesso externo e OTPs |
-| `session_tokens` | Sessoes de usuarios |
-| `notifications` | Notificacoes do sistema |
-| `audit_logs` | Logs de auditoria |
-| `email_logs` | Historico de emails enviados |
-| `credencial_local` | Credenciais locais (desenvolvimento) |
-| `support_registrations` | Registros de suporte |
-| `support_audits` | Auditoria de acoes de suporte |
+| Tabela SQLModel | Descrição |
+|-----------------|-----------|
+| `user` | Usuários internos e externos |
+| `shared_area` | Áreas de compartilhamento S3 por usuário |
+| `area_supervisor` | Pivot M:N área ↔ supervisor |
+| `share` | Compartilhamentos de arquivos |
+| `share_file` | Pivot M:N share ↔ arquivo |
+| `restricted_file` | Arquivo armazenado no S3 |
+| `token_access` | OTPs e tokens de acesso externo |
+| `session_token` | Tokens de sessão (hasheados) |
+| `notification` | Notificações internas |
+| `audit` | Logs de auditoria de todas as ações |
+| `email_log` | Histórico de e-mails enviados |
+| `credential_local` | Senhas bcrypt (AUTH_MODE=local) |
+| `support_registration` | Registros criados pelo suporte |
+| `support_audit` | Auditoria de ações de suporte |
 
-### Status dos Compartilhamentos
+### Ciclo de Vida de um Share
 
-| Status | Descricao |
-|--------|-----------|
-| `pendente` | Aguardando aprovacao do supervisor |
-| `aprovado` | Aprovado, aguardando download |
-| `ativo` | Disponivel para download |
-| `rejeitado` | Rejeitado pelo supervisor |
-| `concluido` | Todos os arquivos foram baixados |
-| `expirado` | Prazo de download expirou |
-| `cancelado` | Cancelado pelo remetente |
+```
+pendente → aprovado → ativo → concluído
+         ↘ rejeitado          ↘ expirado
+                               ↘ cancelado
+```
 
 ---
 
 ## Testes
 
-### Executar Todos os Testes
-
 ```bash
+# Todos os testes
 pytest
-```
 
-### Com Cobertura
-
-```bash
+# Com cobertura
 pytest --cov=app --cov-report=html
-```
 
-### Testes Especificos
-
-```bash
-# Testes de autenticacao
-pytest tests/test_auth.py
-
-# Testes de compartilhamentos
-pytest tests/test_shares.py
-
-# Testes de arquivos
-pytest tests/test_files.py
+# Testes por módulo
+pytest tests/test_auth_routes.py
+pytest tests/test_share_routes.py
+pytest tests/test_routes_download.py
+pytest tests/test_s3_service.py
 ```
 
 ---
 
-## Checklist de Verificacao
-
-### 1. Verificar Status da API
+## Checklist de Verificação
 
 ```bash
+# 1. Verificar status da API
 curl http://localhost:8080/api/v1
-```
+# → {"version": "001", "sytem": "active"}
 
-**Resposta esperada:**
-```json
-{"version": "001", "sytem": "active"}
-```
-
-### 2. Login Interno (Desenvolvimento)
-
-```bash
+# 2. Login local (AUTH_MODE=local)
 curl -X POST http://localhost:8080/api/v1/auth/internal/login \
   -H "Content-Type: application/json" \
   -d '{"email": "usuario@petrobras.com.br", "password": "senha123"}'
-```
 
-### 3. Obter Dados do Usuario
-
-```bash
+# 3. Dados do usuário
 curl http://localhost:8080/api/v1/users/me \
   -H "Authorization: Bearer {token}"
-```
-
-### 4. Criar Compartilhamento
-
-```bash
-curl -X POST http://localhost:8080/api/v1/shares/create \
-  -H "Authorization: Bearer {token}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "recipient_email": "destinatario@empresa.com",
-    "recipient_name": "Nome do Destinatario",
-    "message": "Segue os arquivos solicitados",
-    "file_ids": ["uuid-arquivo-1", "uuid-arquivo-2"]
-  }'
 ```
 
 ---
 
 ## Troubleshooting
 
-### Erro de Conexao com Banco
+| Problema | Causa Provável | Solução |
+|----------|----------------|---------|
+| Erro de conexão com banco | `DATABASE_URL` incorreto | Verificar .env e rodar `alembic upgrade heads` |
+| `ImportError` em `/support` | `core/security.py` está vazio | Ver [MELHORIAS_E_PERFIS.md](docs/MELHORIAS_E_PERFIS.md) item 1.3 |
+| Erro no Entra ID callback | Credenciais ou redirect_uri incorretos | Confirmar `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_REDIRECT_URI` |
+| Upload S3 com erro | `STORAGE_PROVIDER=local` em dev | Definir `STORAGE_PROVIDER=local` para mock local |
+| OTP não chega por e-mail | `EMAIL_PROVIDER=dev` | Checar logs — em dev o e-mail é apenas logado, não enviado |
 
-1. Verifique se `DATABASE_URL` esta configurado corretamente
-2. Para PostgreSQL, verifique se o driver `psycopg` esta instalado
-3. Execute as migrations: `alembic upgrade heads`
+---
 
-### Erro de Autenticacao Entra ID
+## Documentação Interna
 
-1. Verifique se `AUTH_MODE=entra` esta configurado
-2. Confirme as credenciais: `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET`
-3. Verifique se a `ENTRA_REDIRECT_URI` esta registrada no Azure AD
-
-### Erro de Upload S3
-
-1. Verifique se `STORAGE_PROVIDER=aws` esta configurado
-2. Confirme as credenciais AWS: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
-3. Verifique permissoes do bucket S3
+| Documento | Descrição |
+|-----------|-----------|
+| [docs/SISTEMA_ATUAL.md](docs/SISTEMA_ATUAL.md) | Mapa completo do sistema — pastas, endpoints, modelos, serviços |
+| [docs/MELHORIAS_E_PERFIS.md](docs/MELHORIAS_E_PERFIS.md) | Diagnósticos, melhorias e proposta de perfis de acesso com Entra ID |
+| [docs/openapi.yaml](docs/openapi.yaml) | Especificação OpenAPI |
 
 ---

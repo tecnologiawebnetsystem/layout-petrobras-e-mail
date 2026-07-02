@@ -1,0 +1,18 @@
+FROM registry.petrobras.com.br/imagens-devops/base/petro-aspnet-8_0
+
+ARG JENKINS_OUTPUT=.
+
+ARG PORT=8081
+
+ENV ASPNETCORE_URLS=http://+:$PORT \
+    TZ=America/Sao_Paulo
+
+WORKDIR /app
+
+COPY $JENKINS_OUTPUT /app
+
+EXPOSE $PORT
+
+HEALTHCHECK CMD wget --no-verbose --tries=1 --spider http://localhost:$PORT/health || exit 1
+
+ENTRYPOINT ["dotnet", "mip-sdk-worker.dll"]

@@ -21,7 +21,7 @@ import {
 import { UploadSuccessModal } from "@/components/upload/upload-success-modal";
 
 export function SupervisorUploadForm() {
-  const { user } = useAuthStore();
+  const { user, accessToken } = useAuthStore();
   const { loadUploads } = useWorkflowStore();
   const [recipient, setRecipient] = useState("");
   const [description, setDescription] = useState("");
@@ -154,6 +154,7 @@ export function SupervisorUploadForm() {
       }>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "/api/shares/create");
+        xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) {
             setUploadProgress(Math.round((e.loaded / e.total) * 100));
@@ -180,16 +181,35 @@ export function SupervisorUploadForm() {
 
       if (result._status >= 400 || result.success === false) {
         const isS3Failure = result._status === 502;
+        const isMipFailure = result._status === 422;
+        const errorCode = result.error?.code ?? "";
+
+        let title = "Erro ao enviar arquivos";
+        let message =
+          result.error?.message ?? "Ocorreu um erro inesperado. Tente novamente.";
+
+        if (isS3Failure) {
+          title = "Falha no armazenamento seguro";
+          message =
+            "Os arquivos não foram enviados ao armazenamento seguro (S3). Nenhum registro foi criado. Tente novamente ou contate o suporte.";
+        } else if (isMipFailure) {
+          if (errorCode === "MIP_UNSUPPORTED_EXTENSION") {
+            title = "Formato de arquivo não suportado";
+            // mensagem detalhada vem do backend (ex: "O arquivo 'foo.zip' possui extensão...")
+          } else if (errorCode === "MIP_SDK_ERROR") {
+            title = "Falha no processamento de segurança";
+          } else if (errorCode === "MIP_NOT_CONFIGURED") {
+            title = "Serviço de segurança indisponível";
+          } else {
+            title = "Impedimento no processamento de segurança (MIP)";
+          }
+        }
+
         setNotification({
           show: true,
           type: "error",
-          title: isS3Failure
-            ? "Falha no armazenamento seguro"
-            : "Erro ao enviar arquivos",
-          message: isS3Failure
-            ? "Os arquivos não foram enviados ao armazenamento seguro (S3). Nenhum registro foi criado. Tente novamente ou contate o suporte."
-            : (result.error?.message ??
-              "Ocorreu um erro inesperado. Tente novamente."),
+          title,
+          message,
         });
         return;
       }

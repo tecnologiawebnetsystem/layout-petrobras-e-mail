@@ -27,7 +27,6 @@ class EmailType(str, Enum):
     APPROVAL_REJECTED = "approval_rejected"
     EXPIRATION_WARNING = "expiration_warning"
     DOWNLOAD_CONFIRMATION = "download_confirmation"
-    PASSWORD_RESET = "password_reset"
     WELCOME = "welcome"
     SYSTEM = "system"
 

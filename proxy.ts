@@ -7,7 +7,7 @@ export function proxy(request: NextRequest) {
   // Content Security Policy
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com;
+    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com;
     style-src 'self' 'unsafe-inline';
     img-src 'self' blob: data: https:;
     font-src 'self' data:;
@@ -16,7 +16,7 @@ export function proxy(request: NextRequest) {
     form-action 'self';
     frame-ancestors 'none';
     upgrade-insecure-requests;
-    connect-src 'self' https://vercel.live https://login.microsoftonline.com https://*.msauth.net https://*.msauthimages.net https://graph.microsoft.com;
+    connect-src 'self' https://login.microsoftonline.com https://*.msauth.net https://*.msauthimages.net https://graph.microsoft.com;
   `
     .replace(/\s{2,}/g, " ")
     .trim()

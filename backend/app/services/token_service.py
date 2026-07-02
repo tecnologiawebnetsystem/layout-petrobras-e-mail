@@ -1,6 +1,6 @@
-
 import secrets
 import random
+import logging
 from datetime import datetime, timedelta, UTC
 from sqlmodel import Session, select
 from sqlalchemy import or_
@@ -10,12 +10,41 @@ from app.models.user import User, TypeUser
 from app.models.token_access import TokenAccess, TypeToken
 from app.models.share import Share, ShareStatus
 from app.services.audit_service import log_event
+from app.services.cav4_auth_service import remove_role_from_user_with_fallback
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+logger = logging.getLogger(__name__)
+
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 class TokenError(Exception):
     pass
+
+
+def _remove_cav4_role_on_deactivation(
+    user: User,
+    role_code: str,
+    cav4_access_token: str | None = None,
+) -> None:
+    """Remove papel CAV4 de forma resiliente, sem bloquear o fluxo principal."""
+    login = user.login_cav4 or user.employee_id
+    if not login:
+        logger.warning("Nao foi possivel remover papel %s: usuario sem login_cav4/employee_id (user_id=%s)", role_code, user.id)
+        return
+
+    removed, source = remove_role_from_user_with_fallback(
+        login=login,
+        role_code=role_code,
+        user_access_token=cav4_access_token,
+    )
+    if not removed:
+        logger.warning(
+            "Falha ao remover papel CAV4 %s do usuario=%s (login=%s, motivo=%s)",
+            role_code,
+            user.email,
+            login,
+            source,
+        )
 
 
 def deactivate_external_if_no_active_share(
@@ -64,6 +93,152 @@ def deactivate_external_if_no_active_share(
         ip=request_meta.get("ip") if request_meta else None,
         user_agent=request_meta.get("ua") if request_meta else None,
     )
+    return True
+
+
+# =====================================================
+# Desativação de supervisor sem pendências
+# =====================================================
+
+def deactivate_supervisor_if_no_pending(
+    session: Session,
+    supervisor: User,
+    request_meta: dict | None = None,
+    remove_cav4_role: bool = True,
+    cav4_access_token: str | None = None,
+) -> bool:
+    """
+    Desativa o supervisor (status=False, is_supervisor=False) quando não há
+    mais nenhum compartilhamento PENDING sob sua responsabilidade.
+
+    Deve ser chamado após cada aprovação ou rejeição de compartilhamento.
+    Retorna True se o supervisor foi desativado nesta chamada.
+    """
+    if not supervisor or not supervisor.is_supervisor or not supervisor.status:
+        return False
+
+    # Busca subordinados diretos
+    subordinate_ids = session.exec(
+        select(User.id).where(User.manager_id == supervisor.id)
+    ).all()
+
+    if not subordinate_ids:
+        # Nenhum subordinado — sem pendências possíveis
+        has_pending = False
+    else:
+        has_pending = session.exec(
+            select(Share).where(
+                Share.status == ShareStatus.PENDING,
+                Share.created_by_id.in_(subordinate_ids),
+            ).limit(1)
+        ).first() is not None
+
+    if has_pending:
+        return False
+
+    supervisor.is_supervisor = False
+    supervisor.status = False
+    session.add(supervisor)
+    session.commit()
+
+    log_event(
+        session,
+        "SUPERVISOR_DESATIVADO",
+        user_id=supervisor.id,
+        detail="Sem compartilhamentos pendentes — acesso supervisor revogado",
+        ip=request_meta.get("ip") if request_meta else None,
+        user_agent=request_meta.get("ua") if request_meta else None,
+    )
+
+    if remove_cav4_role:
+        _remove_cav4_role_on_deactivation(
+            supervisor,
+            role_code="CD_PAPEL_SUPERVISOR",
+            cav4_access_token=cav4_access_token,
+        )
+    return True
+
+
+# =====================================================
+# Desativação de usuário de upload
+# =====================================================
+
+_SHARE_CONCLUDED_STATUSES = {
+    ShareStatus.APPROVED,
+    ShareStatus.COMPLETED,
+    ShareStatus.EXPIRED,
+    ShareStatus.REJECTED,
+    ShareStatus.CANCELED,
+}
+
+
+def deactivate_internal_if_all_shares_done(
+    session: Session,
+    user: User,
+    request_meta: dict | None = None,
+    remove_cav4_role: bool = True,
+    cav4_access_token: str | None = None,
+) -> bool:
+    """
+    Desativa o usuário interno (upload user) quando todos os seus compartilhamentos
+    estão em estado terminal e não há nenhum PENDING nem ACTIVE dentro do prazo.
+
+    Considera como terminal: APPROVED+expirado, COMPLETED, REJECTED, CANCELED.
+    Usuários administradores nunca são desativados por este mecanismo.
+    Requer que o usuário tenha ao menos um compartilhamento criado (evita desativar
+    usuários recém-provisionados que ainda não iniciaram nenhum fluxo).
+
+    Retorna True se o usuário foi desativado nesta chamada.
+    """
+    if not user or user.type != TypeUser.INTERNAL or not user.status:
+        return False
+
+    # Admin nunca é desativado automaticamente
+    if user.is_admin:
+        return False
+
+    now = datetime.now(UTC)
+
+    # Verifica se existe algum share não-terminal: PENDING ou ACTIVE dentro do prazo
+    open_share = session.exec(
+        select(Share).where(
+            Share.created_by_id == user.id,
+            or_(
+                Share.status == ShareStatus.PENDING,
+                (Share.status == ShareStatus.ACTIVE) & (Share.expires_at > now),
+            ),
+        ).limit(1)
+    ).first()
+
+    if open_share:
+        return False
+
+    # Tem pelo menos um share (não desativar user que nunca criou nada)
+    total = session.exec(
+        select(Share).where(Share.created_by_id == user.id).limit(1)
+    ).first()
+    if not total:
+        return False
+
+    user.status = False
+    session.add(user)
+    session.commit()
+
+    log_event(
+        session,
+        "UPLOAD_USER_DESATIVADO",
+        user_id=user.id,
+        detail="Todos os compartilhamentos concluídos — acesso revogado",
+        ip=request_meta.get("ip") if request_meta else None,
+        user_agent=request_meta.get("ua") if request_meta else None,
+    )
+
+    if remove_cav4_role:
+        _remove_cav4_role_on_deactivation(
+            user,
+            role_code="CD_PAPEL_USUARIO",
+            cav4_access_token=cav4_access_token,
+        )
     return True
 
 

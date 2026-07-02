@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Petrobras File Transfer API
+  title: Solução de Compartilhamento de Arquivos Confidenciais - CSAC
   description: |
     API RESTful para o sistema de transferencia segura de arquivos da Petrobras.
     

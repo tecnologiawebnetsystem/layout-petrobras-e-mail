@@ -30,6 +30,7 @@ def create_session_jwt(
     email: str,
     user_type: str,
     is_supervisor: bool = False,
+    is_admin: bool = False,
     expires_minutes: int = 60
 ) -> str:
     """
@@ -37,13 +38,26 @@ def create_session_jwt(
     O campo 'type' no JWT reflete o papel lógico (supervisor | internal | externo)
     para compatibilidade com o frontend, mesmo que o DB armazene apenas INTERNAL/EXTERNAL.
     """
-    type_value = user_type.value if hasattr(user_type, "value") else str(user_type)
-    display_type = "supervisor" if is_supervisor else type_value
+    type_value = (
+        user_type.value
+        if hasattr(user_type, "value")
+        else str(user_type)
+    )
+    if is_admin:
+        display_type = "admin"
+
+    elif is_supervisor:
+        display_type = "supervisor"
+
+    else:
+        display_type = type_value
+
     claims = {
         "user_id": user_id,
         "email": email,
         "type": display_type,
         "is_supervisor": is_supervisor,
+        "is_admin": is_admin,
         "sub": str(user_id),
     }
     return create_app_jwt(claims, expires_minutes)

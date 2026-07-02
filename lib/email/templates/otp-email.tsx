@@ -73,7 +73,7 @@ export function generateOTPEmail(
                 Este é um email automático. Por favor, não responda.
               </p>
               <p style="color: #999999; font-size: 12px; margin: 0;">
-                © 2025 Petrobras. Todos os direitos reservados.
+                © 2026 Petrobras. Todos os direitos reservados.
               </p>
             </td>
           </tr>

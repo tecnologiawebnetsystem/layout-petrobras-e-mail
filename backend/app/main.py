@@ -5,9 +5,11 @@ from app.core.config import settings
 from app.db.init_db import init_db
 from fastapi.responses import FileResponse
 from pathlib import Path
+import os
 
 # Rotas existentes
 from app.api.v1 import (
+    routes_cav4_auth,
     routes_external,
     routes_external_auth,
     routes_files,
@@ -21,38 +23,46 @@ from app.api.v1 import (
     routes_download,
     routes_auth,
     routes_emails,
-    routes_entra_auth,
     routes_admin,
 )
 
-app = FastAPI(
-    title="Petrobras File Transfer API",
-    description="""
-## Sistema de Transferencia Segura de Arquivos
+# ── Documentação OpenAPI ─────────────────────────────────────────────────────
+# Em produção, /docs e /redoc devem ser desabilitados (docs_url=None).
+# Controlado pela variável DEBUG: True = docs habilitado, False = desabilitado.
+_docs_url    = "/docs"    if settings.debug else None
+_redoc_url   = "/redoc"   if settings.debug else None
+_openapi_url = "/openapi.json" if settings.debug else None
 
-API RESTful para compartilhamento seguro de arquivos da Petrobras com usuarios externos.
+app = FastAPI(
+    title="Solução de Compartilhamento Seguro de Arquivos Confidenciais - Petrobras",
+    description="""
+## Solução de Compartilhamento Seguro de Arquivos Confidenciais (CSAC)
+
+API RESTful para compartilhamento seguro de arquivos da Petrobras com usuários externos.
 
 ### Funcionalidades Principais
 
-- **Autenticacao**: Login via Entra ID (Microsoft) ou credenciais locais
-- **Upload de Arquivos**: Upload seguro com armazenamento no S3
-- **Compartilhamento**: Envio de arquivos para usuarios externos com aprovacao
-- **OTP**: Verificacao por codigo unico enviado por email
-- **Auditoria**: Log completo de todas as acoes do sistema
+- **Autenticação**: Login via CAv4 (OIDC/PKCE) ou credenciais locais (dev)
+- **Upload de Arquivos**: Upload seguro com processamento MIP e armazenamento no S3
+- **Compartilhamento**: Envio de arquivos para usuários externos com aprovação por supervisor
+- **OTP**: Verificação por código único enviado por e-mail
+- **Auditoria**: Log completo de todas as ações do sistema
 
 ### Fluxo de Compartilhamento
 
-1. Usuario interno faz upload dos arquivos
-2. Cria um compartilhamento com email do destinatario externo
-3. Supervisor aprova ou rejeita a solicitacao
-4. Destinatario recebe email com link e codigo OTP
-5. Destinatario acessa o portal, valida OTP e baixa os arquivos
+1. Usuário interno autentica via CAv4 (OIDC Authorization Code + PKCE)
+2. Faz upload dos arquivos (processamento MIP automático)
+3. Cria um compartilhamento com e-mail do destinatário externo
+4. Supervisor recebe notificação e aprova ou rejeita a solicitação
+5. Destinatário recebe e-mail com link e código OTP
+6. Destinatário acessa o portal, valida OTP e baixa os arquivos
 
-### Autenticacao
+### Autenticação
 
-- **Bearer Token (JWT)**: Para usuarios internos autenticados
-- **Cookie de Sessao**: Alternativa ao Bearer token para aplicacoes web
-- **Sessao Externa**: Para usuarios externos apos validacao do OTP
+- **CAv4 (OIDC)**: Fluxo corporativo padrão — Authorization Code + PKCE
+- **Bearer Token (JWT)**: Emitido internamente após autenticação; válido para todas as rotas internas
+- **Cookie de Sessão**: Alternativa ao Bearer token para aplicações web
+- **OTP Externo**: Para usuários externos; válido apenas para o share aprovado
     """,
     version="2.0.0",
     contact={
@@ -63,33 +73,68 @@ API RESTful para compartilhamento seguro de arquivos da Petrobras com usuarios e
         "name": "Proprietary",
     },
     openapi_tags=[
-        {"name": "Auth", "description": "Autenticacao unificada (login, logout, refresh, reset password)"},
-        {"name": "Auth Internal", "description": "Autenticacao para usuarios internos (Entra ID / Local)"},
-        {"name": "Auth / External", "description": "Autenticacao para usuarios externos (OTP)"},
-        {"name": "Users", "description": "Gerenciamento de usuarios e perfil"},
+        {"name": "Auth", "description": "Autenticação unificada (login, logout, refresh)"},
+        {"name": "Auth / CAv4", "description": "Autenticação corporativa via CAv4 (OIDC + PKCE)"},
+        {"name": "Auth Internal", "description": "Autenticação local para desenvolvimento (email+senha)"},
+        {"name": "Auth / External", "description": "Autenticação para usuários externos (OTP)"},
+        {"name": "Users", "description": "Gerenciamento de usuários e perfil"},
         {"name": "Files", "description": "Upload e gerenciamento de arquivos"},
         {"name": "Shares", "description": "Compartilhamentos de arquivos"},
-        {"name": "Supervisor", "description": "Aprovacao e gestao de compartilhamentos"},
-        {"name": "Notifications", "description": "Notificacoes do sistema"},
-        {"name": "Audit", "description": "Logs de auditoria e metricas"},
-        {"name": "Emails", "description": "Envio e historico de emails"},
-        {"name": "Download", "description": "Portal de download para usuarios externos"},
-        {"name": "Areas", "description": "Gerenciamento de areas/departamentos"},
+        {"name": "Supervisor", "description": "Aprovação e gestão de compartilhamentos"},
+        {"name": "Notifications", "description": "Notificações do sistema"},
+        {"name": "Audit", "description": "Logs de auditoria e métricas"},
+        {"name": "Emails", "description": "Envio e histórico de e-mails"},
+        {"name": "Download", "description": "Portal de download para usuários externos"},
+        {"name": "Areas", "description": "Gerenciamento de áreas/departamentos"},
         {"name": "External", "description": "Endpoints para acesso externo"},
+        {"name": "Admin", "description": "Painel administrativo global (requer is_admin=True)"},
     ],
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    docs_url=_docs_url,
+    redoc_url=_redoc_url,
+    openapi_url=_openapi_url,
     lifespan=None
 )
 
-# CORS middleware
+# ── CORS ─────────────────────────────────────────────────────────────────────
+# ATENÇÃO: allow_origins=["*"] com allow_credentials=True é proibido pelo padrão
+# CORS (browsers rejeitam). Em produção, definir CORS_ALLOW_ORIGINS no .env.
+# Formato: "https://app.petrobras.com.br,https://outro.petrobras.com.br"
+_raw_origins = os.getenv("CORS_ALLOW_ORIGINS", "")
+_allow_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
+# Fallback seguro: em dev (DEBUG=true) aceita localhost; em produção exige config explícita.
+if not _allow_origins:
+    if settings.debug:
+        _allow_origins = [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:8080",
+        ]
+    else:
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "CORS_ALLOW_ORIGINS não configurado. Requisições cross-origin serão bloqueadas."
+        )
+        _allow_origins = []
+
+# Ambientes Petrobras são sempre adicionados quando a variável não foi definida manualmente.
+# Em produção, defina CORS_ALLOW_ORIGINS explicitamente para controle total.
+_petrobras_origins = [
+    "https://scac-dsv.petrobras.com.br",   # Desenvolvimento
+    "https://scac-tst.petrobras.com.br",   # Teste
+    "https://scac.petrobras.com.br",       # Produção
+    # hmg (homologação) adicionado quando o ambiente subir
+]
+for _o in _petrobras_origins:
+    if _o not in _allow_origins:
+        _allow_origins.append(_o)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Em producao, especificar origens permitidas
+    allow_origins=_allow_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Forwarded-For", "User-Agent"],
 )
 
 
@@ -133,8 +178,8 @@ app.include_router(routes_emails.router, prefix=prefix_v1, tags=["Emails"])
 # Rotas de Login (legado - auth local e interno)
 app.include_router(routes_internal_auth.router, prefix=prefix_v1)
 
-# Auth Entra ID (Microsoft)
-app.include_router(routes_entra_auth.router, prefix=prefix_v1, tags=["Auth / Entra ID"])
+# Auth CAv4 (OIDC)
+app.include_router(routes_cav4_auth.router, prefix=prefix_v1, tags=["Auth / CAv4"])
 
 # Admin — Super Administrador Global
 app.include_router(routes_admin.router, prefix=prefix_v1, tags=["Admin"])

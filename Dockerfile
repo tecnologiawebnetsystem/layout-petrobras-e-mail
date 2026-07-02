@@ -25,8 +25,7 @@ FROM registry.petrobras.com.br/imagens-devops/base/petro-node22-alpine:snapshot 
 WORKDIR /app
 
 ENV NODE_ENV=production \
-    PORT=3000 \
-    BACKEND_URL=https://scac-backend-dsv.petrobras.com.br
+    PORT=3000
 
 # Segurança básica (rodar como usuário não-root)
 RUN addgroup -S nodejs && adduser -S nextjs -G nodejs

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 /**
  * /auth/entra-callback
@@ -13,32 +13,45 @@
  *   5. Salva no auth store e redireciona para o dashboard
  */
 
-import { useEffect, useRef } from "react"
-import { useRouter } from "next/navigation"
-import { useAuthStore } from "@/lib/stores/auth-store"
-import { getMsalInstance } from "@/lib/auth/msal-config"
-import { Suspense } from "react"
-import { FullPageLoader } from "@/components/ui/full-page-loader"
+import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { getMsalInstance } from "@/lib/auth/msal-config";
+import { Suspense } from "react";
+import { FullPageLoader } from "@/components/ui/full-page-loader";
 
 function CallbackContent() {
-  const router = useRouter()
-  const { setAuth } = useAuthStore()
-  const processed = useRef(false)
+  const router = useRouter();
+  const { setAuth } = useAuthStore();
+  const processed = useRef(false);
 
   useEffect(() => {
-    if (processed.current) return
-    processed.current = true
+    if (processed.current) return;
+    processed.current = true;
 
     const handleMsalCallback = async () => {
       try {
-        const msal = await getMsalInstance()
-        const result = await msal.handleRedirectPromise()
+        const search = window.location.search;
+        const hash = window.location.hash;
+
+        const msal = await getMsalInstance();
+        const result = await msal.handleRedirectPromise();
 
         if (!result) {
-          // Nao e uma resposta de redirect do MSAL — voltar para login
-          console.warn("[EntraCallback] handleRedirectPromise retornou null.")
-          router.replace("/")
-          return
+          const hasCode = search.includes("code=") || hash.includes("code=");
+          if (hasCode) {
+            // URL tem ?code= mas MSAL nao processou — estado desatualizado no sessionStorage.
+            // Solucao: limpar sessionStorage ou usar aba anonima.
+            console.error(
+              "[EntraCallback] handleRedirectPromise retornou null com ?code= na URL. " +
+                "Provavel estado MSAL expirado no sessionStorage. Tente em aba anonima.",
+            );
+            router.replace("/?error=msal_state_mismatch");
+          } else {
+            // Acesso direto a /auth/entra-callback sem redirect do MSAL
+            router.replace("/");
+          }
+          return;
         }
 
         // Trocar tokens Microsoft por JWT interno via backend
@@ -49,31 +62,39 @@ function CallbackContent() {
             id_token: result.idToken,
             access_token: result.accessToken,
           }),
-        })
+        });
 
         if (!resp.ok) {
-          const err = await resp.json().catch(() => ({}))
-          const msg = err.detail || "Falha na autenticacao"
-          console.error("[EntraCallback] Erro do backend:", msg)
-          router.replace(`/?error=${encodeURIComponent(msg)}`)
-          return
+          const err = await resp.json().catch(() => ({}));
+          // Suporta tanto { detail: "..." } (FastAPI direto) quanto
+          // { error: { message: "..." } } (formato BFF do Next.js)
+          const msg =
+            err.detail ||
+            (err.error as { message?: string } | undefined)?.message ||
+            "Servidor indisponível. Tente novamente em alguns instantes.";
+          console.error("[EntraCallback] Erro do backend:", msg);
+          router.replace(`/?error=${encodeURIComponent(msg)}`);
+          return;
         }
 
-        const data = await resp.json()
-        const u = data.user
-        const role: string = (u.role || "").toLowerCase()
+        const data = await resp.json();
+        const u = data.user;
+        const role: string = (u.role || "").toLowerCase();
 
-        let userType: "internal" | "external" | "supervisor" | "admin"
-        if (role === "admin") userType = "admin"
-        else if (role === "supervisor") userType = "supervisor"
-        else if (role === "external") userType = "external"
-        else userType = "internal"
+        let userType: "internal" | "external" | "supervisor" | "admin";
+        if (role === "admin") userType = "admin";
+        else if (role === "supervisor") userType = "supervisor";
+        else if (role === "external") userType = "external";
+        else userType = "internal";
 
         const dest =
-          userType === "admin" ? "/admin" :
-          userType === "supervisor" ? "/supervisor" :
-          userType === "external" ? "/download" :
-          "/upload"
+          userType === "admin"
+            ? "/admin"
+            : userType === "supervisor"
+              ? "/supervisor"
+              : userType === "external"
+                ? "/download"
+                : "/upload";
 
         setAuth(
           {
@@ -98,37 +119,41 @@ function CallbackContent() {
           },
           data.access_token,
           data.refresh_token,
-        )
+        );
 
-        router.replace(dest)
+        router.replace(dest);
       } catch (err) {
-        console.error("[EntraCallback] Erro inesperado:", err)
-        router.replace("/?error=auth_failed")
+        console.error("[EntraCallback] Erro inesperado:", err);
+        const isNetworkError = err instanceof TypeError;
+        const msg = isNetworkError
+          ? "Backend indisponível. Verifique sua conexão e tente novamente."
+          : "auth_failed";
+        router.replace(`/?error=${encodeURIComponent(msg)}`);
       }
-    }
+    };
 
-    handleMsalCallback()
-  }, [router, setAuth])
+    handleMsalCallback();
+  }, [router, setAuth]);
 
   return (
-    <FullPageLoader 
-      message="Autenticando..." 
-      subMessage="Processando sua autenticacao com a Microsoft" 
+    <FullPageLoader
+      message="Autenticando..."
+      subMessage="Processando sua autenticacao"
     />
-  )
+  );
 }
 
 export default function EntraCallbackPage() {
   return (
     <Suspense
       fallback={
-        <FullPageLoader 
-          message="Carregando..." 
-          subMessage="Aguarde um momento" 
+        <FullPageLoader
+          message="Carregando..."
+          subMessage="Aguarde um momento"
         />
       }
     >
       <CallbackContent />
     </Suspense>
-  )
+  );
 }

@@ -8,6 +8,7 @@ from urllib.parse import quote_plus as _quote_plus
 class Settings(BaseSettings):
     app_port: int = 8080
     email_provider: str = "smtp_internal"  # ses | smtp_internal
+    debug: bool = False
 
     # Remetente dos e-mails (obrigatório para ses e smtp_internal)
     mail_from: str | None = None
@@ -37,6 +38,14 @@ class Settings(BaseSettings):
     # Armazenamento: "local" (mock) ou "aws" (S3)
     storage_provider: str = "local"
 
+    # MIP processing no upload via serviço MIP SDK dedicado
+    mip_processing_enabled: bool = True
+    mip_fail_closed: bool = True
+    mip_processing_timeout_seconds: int = 120
+    mip_sdk_base_url: str | None = None
+    mip_sdk_api_token: str | None = None
+    mip_sdk_verify_tls: bool = True
+
     # OTP e cooldown
     otp_max_attempts: int = 5
     otp_cooldown_minutes: int = 15
@@ -49,46 +58,80 @@ class Settings(BaseSettings):
     presigned_ttl_seconds_default: int = 300
 
     # Auth provider
-    auth_mode: str = "local"  # 'local' | 'entra'
+    auth_mode: str = "local"  # 'local' | 'entra' | 'cav4'
 
-    # Microsoft Entra ID (Azure AD)
-    # Desenvolvimento local: preencher no .env
-    # Produção/homologação: carregados da secret via ponteiro SSM:
-    #   /APP/backend-<env>/SECRETS_MANAGER/backend_<env>_secret
-    #     → { "ENTRA_TENANT_ID": ..., "ENTRA_CLIENT_ID": ...,
-    #         "ENTRA_CLIENT_SECRET": ..., "ENTRA_APP_NAME": ...,
-    #         "ENTRA_REDIRECT_URI": ... }
-    entra_app_name: str | None = None
+    # CAv4 (OIDC + APIs de autorizacao)
+    ca_client_id: str | None = None
+    ca_client_secret: str | None = None
+    ca_redirect_uri: str = "http://localhost:8080/api/v1/auth/cav4/callback"
+    ca_scopes: str = "openid profile"
+    oidc_discovery_url: str | None = None
+    ca_api_base_url: str | None = None
+    ca_ssl_use_truststore: bool = False
+    ca_ssl_cert_file: str | None = None
+    ca_ssl_verify: bool = True
+    ca_jwt_leeway_seconds: int = 120
+
+    # Mapeamento de roles CAv4 para perfis internos do CSA
+    cav4_admin_role_names: List[str] = ["admin"]
+    cav4_supervisor_role_names: List[str] = ["supervisor"]
+    cav4_internal_role_names: List[str] = ["internal"]
+
+    # Cargos que concedem aprovação automática de compartilhamentos (sem necessidade de supervisor).
+    # Comparação case-insensitive e sem acento. Configurável via JSON ou CSV no .env.
+    # Exemplo .env: AUTO_APPROVE_JOB_TITLES=["gerente geral","diretor","presidente"]
+    auto_approve_job_titles: List[str] = [
+        "gerente geral",
+        "gerente executivo",
+        "gerente executiva",
+        "ouvidor-geral da petrobras",
+        "ouvidora-geral da petrobras",
+        "secretario-geral da petrobras",
+        "secretaria-geral da petrobras",
+        "chefe do gabinete da presidencia",
+        "auditor-geral da petrobras",
+        "auditora-geral da petrobras",
+        "diretor",
+        "diretora",
+        "presidente",
+        "corregedor-geral da petrobras",
+        "corregedora-geral da petrobras",
+    ]
+
+    # Nota: Entra ID removido em Fase 3. Usar CAv4 como provider principal.
+
+    # ── Microsoft Graph (opcional, Fase 4) ──────────────────────────────────
+    # Credenciais do App Registration com permissoes User.Read.All (e opcionalmente
+    # GroupMember.Read.All) para enriquecimento de perfil no login CAv4.
+    # Se ausentes, o login CAv4 continua funcionando sem dados organizacionais.
     entra_tenant_id: str | None = None
     entra_client_id: str | None = None
     entra_client_secret: str | None = None
-    entra_redirect_uri: str = "http://localhost:3000/auth/entra-callback"
-    entra_supervisor_group_ids: List[str] = []
+    # App Registration separado usado para operacoes Purview (MIP)
+    entra_client_id_purview: str | None = None
+    entra_client_secret_purview: str | None = None
 
-    # Grupo obrigatorio para acesso ao sistema
-    # ENTRA_REQUIRED_GROUP_ID: Object ID (UUID) do grupo no Entra ID
-    # ENTRA_REQUIRED_GROUP_NAME: nome human-readable (para logs e mensagens de erro)
-    # ENTRA_GROUP_SYNC_STRATEGY: "deactivate" (desativa user.status=False) | "block_login" (bloqueia sem desativar)
-    entra_required_group_id: str = "ccc28110-a7ad-45df-94ca-439cf7ff0c55"
-    entra_required_group_name: str = "GN_CLOUD_AWS_SCAC_USERS"
-    entra_group_sync_strategy: str = "deactivate"  # "deactivate" | "block_login"
-
-    @field_validator("entra_supervisor_group_ids", mode="before")
+    @field_validator(
+        "cav4_admin_role_names",
+        "cav4_supervisor_role_names",
+        "cav4_internal_role_names",
+        "auto_approve_job_titles",
+        mode="before",
+    )
     @classmethod
-    def _parse_group_ids(cls, v):
-        """Aceita tanto lista Python quanto string JSON vinda do Parameter Store."""
+    def _parse_role_names(cls, v):
+        """Aceita lista Python, JSON string ou CSV para nomes de roles."""
         if isinstance(v, str):
-            v = v.strip()
-            if not v or v == "[]":
+            raw = v.strip()
+            if not raw:
                 return []
             try:
-                parsed = _json.loads(v)
+                parsed = _json.loads(raw)
                 if isinstance(parsed, list):
-                    return parsed
+                    return [str(i).strip() for i in parsed if str(i).strip()]
             except _json.JSONDecodeError:
                 pass
-            # fallback: string separada por vírgulas
-            return [i.strip() for i in v.split(",") if i.strip()]
+            return [i.strip() for i in raw.split(",") if i.strip()]
         return v
 
     @model_validator(mode="after")
@@ -144,7 +187,7 @@ class Settings(BaseSettings):
     company_name: str = "Petrobras"
     support_email: str = "suporte@petrobras.com.br"
     frontend_external_portal_url: str = "http://localhost:3000"
-    frontend_share_details_url: str = "http://localhost:3000/compartilhamentos"
+    frontend_share_details_url: str = "http://localhost:3000/compartilhamentos/{share_id}"
     frontend_supervisor_url: str = "http://localhost:3000/supervisor"
 
     model_config = SettingsConfigDict(env_file=".env")

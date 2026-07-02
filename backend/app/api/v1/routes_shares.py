@@ -18,7 +18,15 @@ from app.models.share_file import ShareFile
 from app.models.restricted_file import RestrictedFile
 from app.models.user import User
 from app.models.email_log import EmailLog
-from app.services.share_service import create_share, ShareError, S3UploadError, get_or_create_external_user
+from app.services.share_service import (
+    create_share,
+    ShareError,
+    ShareNoSupervisorError,
+    S3UploadError,
+    MipProcessingShareError,
+    get_or_create_external_user,
+    has_auto_approve_job_title,
+)
 from app.services.token_service import issue_token_access, TokenError
 from app.schemas.token_schema import TokenRead
 from app.utils.authz import require_internal, get_current_user
@@ -60,18 +68,21 @@ class ShareCancelRequest(BaseModel):
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_share_endpoint(
     payload: ShareCreateRequest,
+    background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_internal),
     request: Request = None,
 ):
     """
     Cria um novo compartilhamento de arquivos.
+    Exige supervisor vinculado ao criador, exceto para usuários com cargo
+    de aprovação automática (Gerente, Diretor, etc.) ou administradores.
     """
     try:
         # Provisiona destinatário externo antes de criar o share
         recipient = get_or_create_external_user(session, payload.recipient_email)
 
-        # Cria o share
+        # Cria o share — create_share já valida supervisor obrigatório
         share = Share(
             name=payload.name,
             description=payload.description,
@@ -90,12 +101,7 @@ async def create_share_endpoint(
         for file_id in payload.file_ids:
             rfile = session.get(RestrictedFile, file_id)
             if rfile:
-                share_file = ShareFile(
-                    share_id=share.id,
-                    file_id=file_id,
-                )
-                session.add(share_file)
-
+                session.add(ShareFile(share_id=share.id, file_id=file_id))
         session.commit()
 
         log_event(
@@ -105,8 +111,53 @@ async def create_share_endpoint(
             share_id=share.id,
             detail=f"recipient={payload.recipient_email}, files={len(payload.file_ids)}",
             ip=request.client.host if request else None,
-            user_agent=request.headers.get("User-Agent") if request else None
+            user_agent=request.headers.get("User-Agent") if request else None,
         )
+
+        # Verifica aprovação automática por cargo ou por ser admin
+        auto_approve = has_auto_approve_job_title(user) or user.is_admin
+        if auto_approve:
+            now = datetime.now(UTC)
+            share.status = ShareStatus.ACTIVE
+            share.approver_id = user.id
+            share.approved_at = now
+            share.expires_at = now + timedelta(hours=share.expiration_hours)
+            session.add(share)
+            session.commit()
+            session.refresh(share)
+            log_event(
+                session=session,
+                action="AUTO_APROVAR_SHARE_CARGO",
+                user_id=user.id,
+                share_id=share.id,
+                detail=f"job_title={user.job_title or 'admin'}",
+                ip=request.client.host if request else None,
+                user_agent=request.headers.get("User-Agent") if request else None,
+            )
+            background_tasks.add_task(
+                send_share_approved_external_email,
+                share.external_email,
+                user.name or "Usuario Interno",
+                len(payload.file_ids),
+                share.expires_at,
+                share.id,
+            )
+        else:
+            # Notifica supervisor
+            supervisor = session.get(User, user.manager_id) if user.manager_id else None
+            if supervisor:
+                background_tasks.add_task(
+                    send_supervisor_approval_request_email,
+                    supervisor_email=supervisor.email,
+                    supervisor_name=supervisor.name,
+                    requester_name=user.name,
+                    requester_email=user.email,
+                    recipient_email=payload.recipient_email,
+                    files_count=len(payload.file_ids),
+                    expiration_hours=payload.expiration_hours,
+                    share_name=payload.name,
+                    share_id=share.id,
+                )
 
         return {
             "id": share.id,
@@ -117,14 +168,17 @@ async def create_share_endpoint(
             "expiration_hours": share.expiration_hours,
             "created_at": share.created_at.isoformat(),
             "files_count": len(payload.file_ids),
+            "auto_approved": auto_approve,
         }
 
+    except ShareNoSupervisorError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
 # =====================================================
-# POST /shares/create - Criar com upload (legado)
+# POST /shares/create - Criar com upload
 # =====================================================
 
 @router.post("/create", response_model=ShareRead, status_code=status.HTTP_201_CREATED)
@@ -160,11 +214,11 @@ async def create_with_upload(
             area_id=payload_obj.area_id,
             external_email=payload_obj.external_email,
             created_by_id=payload_obj.created_by_id,
-            expiration_hours=payload_obj.expiration_hours,
-            name=payload_obj.name,
-            description=payload_obj.description,
-            consumption_policy=payload_obj.consumption_policy,
-            file_ids=payload_obj.file_ids or [],
+            expiration_hours=payload.obj.expiration_hours,
+            name=payload.obj.name,
+            description=payload.obj.description,
+            consumption_policy=payload.obj.consumption_policy,
+            file_ids=payload.obj.file_ids or [],
             new_uploads=new_uploads,
             request_meta={
                 "ip": request.client.host if request else None,
@@ -186,14 +240,14 @@ async def create_with_upload(
 
             # Reativa o usuário externo se estiver inativo
             ext_user = session.exec(
-                select(User).where(User.email == payload_obj.external_email)
+                select(User).where(User.email == payload.obj.external_email)
             ).first()
             if ext_user and not ext_user.status:
                 ext_user.status = True
                 session.add(ext_user)
                 session.commit()
 
-            files_count = len(new_uploads) if new_uploads else len(payload_obj.file_ids or [])
+            files_count = len(new_uploads) if new_uploads else len(payload.obj.file_ids or [])
             background_tasks.add_task(
                 send_share_approved_external_email,
                 share.external_email,
@@ -224,17 +278,17 @@ async def create_with_upload(
             if creator and creator.manager_id:
                 supervisor = session.get(User, creator.manager_id)
                 if supervisor:
-                    files_count = len(new_uploads) if new_uploads else len(payload_obj.file_ids or [])
+                    files_count = len(new_uploads) if new_uploads else len(payload.obj.file_ids or [])
                     background_tasks.add_task(
                         send_supervisor_approval_request_email,
                         supervisor_email=supervisor.email,
                         supervisor_name=supervisor.name,
                         requester_name=creator.name,
                         requester_email=creator.email,
-                        recipient_email=payload_obj.external_email,
+                        recipient_email=payload.obj.external_email,
                         files_count=files_count,
-                        expiration_hours=payload_obj.expiration_hours,
-                        share_name=payload_obj.name,
+                        expiration_hours=payload.obj.expiration_hours,
+                        share_name=payload.obj.name,
                         share_id=share.id,
                     )
 
@@ -244,10 +298,22 @@ async def create_with_upload(
         logger.error(
             "s3_upload_failed",
             detail=str(e),
-            user_id=payload_obj.created_by_id,
-            external_email=payload_obj.external_email,
+            user_id=payload.obj.created_by_id,
+            external_email=payload.obj.external_email,
         )
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+    except MipProcessingShareError as e:
+        logger.error(
+            "mip_processing_failed",
+            detail=str(e),
+            error_code=getattr(e, "error_code", "MIP_ERROR"),
+            user_id=payload.obj.created_by_id,
+            external_email=payload.obj.external_email,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"message": str(e), "error_code": getattr(e, "error_code", "MIP_ERROR")},
+        )
     except ShareError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:

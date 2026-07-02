@@ -4,9 +4,8 @@ env:
 
 build:
   python:
-    #Name: "a12022-backend"
     Name: "scac"
-    PythonVersion: "3.12"
+    PythonVersion: "3.13"
     PythonSourcePath: "."
     DependenciesManager: "pip"
     TestingTool: "pytest"
@@ -14,11 +13,32 @@ build:
     SonarSources: app
 
   docker:
+    Name: scac
     RegistryName: ecr
+    Repository: a12022
     Dockerfile: ./Dockerfile
+    ContextRoot: .
+
+  dotnet:
+    ProjectName: mip-sdk-worker
+    SolutionName: mip-sdk-worker
+    Name: mip-sdk-worker
+    RegistryName: ecr
+    Repository: a12022
+    DockerfileFolder: mip-sdk-worker
 
 upload:
   docker:
+    RegistryName: ecr
+    Repository: a12022
+    Images:
+      - scac
+      
+  dotnet:
+    RegistryName: ecr
+    Repository: a12022
+    Images:
+      - mip-sdk-worker
 
 deploy:
   SnapshotEnvs: DSV, TST

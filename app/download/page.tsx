@@ -581,7 +581,7 @@ export default function DownloadPage() {
         )}
 
         <div className="text-center text-sm text-muted-foreground border-t pt-12 mt-12">
-          © 2025 Petrobras. Todos os direitos reservados. | Política de Privacidade
+          © 2026 Petrobras. Todos os direitos reservados. | Política de Privacidade
         </div>
       </main>
 

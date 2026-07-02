@@ -1,20 +1,27 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useAuthStore } from "@/lib/stores/auth-store"
-import { apiFetch } from "@/lib/services/api-fetch"
-import { AppHeader } from "@/components/shared/app-header"
-import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
-import { ScrollToTop } from "@/components/shared/scroll-to-top"
-import { ProtectedRoute } from "@/components/auth/protected-route"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { FullPageLoader } from "@/components/ui/full-page-loader"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { apiFetch } from "@/lib/services/api-fetch";
+import { AppHeader } from "@/components/shared/app-header";
+import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav";
+import { ScrollToTop } from "@/components/shared/scroll-to-top";
+import { ProtectedRoute } from "@/components/auth/protected-route";
+import { DraggableScroll } from "@/components/ui/draggable-scroll";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { FullPageLoader } from "@/components/ui/full-page-loader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -22,14 +29,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Search,
   Users,
@@ -49,866 +56,391 @@ import {
   AlertTriangle,
   User,
   Download,
-  FileSpreadsheet,
-  FileType,
-  Filter,
-  Upload,
-  Share2,
-  Ban,
-  Calendar,
-  CheckCircle2,
-} from "lucide-react"
-import { AdminUploadForm } from "@/components/admin/admin-upload-form"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Checkbox } from "@/components/ui/checkbox"
+} from "lucide-react";
 
 // Tipos
 interface DashboardMetrics {
   users: {
-    total: number
-    internal: number
-    external: number
-    supervisors: number
-    admins: number
-    active: number
-  }
+    total: number;
+    internal: number;
+    external: number;
+    supervisors: number;
+    admins: number;
+    active: number;
+  };
   shares: {
-    total: number
-    pending: number
-    approved: number
-    active: number
-    rejected: number
-    expired: number
-  }
+    total: number;
+    pending: number;
+    approved: number;
+    active: number;
+    rejected: number;
+    expired: number;
+  };
   files: {
-    total: number
-    storage_bytes: number
-    storage_mb: number
-  }
+    total: number;
+    storage_bytes: number;
+    storage_mb: number;
+  };
   audit: {
-    total_logs: number
-    logs_last_7_days: number
-  }
+    total_logs: number;
+    logs_last_7_days: number;
+  };
   emails: {
-    total_sent: number
-  }
+    total_sent: number;
+  };
 }
 
 interface UserItem {
-  id: number
-  name: string
-  email: string
-  type: string
-  department: string | null
-  job_title: string | null
-  is_supervisor: boolean
-  is_admin: boolean
-  status: boolean
-  created_at: string | null
-  last_login: string | null
+  id: number;
+  name: string;
+  email: string;
+  type: string;
+  department: string | null;
+  job_title: string | null;
+  is_supervisor: boolean;
+  is_admin: boolean;
+  status: boolean;
+  created_at: string | null;
+  last_login: string | null;
 }
 
 interface ShareItem {
-  id: number
-  name: string
-  description: string | null
-  external_email: string
-  status: string
-  created_at: string | null
-  expires_at: string | null
-  approved_at: string | null
-  files_count: number
-  creator: { id: number; name: string; email: string } | null
-  approver: { id: number; name: string; email: string } | null
+  id: number;
+  name: string;
+  description: string | null;
+  external_email: string;
+  status: string;
+  created_at: string | null;
+  expires_at: string | null;
+  approved_at: string | null;
+  files_count: number;
+  creator: { id: number; name: string; email: string } | null;
+  approver: { id: number; name: string; email: string } | null;
 }
 
 interface LogItem {
-  id: number
-  action: string
-  detail: string | null
-  ip: string | null
-  user_agent: string | null
-  created_at: string | null
-  share_id: number | null
-  user: { id: number; name: string; email: string } | null
+  id: number;
+  action: string;
+  detail: string | null;
+  ip: string | null;
+  user_agent: string | null;
+  created_at: string | null;
+  share_id: number | null;
+  user: { id: number; name: string; email: string } | null;
 }
 
 interface TrackingData {
-  user: UserItem & { manager_id: number | null }
+  user: UserItem & { manager_id: number | null };
   shares_created: Array<{
-    id: number
-    name: string
-    external_email: string
-    status: string
-    created_at: string | null
-  }>
+    id: number;
+    name: string;
+    external_email: string;
+    status: string;
+    created_at: string | null;
+  }>;
   shares_approved: Array<{
-    id: number
-    name: string
-    external_email: string
-    status: string
-    approved_at: string | null
-  }>
+    id: number;
+    name: string;
+    external_email: string;
+    status: string;
+    approved_at: string | null;
+  }>;
   files_uploaded: Array<{
-    id: number
-    name: string
-    size_bytes: number
-    mime_type: string
-    created_at: string | null
-  }>
+    id: number;
+    name: string;
+    size_bytes: number;
+    mime_type: string;
+    created_at: string | null;
+  }>;
   recent_logs: Array<{
-    id: number
-    action: string
-    detail: string | null
-    ip: string | null
-    created_at: string | null
-  }>
+    id: number;
+    action: string;
+    detail: string | null;
+    ip: string | null;
+    created_at: string | null;
+  }>;
   stats: {
-    total_shares_created: number
-    total_shares_approved: number
-    total_files_uploaded: number
-    total_logs: number
-  }
+    total_shares_created: number;
+    total_shares_approved: number;
+    total_files_uploaded: number;
+    total_logs: number;
+  };
 }
 
 interface Pagination {
-  current_page: number
-  total_pages: number
-  total_items: number
-  limit: number
+  current_page: number;
+  total_pages: number;
+  total_items: number;
+  limit: number;
 }
 
 function AdminContent() {
-  const router = useRouter()
-  const { user, _hasHydrated } = useAuthStore()
-  const [pageLoading, setPageLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState("dashboard")
+  const router = useRouter();
+  const { user, _hasHydrated } = useAuthStore();
+  const [pageLoading, setPageLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   // Dashboard state
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
-  const [metricsLoading, setMetricsLoading] = useState(false)
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [metricsLoading, setMetricsLoading] = useState(false);
 
   // Users state
-  const [users, setUsers] = useState<UserItem[]>([])
-  const [usersLoading, setUsersLoading] = useState(false)
-  const [usersPagination, setUsersPagination] = useState<Pagination | null>(null)
-  const [usersPage, setUsersPage] = useState(1)
-  const [usersSearch, setUsersSearch] = useState("")
-  const [usersTypeFilter, setUsersTypeFilter] = useState("all")
+  const [users, setUsers] = useState<UserItem[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersPagination, setUsersPagination] = useState<Pagination | null>(
+    null,
+  );
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersSearch, setUsersSearch] = useState("");
+  const [usersTypeFilter, setUsersTypeFilter] = useState("all");
 
   // Shares state
-  const [shares, setShares] = useState<ShareItem[]>([])
-  const [sharesLoading, setSharesLoading] = useState(false)
-  const [sharesPagination, setSharesPagination] = useState<Pagination | null>(null)
-  const [sharesPage, setSharesPage] = useState(1)
-  const [sharesSearch, setSharesSearch] = useState("")
-  const [sharesStatusFilter, setSharesStatusFilter] = useState("all")
+  const [shares, setShares] = useState<ShareItem[]>([]);
+  const [sharesLoading, setSharesLoading] = useState(false);
+  const [sharesPagination, setSharesPagination] = useState<Pagination | null>(
+    null,
+  );
+  const [sharesPage, setSharesPage] = useState(1);
+  const [sharesSearch, setSharesSearch] = useState("");
+  const [sharesStatusFilter, setSharesStatusFilter] = useState("all");
 
   // Logs state
-  const [logs, setLogs] = useState<LogItem[]>([])
-  const [logsLoading, setLogsLoading] = useState(false)
-  const [logsPagination, setLogsPagination] = useState<Pagination | null>(null)
-  const [logsPage, setLogsPage] = useState(1)
-  const [logsSearch, setLogsSearch] = useState("")
-  const [logsActionFilter, setLogsActionFilter] = useState("all")
-  const [availableActions, setAvailableActions] = useState<string[]>([])
+  const [logs, setLogs] = useState<LogItem[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logsPagination, setLogsPagination] = useState<Pagination | null>(null);
+  const [logsPage, setLogsPage] = useState(1);
+  const [logsSearch, setLogsSearch] = useState("");
+  const [logsActionFilter, setLogsActionFilter] = useState("all");
+  const [availableActions, setAvailableActions] = useState<string[]>([]);
 
   // Tracking state
-const [trackingUserEmail, setTrackingUserEmail] = useState("")
-const [trackingData, setTrackingData] = useState<TrackingData | null>(null)
-const [trackingLoading, setTrackingLoading] = useState(false)
-const [trackingError, setTrackingError] = useState("")
-
-  // Export state
-  const [exportModalOpen, setExportModalOpen] = useState(false)
-  const [exportFormat, setExportFormat] = useState<"csv" | "txt" | "pdf">("csv")
-  const [exportDataType, setExportDataType] = useState<"users" | "shares" | "logs">("logs")
-  const [exportFilterUser, setExportFilterUser] = useState("")
-  const [exportFilterAction, setExportFilterAction] = useState("all")
-  const [exportIncludeAll, setExportIncludeAll] = useState(true)
-  const [exportLoading, setExportLoading] = useState(false)
-
-  // Meus Compartilhamentos state (admin)
-  const [myShares, setMyShares] = useState<ShareItem[]>([])
-  const [mySharesLoading, setMySharesLoading] = useState(false)
-  const [mySharesSearch, setMySharesSearch] = useState("")
-  const [mySharesStatusFilter, setMySharesStatusFilter] = useState("all")
+  const [trackingUserEmail, setTrackingUserEmail] = useState("");
+  const [trackingData, setTrackingData] = useState<TrackingData | null>(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+  const [trackingError, setTrackingError] = useState("");
 
   // Initial load
   useEffect(() => {
-    if (!_hasHydrated) return
-    const timer = setTimeout(() => setPageLoading(false), 800)
-    return () => clearTimeout(timer)
-  }, [_hasHydrated])
+    if (!_hasHydrated) return;
+    const timer = setTimeout(() => setPageLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, [_hasHydrated]);
 
   // Load dashboard metrics
   const loadMetrics = async () => {
-    setMetricsLoading(true)
+    setMetricsLoading(true);
     try {
-      const data = await apiFetch<DashboardMetrics>("/admin/dashboard")
-      setMetrics(data)
+      const data = await apiFetch<DashboardMetrics>("/admin/dashboard");
+      setMetrics(data);
     } catch (error) {
-      console.error("[Admin] Erro ao carregar metricas:", error)
+      console.error("[Admin] Erro ao carregar metricas:", error);
     } finally {
-      setMetricsLoading(false)
+      setMetricsLoading(false);
     }
-  }
+  };
 
   // Load users
   const loadUsers = async () => {
-    setUsersLoading(true)
+    setUsersLoading(true);
     try {
       const params = new URLSearchParams({
         page: String(usersPage),
         limit: "20",
-      })
-      if (usersSearch) params.set("search", usersSearch)
-      if (usersTypeFilter !== "all") params.set("user_type", usersTypeFilter)
+      });
+      if (usersSearch) params.set("search", usersSearch);
+      if (usersTypeFilter !== "all") params.set("user_type", usersTypeFilter);
 
-      const data = await apiFetch<{ users: UserItem[]; pagination: Pagination }>(
-        `/admin/users?${params.toString()}`
-      )
-      setUsers(data.users)
-      setUsersPagination(data.pagination)
+      const data = await apiFetch<{
+        users: UserItem[];
+        pagination: Pagination;
+      }>(`/admin/users?${params.toString()}`);
+      setUsers(data.users);
+      setUsersPagination(data.pagination);
     } catch (error) {
-      console.error("[Admin] Erro ao carregar usuarios:", error)
+      console.error("[Admin] Erro ao carregar usuarios:", error);
     } finally {
-      setUsersLoading(false)
+      setUsersLoading(false);
     }
-  }
+  };
 
   // Load shares
   const loadShares = async () => {
-    setSharesLoading(true)
+    setSharesLoading(true);
     try {
       const params = new URLSearchParams({
         page: String(sharesPage),
         limit: "20",
-      })
-      if (sharesSearch) params.set("search", sharesSearch)
-      if (sharesStatusFilter !== "all") params.set("status", sharesStatusFilter)
+      });
+      if (sharesSearch) params.set("search", sharesSearch);
+      if (sharesStatusFilter !== "all")
+        params.set("status", sharesStatusFilter);
 
-      const data = await apiFetch<{ shares: ShareItem[]; pagination: Pagination }>(
-        `/admin/shares?${params.toString()}`
-      )
-      setShares(data.shares)
-      setSharesPagination(data.pagination)
+      const data = await apiFetch<{
+        shares: ShareItem[];
+        pagination: Pagination;
+      }>(`/admin/shares?${params.toString()}`);
+      setShares(data.shares);
+      setSharesPagination(data.pagination);
     } catch (error) {
-      console.error("[Admin] Erro ao carregar shares:", error)
+      console.error("[Admin] Erro ao carregar shares:", error);
     } finally {
-      setSharesLoading(false)
+      setSharesLoading(false);
     }
-  }
+  };
 
   // Load logs
   const loadLogs = async () => {
-    setLogsLoading(true)
+    setLogsLoading(true);
     try {
       const params = new URLSearchParams({
         page: String(logsPage),
         limit: "50",
-      })
-      if (logsSearch) params.set("search", logsSearch)
-      if (logsActionFilter !== "all") params.set("action", logsActionFilter)
+      });
+      if (logsSearch) params.set("search", logsSearch);
+      if (logsActionFilter !== "all") params.set("action", logsActionFilter);
 
       const data = await apiFetch<{ logs: LogItem[]; pagination: Pagination }>(
-        `/admin/logs?${params.toString()}`
-      )
-      setLogs(data.logs)
-      setLogsPagination(data.pagination)
+        `/admin/logs?${params.toString()}`,
+      );
+      setLogs(data.logs);
+      setLogsPagination(data.pagination);
     } catch (error) {
-      console.error("[Admin] Erro ao carregar logs:", error)
+      console.error("[Admin] Erro ao carregar logs:", error);
     } finally {
-      setLogsLoading(false)
+      setLogsLoading(false);
     }
-  }
+  };
 
   // Load available actions for filter
   const loadActions = async () => {
     try {
-      const data = await apiFetch<{ actions: string[] }>("/admin/actions")
-      setAvailableActions(data.actions)
+      const data = await apiFetch<{ actions: string[] }>("/admin/actions");
+      setAvailableActions(data.actions);
     } catch (error) {
-      console.error("[Admin] Erro ao carregar acoes:", error)
+      console.error("[Admin] Erro ao carregar acoes:", error);
     }
-  }
-
-  // Load my shares (admin's own shares)
-  const loadMyShares = async () => {
-    setMySharesLoading(true)
-    try {
-      const params = new URLSearchParams({ limit: "100" })
-      if (mySharesSearch) params.set("search", mySharesSearch)
-      if (mySharesStatusFilter !== "all") params.set("status", mySharesStatusFilter)
-      // Filter by current user (admin)
-      if (user?.id) params.set("created_by", String(user.id))
-
-      const data = await apiFetch<{ shares: ShareItem[] }>(
-        `/admin/shares?${params.toString()}`
-      )
-      setMyShares(data.shares)
-    } catch (error) {
-      console.error("[Admin] Erro ao carregar meus compartilhamentos:", error)
-    } finally {
-      setMySharesLoading(false)
-    }
-  }
+  };
 
   // Load tracking data
   const loadTracking = async () => {
     if (!trackingUserEmail || !trackingUserEmail.includes("@")) {
-      setTrackingError("Digite um email valido")
-      return
+      setTrackingError("Digite um email valido");
+      return;
     }
-    setTrackingLoading(true)
-    setTrackingError("")
-    setTrackingData(null)
+    setTrackingLoading(true);
+    setTrackingError("");
+    setTrackingData(null);
     try {
-      const data = await apiFetch<TrackingData>(`/admin/tracking/by-email?email=${encodeURIComponent(trackingUserEmail)}`)
-      setTrackingData(data)
+      const data = await apiFetch<TrackingData>(
+        `/admin/tracking/by-email?email=${encodeURIComponent(trackingUserEmail)}`,
+      );
+      setTrackingData(data);
     } catch (error: any) {
-      setTrackingError(error?.message || "Usuario nao encontrado com este email")
+      setTrackingError(
+        error?.message || "Usuario nao encontrado com este email",
+      );
     } finally {
-      setTrackingLoading(false)
+      setTrackingLoading(false);
     }
-  }
-
-  // Export report function
-  const handleExportReport = async () => {
-    setExportLoading(true)
-    try {
-      let dataToExport: any[] = []
-      let filename = ""
-      let headers: string[] = []
-
-      // Load data based on type
-      if (exportDataType === "users") {
-        const params = new URLSearchParams({ limit: "1000" })
-        if (exportFilterUser) params.set("search", exportFilterUser)
-        const data = await apiFetch<{ users: UserItem[] }>(`/admin/users?${params.toString()}`)
-        dataToExport = data.users
-        headers = ["ID", "Nome", "Email", "Tipo", "Departamento", "Cargo", "Supervisor", "Admin", "Status", "Criado em", "Ultimo Login"]
-        filename = `relatorio_usuarios_${new Date().toISOString().split("T")[0]}`
-      } else if (exportDataType === "shares") {
-        const params = new URLSearchParams({ limit: "1000" })
-        if (exportFilterUser) params.set("search", exportFilterUser)
-        const data = await apiFetch<{ shares: ShareItem[] }>(`/admin/shares?${params.toString()}`)
-        dataToExport = data.shares
-        headers = ["ID", "Nome", "Destinatario", "Status", "Arquivos", "Criado por", "Aprovado por", "Criado em", "Expira em"]
-        filename = `relatorio_compartilhamentos_${new Date().toISOString().split("T")[0]}`
-      } else if (exportDataType === "logs") {
-        const params = new URLSearchParams({ limit: "5000" })
-        if (exportFilterUser) params.set("search", exportFilterUser)
-        if (exportFilterAction !== "all") params.set("action", exportFilterAction)
-        const data = await apiFetch<{ logs: LogItem[] }>(`/admin/logs?${params.toString()}`)
-        dataToExport = data.logs
-        headers = ["ID", "Acao", "Usuario", "Email Usuario", "Detalhe", "IP", "Share ID", "Data/Hora"]
-        filename = `relatorio_logs_${new Date().toISOString().split("T")[0]}`
-      }
-
-      // Format data based on export format
-      if (exportFormat === "csv") {
-        const csvContent = generateCSV(dataToExport, exportDataType, headers)
-        downloadFile(csvContent, `${filename}.csv`, "text/csv;charset=utf-8;")
-      } else if (exportFormat === "txt") {
-        const txtContent = generateTXT(dataToExport, exportDataType, headers)
-        downloadFile(txtContent, `${filename}.txt`, "text/plain;charset=utf-8;")
-      } else if (exportFormat === "pdf") {
-        await generatePDF(dataToExport, exportDataType, headers, filename)
-      }
-
-      setExportModalOpen(false)
-    } catch (error) {
-      console.error("[Admin] Erro ao exportar relatorio:", error)
-    } finally {
-      setExportLoading(false)
-    }
-  }
-
-  // Generate CSV content
-  const generateCSV = (data: any[], dataType: string, headers: string[]) => {
-    const rows: string[] = []
-    rows.push(headers.join(";"))
-
-    data.forEach((item) => {
-      if (dataType === "users") {
-        rows.push([
-          item.id,
-          `"${item.name || ""}"`,
-          item.email,
-          item.type === "internal" ? "Interno" : "Externo",
-          `"${item.department || ""}"`,
-          `"${item.job_title || ""}"`,
-          item.is_supervisor ? "Sim" : "Nao",
-          item.is_admin ? "Sim" : "Nao",
-          item.status ? "Ativo" : "Inativo",
-          formatDate(item.created_at),
-          formatDate(item.last_login),
-        ].join(";"))
-      } else if (dataType === "shares") {
-        rows.push([
-          item.id,
-          `"${item.name || ""}"`,
-          item.external_email,
-          item.status,
-          item.files_count,
-          `"${item.creator?.name || ""}"`,
-          `"${item.approver?.name || ""}"`,
-          formatDate(item.created_at),
-          formatDate(item.expires_at),
-        ].join(";"))
-      } else if (dataType === "logs") {
-        rows.push([
-          item.id,
-          item.action,
-          `"${item.user?.name || ""}"`,
-          item.user?.email || "",
-          `"${(item.detail || "").replace(/"/g, '""')}"`,
-          item.ip || "",
-          item.share_id || "",
-          formatDate(item.created_at),
-        ].join(";"))
-      }
-    })
-
-    return "\uFEFF" + rows.join("\n")
-  }
-
-  // Generate TXT content
-  const generateTXT = (data: any[], dataType: string, headers: string[]) => {
-    const lines: string[] = []
-    const separator = "=".repeat(100)
-    
-    lines.push(separator)
-    lines.push(`RELATORIO DE ${dataType.toUpperCase()}`)
-    lines.push(`Gerado em: ${new Date().toLocaleString("pt-BR")}`)
-    lines.push(`Total de registros: ${data.length}`)
-    lines.push(separator)
-    lines.push("")
-
-    data.forEach((item, index) => {
-      lines.push(`--- Registro ${index + 1} ---`)
-      if (dataType === "users") {
-        lines.push(`ID: ${item.id}`)
-        lines.push(`Nome: ${item.name}`)
-        lines.push(`Email: ${item.email}`)
-        lines.push(`Tipo: ${item.type === "internal" ? "Interno" : "Externo"}`)
-        lines.push(`Departamento: ${item.department || "-"}`)
-        lines.push(`Cargo: ${item.job_title || "-"}`)
-        lines.push(`Supervisor: ${item.is_supervisor ? "Sim" : "Nao"}`)
-        lines.push(`Admin: ${item.is_admin ? "Sim" : "Nao"}`)
-        lines.push(`Status: ${item.status ? "Ativo" : "Inativo"}`)
-        lines.push(`Criado em: ${formatDate(item.created_at)}`)
-        lines.push(`Ultimo Login: ${formatDate(item.last_login)}`)
-      } else if (dataType === "shares") {
-        lines.push(`ID: ${item.id}`)
-        lines.push(`Nome: ${item.name || "-"}`)
-        lines.push(`Destinatario: ${item.external_email}`)
-        lines.push(`Status: ${item.status}`)
-        lines.push(`Arquivos: ${item.files_count}`)
-        lines.push(`Criado por: ${item.creator?.name || "-"}`)
-        lines.push(`Aprovado por: ${item.approver?.name || "-"}`)
-        lines.push(`Criado em: ${formatDate(item.created_at)}`)
-        lines.push(`Expira em: ${formatDate(item.expires_at)}`)
-      } else if (dataType === "logs") {
-        lines.push(`ID: ${item.id}`)
-        lines.push(`Acao: ${item.action}`)
-        lines.push(`Usuario: ${item.user?.name || "-"} (${item.user?.email || "-"})`)
-        lines.push(`Detalhe: ${item.detail || "-"}`)
-        lines.push(`IP: ${item.ip || "-"}`)
-        lines.push(`Share ID: ${item.share_id || "-"}`)
-        lines.push(`Data/Hora: ${formatDate(item.created_at)}`)
-      }
-      lines.push("")
-    })
-
-    return lines.join("\n")
-  }
-
-  // Generate PDF content
-  const generatePDF = async (data: any[], dataType: string, headers: string[], filename: string) => {
-    // Create a simple HTML table and use browser print to PDF
-    const printWindow = window.open("", "_blank")
-    if (!printWindow) {
-      alert("Por favor, permita popups para gerar o PDF")
-      return
-    }
-
-    let tableRows = ""
-    data.forEach((item) => {
-      if (dataType === "users") {
-        tableRows += `<tr>
-          <td>${item.id}</td>
-          <td>${item.name}</td>
-          <td>${item.email}</td>
-          <td>${item.type === "internal" ? "Interno" : "Externo"}</td>
-          <td>${item.department || "-"}</td>
-          <td>${item.job_title || "-"}</td>
-          <td>${item.is_supervisor ? "Sim" : "Nao"}</td>
-          <td>${item.is_admin ? "Sim" : "Nao"}</td>
-          <td>${item.status ? "Ativo" : "Inativo"}</td>
-          <td>${formatDate(item.created_at)}</td>
-          <td>${formatDate(item.last_login)}</td>
-        </tr>`
-      } else if (dataType === "shares") {
-        tableRows += `<tr>
-          <td>${item.id}</td>
-          <td>${item.name || "-"}</td>
-          <td>${item.external_email}</td>
-          <td>${item.status}</td>
-          <td>${item.files_count}</td>
-          <td>${item.creator?.name || "-"}</td>
-          <td>${item.approver?.name || "-"}</td>
-          <td>${formatDate(item.created_at)}</td>
-          <td>${formatDate(item.expires_at)}</td>
-        </tr>`
-      } else if (dataType === "logs") {
-        tableRows += `<tr>
-          <td>${item.id}</td>
-          <td>${item.action}</td>
-          <td>${item.user?.name || "-"}</td>
-          <td>${item.user?.email || "-"}</td>
-          <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${item.detail || "-"}</td>
-          <td>${item.ip || "-"}</td>
-          <td>${item.share_id || "-"}</td>
-          <td>${formatDate(item.created_at)}</td>
-        </tr>`
-      }
-    })
-
-    const dataTypeLabel = {
-      users: "Usuarios",
-      shares: "Compartilhamentos",
-      logs: "Logs de Auditoria",
-    }[dataType]
-
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Relatorio de ${dataTypeLabel}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; font-size: 11px; }
-          h1 { color: #333; font-size: 18px; margin-bottom: 5px; }
-          .meta { color: #666; margin-bottom: 20px; font-size: 10px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-          th, td { border: 1px solid #ddd; padding: 6px; text-align: left; font-size: 10px; }
-          th { background-color: #005B9F; color: white; }
-          tr:nth-child(even) { background-color: #f9f9f9; }
-          @media print {
-            body { padding: 0; }
-            @page { margin: 1cm; size: landscape; }
-          }
-        </style>
-      </head>
-      <body>
-        <h1>Relatorio de ${dataTypeLabel}</h1>
-        <p class="meta">Gerado em: ${new Date().toLocaleString("pt-BR")} | Total de registros: ${data.length}</p>
-        <table>
-          <thead>
-            <tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr>
-          </thead>
-          <tbody>
-            ${tableRows}
-          </tbody>
-        </table>
-        <script>
-          window.onload = function() {
-            window.print();
-          }
-        </script>
-      </body>
-      </html>
-    `
-
-    printWindow.document.write(htmlContent)
-    printWindow.document.close()
-  }
-
-  // Download file helper
-  const downloadFile = (content: string, filename: string, mimeType: string) => {
-    const blob = new Blob([content], { type: mimeType })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.href = url
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }
+  };
 
   // Effects to load data based on active tab
   useEffect(() => {
-    if (pageLoading) return
-    if (activeTab === "dashboard") loadMetrics()
-  }, [activeTab, pageLoading])
+    if (pageLoading) return;
+    if (activeTab === "dashboard") loadMetrics();
+  }, [activeTab, pageLoading]);
 
   useEffect(() => {
-    if (pageLoading || activeTab !== "users") return
-    loadUsers()
-  }, [activeTab, usersPage, usersSearch, usersTypeFilter, pageLoading])
+    if (pageLoading || activeTab !== "users") return;
+    loadUsers();
+  }, [activeTab, usersPage, usersSearch, usersTypeFilter, pageLoading]);
 
   useEffect(() => {
-    if (pageLoading || activeTab !== "shares") return
-    loadShares()
-  }, [activeTab, sharesPage, sharesSearch, sharesStatusFilter, pageLoading])
+    if (pageLoading || activeTab !== "shares") return;
+    loadShares();
+  }, [activeTab, sharesPage, sharesSearch, sharesStatusFilter, pageLoading]);
 
   useEffect(() => {
-    if (pageLoading || activeTab !== "logs") return
-    loadLogs()
-    if (availableActions.length === 0) loadActions()
-  }, [activeTab, logsPage, logsSearch, logsActionFilter, pageLoading])
-
-  useEffect(() => {
-    if (pageLoading || activeTab !== "meus-compartilhamentos") return
-    loadMyShares()
-  }, [activeTab, mySharesSearch, mySharesStatusFilter, pageLoading, user?.id])
+    if (pageLoading || activeTab !== "logs") return;
+    loadLogs();
+    if (availableActions.length === 0) loadActions();
+  }, [activeTab, logsPage, logsSearch, logsActionFilter, pageLoading]);
 
   // Helpers
   const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "-"
-    return new Date(dateStr).toLocaleString("pt-BR")
-  }
+    if (!dateStr) return "-";
+    return new Date(dateStr).toLocaleString("pt-BR");
+  };
 
   const formatBytes = (bytes: number) => {
-    if (bytes === 0) return "0 B"
-    const k = 1024
-    const sizes = ["B", "KB", "MB", "GB"]
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
-  }
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
+    const statusMap: Record<
+      string,
+      {
+        variant: "default" | "secondary" | "destructive" | "outline";
+        label: string;
+      }
+    > = {
       pending: { variant: "secondary", label: "Pendente" },
       approved: { variant: "default", label: "Aprovado" },
       active: { variant: "default", label: "Ativo" },
       rejected: { variant: "destructive", label: "Rejeitado" },
       expired: { variant: "outline", label: "Expirado" },
-    }
-    const s = statusMap[status] || { variant: "outline" as const, label: status }
-    return <Badge variant={s.variant}>{s.label}</Badge>
-  }
+    };
+    const s = statusMap[status] || {
+      variant: "outline" as const,
+      label: status,
+    };
+    return <Badge variant={s.variant}>{s.label}</Badge>;
+  };
 
   if (pageLoading) {
-    return <FullPageLoader message="Carregando painel administrativo..." />
+    return <FullPageLoader message="Carregando painel administrativo..." />;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <AppHeader />
-      <BreadcrumbNav
-        dashboardLink="/admin"
-        items={[
-          { label: "Inicio", href: "/" },
-          { label: "Administracao" },
-        ]}
-      />
-
+      <AppHeader subtitle="Solucao de Compartilhamento de Arquivos Confidenciais" />
       <main className="container mx-auto px-4 py-6 max-w-7xl">
+        <BreadcrumbNav
+          dashboardLink="/admin"
+          items={[{ label: "Inicio", href: "/" }, { label: "Administracao" }]}
+        />
+
         {/* Header com gradiente */}
         <div className="mb-8 mt-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 mb-2">
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
-                <Shield className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">Painel Administrativo</h1>
-                <p className="text-muted-foreground">Visao completa de todos os usuarios, compartilhamentos e logs do sistema</p>
-              </div>
+          <div className="flex items-center gap-4 mb-2">
+            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
+              <Shield className="h-7 w-7 text-white" />
             </div>
-            
-            {/* Export Button */}
-            <Dialog open={exportModalOpen} onOpenChange={setExportModalOpen}>
-              <DialogTrigger asChild>
-                <Button variant="default" className="gap-2">
-                  <Download className="h-4 w-4" />
-                  Exportar Relatorio
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <FileSpreadsheet className="h-5 w-5" />
-                    Exportar Relatorio
-                  </DialogTitle>
-                  <DialogDescription>
-                    Configure os filtros e o formato de exportacao desejado
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <div className="space-y-6 py-4">
-                  {/* Formato de Exportacao */}
-                  <div className="space-y-3">
-                    <Label className="text-sm font-semibold flex items-center gap-2">
-                      <FileType className="h-4 w-4" />
-                      Formato de Exportacao
-                    </Label>
-                    <RadioGroup
-                      value={exportFormat}
-                      onValueChange={(v) => setExportFormat(v as "csv" | "txt" | "pdf")}
-                      className="flex gap-6"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="csv" id="format-csv" />
-                        <Label htmlFor="format-csv" className="font-normal cursor-pointer">
-                          CSV (Excel)
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="txt" id="format-txt" />
-                        <Label htmlFor="format-txt" className="font-normal cursor-pointer">
-                          TXT (Texto)
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="pdf" id="format-pdf" />
-                        <Label htmlFor="format-pdf" className="font-normal cursor-pointer">
-                          PDF
-                        </Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
-                  {/* Tipo de Dados */}
-                  <div className="space-y-3">
-                    <Label className="text-sm font-semibold flex items-center gap-2">
-                      <Filter className="h-4 w-4" />
-                      Tipo de Dados
-                    </Label>
-                    <RadioGroup
-                      value={exportDataType}
-                      onValueChange={(v) => setExportDataType(v as "users" | "shares" | "logs")}
-                      className="grid gap-3"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="users" id="data-users" />
-                        <Label htmlFor="data-users" className="font-normal cursor-pointer flex items-center gap-2">
-                          <Users className="h-4 w-4 text-blue-600" />
-                          Usuarios do Sistema
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="shares" id="data-shares" />
-                        <Label htmlFor="data-shares" className="font-normal cursor-pointer flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-green-600" />
-                          Compartilhamentos
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="logs" id="data-logs" />
-                        <Label htmlFor="data-logs" className="font-normal cursor-pointer flex items-center gap-2">
-                          <Activity className="h-4 w-4 text-purple-600" />
-                          Logs de Auditoria
-                        </Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
-                  {/* Filtros */}
-                  <div className="space-y-3 border-t pt-4">
-                    <Label className="text-sm font-semibold">Filtros (Opcional)</Label>
-                    
-                    <div className="space-y-3">
-                      <div>
-                        <Label htmlFor="filter-user" className="text-sm text-muted-foreground">
-                          Filtrar por Usuario (nome ou email)
-                        </Label>
-                        <Input
-                          id="filter-user"
-                          placeholder="Digite nome ou email do usuario..."
-                          value={exportFilterUser}
-                          onChange={(e) => setExportFilterUser(e.target.value)}
-                          className="mt-1"
-                        />
-                      </div>
-
-                      {exportDataType === "logs" && (
-                        <div>
-                          <Label htmlFor="filter-action" className="text-sm text-muted-foreground">
-                            Filtrar por Acao Especifica
-                          </Label>
-                          <Select
-                            value={exportFilterAction}
-                            onValueChange={setExportFilterAction}
-                          >
-                            <SelectTrigger id="filter-action" className="mt-1">
-                              <SelectValue placeholder="Selecione uma acao" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">Todas as Acoes</SelectItem>
-                              {availableActions.map((action) => (
-                                <SelectItem key={action} value={action}>
-                                  {action}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-
-                      <div className="flex items-center space-x-2 pt-2">
-                        <Checkbox
-                          id="include-all"
-                          checked={exportIncludeAll}
-                          onCheckedChange={(checked) => setExportIncludeAll(!!checked)}
-                        />
-                        <Label htmlFor="include-all" className="font-normal cursor-pointer text-sm">
-                          Incluir todos os registros (ate 5000 para logs, 1000 para outros)
-                        </Label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setExportModalOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button onClick={handleExportReport} disabled={exportLoading} className="gap-2">
-                    {exportLoading ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 animate-spin" />
-                        Gerando...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4" />
-                        Exportar
-                      </>
-                    )}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">
+                Painel Administrativo
+              </h1>
+              <p className="text-muted-foreground">
+                Visao completa de todos os usuarios, compartilhamentos e logs do
+                sistema
+              </p>
+            </div>
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="compartilhar" className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
-              Compartilhar
-            </TabsTrigger>
-            <TabsTrigger value="meus-compartilhamentos" className="flex items-center gap-2">
-              <Share2 className="h-4 w-4" />
-              Meus Envios
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -916,7 +448,7 @@ const [trackingError, setTrackingError] = useState("")
             </TabsTrigger>
             <TabsTrigger value="shares" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Todos Shares
+              Compartilhamentos
             </TabsTrigger>
             <TabsTrigger value="logs" className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
@@ -937,7 +469,9 @@ const [trackingError, setTrackingError] = useState("")
                 onClick={loadMetrics}
                 disabled={metricsLoading}
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${metricsLoading ? "animate-spin" : ""}`} />
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${metricsLoading ? "animate-spin" : ""}`}
+                />
                 Atualizar
               </Button>
             </div>
@@ -953,7 +487,9 @@ const [trackingError, setTrackingError] = useState("")
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{metrics.users.total}</div>
+                      <div className="text-2xl font-bold">
+                        {metrics.users.total}
+                      </div>
                     </CardContent>
                   </Card>
                   <Card>
@@ -963,7 +499,9 @@ const [trackingError, setTrackingError] = useState("")
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-blue-600">{metrics.users.internal}</div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {metrics.users.internal}
+                      </div>
                     </CardContent>
                   </Card>
                   <Card>
@@ -973,7 +511,9 @@ const [trackingError, setTrackingError] = useState("")
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-purple-600">{metrics.users.external}</div>
+                      <div className="text-2xl font-bold text-purple-600">
+                        {metrics.users.external}
+                      </div>
                     </CardContent>
                   </Card>
                   <Card>
@@ -983,7 +523,9 @@ const [trackingError, setTrackingError] = useState("")
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-green-600">{metrics.users.supervisors}</div>
+                      <div className="text-2xl font-bold text-green-600">
+                        {metrics.users.supervisors}
+                      </div>
                     </CardContent>
                   </Card>
                   <Card>
@@ -993,7 +535,9 @@ const [trackingError, setTrackingError] = useState("")
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-red-600">{metrics.users.admins}</div>
+                      <div className="text-2xl font-bold text-red-600">
+                        {metrics.users.admins}
+                      </div>
                     </CardContent>
                   </Card>
                   <Card>
@@ -1003,7 +547,9 @@ const [trackingError, setTrackingError] = useState("")
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-emerald-600">{metrics.users.active}</div>
+                      <div className="text-2xl font-bold text-emerald-600">
+                        {metrics.users.active}
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -1017,7 +563,9 @@ const [trackingError, setTrackingError] = useState("")
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{metrics.shares.total}</div>
+                      <div className="text-2xl font-bold">
+                        {metrics.shares.total}
+                      </div>
                     </CardContent>
                   </Card>
                   <Card>
@@ -1027,7 +575,9 @@ const [trackingError, setTrackingError] = useState("")
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-amber-600">{metrics.shares.pending}</div>
+                      <div className="text-2xl font-bold text-amber-600">
+                        {metrics.shares.pending}
+                      </div>
                     </CardContent>
                   </Card>
                   <Card>
@@ -1037,7 +587,9 @@ const [trackingError, setTrackingError] = useState("")
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-green-600">{metrics.shares.approved}</div>
+                      <div className="text-2xl font-bold text-green-600">
+                        {metrics.shares.approved}
+                      </div>
                     </CardContent>
                   </Card>
                   <Card>
@@ -1047,7 +599,9 @@ const [trackingError, setTrackingError] = useState("")
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-blue-600">{metrics.shares.active}</div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {metrics.shares.active}
+                      </div>
                     </CardContent>
                   </Card>
                   <Card>
@@ -1057,7 +611,9 @@ const [trackingError, setTrackingError] = useState("")
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-red-600">{metrics.shares.rejected}</div>
+                      <div className="text-2xl font-bold text-red-600">
+                        {metrics.shares.rejected}
+                      </div>
                     </CardContent>
                   </Card>
                   <Card>
@@ -1067,7 +623,9 @@ const [trackingError, setTrackingError] = useState("")
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-gray-500">{metrics.shares.expired}</div>
+                      <div className="text-2xl font-bold text-gray-500">
+                        {metrics.shares.expired}
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -1081,7 +639,9 @@ const [trackingError, setTrackingError] = useState("")
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{metrics.files.total}</div>
+                      <div className="text-2xl font-bold">
+                        {metrics.files.total}
+                      </div>
                     </CardContent>
                   </Card>
                   <Card>
@@ -1091,7 +651,9 @@ const [trackingError, setTrackingError] = useState("")
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{metrics.files.storage_mb.toFixed(2)} MB</div>
+                      <div className="text-2xl font-bold">
+                        {metrics.files.storage_mb.toFixed(2)} MB
+                      </div>
                     </CardContent>
                   </Card>
                   <Card>
@@ -1101,7 +663,9 @@ const [trackingError, setTrackingError] = useState("")
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{metrics.audit.total_logs}</div>
+                      <div className="text-2xl font-bold">
+                        {metrics.audit.total_logs}
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         {metrics.audit.logs_last_7_days} nos ultimos 7 dias
                       </p>
@@ -1114,248 +678,13 @@ const [trackingError, setTrackingError] = useState("")
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{metrics.emails.total_sent}</div>
+                      <div className="text-2xl font-bold">
+                        {metrics.emails.total_sent}
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
               </>
-            )}
-          </TabsContent>
-
-          {/* Compartilhar Tab */}
-          <TabsContent value="compartilhar" className="space-y-6">
-            <AdminUploadForm />
-          </TabsContent>
-
-          {/* Meus Compartilhamentos Tab */}
-          <TabsContent value="meus-compartilhamentos" className="space-y-6">
-            {/* Cards de Metricas */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-              <Card
-                className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${mySharesStatusFilter === "all" ? "ring-2 ring-secondary shadow-lg" : ""}`}
-                onClick={() => setMySharesStatusFilter("all")}
-              >
-                <CardContent className="p-4 md:p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-secondary/10 to-secondary/5 flex items-center justify-center">
-                      <FileText className="h-6 w-6 text-secondary" />
-                    </div>
-                    <div>
-                      <p className="text-2xl md:text-3xl font-bold text-foreground">
-                        {myShares.length}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Total</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card
-                className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${mySharesStatusFilter === "pending" ? "ring-2 ring-amber-500 shadow-lg" : ""}`}
-                onClick={() => setMySharesStatusFilter("pending")}
-              >
-                <CardContent className="p-4 md:p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 flex items-center justify-center">
-                      <Clock className="h-6 w-6 text-amber-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl md:text-3xl font-bold text-foreground">
-                        {myShares.filter((s) => s.status === "pending").length}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Aguardando</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card
-                className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${mySharesStatusFilter === "approved" ? "ring-2 ring-emerald-500 shadow-lg" : ""}`}
-                onClick={() => setMySharesStatusFilter("approved")}
-              >
-                <CardContent className="p-4 md:p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 flex items-center justify-center">
-                      <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl md:text-3xl font-bold text-foreground">
-                        {myShares.filter((s) => s.status === "approved" || s.status === "active").length}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Aprovados</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card
-                className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${mySharesStatusFilter === "rejected" ? "ring-2 ring-red-500 shadow-lg" : ""}`}
-                onClick={() => setMySharesStatusFilter("rejected")}
-              >
-                <CardContent className="p-4 md:p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-red-500/10 to-red-500/5 flex items-center justify-center">
-                      <XCircle className="h-6 w-6 text-red-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl md:text-3xl font-bold text-foreground">
-                        {myShares.filter((s) => s.status === "rejected").length}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Rejeitados</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card
-                className={`cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${mySharesStatusFilter === "expired" ? "ring-2 ring-gray-500 shadow-lg" : ""}`}
-                onClick={() => setMySharesStatusFilter("expired")}
-              >
-                <CardContent className="p-4 md:p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-gray-500/10 to-gray-500/5 flex items-center justify-center">
-                      <Ban className="h-6 w-6 text-gray-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl md:text-3xl font-bold text-foreground">
-                        {myShares.filter((s) => s.status === "expired" || s.status === "cancelled").length}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Expirados</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Barra de busca */}
-            <Card className="bg-card/50 backdrop-blur-sm">
-              <CardContent className="p-4">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      type="text"
-                      placeholder="Buscar por nome ou destinatario..."
-                      value={mySharesSearch}
-                      onChange={(e) => setMySharesSearch(e.target.value)}
-                      className="pl-10 h-12 text-base"
-                    />
-                  </div>
-                  <Button
-                    variant="outline"
-                    onClick={loadMyShares}
-                    className="gap-2 h-12"
-                    disabled={mySharesLoading}
-                  >
-                    <RefreshCw className={`h-4 w-4 ${mySharesLoading ? "animate-spin" : ""}`} />
-                    Atualizar
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Lista de Compartilhamentos */}
-            {mySharesLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : myShares.length === 0 ? (
-              <Card className="p-12 text-center bg-card/50 backdrop-blur-sm">
-                <div className="h-20 w-20 rounded-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center mx-auto mb-6">
-                  <FileText className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">
-                  Nenhum compartilhamento encontrado
-                </h3>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Voce ainda nao realizou nenhum compartilhamento. Use a aba "Compartilhar" para enviar seus arquivos.
-                </p>
-                <Button
-                  onClick={() => setActiveTab("compartilhar")}
-                  className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white"
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Fazer Primeiro Compartilhamento
-                </Button>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {myShares
-                  .filter((s) => {
-                    if (mySharesStatusFilter === "all") return true
-                    if (mySharesStatusFilter === "approved") return s.status === "approved" || s.status === "active"
-                    if (mySharesStatusFilter === "expired") return s.status === "expired" || s.status === "cancelled"
-                    return s.status === mySharesStatusFilter
-                  })
-                  .map((share) => (
-                    <Card 
-                      key={share.id} 
-                      className={`overflow-hidden transition-all hover:shadow-lg border-l-4 ${
-                        share.status === "pending" ? "border-l-amber-500" :
-                        share.status === "approved" || share.status === "active" ? "border-l-emerald-500" :
-                        share.status === "rejected" ? "border-l-red-500" :
-                        "border-l-gray-400"
-                      }`}
-                    >
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-start gap-4 flex-1">
-                            <div className={`p-3 rounded-xl ${
-                              share.status === "pending" ? "bg-amber-100" :
-                              share.status === "approved" || share.status === "active" ? "bg-emerald-100" :
-                              share.status === "rejected" ? "bg-red-100" :
-                              "bg-gray-100"
-                            }`}>
-                              <FileText className={`h-6 w-6 ${
-                                share.status === "pending" ? "text-amber-600" :
-                                share.status === "approved" || share.status === "active" ? "text-emerald-600" :
-                                share.status === "rejected" ? "text-red-600" :
-                                "text-gray-600"
-                              }`} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h3 className="text-lg font-semibold text-foreground truncate">{share.name || "Sem nome"}</h3>
-                                {getStatusBadge(share.status)}
-                              </div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                  <Mail className="h-4 w-4 flex-shrink-0" />
-                                  <span className="truncate">
-                                    <span className="font-medium">Destinatario:</span> {share.external_email}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                  <FileText className="h-4 w-4 flex-shrink-0" />
-                                  <span className="truncate">
-                                    <span className="font-medium">Arquivos:</span> {share.files_count}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  Criado: {formatDate(share.created_at)}
-                                </span>
-                                {share.expires_at && (
-                                  <span className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    Expira: {formatDate(share.expires_at)}
-                                  </span>
-                                )}
-                              </div>
-                              {share.approver && (
-                                <div className="mt-2 text-xs text-muted-foreground">
-                                  <span className="font-medium">Aprovado por:</span> {share.approver.name}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-              </div>
             )}
           </TabsContent>
 
@@ -1368,8 +697,8 @@ const [trackingError, setTrackingError] = useState("")
                   placeholder="Buscar por nome ou email..."
                   value={usersSearch}
                   onChange={(e) => {
-                    setUsersSearch(e.target.value)
-                    setUsersPage(1)
+                    setUsersSearch(e.target.value);
+                    setUsersPage(1);
                   }}
                   className="pl-10"
                 />
@@ -1377,8 +706,8 @@ const [trackingError, setTrackingError] = useState("")
               <Select
                 value={usersTypeFilter}
                 onValueChange={(v) => {
-                  setUsersTypeFilter(v)
-                  setUsersPage(1)
+                  setUsersTypeFilter(v);
+                  setUsersPage(1);
                 }}
               >
                 <SelectTrigger className="w-[180px]">
@@ -1393,88 +722,111 @@ const [trackingError, setTrackingError] = useState("")
             </div>
 
             <Card>
-              <ScrollArea className="h-[500px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Cargo</TableHead>
-                      <TableHead>Supervisor</TableHead>
-                      <TableHead>Admin</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Ultimo Login</TableHead>
-                      <TableHead>Acoes</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {usersLoading ? (
+              <DraggableScroll>
+                <div className="min-w-max">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center py-8">
-                          <RefreshCw className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
-                        </TableCell>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Cargo</TableHead>
+                        <TableHead>Supervisor</TableHead>
+                        <TableHead>Admin</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Ultimo Login</TableHead>
+                        <TableHead>Acoes</TableHead>
                       </TableRow>
-                    ) : users.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                          Nenhum usuario encontrado
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      users.map((u) => (
-                        <TableRow key={u.id}>
-                          <TableCell className="font-mono text-sm">{u.id}</TableCell>
-                          <TableCell className="font-medium">{u.name}</TableCell>
-                          <TableCell className="text-sm">{u.email}</TableCell>
-                          <TableCell>
-                            <Badge variant={u.type === "internal" ? "default" : "secondary"}>
-                              {u.type === "internal" ? "Interno" : "Externo"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {u.job_title || "-"}
-                          </TableCell>
-                          <TableCell>
-                            {u.is_supervisor && <Badge variant="outline">Sim</Badge>}
-                          </TableCell>
-                          <TableCell>
-                            {u.is_admin && <Badge variant="destructive">Sim</Badge>}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={u.status ? "default" : "secondary"}>
-                              {u.status ? "Ativo" : "Inativo"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {formatDate(u.last_login)}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setTrackingUserEmail(u.email)
-                                setActiveTab("tracking")
-                              }}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
+                    </TableHeader>
+                    <TableBody>
+                      {usersLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={10} className="text-center py-8">
+                            <RefreshCw className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
+                      ) : users.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={10}
+                            className="text-center py-8 text-muted-foreground"
+                          >
+                            Nenhum usuario encontrado
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        users.map((u) => (
+                          <TableRow key={u.id}>
+                            <TableCell className="font-mono text-sm">
+                              {u.id}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {u.name}
+                            </TableCell>
+                            <TableCell className="text-sm">{u.email}</TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  u.type === "internal"
+                                    ? "default"
+                                    : "secondary"
+                                }
+                              >
+                                {u.type === "internal" ? "Interno" : "Externo"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {u.job_title || "-"}
+                            </TableCell>
+                            <TableCell>
+                              {u.is_supervisor && (
+                                <Badge variant="outline">Sim</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {u.is_admin && (
+                                <Badge variant="destructive">Sim</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={u.status ? "default" : "secondary"}
+                              >
+                                {u.status ? "Ativo" : "Inativo"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {formatDate(u.last_login)}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setTrackingUserEmail(u.email);
+                                  setActiveTab("tracking");
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </DraggableScroll>
             </Card>
 
             {/* Pagination */}
             {usersPagination && usersPagination.total_pages > 1 && (
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Pagina {usersPagination.current_page} de {usersPagination.total_pages} ({usersPagination.total_items} usuarios)
+                  Pagina {usersPagination.current_page} de{" "}
+                  {usersPagination.total_pages} ({usersPagination.total_items}{" "}
+                  usuarios)
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -1507,8 +859,8 @@ const [trackingError, setTrackingError] = useState("")
                   placeholder="Buscar por nome ou email destinatario..."
                   value={sharesSearch}
                   onChange={(e) => {
-                    setSharesSearch(e.target.value)
-                    setSharesPage(1)
+                    setSharesSearch(e.target.value);
+                    setSharesPage(1);
                   }}
                   className="pl-10"
                 />
@@ -1516,8 +868,8 @@ const [trackingError, setTrackingError] = useState("")
               <Select
                 value={sharesStatusFilter}
                 onValueChange={(v) => {
-                  setSharesStatusFilter(v)
-                  setSharesPage(1)
+                  setSharesStatusFilter(v);
+                  setSharesPage(1);
                 }}
               >
                 <SelectTrigger className="w-[180px]">
@@ -1535,69 +887,80 @@ const [trackingError, setTrackingError] = useState("")
             </div>
 
             <Card>
-              <ScrollArea className="h-[500px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Destinatario</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Arquivos</TableHead>
-                      <TableHead>Criado por</TableHead>
-                      <TableHead>Aprovado por</TableHead>
-                      <TableHead>Criado em</TableHead>
-                      <TableHead>Expira em</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sharesLoading ? (
+              <DraggableScroll>
+                <div className="min-w-max">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8">
-                          <RefreshCw className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
-                        </TableCell>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Destinatario</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Arquivos</TableHead>
+                        <TableHead>Criado por</TableHead>
+                        <TableHead>Aprovado por</TableHead>
+                        <TableHead>Criado em</TableHead>
+                        <TableHead>Expira em</TableHead>
                       </TableRow>
-                    ) : shares.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                          Nenhum compartilhamento encontrado
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      shares.map((s) => (
-                        <TableRow key={s.id}>
-                          <TableCell className="font-mono text-sm">{s.id}</TableCell>
-                          <TableCell className="font-medium max-w-[200px] truncate">
-                            {s.name || "-"}
-                          </TableCell>
-                          <TableCell className="text-sm">{s.external_email}</TableCell>
-                          <TableCell>{getStatusBadge(s.status)}</TableCell>
-                          <TableCell>{s.files_count}</TableCell>
-                          <TableCell className="text-sm">
-                            {s.creator?.name || "-"}
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            {s.approver?.name || "-"}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {formatDate(s.created_at)}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {formatDate(s.expires_at)}
+                    </TableHeader>
+                    <TableBody>
+                      {sharesLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={9} className="text-center py-8">
+                            <RefreshCw className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
+                      ) : shares.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={9}
+                            className="text-center py-8 text-muted-foreground"
+                          >
+                            Nenhum compartilhamento encontrado
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        shares.map((s) => (
+                          <TableRow key={s.id}>
+                            <TableCell className="font-mono text-sm">
+                              {s.id}
+                            </TableCell>
+                            <TableCell className="font-medium max-w-[200px] truncate">
+                              {s.name || "-"}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {s.external_email}
+                            </TableCell>
+                            <TableCell>{getStatusBadge(s.status)}</TableCell>
+                            <TableCell>{s.files_count}</TableCell>
+                            <TableCell className="text-sm">
+                              {s.creator?.name || "-"}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {s.approver?.name || "-"}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {formatDate(s.created_at)}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {formatDate(s.expires_at)}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </DraggableScroll>
             </Card>
 
             {/* Pagination */}
             {sharesPagination && sharesPagination.total_pages > 1 && (
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Pagina {sharesPagination.current_page} de {sharesPagination.total_pages} ({sharesPagination.total_items} compartilhamentos)
+                  Pagina {sharesPagination.current_page} de{" "}
+                  {sharesPagination.total_pages} ({sharesPagination.total_items}{" "}
+                  compartilhamentos)
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -1630,8 +993,8 @@ const [trackingError, setTrackingError] = useState("")
                   placeholder="Buscar por acao ou detalhe..."
                   value={logsSearch}
                   onChange={(e) => {
-                    setLogsSearch(e.target.value)
-                    setLogsPage(1)
+                    setLogsSearch(e.target.value);
+                    setLogsPage(1);
                   }}
                   className="pl-10"
                 />
@@ -1639,8 +1002,8 @@ const [trackingError, setTrackingError] = useState("")
               <Select
                 value={logsActionFilter}
                 onValueChange={(v) => {
-                  setLogsActionFilter(v)
-                  setLogsPage(1)
+                  setLogsActionFilter(v);
+                  setLogsPage(1);
                 }}
               >
                 <SelectTrigger className="w-[220px]">
@@ -1658,67 +1021,81 @@ const [trackingError, setTrackingError] = useState("")
             </div>
 
             <Card>
-              <ScrollArea className="h-[500px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Acao</TableHead>
-                      <TableHead>Usuario</TableHead>
-                      <TableHead>Detalhe</TableHead>
-                      <TableHead>IP</TableHead>
-                      <TableHead>Data/Hora</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {logsLoading ? (
+              <DraggableScroll>
+                <div className="min-w-max">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
-                          <RefreshCw className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
-                        </TableCell>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Acao</TableHead>
+                        <TableHead>Usuario</TableHead>
+                        <TableHead>Detalhe</TableHead>
+                        <TableHead>IP</TableHead>
+                        <TableHead>Data/Hora</TableHead>
                       </TableRow>
-                    ) : logs.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          Nenhum log encontrado
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      logs.map((log) => (
-                        <TableRow key={log.id}>
-                          <TableCell className="font-mono text-sm">{log.id}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{log.action}</Badge>
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            {log.user ? (
-                              <span title={log.user.email}>{log.user.name}</span>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-sm max-w-[300px] truncate" title={log.detail || ""}>
-                            {log.detail || "-"}
-                          </TableCell>
-                          <TableCell className="font-mono text-xs text-muted-foreground">
-                            {log.ip || "-"}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {formatDate(log.created_at)}
+                    </TableHeader>
+                    <TableBody>
+                      {logsLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8">
+                            <RefreshCw className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
+                      ) : logs.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={6}
+                            className="text-center py-8 text-muted-foreground"
+                          >
+                            Nenhum log encontrado
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        logs.map((log) => (
+                          <TableRow key={log.id}>
+                            <TableCell className="font-mono text-sm">
+                              {log.id}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{log.action}</Badge>
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {log.user ? (
+                                <span title={log.user.email}>
+                                  {log.user.name}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell
+                              className="text-sm max-w-[300px] truncate"
+                              title={log.detail || ""}
+                            >
+                              {log.detail || "-"}
+                            </TableCell>
+                            <TableCell className="font-mono text-xs text-muted-foreground">
+                              {log.ip || "-"}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {formatDate(log.created_at)}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </DraggableScroll>
             </Card>
 
             {/* Pagination */}
             {logsPagination && logsPagination.total_pages > 1 && (
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Pagina {logsPagination.current_page} de {logsPagination.total_pages} ({logsPagination.total_items} logs)
+                  Pagina {logsPagination.current_page} de{" "}
+                  {logsPagination.total_pages} ({logsPagination.total_items}{" "}
+                  logs)
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -1748,7 +1125,8 @@ const [trackingError, setTrackingError] = useState("")
               <CardHeader>
                 <CardTitle>Rastreamento de Usuario</CardTitle>
                 <CardDescription>
-                  Digite o email do usuario para ver todo o historico de atividades
+                  Digite o email do usuario para ver todo o historico de
+                  atividades
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1770,7 +1148,9 @@ const [trackingError, setTrackingError] = useState("")
                   </Button>
                 </div>
                 {trackingError && (
-                  <p className="text-sm text-destructive mt-2">{trackingError}</p>
+                  <p className="text-sm text-destructive mt-2">
+                    {trackingError}
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -1797,39 +1177,71 @@ const [trackingError, setTrackingError] = useState("")
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Tipo</p>
-                        <Badge variant={trackingData.user.type === "internal" ? "default" : "secondary"}>
-                          {trackingData.user.type === "internal" ? "Interno" : "Externo"}
+                        <Badge
+                          variant={
+                            trackingData.user.type === "internal"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {trackingData.user.type === "internal"
+                            ? "Interno"
+                            : "Externo"}
                         </Badge>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Status</p>
-                        <Badge variant={trackingData.user.status ? "default" : "destructive"}>
+                        <Badge
+                          variant={
+                            trackingData.user.status ? "default" : "destructive"
+                          }
+                        >
                           {trackingData.user.status ? "Ativo" : "Inativo"}
                         </Badge>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Departamento</p>
-                        <p className="font-medium">{trackingData.user.department || "-"}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Departamento
+                        </p>
+                        <p className="font-medium">
+                          {trackingData.user.department || "-"}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Cargo</p>
-                        <p className="font-medium">{trackingData.user.job_title || "-"}</p>
+                        <p className="font-medium">
+                          {trackingData.user.job_title || "-"}
+                        </p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Supervisor</p>
-                        <p className="font-medium">{trackingData.user.is_supervisor ? "Sim" : "Nao"}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Supervisor
+                        </p>
+                        <p className="font-medium">
+                          {trackingData.user.is_supervisor ? "Sim" : "Nao"}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Admin</p>
-                        <p className="font-medium">{trackingData.user.is_admin ? "Sim" : "Nao"}</p>
+                        <p className="font-medium">
+                          {trackingData.user.is_admin ? "Sim" : "Nao"}
+                        </p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Criado em</p>
-                        <p className="font-medium">{formatDate(trackingData.user.created_at)}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Criado em
+                        </p>
+                        <p className="font-medium">
+                          {formatDate(trackingData.user.created_at)}
+                        </p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Ultimo Login</p>
-                        <p className="font-medium">{formatDate(trackingData.user.last_login)}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Ultimo Login
+                        </p>
+                        <p className="font-medium">
+                          {formatDate(trackingData.user.last_login)}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -1839,26 +1251,42 @@ const [trackingError, setTrackingError] = useState("")
                 <div className="grid gap-4 md:grid-cols-4">
                   <Card>
                     <CardContent className="pt-6">
-                      <div className="text-2xl font-bold">{trackingData.stats.total_shares_created}</div>
-                      <p className="text-sm text-muted-foreground">Shares Criados</p>
+                      <div className="text-2xl font-bold">
+                        {trackingData.stats.total_shares_created}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Shares Criados
+                      </p>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="pt-6">
-                      <div className="text-2xl font-bold">{trackingData.stats.total_shares_approved}</div>
-                      <p className="text-sm text-muted-foreground">Shares Aprovados</p>
+                      <div className="text-2xl font-bold">
+                        {trackingData.stats.total_shares_approved}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Shares Aprovados
+                      </p>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="pt-6">
-                      <div className="text-2xl font-bold">{trackingData.stats.total_files_uploaded}</div>
-                      <p className="text-sm text-muted-foreground">Arquivos Enviados</p>
+                      <div className="text-2xl font-bold">
+                        {trackingData.stats.total_files_uploaded}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Arquivos Enviados
+                      </p>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="pt-6">
-                      <div className="text-2xl font-bold">{trackingData.stats.total_logs}</div>
-                      <p className="text-sm text-muted-foreground">Logs Registrados</p>
+                      <div className="text-2xl font-bold">
+                        {trackingData.stats.total_logs}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Logs Registrados
+                      </p>
                     </CardContent>
                   </Card>
                 </div>
@@ -1927,7 +1355,9 @@ const [trackingError, setTrackingError] = useState("")
                                 <TableCell className="font-mono text-xs">
                                   {log.ip || "-"}
                                 </TableCell>
-                                <TableCell>{formatDate(log.created_at)}</TableCell>
+                                <TableCell>
+                                  {formatDate(log.created_at)}
+                                </TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
@@ -1944,7 +1374,7 @@ const [trackingError, setTrackingError] = useState("")
 
       <ScrollToTop />
     </div>
-  )
+  );
 }
 
 export default function AdminPage() {
@@ -1952,5 +1382,5 @@ export default function AdminPage() {
     <ProtectedRoute allowedUserTypes={["admin"]}>
       <AdminContent />
     </ProtectedRoute>
-  )
+  );
 }

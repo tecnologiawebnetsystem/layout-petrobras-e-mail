@@ -32,7 +32,8 @@ class User(SQLModel, table=True):
     phone: Optional[str] = Field(default=None, max_length=20)
     department: Optional[str] = Field(default=None, max_length=255)
     job_title: Optional[str] = Field(default=None, max_length=255)
-    employee_id: Optional[str] = Field(default=None, max_length=50)
+    employee_id: Optional[str] = Field(default=None, max_length=50)  # matrícula/login CAv4 (onPremicesSamAccountName)
+    login_cav4: Optional[str] = Field(default=None, max_length=50, index=True)  # onPremicesSamAccountName do AD para chamar CAv4 APIs
     photo_url: Optional[str] = Field(default=None)
     manager_id: Optional[int] = Field(default=None, foreign_key="user.id")
     is_supervisor: bool = Field(default=False)  # True = pode aprovar/rejeitar shares da sua área

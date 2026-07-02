@@ -116,7 +116,7 @@ export const useAuthStore = create<AuthState>()(
         })),
 
       /**
-       * Valida a sessao com o backend (GET /auth/entra/session-check).
+       * Valida a sessao com o backend (entra/cav4 conforme modo).
        * Se invalida, limpa o state e redireciona para login.
        * Retorna true se sessao e valida, false caso contrario.
        */
@@ -127,6 +127,16 @@ export const useAuthStore = create<AuthState>()(
           return false
         }
 
+        const authMode = getClientEnv("NEXT_PUBLIC_AUTH_MODE") || "entra"
+
+        // Em modo local/dev, não há session-check dedicado no backend.
+        if (authMode !== "entra" && authMode !== "cav4") {
+          return true
+        }
+
+        const sessionCheckEndpoint =
+          authMode === "cav4" ? "/auth/cav4/session-check" : "/auth/entra/session-check"
+
         try {
           const data = await apiFetch<{
             valid: boolean
@@ -134,7 +144,7 @@ export const useAuthStore = create<AuthState>()(
             email: string
             role: string
             expires_in: number
-          }>("/auth/entra/session-check")
+          }>(sessionCheckEndpoint)
 
           if (!data.valid) {
             get().clearAuth()
@@ -163,12 +173,18 @@ export const useAuthStore = create<AuthState>()(
       /**
        * Logout via backend.
        * - Modo entra: POST /auth/entra/logout (revoga refresh token, retorna URL Microsoft)
+       * - Modo cav4: POST /auth/cav4/logout (revoga refresh token)
        * - Modo dev:   POST /auth/internal/logout (limpa cookie de sessão)
        * Em ambos os casos limpa o state local e redireciona para /.
        */
       logout: async () => {
         const authMode = getClientEnv("NEXT_PUBLIC_AUTH_MODE") || "entra"
-        const endpoint = authMode !== "entra" ? "/auth/internal/logout" : "/auth/entra/logout"
+        const endpoint =
+          authMode === "entra"
+            ? "/auth/entra/logout"
+            : authMode === "cav4"
+              ? "/auth/cav4/logout"
+              : "/auth/internal/logout"
         const clearState = {
           user: null,
           accessToken: null,
@@ -197,15 +213,23 @@ export const useAuthStore = create<AuthState>()(
       },
 
       /**
-       * Refresh do token via backend (POST /auth/entra/refresh).
+       * Refresh do token via backend (entra/cav4 conforme modo).
        * Usa header X-Refresh-Token conforme esperado pelo backend.
        */
       refreshSession: async () => {
         const { refreshToken: currentRefreshToken } = get()
         if (!currentRefreshToken) return false
 
+        const authMode = getClientEnv("NEXT_PUBLIC_AUTH_MODE") || "entra"
+        const refreshEndpoint =
+          authMode === "cav4"
+            ? "/api/auth/cav4/refresh"
+            : authMode === "entra"
+              ? "/api/auth/entra/refresh"
+              : "/api/auth/refresh"
+
         try {
-          const response = await fetch("/api/auth/entra/refresh", {
+          const response = await fetch(refreshEndpoint, {
             method: "POST",
             headers: {
               "X-Refresh-Token": currentRefreshToken,

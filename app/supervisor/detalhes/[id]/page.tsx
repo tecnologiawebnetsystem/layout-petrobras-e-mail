@@ -41,7 +41,7 @@ import { Separator } from "@/components/ui/separator";
 export default function SupervisorDetailsPage({
   params,
 }: {
-  params: { id: string } | Promise<{ id: string }>;
+  params: { id: string };
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -90,7 +90,7 @@ export default function SupervisorDetailsPage({
 
   const fetchEmailLogs = useCallback(async (shareId: string) => {
     try {
-      const token = useAuthStore(state => state.accessToken);
+      const token = useAuthStore.getState().accessToken;
       const res = await fetch(`/api/supervisor/shares/${shareId}/email-logs`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -107,7 +107,7 @@ export default function SupervisorDetailsPage({
     if (!id) return;
     setResending(true);
     try {
-      const token = useAuthStore(state => state.accessToken);
+      const token = useAuthStore.getState().accessToken;
       const res = await fetch(
         `/api/supervisor/shares/${id}/resend-notification`,
         {
@@ -197,7 +197,7 @@ export default function SupervisorDetailsPage({
     if (!id) return;
     setIsDownloading(true);
     try {
-      const token = useAuthStore(state => state.accessToken);
+      const token = useAuthStore.getState().accessToken;
       const res = await fetch(`/api/supervisor/shares/${id}/download-zip`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -237,7 +237,7 @@ export default function SupervisorDetailsPage({
     if (!id) return;
     setRemovingFileId(shareFileId);
     try {
-      const token = useAuthStore(state => state.accessToken);
+      const token = useAuthStore.getState().accessToken;
       const res = await fetch(
         `/api/supervisor/shares/${id}/files/${shareFileId}`,
         {
@@ -298,7 +298,7 @@ export default function SupervisorDetailsPage({
     }
   };
 
-  const handleConfirmRejection = () => {
+  const handleConfirmRejection = async () => {
     if (!rejectionReason.trim()) {
       toast({
         title: "Motivo obrigat\u00f3rio",
@@ -321,7 +321,7 @@ export default function SupervisorDetailsPage({
           }
         }
       };
-      removeNext(selectedIndexes);
+      await removeNext(selectedIndexes);
       setShowRejectDialog(false);
       setRejectionReason("");
       return;

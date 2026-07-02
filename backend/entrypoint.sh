@@ -13,13 +13,25 @@
 #   SEED_ON_STARTUP=true       → popula banco com dados dev (somente DSV)
 set -e
 
+if [ "${MIP_PROCESSING_ENABLED}" = "true" ]; then
+        echo "[entrypoint] MIP_PROCESSING_ENABLED=true – validando configuracao do servico MIP SDK..."
+
+        if [ -z "${MIP_SDK_BASE_URL}" ]; then
+                echo "[entrypoint] ERRO: MIP_SDK_BASE_URL nao definido com MIP_PROCESSING_ENABLED=true." >&2
+                exit 1
+        fi
+
+        echo "[entrypoint] MIP SDK configurado. Base URL: ${MIP_SDK_BASE_URL}"
+fi
+
 echo "[entrypoint] Aplicando migrations do Alembic..."
 alembic upgrade heads
 
 # Seed de dados de desenvolvimento.
 # Ative apenas nos ambientes que precisam de dados iniciais:
 #   SEED_ON_STARTUP=true  (via ECS Task Definition ou docker run -e)
-# Em produção deixe a variável ausente ou vazia.
+# Em produção deixe a variável ausente ou vazia para que não alimente a base de produção com dados fake.
+
 if [ "${SEED_ON_STARTUP}" = "true" ]; then
     echo "[entrypoint] SEED_ON_STARTUP=true – populando banco com dados dev..."
     python -m scripts_data.seed_dev

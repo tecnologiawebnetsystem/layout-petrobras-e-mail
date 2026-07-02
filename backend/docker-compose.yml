@@ -26,3 +26,28 @@ services:
       --port 8080
       --reload
       --lifespan off
+
+  mip-sdk-worker:
+    image: mip-sdk-worker:dev
+    build:
+      context: .
+      dockerfile: mip-sdk-worker/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8081
+      ENTRAID__TENANTID: ${ENTRAID_TENANT_ID:-}
+      ENTRAID__CLIENTID: ${ENTRAID_CLIENT_ID_PURVIEW:-}
+      ENTRAID__CLIENTSECRET: ${ENTRAID_CLIENT_SECRET_PURVIEW:-}
+      MIPWORKER__SERVICEAPITOKEN: ${MIP_SDK_API_TOKEN:-}
+      MIPWORKER__PROCESSINGTIMEOUTSECONDS: 120
+      MIPWORKER__MAXFILESIZBYTES: 52428800
+    depends_on:
+      - api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s

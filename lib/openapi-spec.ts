@@ -1,5 +1,5 @@
 /**
- * OpenAPI 3.0 Specification - Petrobras File Transfer API
+ * OpenAPI 3.0 Specification - Solução de Compartilhamento de Arquivos Confidenciais
  * 
  * Documentacao completa de todos os endpoints do backend
  */
@@ -7,7 +7,7 @@
 export const openApiSpec = {
   openapi: "3.0.3",
   info: {
-    title: "Petrobras File Transfer API",
+    title: "Solução de Compartilhamento de Arquivos Confidenciais",
     description: `
 API RESTful para o sistema de transferência segura de arquivos da Petrobras.
 

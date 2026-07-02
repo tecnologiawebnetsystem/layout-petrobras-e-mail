@@ -26,11 +26,10 @@ FROM registry.petrobras.com.br/imagens-devops/base/petro-python3.12-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    # libpq5: cliente PostgreSQL (mantido para compatibilidade futura)
-    libpq5 \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 # Instala dependências a partir dos wheels pré-compilados
 COPY --from=builder /wheels /wheels
@@ -50,7 +49,7 @@ RUN mkdir -p /app/data
 # No pipeline CDK Petrobras (ECS), as variáveis abaixo são sobrescritas
 # automaticamente pela task definition com os valores do Parameter Store.
 # Para simular esse comportamento fora do pipeline:
-#   USE_AWS_CONFIG=true         → ativa aws_loader.py (boto3 em runtime)
+#   USE_AWS_CONFIG=true
 #   CDK_APP_SERVICE_NAME=backend → nome do módulo CDK (padrão: backend)
 #   APP_ENV=dsv|tst|trn|hmg|prd → define o sufixo do path SSM
 # ─────────────────────────────────────────────────────────────────────────────

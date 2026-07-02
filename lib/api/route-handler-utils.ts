@@ -128,18 +128,31 @@ export async function handleProxyResponse(
   }
 
   if (!response.ok) {
+    // FastAPI retorna detail como string ou objeto {message, error_code}
+    const detail = data["detail"];
+    let errorMessage = opts.errorMessage ?? "Erro na requisição";
+    let errorCode = opts.errorCode ?? "REQUEST_FAILED";
+
+    if (typeof detail === "string" && detail.trim()) {
+      errorMessage = detail;
+    } else if (detail && typeof detail === "object" && !Array.isArray(detail)) {
+      const d = detail as Record<string, unknown>;
+      if (typeof d["message"] === "string" && d["message"].trim()) {
+        errorMessage = d["message"] as string;
+      }
+      if (typeof d["error_code"] === "string" && d["error_code"].trim()) {
+        errorCode = d["error_code"] as string;
+      }
+    } else if (response.status === 404) {
+      errorMessage = "Recurso não encontrado";
+    } else if (response.status === 403) {
+      errorMessage = "Acesso não autorizado";
+    }
+
     return NextResponse.json(
       {
         success: false,
-        error: {
-          code: opts.errorCode ?? "REQUEST_FAILED",
-          message:
-            response.status === 404
-              ? "Recurso não encontrado"
-              : response.status === 403
-                ? "Acesso não autorizado"
-                : (opts.errorMessage ?? "Erro na requisição"),
-        },
+        error: { code: errorCode, message: errorMessage },
       },
       { status: response.status },
     );

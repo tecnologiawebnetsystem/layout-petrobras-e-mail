@@ -125,7 +125,7 @@ export default function SupervisorPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <AppHeader />
+      <AppHeader subtitle="Solucao de Compartilhamento de Arquivos Confidenciais" />  
       <ScrollToTop />
 
       <main className="container mx-auto px-4 py-6 max-w-7xl">

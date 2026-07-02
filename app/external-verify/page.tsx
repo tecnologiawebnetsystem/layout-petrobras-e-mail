@@ -232,7 +232,7 @@ function VerifyContent() {
 
         <div className="text-center text-xs text-muted-foreground space-y-1">
           <p>Este Ã© um acesso seguro e temporÃ¡rio</p>
-          <p>Â© 2025 Petrobras. Todos os direitos reservados.</p>
+          <p>Â© 2026 Petrobras. Todos os direitos reservados.</p>
         </div>
       </div>
     </div>

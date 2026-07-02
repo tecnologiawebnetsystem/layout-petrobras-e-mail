@@ -12,9 +12,12 @@ Endpoints:
 - GET /admin/tracking/by-email  — Rastreamento completo por email
 - GET /admin/tracking/{id}      — Rastreamento completo por ID
 - PATCH /admin/users/{id}/admin — Promover/rebaixar admin
+- GET /admin/mip-diagnostico    — Diagnostico da integracao MIP SDK
 """
 
+import sys
 from datetime import datetime, UTC, timedelta
+from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -29,6 +32,7 @@ from app.models.audit import Audit as AuditLog
 from app.models.email_log import EmailLog
 from app.utils.authz import require_admin
 from app.services.audit_service import log_event
+from app.services.task_service import run_cleanup_job
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -610,3 +614,157 @@ def admin_list_actions(
         select(AuditLog.action).distinct().order_by(AuditLog.action)
     ).all()
     return {"actions": list(actions)}
+
+
+# ---------------------------------------------------------------------------
+# GET /admin/mip-diagnostico — Diagnóstico da integração MIP SDK
+# ---------------------------------------------------------------------------
+
+@router.get("/mip-diagnostico")
+def admin_mip_diagnostico():
+    """
+    Executa uma série de verificações da integração MIP SDK e retorna
+    um relatório JSON com o resultado de cada etapa.
+    """
+    import httpx
+
+    from app.core.config import settings
+
+    checks: list[dict] = []
+
+    mip_enabled = settings.mip_processing_enabled
+    mip_fail_closed = settings.mip_fail_closed
+    sdk_base_url = settings.mip_sdk_base_url
+    sdk_verify_tls = settings.mip_sdk_verify_tls
+    has_sdk_token = bool(settings.mip_sdk_api_token)
+    timeout_s = settings.mip_processing_timeout_seconds
+
+    checks.append(
+        {
+            "check": "settings",
+            "ok": True,
+            "detail": {
+                "mip_processing_enabled": mip_enabled,
+                "mip_fail_closed": mip_fail_closed,
+                "mip_sdk_base_url": sdk_base_url,
+                "mip_sdk_verify_tls": sdk_verify_tls,
+                "mip_sdk_api_token_set": has_sdk_token,
+                "mip_processing_timeout_seconds": timeout_s,
+            },
+        }
+    )
+
+    if not mip_enabled:
+        return {
+            "timestamp": datetime.now(UTC).isoformat(),
+            "summary": "MIP desabilitado (MIP_PROCESSING_ENABLED=false). Nenhuma verificacao adicional necessaria.",
+            "checks": checks,
+        }
+
+    sdk_config_ok = bool(sdk_base_url)
+    checks.append(
+        {
+            "check": "sdk_configurado",
+            "ok": sdk_config_ok,
+            "detail": {"mip_sdk_base_url": sdk_base_url},
+            "hint": (
+                "Defina MIP_SDK_BASE_URL com o endpoint do servico MIP SDK."
+                if not sdk_config_ok
+                else None
+            ),
+        }
+    )
+
+    if sdk_config_ok:
+        health_url = f"{sdk_base_url.rstrip('/')}/health"
+        headers = {}
+        if settings.mip_sdk_api_token:
+            headers["Authorization"] = f"Bearer {settings.mip_sdk_api_token}"
+        try:
+            health_response = httpx.get(
+                health_url,
+                headers=headers,
+                timeout=10,
+                verify=sdk_verify_tls,
+            )
+            checks.append(
+                {
+                    "check": "sdk_health",
+                    "ok": health_response.status_code < 400,
+                    "detail": {
+                        "url": health_url,
+                        "status_code": health_response.status_code,
+                        "body": (health_response.text or "")[:300],
+                    },
+                    "hint": (
+                        "Verifique conectividade de rede e autenticacao entre backend e servico MIP SDK."
+                        if health_response.status_code >= 400
+                        else None
+                    ),
+                }
+            )
+        except httpx.HTTPError as exc:
+            checks.append(
+                {
+                    "check": "sdk_health",
+                    "ok": False,
+                    "detail": f"Falha ao acessar health do servico MIP SDK: {exc}",
+                    "hint": "Verifique DNS, rota de rede, TLS e token do servico MIP SDK.",
+                }
+            )
+    else:
+        checks.append(
+            {
+                "check": "sdk_health",
+                "ok": None,
+                "detail": "Pulado: MIP_SDK_BASE_URL nao configurado.",
+            }
+        )
+
+    all_ok = all(c["ok"] is True for c in checks if c.get("ok") is not None)
+    failed = [c["check"] for c in checks if c.get("ok") is False]
+
+    return {
+        "timestamp": datetime.now(UTC).isoformat(),
+        "python": sys.version,
+        "cwd": str(Path.cwd()),
+        "summary": "Tudo OK" if all_ok else f"Falhou em: {failed}",
+        "checks": checks,
+    }
+
+# Rota gerada dentro de admin, mas pode ser encaixada em shared
+# ---------------------------------------------------------------------------
+# POST /admin/run-cleanup — Trigger manual do job de ciclo de vida
+# ---------------------------------------------------------------------------
+
+@router.post("/run-cleanup")
+def trigger_cleanup(
+    session: Session = Depends(get_session),
+    user: User = Depends(require_admin),
+    request: Request = None,
+):
+    """
+    Executa manualmente as rotinas automáticas de ciclo de vida:
+    - Expira shares vencidos e remove arquivos S3
+    - Desativa usuários externos/internos/supervisores sem atividade pendente
+    - Envia e-mails de notificação de expiração
+
+    Equivale ao job automático que deve ser configurado externamente (cron/APScheduler).
+    """
+    result = run_cleanup_job(session)
+
+    log_event(
+        session=session,
+        action="RUN_CLEANUP_JOB",
+        user_id=user.id,
+        detail=str(result),
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None,
+    )
+
+    return {
+        "timestamp": datetime.now(UTC).isoformat(),
+        "triggered_by": user.email,
+        "result": result,
+    }
+

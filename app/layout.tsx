@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from "next"
 import localFont from "next/font/local"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ExpirationMonitor } from "@/components/shared/expiration-monitor"
-import { EntraProvider } from "@/components/auth/entra-provider"
 import { GlobalAlertProvider } from "@/components/shared/global-alert-provider"
 import "./globals.css"
 
@@ -47,8 +46,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "Petrobras File Transfer - Transferencia Segura de Arquivos",
-    template: "%s | Petrobras File Transfer",
+    default: "Solução de Compartilhamento de Arquivos Confidenciais",
+    template: "%s | CSAC",
   },
   description:
     "Sistema corporativo de transferencia segura de arquivos para destinatarios externos. Compartilhe documentos de forma controlada, auditavel e em conformidade com as politicas de seguranca da Petrobras.",
@@ -71,14 +70,14 @@ export const metadata: Metadata = {
     type: "website",
     locale: "pt_BR",
     url: "https://transfer.petrobras.com.br",
-    siteName: "Petrobras File Transfer",
-    title: "Petrobras File Transfer - Transferencia Segura de Arquivos",
+    siteName: "CSAC",
+    title: "Solução de Compartilhamento de Arquivos Confidenciais",
     description:
       "Sistema corporativo de transferencia segura de arquivos para destinatarios externos com aprovacao supervisionada e auditoria completa.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Petrobras File Transfer",
+    title: "CSAC",
     description: "Transferencia segura de arquivos para destinatarios externos",
   },
   icons: {
@@ -123,7 +122,7 @@ export default function RootLayout({
   //   ENTRA_CLIENT_ID        (secret, via valueFrom) → NEXT_PUBLIC_ENTRA_CLIENT_ID
   //   ENTRA_TENANT_ID        (secret, via valueFrom) → NEXT_PUBLIC_ENTRA_TENANT_ID
   //   NEXT_PUBLIC_ENTRA_REDIRECT_URI derivado do APP_URL
-  const appUrl = (process.env['NEXT_PUBLIC_APP_URL'] ?? "") as string
+  const appUrl = (process.env['NEXT_PUBLIC_APP_URL'] ?? "https://scac-dsv.petrobras.com.br") as string
   const publicEnv = {
     NEXT_PUBLIC_AUTH_MODE: (process.env['NEXT_PUBLIC_AUTH_MODE'] ?? "entra") as string,
     // No ECS as chaves da secret chegam sem prefixo (ENTRA_CLIENT_ID).
@@ -132,6 +131,8 @@ export default function RootLayout({
       ((process.env['NEXT_PUBLIC_ENTRA_CLIENT_ID'] || process.env['ENTRA_CLIENT_ID'] || "") as string),
     NEXT_PUBLIC_ENTRA_TENANT_ID:
       ((process.env['NEXT_PUBLIC_ENTRA_TENANT_ID'] || process.env['ENTRA_TENANT_ID'] || "") as string),
+    NEXT_PUBLIC_CAV4_DISCOVERY_URL:
+      ((process.env['NEXT_PUBLIC_CAV4_DISCOVERY_URL'] || process.env['OIDC_DISCOVERY_URL'] || "") as string),
     NEXT_PUBLIC_APP_URL: appUrl,
   }
 
@@ -146,13 +147,13 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} font-sans antialiased`}>
-        <EntraProvider>
+       
           <ThemeProvider>
             {children}
             <ExpirationMonitor />
             <GlobalAlertProvider />
           </ThemeProvider>
-        </EntraProvider>
+        
       </body>
     </html>
   )

@@ -12,10 +12,10 @@ import { LoginBackground } from "@/components/ui/login-background";
 import { NotificationModal } from "@/components/shared/notification-modal";
 import { FullPageLoader } from "@/components/ui/full-page-loader";
 import { useAuthStore } from "@/lib/stores/auth-store";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { isBackendAvailable } from "@/lib/services/api-fetch";
 import { getClientEnv } from "@/lib/env";
-import { getMsalInstance, loginRequest } from "@/lib/auth/msal-config";
+import { getCav4LoginPath } from "@/lib/auth/cav4-config";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -49,10 +49,13 @@ export function LoginForm() {
   });
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setAuth, isAuthenticated, user } = useAuthStore();
 
   const AUTH_MODE = getClientEnv("NEXT_PUBLIC_AUTH_MODE") || "entra";
-  const isDevMode = AUTH_MODE !== "entra";
+  const isEntraMode = AUTH_MODE === "entra";
+  const isCav4Mode = AUTH_MODE === "cav4";
+  const isLocalMode = !isEntraMode && !isCav4Mode;
 
   // Guard: se já autenticado, redirecionar para a página correta
   useEffect(() => {
@@ -67,6 +70,26 @@ export function LoginForm() {
             : "/upload";
     router.replace(dest);
   }, [isAuthenticated, user, router]);
+
+  // Exibe erro vindo do redirect do callback de autenticação (?error=...)
+  const errorParam = searchParams.get("error");
+  useEffect(() => {
+    if (!errorParam) return;
+    const message =
+      errorParam === "auth_failed"
+        ? "Falha na autenticação. Tente novamente."
+        : errorParam === "msal_state_mismatch"
+          ? "Sessão expirada. Tente novamente em uma aba anônima."
+          : errorParam;
+    setNotification({
+      show: true,
+      type: "error",
+      title: "Erro na autenticação",
+      message,
+    });
+    // Limpa o parâmetro da URL sem recarregar a página
+    window.history.replaceState(null, "", "/");
+  }, [errorParam]);
 
   const isExternalUser =
     email.trim().length > 0 && !email.toLowerCase().includes("@petrobras");
@@ -288,12 +311,6 @@ export function LoginForm() {
           "Servidor indisponivel. O login requer o backend ativo. Tente novamente em alguns instantes.",
         );
       }
-      // MSAL conduz o fluxo Authorization Code + PKCE diretamente com a Microsoft.
-      // Nao usa client_secret (compativel com app registrada como SPA no Azure AD).
-      // Apos login, Microsoft redireciona para /auth/entra-callback onde MSAL
-      // processa a resposta e o frontend troca os tokens com o backend.
-      const msal = await getMsalInstance();
-      await msal.loginRedirect(loginRequest);
       // O browser sera redirecionado — o estado de loading permanece ate o redirect.
     } catch (error: unknown) {
       setIsLoading(false);
@@ -321,7 +338,7 @@ export function LoginForm() {
       return;
     }
     // Modo DEV: login local com email+senha
-    if (isDevMode) {
+    if (isLocalMode) {
       await handleLocalLogin();
       return;
     }
@@ -340,8 +357,8 @@ export function LoginForm() {
   if (isRedirectingToMicrosoft) {
     return (
       <FullPageLoader
-        message="Redirecionando para a Microsoft..."
-        subMessage="Voce sera direcionado para a pagina de login corporativa"
+        message="Redirecionando para login corporativo..."
+        subMessage="Voce sera direcionado para a autenticacao da empresa"
       />
     );
   }
@@ -414,7 +431,7 @@ export function LoginForm() {
             </div>
 
             {/* Campo de senha — modo DEV, usuario interno */}
-            {!isExternalUser && isDevMode && (
+            {!isExternalUser && isLocalMode && (
               <div className="space-y-2">
                 <Label
                   htmlFor="password"
@@ -526,7 +543,7 @@ export function LoginForm() {
             )}
 
             {/* Botao de login local — modo DEV, usuario interno */}
-            {!isExternalUser && isDevMode && (
+            {!isExternalUser && isLocalMode && (
               <Button
                 type="submit"
                 disabled={isLoading || !email || !password}
@@ -538,7 +555,7 @@ export function LoginForm() {
           </form>
 
           {/* Botao Login com Microsoft (Entra ID via backend) — apenas modo entra */}
-          {!isDevMode && (
+          {!isLocalMode && (
             <div className="space-y-4">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -551,7 +568,7 @@ export function LoginForm() {
                 </div>
               </div>
               {/* Hint para usuarios internos */}
-              {!isExternalUser && !isDevMode && (
+              {!isExternalUser && !isLocalMode && (
                 <p className="text-sm text-center text-muted-foreground">
                   Colaboradores Petrobras devem acessar utilizando o botão{" "}
                   <span className="font-semibold text-secondary">
@@ -563,7 +580,37 @@ export function LoginForm() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleEntraIdLogin}
+                onClick={async () => {
+                  if (isEntraMode) {
+                    await handleEntraIdLogin();
+                    return;
+                  }
+
+                  // Modo CAv4: fluxo backend-driven via redirect BFF.
+                  setIsRedirectingToMicrosoft(true);
+                  setIsLoading(true);
+                  try {
+                    const backendOk = await isBackendAvailable();
+                    if (!backendOk) {
+                      throw new Error(
+                        "Servidor indisponivel. O login requer o backend ativo.",
+                      );
+                    }
+                    window.location.href = getCav4LoginPath();
+                  } catch (error: unknown) {
+                    setIsLoading(false);
+                    setIsRedirectingToMicrosoft(false);
+                    setNotification({
+                      show: true,
+                      type: "error",
+                      title: "Erro ao autenticar",
+                      message:
+                        error instanceof Error
+                          ? error.message
+                          : "Nao foi possivel iniciar o login corporativo.",
+                    });
+                  }
+                }}
                 disabled={isLoading}
                 className="w-full h-12 text-base font-medium border-2 hover:bg-accent bg-transparent"
               >
@@ -575,7 +622,6 @@ export function LoginForm() {
                 </svg>
                 {isLoading ? "Redirecionando..." : "Login corporativo"}
               </Button>
-
               {/* Link para Documentação */}
               <Link
                 href="/docs"
@@ -587,29 +633,9 @@ export function LoginForm() {
             </div>
           )}
 
-          {/* Info de Usuarios de Teste (somente para desenvolvimento) */}
-          {isDevMode && (
-            <div className="border-t border-dashed border-amber-300 pt-6 mt-6">
-              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                <p className="text-xs font-semibold text-amber-800 dark:text-amber-200 mb-2 text-center uppercase tracking-wide">
-                  Usuarios de Teste (Dev Only)
-                </p>
-                <p className="text-xs text-amber-700 dark:text-amber-300 text-center mb-3">
-                  Para testar, faca login via &quot;Login corporativo&quot; com um usuario de teste do Entra ID.
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-xs text-amber-600 dark:text-amber-400">
-                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">👑 Admin → /admin</div>
-                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">📋 Supervisor → /supervisor</div>
-                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">🏢 Interno → /upload</div>
-                  <div className="text-center p-2 bg-white/50 dark:bg-gray-800/50 rounded">🌐 Externo → /download</div>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Footer */}
           <footer className="text-center text-xs text-muted-foreground/60 pt-4">
-            <p>2025 Petrobras. Todos os direitos reservados.</p>
+            <p>© 2026 Petrobras. Todos os direitos reservados.</p>
           </footer>
         </div>
       </div>
