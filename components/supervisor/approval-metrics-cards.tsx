@@ -30,68 +30,68 @@ export function ApprovalMetricsCards({
   onSelect,
 }: ApprovalMetricsCardsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       <Card
-        className={`p-6 relative overflow-hidden card-hover cursor-pointer ${activeFilter === "all" ? "ring-2 ring-primary" : ""}`}
+        className={`p-5 relative overflow-hidden card-hover cursor-pointer border-l-4 border-l-primary ${activeFilter === "all" ? "ring-2 ring-primary" : ""}`}
         onClick={() => onSelect("all")}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary to-secondary opacity-5" />
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <FileText className="h-6 w-6 text-white" />
-            </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-primary to-secondary opacity-[0.07]" />
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-md shrink-0">
+            <FileText className="h-5 w-5 text-white" />
           </div>
-          <p className="text-2xl font-bold text-foreground mb-1">{total}</p>
-          <p className="text-sm text-muted-foreground">Total para Analise</p>
+          <div className="text-right">
+            <p className="text-3xl font-bold text-foreground leading-none mb-1.5">{total}</p>
+            <p className="text-xs text-muted-foreground">Total para Analise</p>
+          </div>
         </div>
       </Card>
 
       <Card
-        className={`p-6 relative overflow-hidden card-hover cursor-pointer ${activeFilter === "pending" ? "ring-2 ring-yellow-500" : ""}`}
+        className={`p-5 relative overflow-hidden card-hover cursor-pointer border-l-4 border-l-amber-500 ${activeFilter === "pending" ? "ring-2 ring-amber-500" : ""}`}
         onClick={() => onSelect("pending")}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-yellow-500 to-orange-500 opacity-5" />
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center">
-              <Clock className="h-6 w-6 text-white" />
-            </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-orange-500 opacity-[0.07]" />
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md shrink-0">
+            <Clock className="h-5 w-5 text-white" />
           </div>
-          <p className="text-2xl font-bold text-foreground mb-1">{pending}</p>
-          <p className="text-sm text-muted-foreground">Pendentes</p>
+          <div className="text-right">
+            <p className="text-3xl font-bold text-amber-600 dark:text-amber-400 leading-none mb-1.5">{pending}</p>
+            <p className="text-xs text-muted-foreground">Pendentes</p>
+          </div>
         </div>
       </Card>
 
       <Card
-        className={`p-6 relative overflow-hidden card-hover cursor-pointer ${activeFilter === "approved" ? "ring-2 ring-green-500" : ""}`}
+        className={`p-5 relative overflow-hidden card-hover cursor-pointer border-l-4 border-l-emerald-500 ${activeFilter === "approved" ? "ring-2 ring-emerald-500" : ""}`}
         onClick={() => onSelect("approved")}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-500 opacity-5" />
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-              <CheckCircle className="h-6 w-6 text-white" />
-            </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-green-500 opacity-[0.07]" />
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center shadow-md shrink-0">
+            <CheckCircle className="h-5 w-5 text-white" />
           </div>
-          <p className="text-2xl font-bold text-foreground mb-1">{approved}</p>
-          <p className="text-sm text-muted-foreground">Aprovados</p>
+          <div className="text-right">
+            <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 leading-none mb-1.5">{approved}</p>
+            <p className="text-xs text-muted-foreground">Aprovados</p>
+          </div>
         </div>
       </Card>
 
       <Card
-        className={`p-6 relative overflow-hidden card-hover cursor-pointer ${activeFilter === "rejected" ? "ring-2 ring-red-500" : ""}`}
+        className={`p-5 relative overflow-hidden card-hover cursor-pointer border-l-4 border-l-red-500 ${activeFilter === "rejected" ? "ring-2 ring-red-500" : ""}`}
         onClick={() => onSelect("rejected")}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-rose-500 opacity-5" />
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-500 flex items-center justify-center">
-              <XCircle className="h-6 w-6 text-white" />
-            </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-rose-500 opacity-[0.07]" />
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-red-500 to-rose-500 flex items-center justify-center shadow-md shrink-0">
+            <XCircle className="h-5 w-5 text-white" />
           </div>
-          <p className="text-2xl font-bold text-foreground mb-1">{rejected}</p>
-          <p className="text-sm text-muted-foreground">Rejeitados</p>
+          <div className="text-right">
+            <p className="text-3xl font-bold text-red-600 dark:text-red-400 leading-none mb-1.5">{rejected}</p>
+            <p className="text-xs text-muted-foreground">Rejeitados</p>
+          </div>
         </div>
       </Card>
     </div>

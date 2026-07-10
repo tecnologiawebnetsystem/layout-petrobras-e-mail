@@ -35,23 +35,37 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <div className="mb-8 mt-4">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-4">
-          <div
-            className={`h-14 w-14 rounded-2xl flex items-center justify-center shadow-lg ${
-              reverseGradient
-                ? "bg-gradient-to-br from-secondary to-primary"
-                : "bg-gradient-to-br from-primary to-secondary"
-            }`}
-          >
-            <Icon className="h-7 w-7 text-white" />
+      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-r from-card via-card to-muted/30 p-6 shadow-sm">
+        {/* Faixa de destaque lateral */}
+        <div
+          className={`absolute inset-y-0 left-0 w-1.5 ${
+            reverseGradient ? "bg-gradient-to-b from-secondary to-primary" : "bg-gradient-to-b from-primary to-secondary"
+          }`}
+          aria-hidden="true"
+        />
+        {/* Brilho decorativo sutil */}
+        <div
+          className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/5 blur-3xl"
+          aria-hidden="true"
+        />
+        <div className="relative flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-4">
+            <div
+              className={`h-14 w-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-300 hover:scale-105 ${
+                reverseGradient
+                  ? "bg-gradient-to-br from-secondary to-primary"
+                  : "bg-gradient-to-br from-primary to-secondary"
+              }`}
+            >
+              <Icon className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground text-balance">{title}</h1>
+              {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground text-balance">{title}</h1>
-            {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
-          </div>
+          {actions && <div className="flex items-center gap-2">{actions}</div>}
         </div>
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
     </div>
   )
