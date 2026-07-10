@@ -1,17 +1,21 @@
 "use client"
 
-import { Suspense, useEffect, useRef } from "react"
+import { Suspense, useEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import { FullPageLoader } from "@/components/ui/full-page-loader"
 import { useAuthStore } from "@/lib/stores/auth-store"
-import { mapRoleToUserType, resolvePostLoginRoute } from "@/lib/auth/cav4-config"
+import { getRedirectMessage, mapRoleToUserType, resolvePostLoginRoute } from "@/lib/auth/cav4-config"
 
 function CAv4CallbackContent() {
   const router = useRouter()
   const params = useSearchParams()
   const { setAuth } = useAuthStore()
   const processed = useRef(false)
+  const [loaderMessage, setLoaderMessage] = useState("Validando seu acesso corporativo")
+  const [loaderSubMessage, setLoaderSubMessage] = useState(
+    "Estamos confirmando suas credenciais com a Petrobras. Isso leva apenas alguns segundos.",
+  )
 
   useEffect(() => {
     if (processed.current) return
@@ -73,6 +77,8 @@ function CAv4CallbackContent() {
           data.refresh_token,
         )
 
+        setLoaderMessage(getRedirectMessage(userType))
+        setLoaderSubMessage("Acesso confirmado. Preparando seu ambiente de trabalho.")
         router.replace(resolvePostLoginRoute(userType))
       } catch {
         router.replace("/?error=auth_failed")
@@ -83,10 +89,7 @@ function CAv4CallbackContent() {
   }, [params, router, setAuth])
 
   return (
-    <FullPageLoader
-      message="Autenticando no CAv4..."
-      subMessage="Aguarde enquanto finalizamos seu acesso"
-    />
+    <FullPageLoader message={loaderMessage} subMessage={loaderSubMessage} />
   )
 }
 
@@ -95,8 +98,8 @@ export default function CAv4CallbackPage() {
     <Suspense
       fallback={
         <FullPageLoader
-          message="Carregando..."
-          subMessage="Preparando autenticacao"
+          message="Preparando seu acesso"
+          subMessage="Aguarde um instante enquanto iniciamos a autenticacao."
         />
       }
     >

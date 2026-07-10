@@ -29,6 +29,19 @@ export function resolvePostLoginRoute(userType: FrontendUserType): string {
   return "/upload"
 }
 
+// Rotulo amigavel do perfil, usado nas mensagens de loading/redirecionamento.
+export function getUserTypeLabel(userType: FrontendUserType): string {
+  if (userType === "admin") return "Administrador"
+  if (userType === "supervisor") return "Supervisor"
+  if (userType === "external") return "Usuario Externo"
+  return "Remetente"
+}
+
+// Mensagem dinamica exibida enquanto o usuario e direcionado para a sua area.
+export function getRedirectMessage(userType: FrontendUserType): string {
+  return `Redirecionando para a area de ${getUserTypeLabel(userType)}...`
+}
+
 // Helper utilitário para cenários em que o fluxo precisar ser client-driven.
 // No desenho atual do projeto, o PKCE principal é gerado no backend.
 export async function generatePkcePair(): Promise<{
