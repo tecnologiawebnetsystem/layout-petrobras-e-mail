@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { useAuthStore } from "@/lib/stores/auth-store"
-import { resolvePostLoginRoute, type FrontendUserType } from "@/lib/auth/cav4-config"
+import { getRedirectMessage, resolvePostLoginRoute, type FrontendUserType } from "@/lib/auth/cav4-config"
 
 type GateStatus = "checking" | "redirecting" | "unauthenticated"
 
@@ -29,6 +29,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const clearAuth = useAuthStore((s) => s.clearAuth)
 
   const [status, setStatus] = useState<GateStatus>("checking")
+  // Perfil para o qual o usuario esta sendo direcionado (mensagem dinamica).
+  const [targetType, setTargetType] = useState<FrontendUserType | null>(null)
   // Evita rodar a verificacao mais de uma vez (StrictMode / re-renders).
   const checkedRef = useRef(false)
 
@@ -50,7 +52,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
       if (!active) return
 
       if (valid) {
-        const dest = resolvePostLoginRoute(user.userType as FrontendUserType)
+        const userType = user.userType as FrontendUserType
+        const dest = resolvePostLoginRoute(userType)
+        setTargetType(userType)
         setStatus("redirecting")
         router.replace(dest)
       } else {
@@ -86,9 +90,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
         <div className="flex items-center gap-3 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden="true" />
           <span className="text-sm font-medium">
-            {status === "redirecting"
-              ? "Acesso confirmado. Redirecionando..."
-              : "Verificando sua sessao..."}
+            {status === "redirecting" && targetType
+              ? getRedirectMessage(targetType)
+              : status === "redirecting"
+                ? "Acesso confirmado. Redirecionando..."
+                : "Verificando sua sessao..."}
           </span>
         </div>
       </div>
