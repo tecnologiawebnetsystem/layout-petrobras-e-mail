@@ -84,8 +84,8 @@ function CAv4CallbackContent() {
 
   return (
     <FullPageLoader
-      message="Autenticando no CAv4..."
-      subMessage="Aguarde enquanto finalizamos seu acesso"
+      message="Validando seu acesso corporativo"
+      subMessage="Estamos confirmando suas credenciais com a Petrobras. Isso leva apenas alguns segundos."
     />
   )
 }
@@ -95,8 +95,8 @@ export default function CAv4CallbackPage() {
     <Suspense
       fallback={
         <FullPageLoader
-          message="Carregando..."
-          subMessage="Preparando autenticacao"
+          message="Preparando seu acesso"
+          subMessage="Aguarde um instante enquanto iniciamos a autenticacao."
         />
       }
     >
