@@ -7,25 +7,21 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 import { useWorkflowStore } from "@/lib/stores/workflow-store";
 import { AppHeader } from "@/components/shared/app-header";
 import { DragDropZone } from "@/components/upload/drag-drop-zone";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { NotificationModal } from "@/components/shared/notification-modal";
-import { Lock, Send, Sparkles, Clock } from "lucide-react";
+import { Send, Sparkles } from "lucide-react";
 import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard";
 import type { FileDetail } from "@/components/dashboard/metric-detail-modal";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav";
 import { ScrollToTop } from "@/components/shared/scroll-to-top";
 import { UploadSuccessModal } from "@/components/upload/upload-success-modal";
 import { ProtectedRoute } from "@/components/auth/protected-route";
+import { PageHeader } from "@/components/shared/page-header";
+import { ApproverInfoCard } from "@/components/sender/approver-info-card";
+import { RecipientField } from "@/components/upload/recipient-field";
+import { ExpirationSelect } from "@/components/upload/expiration-select";
 
 export default function UploadPage() {
   const { user, isAuthenticated, _hasHydrated, accessToken } = useAuthStore();
@@ -322,18 +318,11 @@ export default function UploadPage() {
             dashboardLink="/upload"
           />
 
-          {/* Header com gradiente */}
-          <div className="mb-8 mt-4">
-            <div className="flex items-center gap-4 mb-2">
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
-                <Sparkles className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">Transferencia Segura de Arquivos</h1>
-                <p className="text-muted-foreground">Envie documentos para destinatarios externos com seguranca</p>
-              </div>
-            </div>
-          </div>
+          <PageHeader
+            icon={Sparkles}
+            title="Transferencia Segura de Arquivos"
+            subtitle="Envie documentos para destinatarios externos com seguranca"
+          />
 
           <MetricsDashboard
             {...uploadStats}
@@ -343,105 +332,13 @@ export default function UploadPage() {
 
           <div className="bg-card/50 backdrop-blur-sm rounded-2xl shadow-xl border p-10 space-y-8 relative overflow-hidden mt-8">
             <form onSubmit={handleSubmit} className="space-y-7">
-              {user?.userType === "supervisor" && (
-                <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-5 space-y-2">
-                  <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Sparkles className="h-4 w-4 text-green-600" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="font-medium text-green-800 dark:text-green-400">
-                        Aprovação automática
-                      </p>
-                      <p className="text-sm text-green-700 dark:text-green-500 leading-relaxed">
-                        Como supervisor, este compartilhamento será aprovado imediatamente e o destinatário receberá acesso aos arquivos assim que o envio for concluído.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {user?.userType !== "supervisor" && user?.manager && (
-                <div className="bg-muted/30 border border-border/50 rounded-xl p-5 space-y-3">
-                  <Label className="text-base font-medium flex items-center gap-2">
-                    <Lock className="h-4 w-4 text-secondary" />
-                    Aprovador
-                  </Label>
-                  <div className="bg-background/50 rounded-lg p-4 space-y-2">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <p className="font-semibold text-foreground">
-                          {user.manager.name}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {user.manager.email}
-                        </p>
-                        {user.manager.jobTitle && (
-                          <p className="text-sm text-muted-foreground">
-                            <span className="font-medium">Cargo:</span>{" "}
-                            {user.manager.jobTitle}
-                          </p>
-                        )}
-                        {user.manager.department && (
-                          <p className="text-sm text-muted-foreground">
-                            <span className="font-medium">Departamento:</span>{" "}
-                            {user.manager.department}
-                          </p>
-                        )}
-                      </div>
-                      <div className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-medium">
-                        Supervisor Direto
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Este compartilhamento será enviado para aprovação do seu
-                    supervisor direto.
-                  </p>
-                </div>
-              )}
-              {user?.userType !== "supervisor" && !user?.manager && (
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-5 space-y-2">
-                  <div className="flex items-start gap-3">
-                    <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-blue-600 font-bold text-sm">i</span>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="font-medium text-blue-800 dark:text-blue-500">
-                        Supervisor não identificado
-                      </p>
-                      <p className="text-sm text-blue-700 dark:text-blue-600 leading-relaxed">
-                        Não foi possível identificar seu supervisor no Active
-                        Directory. Você pode continuar com o compartilhamento,
-                        mas recomendamos entrar em contato com o RH ou TI para
-                        atualizar seu cadastro hierárquico.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <ApproverInfoCard userType={user?.userType} manager={user?.manager} />
 
-              <div className="space-y-3">
-                <Label
-                  htmlFor="recipient"
-                  className="text-base font-medium flex items-center gap-2"
-                >
-                  <Lock className="h-4 w-4 text-primary" />
-                  Destinatário Externo
-                </Label>
-                <Input
-                  id="recipient"
-                  type="email"
-                  placeholder="cliente@empresa.com"
-                  value={recipient}
-                  onChange={(e) => setRecipient(e.target.value)}
-                  required
-                  aria-label="E-mail do destinatário"
-                  disabled={isLoading || showSuccess}
-                />
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  O destinatário receberá um email com link seguro para download
-                </p>
-              </div>
+              <RecipientField
+                value={recipient}
+                onChange={setRecipient}
+                disabled={isLoading || showSuccess}
+              />
               <div className="space-y-3">
                 <Label className="text-base font-medium">Anexar Arquivos</Label>
                 <DragDropZone
@@ -451,39 +348,11 @@ export default function UploadPage() {
                   aria-label="Área para anexar arquivos"
                 />
               </div>
-              <div className="space-y-3">
-                <Label
-                  htmlFor="expiration"
-                  className="text-base font-medium flex items-center gap-2"
-                >
-                  <Clock className="h-4 w-4 text-accent" />
-                  Tempo de Disponibilidade
-                </Label>
-                <Select
-                  value={expirationHours.toString()}
-                  onValueChange={(v) => setExpirationHours(Number(v))}
-                  disabled={isLoading || showSuccess}
-                  aria-label="Tempo de disponibilidade dos arquivos"
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="24">24 horas (1 dia)</SelectItem>
-                    <SelectItem value="48">48 horas (2 dias)</SelectItem>
-                    <SelectItem value="72">72 horas (3 dias)</SelectItem>
-                    <SelectItem value="96">96 horas (4 dias)</SelectItem>
-                    <SelectItem value="120">120 horas (5 dias)</SelectItem>
-                    <SelectItem value="144">144 horas (6 dias)</SelectItem>
-                    <SelectItem value="168">168 horas (7 dias)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Os arquivos ficarão disponíveis para download por{" "}
-                  {expirationHours} horas após a aprovação. Máximo: 168 horas (7
-                  dias).
-                </p>
-              </div>
+              <ExpirationSelect
+                value={expirationHours}
+                onChange={setExpirationHours}
+                disabled={isLoading || showSuccess}
+              />
               <div className="space-y-3">
                 <Label htmlFor="description" className="text-base font-medium">
                   Descrição do Envio (obrigatório)
