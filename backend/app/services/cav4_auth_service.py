@@ -14,6 +14,12 @@ from fastapi import HTTPException
 
 from app.core.config import settings
 
+_CAV4_CODE_TO_ROLE: dict[str, str] = {
+    "cd_papel_auditor":    "auditor",
+    "cd_papel_supervisor": "supervisor",
+    "cd_papel_usuario":    "internal",
+}
+
 _OIDC_CACHE: dict[str, Any] = {}
 _JWKS_CLIENT: jwt.PyJWKClient | None = None
 
@@ -249,7 +255,7 @@ def _normalize_role_name(value: Any) -> str:
 
 
 def _extract_role_names(raw_roles: Any) -> list[str]:
-    """Normaliza payload de roles do CAv4 para lista de nomes em lowercase."""
+    """Extrai nomes de roles do payload CAv4, preservando o case original."""
     if not raw_roles:
         return []
 
@@ -275,12 +281,12 @@ def _extract_role_names(raw_roles: Any) -> list[str]:
                     or item.get("id")
                 )
                 if name:
-                    result.append(_normalize_role_name(name))
+                    result.append(str(name).strip())
             else:
-                result.append(_normalize_role_name(item))
+                result.append(str(item).strip())
         return [r for r in result if r]
 
-    return [_normalize_role_name(raw_roles)]
+    return [str(raw_roles).strip()]
 
 
 def get_cav4_roles(login: str, access_token: str) -> list[str]:
@@ -305,6 +311,22 @@ def get_cav4_roles(login: str, access_token: str) -> list[str]:
             status_code=403 if resp.status_code in (401, 403) else 502,
             detail=f"Falha ao consultar roles no CAv4: {resp.status_code}",
         )
+        
+    import logging
+
+    logging.getLogger(__name__).info(
+        "CAV4_ROLES_RAW: %s",
+        resp.json()
+    )
+
+    roles = _extract_role_names(resp.json())
+
+    logging.getLogger(__name__).info(
+        "CAV4_ROLES_EXTRAIDAS: %s",
+        roles
+    )
+
+    return roles
 
     return _extract_role_names(resp.json())
 
@@ -444,46 +466,76 @@ def get_cav4_user_details(login: str, access_token: str) -> dict[str, Any]:
 
 
 def resolve_access_from_cav4_roles(roles: list[str]) -> dict[str, Any]:
-    """Mapeia roles CAv4 para perfil interno da aplicacao (admin/supervisor/internal)."""
+    """Mapeia roles CAv4 para perfil interno da aplicacao."""
+    import logging
+
+    logging.getLogger(__name__).info(
+        "RESOLVE_ACCESS_ROLES: %s",
+        roles
+    )
+
     role_set = set(_normalize_role_name(r) for r in roles)
-    admin_names = set(_normalize_role_name(r) for r in settings.cav4_admin_role_names)
+
+    # ── 1. Mapeamento direto por código CAV4 (prioridade máxima) ─────────────
+    priority_order = ["auditor", "supervisor", "internal"]
+    for target_role in priority_order:
+        for normalized in role_set:
+            if _CAV4_CODE_TO_ROLE.get(normalized) == target_role:       
+                is_admin     = target_role in ("auditor", "admin")
+                is_supervisor = target_role == "supervisor"
+                # tirar depois
+                logging.getLogger(__name__).info(
+                    "ROLE_RESOLVIDA: %s",
+                    target_role
+                )
+                
+                
+                frontend_role = target_role
+
+                if target_role == "auditor":
+                    frontend_role = "admin"
+
+                return {                    
+                    "authorized": True,
+                    "role": frontend_role,
+                    "cav4_role": target_role,
+                    "is_admin": is_admin,
+                    "is_supervisor": is_supervisor,
+                    "source": "cav4_direct_code",
+                }
+
+    # ── 2. Fallback: comparação por settings (comportamento original) ─────────
+    admin_names      = set(_normalize_role_name(r) for r in settings.cav4_admin_role_names)
     supervisor_names = set(_normalize_role_name(r) for r in settings.cav4_supervisor_role_names)
-    internal_names = set(_normalize_role_name(r) for r in settings.cav4_internal_role_names)
+    internal_names   = set(_normalize_role_name(r) for r in settings.cav4_internal_role_names)
 
     if role_set & admin_names:
-        return {
-            "authorized": True,
-            "role": "admin",
-            "is_admin": True,
-            "is_supervisor": False,
-            "source": "cav4_roles",
-        }
-
+        logging.getLogger(__name__).info(
+            "ROLE_RESOLVIDA: %s",
+            target_role
+        )
+        return {"authorized": True, "role": "admin",
+                "is_admin": True, "is_supervisor": False, "source": "cav4_roles"}
     if role_set & supervisor_names:
-        return {
-            "authorized": True,
-            "role": "supervisor",
-            "is_admin": False,
-            "is_supervisor": True,
-            "source": "cav4_roles",
-        }
-
+        logging.getLogger(__name__).info(
+            "ROLE_RESOLVIDA: %s",
+            target_role
+        )
+        return {"authorized": True, "role": "supervisor",
+                "is_admin": False, "is_supervisor": True, "source": "cav4_roles"}
     if role_set & internal_names:
-        return {
-            "authorized": True,
-            "role": "internal",
-            "is_admin": False,
-            "is_supervisor": False,
-            "source": "cav4_roles",
-        }
-
-    return {
-        "authorized": False,
-        "role": None,
-        "is_admin": False,
-        "is_supervisor": False,
-        "source": "cav4_roles",
-    }
+        logging.getLogger(__name__).info(
+            "ROLE_RESOLVIDA: %s",
+            target_role
+        )
+        return {"authorized": True, "role": "internal",
+                "is_admin": False, "is_supervisor": False, "source": "cav4_roles"}
+        logging.getLogger(__name__).info(
+            "ROLE_RESOLVIDA: %s",
+            target_role
+        )
+    return {"authorized": False, "role": None,
+            "is_admin": False, "is_supervisor": False, "source": "cav4_roles"}
 
 
 def add_role_to_user(login: str, role_code: str, access_token: str) -> bool:
@@ -494,7 +546,7 @@ def add_role_to_user(login: str, role_code: str, access_token: str) -> bool:
     
     Args:
         login: matrícula/login do usuário (onPremisesSamAccountName)
-        role_code: código do papel (ex: "cd_papel_supervisor")
+        role_code: código do papel (ex: "CD_PAPEL_SUPERVISOR")
         access_token: token de acesso CAv4 com permissões de admin
     
     Returns:
@@ -636,7 +688,7 @@ def remove_role_from_user(login: str, role_code: str, access_token: str) -> bool
     
     Args:
         login: matrícula/login do usuário (onPremicesSamAccountName)
-        role_code: código do papel (ex: "cd_papel_supervisor")
+        role_code: código do papel (ex: "CD_PAPEL_SUPERVISOR")
         access_token: token de acesso CAv4 com permissões de admin
     
     Returns:

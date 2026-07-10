@@ -12,7 +12,7 @@ import shutil
 import os
 
 from app.db.session import get_session
-from app.utils.authz import require_supervisor, get_current_user
+from app.utils.authz import require_supervisor, get_current_user, require_permission
 from app.services.token_service import (
     deactivate_external_if_no_active_share,
     deactivate_supervisor_if_no_pending,
@@ -62,7 +62,7 @@ def get_pending_files(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     session: Session = Depends(get_session),
-    user: User = Depends(require_supervisor),
+    user: User = Depends(require_permission("shares:read")),
     request: Request = None,
 ):
     """
@@ -191,7 +191,7 @@ async def approve_file(
     payload: ApproveRequest,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
-    user: User = Depends(require_supervisor),
+    user: User = Depends(require_permission("shares:approve")),
     request: Request = None,
 ):
     """
@@ -307,7 +307,7 @@ async def reject_file(
     payload: RejectRequest,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
-    user: User = Depends(require_supervisor),
+    user: User = Depends(require_permission("shares:reject")),
     request: Request = None,
 ):
     """
@@ -420,7 +420,7 @@ def extend_expiration(
     file_id: int,
     payload: ExtendRequest,
     session: Session = Depends(get_session),
-    user: User = Depends(require_supervisor),
+    user: User = Depends(require_permission("shares:extend")),
     request: Request = None,
 ):
     """
@@ -489,7 +489,7 @@ def extend_expiration(
 def relatorio_area(
     area_id: int,
     session: Session = Depends(get_session),
-    user: User = Depends(require_supervisor),
+    user: User = Depends(require_permission("report:read")),
     request: Request = None,
 ):
     """
@@ -553,7 +553,7 @@ async def approve_share_legacy(
     share_id: int,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
-    user: User = Depends(require_supervisor),
+    user: User = Depends(require_permission("shares:approve")),
     request: Request = None,
 ):
     """Endpoint legado - redireciona para novo endpoint."""
@@ -629,7 +629,7 @@ def get_supervisor_shares(
     page: int = Query(1, ge=1),
     limit: int = Query(100, ge=1, le=200),
     session: Session = Depends(get_session),
-    user: User = Depends(require_supervisor),
+    user: User = Depends(require_permission("shares:read")),
     request: Request = None,
 ):
     """
@@ -757,7 +757,7 @@ def get_supervisor_shares(
 def get_share_email_logs_supervisor(
     share_id: int,
     session: Session = Depends(get_session),
-    user: User = Depends(require_supervisor),
+    user: User = Depends(require_permission("shares:read")),
     request: Request = None,
 ):
     """
@@ -806,7 +806,7 @@ async def resend_approval_notification(
     share_id: int,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
-    user: User = Depends(require_supervisor),
+    user: User = Depends(require_permission("shares:resend")),
     request: Request = None,
 ):
     """
@@ -892,7 +892,7 @@ async def remove_share_file(
     share_file_id: int,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
-    user: User = Depends(require_supervisor),
+    user: User = Depends(require_permission("shares:file:delete")),
     request: Request = None,
 ):
     """
@@ -1011,7 +1011,7 @@ def sanitize_filename(filename: str) -> str:
 def download_share_zip(
     share_id: int,
     session: Session = Depends(get_session),
-    user: User = Depends(require_supervisor),
+    user: User = Depends(require_permission("shares:download")),
     request: Request = None,
 ):
     """

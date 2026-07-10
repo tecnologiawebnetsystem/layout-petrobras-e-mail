@@ -25,7 +25,7 @@ from app.models.share_file import ShareFile
 from app.models.user import User
 from app.schemas.file_schema import FileCreate, FileRead
 from app.services.audit_service import log_event
-from app.utils.authz import get_current_user
+from app.utils.authz import get_current_user, require_permission
 from app.core.aws_utils import generate_presigned_upload, generate_presigned_download
 from app.services.s3_service import delete_object, S3ServiceError, get_s3_client, build_upload_key, sanitize_filename, S3_BUCKET
 from app.core.config import settings
@@ -50,7 +50,7 @@ def list_files(
     order: str = Query("desc"),
     area_id: Optional[int] = Query(None),
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("shares:read")),
     request: Request = None,
 ):
     """
@@ -161,7 +161,7 @@ def list_files(
 def get_file_details(
     file_id: int,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("shares:read")),
     request: Request = None,
 ):
     """
@@ -278,7 +278,7 @@ async def upload_files(
     description: Optional[str] = Form(None),
     expirationHours: int = Form(72),
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("shares:create")),
     request: Request = None,
 ):
     """
@@ -411,7 +411,7 @@ async def upload_files(
 def cancel_file(
     file_id: int,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("shares:cancel")),
     request: Request = None,
 ):
     """
@@ -470,6 +470,7 @@ def cancel_file(
 def create_metadata(
     payload: FileCreate,
     session: Session = Depends(get_session),
+    current_user: User = Depends(require_permission("file:upload")),
     request: Request = None,
 ):
     """Cria metadados de arquivo."""
@@ -510,6 +511,7 @@ def upload_local(
     upload_id: int,
     file: UploadFile = File(...),
     session: Session = Depends(get_session),
+    current_user: User = Depends(require_permission("file:upload")),
     request: Request = None
 ):
     """Upload local para desenvolvimento."""
@@ -554,6 +556,7 @@ def presigned_upload(
     file_id: int,
     expires_in: int = 600,
     session: Session = Depends(get_session),
+    current_user: User = Depends(require_permission("file:upload")),
     request: Request = None
 ):
     """
@@ -586,6 +589,7 @@ def presigned_download(
     file_id: int,
     expires_in: int = 300,
     session: Session = Depends(get_session),
+    current_user: User = Depends(require_permission("shares:download")),
     request: Request = None
 ):
     """

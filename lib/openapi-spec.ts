@@ -22,9 +22,9 @@ Esta API permite:
 
 A API suporta dois métodos de autenticação:
 
-1. **Microsoft Entra ID** (usuários internos/supervisores)
-   - Token Bearer obtido via MSAL
-   - Header: \`Authorization: Bearer {token}\`
+1. **JWT corporativo (CAv4)** (usuários internos/supervisores)
+  - Token Bearer emitido pelo backend
+  - Header: \`Authorization: Bearer {token}\`
 
 2. **OTP por Email** (usuários externos)
    - Código de 6 dígitos enviado por email
@@ -71,7 +71,7 @@ Usuário Interno → Cria Share → Supervisor Aprova → Usuário Externo Baixa
   tags: [
     {
       name: "Authentication",
-      description: "Autenticação de usuários (Entra ID e OTP)"
+      description: "Autenticação de usuários (CAv4 e OTP)"
     },
     {
       name: "Shares",
@@ -102,89 +102,6 @@ Usuário Interno → Cria Share → Supervisor Aprova → Usuário Externo Baixa
     // ============================================
     // AUTHENTICATION
     // ============================================
-    "/auth/entra/validate": {
-      post: {
-        tags: ["Authentication"],
-        summary: "Validar token Entra ID",
-        description: `
-Valida token do Microsoft Entra ID e cria sessão para usuário interno/supervisor.
-
-**Fluxo:**
-1. Frontend faz login com Microsoft (MSAL)
-2. Frontend envia token e dados extraídos
-3. Backend valida e determina tipo de usuário
-4. Backend cria sessão e retorna token
-        `,
-        operationId: "validateEntraToken",
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/EntraTokenValidationRequest" },
-              example: {
-                access_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Ik...",
-                id_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ik...",
-                email: "joao.silva@petrobras.com.br",
-                name: "João Silva",
-                job_title: "Analista de Sistemas",
-                department: "TI - Desenvolvimento",
-                employee_id: "P12345",
-                manager: {
-                  id: "mgr-001",
-                  name: "Maria Santos",
-                  email: "maria.santos@petrobras.com.br",
-                  job_title: "Gerente de TI"
-                },
-                photo_url: "https://graph.microsoft.com/v1.0/me/photo/$value"
-              }
-            }
-          }
-        },
-        responses: {
-          "200": {
-            description: "Token validado com sucesso",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/EntraTokenValidationResponse" },
-                example: {
-                  success: true,
-                  user_id: "usr-12345-abcde",
-                  email: "joao.silva@petrobras.com.br",
-                  name: "João Silva",
-                  user_type: "internal",
-                  job_title: "Analista de Sistemas",
-                  department: "TI - Desenvolvimento",
-                  manager: {
-                    id: "mgr-001",
-                    name: "Maria Santos",
-                    email: "maria.santos@petrobras.com.br"
-                  },
-                  session_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                  session_expires_at: "2026-01-21T18:00:00.000Z",
-                  permissions: ["view_own_shares", "create_shares", "cancel_own_shares"]
-                }
-              }
-            }
-          },
-          "403": {
-            description: "Domínio de email não autorizado",
-            content: {
-              "application/json": {
-                example: { detail: "Domínio de email não autorizado" }
-              }
-            }
-          },
-          "500": {
-            description: "Erro interno",
-            content: {
-              "application/json": {
-                example: { detail: "Erro ao validar token: {mensagem}" }
-              }
-            }
-          }
-        }
-      }
-    },
     "/auth/external/verify": {
       post: {
         tags: ["Authentication"],
@@ -1213,7 +1130,7 @@ Faz upload de arquivos para um compartilhamento.
         type: "http",
         scheme: "bearer",
         bearerFormat: "JWT",
-        description: "Token JWT obtido via login Entra ID"
+        description: "Token JWT obtido via login corporativo CAv4"
       },
       externalAuth: {
         type: "http",
@@ -1223,37 +1140,6 @@ Faz upload de arquivos para um compartilhamento.
       }
     },
     schemas: {
-      EntraTokenValidationRequest: {
-        type: "object",
-        required: ["access_token", "email", "name"],
-        properties: {
-          access_token: { type: "string", description: "Token de acesso do Entra ID" },
-          id_token: { type: "string", description: "Token de ID do Entra ID" },
-          email: { type: "string", format: "email" },
-          name: { type: "string" },
-          job_title: { type: "string" },
-          department: { type: "string" },
-          employee_id: { type: "string" },
-          manager: { $ref: "#/components/schemas/ManagerInfo" },
-          photo_url: { type: "string" }
-        }
-      },
-      EntraTokenValidationResponse: {
-        type: "object",
-        properties: {
-          success: { type: "boolean" },
-          user_id: { type: "string" },
-          email: { type: "string" },
-          name: { type: "string" },
-          user_type: { type: "string", enum: ["internal", "supervisor"] },
-          job_title: { type: "string" },
-          department: { type: "string" },
-          manager: { $ref: "#/components/schemas/ManagerInfo" },
-          session_token: { type: "string" },
-          session_expires_at: { type: "string", format: "date-time" },
-          permissions: { type: "array", items: { type: "string" } }
-        }
-      },
       ExternalVerifyRequest: {
         type: "object",
         required: ["email"],

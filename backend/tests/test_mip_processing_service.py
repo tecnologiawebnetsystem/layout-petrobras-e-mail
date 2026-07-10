@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from app.services import mip_processing_service as svc
+import pytest
 
+from app.services import mip_processing_service as svc
+import pytest 
 
 def test_returns_disabled_when_feature_flag_off(monkeypatch):
     monkeypatch.setattr(svc.settings, "mip_processing_enabled", False)
@@ -16,11 +18,17 @@ def test_fail_closed_for_unsupported_extension(monkeypatch):
     monkeypatch.setattr(svc.settings, "mip_processing_enabled", True)
     monkeypatch.setattr(svc.settings, "mip_fail_closed", True)
 
-    try:
+    """ try:
         svc.process_upload_file(filename="arquivo.exe", content_bytes=b"abc")
         assert False, "Era esperado MipProcessingPolicyError"
     except svc.MipProcessingPolicyError as exc:
-        assert "nao suportada" in str(exc)
+        assert exc.value.error_code == "MIP_UNSUPPORTED_EXTENSION" """
+    
+    with pytest.raises(svc.MipProcessingPolicyError) as exc:
+        svc.process_upload_file(filename="arquivo.exe", content_bytes=b"abc")
+
+    assert exc.value.error_code == "MIP_UNSUPPORTED_EXTENSION"
+
 
 
 def test_process_success_with_adapter(monkeypatch):

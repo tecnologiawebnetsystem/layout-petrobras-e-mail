@@ -52,10 +52,9 @@ export function LoginForm() {
   const searchParams = useSearchParams();
   const { setAuth, isAuthenticated, user } = useAuthStore();
 
-  const AUTH_MODE = getClientEnv("NEXT_PUBLIC_AUTH_MODE") || "entra";
-  const isEntraMode = AUTH_MODE === "entra";
+  const AUTH_MODE = getClientEnv("NEXT_PUBLIC_AUTH_MODE") || "cav4";
   const isCav4Mode = AUTH_MODE === "cav4";
-  const isLocalMode = !isEntraMode && !isCav4Mode;
+  const isLocalMode = !isCav4Mode;
 
   // Guard: se já autenticado, redirecionar para a página correta
   useEffect(() => {
@@ -78,9 +77,7 @@ export function LoginForm() {
     const message =
       errorParam === "auth_failed"
         ? "Falha na autenticação. Tente novamente."
-        : errorParam === "msal_state_mismatch"
-          ? "Sessão expirada. Tente novamente em uma aba anônima."
-          : errorParam;
+        : errorParam;
     setNotification({
       show: true,
       type: "error",
@@ -297,37 +294,6 @@ export function LoginForm() {
     }
   };
 
-  // ─── Fluxo Interno (Entra ID via backend) ─────────────────────────────
-
-  const handleEntraIdLogin = async () => {
-    // Mostra o FullPageLoader imediatamente ao clicar
-    setIsRedirectingToMicrosoft(true);
-    setIsLoading(true);
-    try {
-      // Verifica se o backend esta acessivel antes de redirecionar
-      const backendOk = await isBackendAvailable();
-      if (!backendOk) {
-        throw new Error(
-          "Servidor indisponivel. O login requer o backend ativo. Tente novamente em alguns instantes.",
-        );
-      }
-      // O browser sera redirecionado — o estado de loading permanece ate o redirect.
-    } catch (error: unknown) {
-      setIsLoading(false);
-      setIsRedirectingToMicrosoft(false);
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Nao foi possivel iniciar o login com a Microsoft.";
-      setNotification({
-        show: true,
-        type: "error",
-        title: "Erro ao autenticar",
-        message,
-      });
-    }
-  };
-
   // ─── Submit handler ───────────────────────────────────────────────────
 
   const handleSubmit = async (e: FormEvent) => {
@@ -342,13 +308,13 @@ export function LoginForm() {
       await handleLocalLogin();
       return;
     }
-    // Modo Entra ID: orienta uso do botao Microsoft
+    // Modo corporativo: orienta uso do botao de login corporativo
     setNotification({
       show: true,
       type: "info",
       title: "Acessar com e-mail institucional",
       message:
-        "Colaboradores Petrobras devem usar o botao 'Login com Microsoft' abaixo para acessar o sistema.",
+        "Colaboradores Petrobras devem usar o botao 'Login corporativo' abaixo para acessar o sistema.",
     });
   };
 
@@ -554,7 +520,7 @@ export function LoginForm() {
             )}
           </form>
 
-          {/* Botao Login com Microsoft (Entra ID via backend) — apenas modo entra */}
+          {/* Botao Login corporativo (CAv4 backend-driven) */}
           {!isLocalMode && (
             <div className="space-y-4">
               <div className="relative">
@@ -581,12 +547,6 @@ export function LoginForm() {
                 type="button"
                 variant="outline"
                 onClick={async () => {
-                  if (isEntraMode) {
-                    await handleEntraIdLogin();
-                    return;
-                  }
-
-                  // Modo CAv4: fluxo backend-driven via redirect BFF.
                   setIsRedirectingToMicrosoft(true);
                   setIsLoading(true);
                   try {

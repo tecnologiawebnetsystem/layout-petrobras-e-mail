@@ -5,6 +5,8 @@ from types import SimpleNamespace
 
 from app.core.config import settings
 from app.api.v1 import routes_cav4_auth as cav4_routes
+from app.models.user import TypeUser
+from app.utils.session_jwt import create_session_jwt
 
 
 def test_cav4_login_requires_auth_mode(client):
@@ -99,7 +101,7 @@ def test_cav4_token_exchange_success_contract(client, monkeypatch):
     monkeypatch.setattr(
         cav4_routes,
         "issue_internal_tokens",
-        lambda session, user, request: {
+        lambda session, user, request, *args, **kwargs: {
             "access_token": "jwt-interno",
             "refresh_token": "refresh-interno",
             "expires_in": 3600,
@@ -122,3 +124,54 @@ def test_cav4_token_exchange_success_contract(client, monkeypatch):
     assert data["user"]["id"] == 99
     assert data["user"]["role"] == "admin"
     assert data["user"]["is_admin"] is True
+
+
+def test_cav4_graph_me_returns_graph_payload(client, monkeypatch, session):
+    monkeypatch.setattr(settings, "auth_mode", "cav4")
+
+    user = cav4_routes.User(
+        id=7,
+        name="Usuaria Teste",
+        email="usuaria@petrobras.com.br",
+        type=TypeUser.INTERNAL,
+        status=True,
+        login_cav4="GFZ3",
+        employee_id="GFZ3",
+    )
+    session.add(user)
+    session.commit()
+
+    token = create_session_jwt(
+        user_id=user.id,
+        email=user.email,
+        user_type=user.type,
+        is_supervisor=False,
+        is_admin=False,
+        expires_minutes=60,
+    )
+
+    monkeypatch.setattr(
+        cav4_routes,
+        "enrich_graph_profile_by_upn",
+        lambda upn, employee_id=None: {
+            "job_title": "Analista",
+            "department": "TI",
+            "employee_id": employee_id,
+            "login_cav4": employee_id,
+            "manager_email": "gestora@petrobras.com.br",
+            "manager_name": "Gestora Teste",
+            "manager_job_title": "Gerente",
+            "manager_employee_id": "GM01",
+            "photo_url": None,
+        },
+    )
+
+    response = client.get(
+        "/api/v1/auth/cav4/graph-me",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["user"]["email"] == "usuaria@petrobras.com.br"
+    assert data["graph"]["manager_job_title"] == "Gerente"

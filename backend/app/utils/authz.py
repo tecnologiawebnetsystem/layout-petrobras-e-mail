@@ -7,6 +7,8 @@ from datetime import datetime, UTC
 from app.db.session import get_session
 from app.models.user import User, TypeUser
 from app.utils.session_jwt import decode_app_jwt
+from app.utils.logger import logger
+
 
 # Security scheme para Bearer token (obrigatorio)
 security = HTTPBearer(auto_error=False)
@@ -63,6 +65,7 @@ def get_current_user(
     user_id = data.get("user_id")
     email = data.get("email")
 
+    
     user = None
     if user_id:
         user = session.get(User, user_id)
@@ -71,9 +74,14 @@ def get_current_user(
 
     if not user:
         raise HTTPException(status_code=401, detail="Usuario nao encontrado.")
-
+    
+    
     if not user.status:
         raise HTTPException(status_code=403, detail="Usuario desativado.")
+    
+    # Adicionado para buscar role e permissions
+    object.__setattr__(user, "permissions", data.get("permissions") or [])
+    object.__setattr__(user, "roles", data.get("roles") or [])
 
     return user
 
@@ -110,3 +118,25 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Acesso restrito a administradores.")
     return user
+
+def require_permission(permission: str):
+    def dependency(user: User = Depends(get_current_user)):
+    
+        allowed = False    
+        if "*" in getattr(user, "permissions", []):
+            allowed = True    
+        elif permission in getattr(user, "permissions", []):
+            allowed = True
+        logger.info(
+            "authz_decision",
+            user_id=user.id,
+            permission=permission,
+            allowed=allowed,
+            roles=getattr(user, "roles", []),
+            permissions=getattr(user, "permissions", []),
+        )    
+        if not allowed:
+            raise HTTPException(status_code=403, detail="Acesso negado")    
+        return user 
+
+    return dependency

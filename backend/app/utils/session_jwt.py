@@ -31,6 +31,8 @@ def create_session_jwt(
     user_type: str,
     is_supervisor: bool = False,
     is_admin: bool = False,
+    roles=None,
+    permissions=None,
     expires_minutes: int = 60
 ) -> str:
     """
@@ -58,6 +60,8 @@ def create_session_jwt(
         "type": display_type,
         "is_supervisor": is_supervisor,
         "is_admin": is_admin,
+        "roles": roles or [],
+        "permissions": permissions or [],
         "sub": str(user_id),
     }
     return create_app_jwt(claims, expires_minutes)

@@ -2,13 +2,13 @@
  * Auth Store using Zustand for state management.
  * Integrado com backend Python via /api/auth/* proxy.
  *
- * IMPORTANTE: Autenticacao exclusiva via Entra ID (backend-driven).
- * Nao ha login local, mocks, tokens fake, ou bypass.
+ * IMPORTANTE: Autenticacao corporativa via CAv4 (backend-driven).
+ * Modo dev local e suportado para desenvolvimento.
  */
 
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import { apiFetch, ApiRequestError } from "@/lib/services/api-fetch"
+import { apiFetch } from "@/lib/services/api-fetch"
 import { getClientEnv } from "@/lib/env"
 
 interface User {
@@ -116,7 +116,7 @@ export const useAuthStore = create<AuthState>()(
         })),
 
       /**
-       * Valida a sessao com o backend (entra/cav4 conforme modo).
+      * Valida a sessao com o backend (cav4 conforme modo).
        * Se invalida, limpa o state e redireciona para login.
        * Retorna true se sessao e valida, false caso contrario.
        */
@@ -127,15 +127,14 @@ export const useAuthStore = create<AuthState>()(
           return false
         }
 
-        const authMode = getClientEnv("NEXT_PUBLIC_AUTH_MODE") || "entra"
+        const authMode = getClientEnv("NEXT_PUBLIC_AUTH_MODE") || "cav4"
 
         // Em modo local/dev, não há session-check dedicado no backend.
-        if (authMode !== "entra" && authMode !== "cav4") {
+        if (authMode !== "cav4") {
           return true
         }
 
-        const sessionCheckEndpoint =
-          authMode === "cav4" ? "/auth/cav4/session-check" : "/auth/entra/session-check"
+        const sessionCheckEndpoint = "/auth/cav4/session-check"
 
         try {
           const data = await apiFetch<{
@@ -172,19 +171,14 @@ export const useAuthStore = create<AuthState>()(
 
       /**
        * Logout via backend.
-       * - Modo entra: POST /auth/entra/logout (revoga refresh token, retorna URL Microsoft)
        * - Modo cav4: POST /auth/cav4/logout (revoga refresh token)
        * - Modo dev:   POST /auth/internal/logout (limpa cookie de sessão)
        * Em ambos os casos limpa o state local e redireciona para /.
        */
       logout: async () => {
-        const authMode = getClientEnv("NEXT_PUBLIC_AUTH_MODE") || "entra"
+        const authMode = getClientEnv("NEXT_PUBLIC_AUTH_MODE") || "cav4"
         const endpoint =
-          authMode === "entra"
-            ? "/auth/entra/logout"
-            : authMode === "cav4"
-              ? "/auth/cav4/logout"
-              : "/auth/internal/logout"
+          authMode === "cav4" ? "/auth/cav4/logout" : "/auth/internal/logout"
         const clearState = {
           user: null,
           accessToken: null,
@@ -194,13 +188,8 @@ export const useAuthStore = create<AuthState>()(
         }
 
         try {
-          const data = await apiFetch<{ ms_logout_url?: string }>(endpoint, { method: "POST" })
+          await apiFetch(endpoint, { method: "POST" })
           set(clearState)
-          // Modo entra: redireciona para logout Microsoft (limpa sessao SSO)
-          if (data?.ms_logout_url) {
-            window.location.href = data.ms_logout_url
-            return
-          }
         } catch {
           // Ignora erros de logout — limpa o state de qualquer forma
         }
@@ -213,20 +202,18 @@ export const useAuthStore = create<AuthState>()(
       },
 
       /**
-       * Refresh do token via backend (entra/cav4 conforme modo).
+      * Refresh do token via backend (cav4 conforme modo).
        * Usa header X-Refresh-Token conforme esperado pelo backend.
        */
       refreshSession: async () => {
         const { refreshToken: currentRefreshToken } = get()
         if (!currentRefreshToken) return false
 
-        const authMode = getClientEnv("NEXT_PUBLIC_AUTH_MODE") || "entra"
+        const authMode = getClientEnv("NEXT_PUBLIC_AUTH_MODE") || "cav4"
         const refreshEndpoint =
           authMode === "cav4"
             ? "/api/auth/cav4/refresh"
-            : authMode === "entra"
-              ? "/api/auth/entra/refresh"
-              : "/api/auth/refresh"
+            : "/api/auth/refresh"
 
         try {
           const response = await fetch(refreshEndpoint, {

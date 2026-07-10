@@ -244,9 +244,9 @@ CA_REDIRECT_URI=https://scac-dsv.petrobras.com.br/auth/cav4-callback
 # DEV: CA_REDIRECT_URI=http://localhost:3000/auth/cav4-callback
 
 # Mapeamento de roles CAv4 para perfis internos (JSON array ou CSV)
-CAV4_ADMIN_ROLE_NAMES=["cd_papel_auditor"]
-CAV4_SUPERVISOR_ROLE_NAMES=["cd_papel_supervisor"]
-CAV4_INTERNAL_ROLE_NAMES=["cd_papel_usuario"]
+CAV4_ADMIN_ROLE_NAMES=["CD_PAPEL_AUDITOR"]
+CAV4_SUPERVISOR_ROLE_NAMES=["CD_PAPEL_SUPERVISOR"]
+CAV4_INTERNAL_ROLE_NAMES=["CD_PAPEL_USUARIO"]
 
 # Cargos com aprovação automática (sem necessidade de supervisor)
 # AUTO_APPROVE_JOB_TITLES=["gerente geral","diretor","presidente"]
@@ -508,9 +508,9 @@ Tela Web  POST /api/shares/create (Next.js BFF)
 | Perfil | Critério no banco | CAv4 Role | Permissões |
 |--------|-------------------|-----------|------------|
 | **Externo** | `type=EXTERNAL` | — | Download via OTP |
-| **Interno** | `type=INTERNAL` | `cd_papel_usuario` | Upload, criar shares |
-| **Supervisor** | `INTERNAL + is_supervisor=True` | `cd_papel_supervisor` | Aprovar/rejeitar shares dos supervisionados |
-| **Admin** | `INTERNAL + is_admin=True` | `cd_papel_auditor` | Painel global, administrar usuários |
+| **Interno** | `type=INTERNAL` | `CD_PAPEL_USUARIO` | Upload, criar shares |
+| **Supervisor** | `INTERNAL + is_supervisor=True` | `CD_PAPEL_SUPERVISOR` | Aprovar/rejeitar shares dos supervisionados |
+| **Admin** | `INTERNAL + is_admin=True` | `CD_PAPEL_AUDITOR` | Painel global, administrar usuários |
 
 **Aprovação automática de shares** (sem necessidade de supervisor):
 Usuários com cargos executivos (Diretor, Gerente Geral, Presidente, etc.) têm seus compartilhamentos aprovados imediatamente.

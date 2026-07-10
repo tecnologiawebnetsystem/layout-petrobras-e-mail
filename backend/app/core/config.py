@@ -1,8 +1,10 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import field_validator, model_validator
-from typing import List
 import json as _json
+import os
+from typing import List
 from urllib.parse import quote_plus as _quote_plus
+
+from pydantic import field_validator, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -29,10 +31,10 @@ class Settings(BaseSettings):
     # Credenciais BD — injetadas pelo ECS Task Definition ou definidas no .env
     # ECS: Task Definition injeta a partir das secrets do Secrets Manager
     # Local: definir todas no .env
-    rds_aurora_postgres_host:     str | None = None 
+    rds_aurora_postgres_host: str | None = None
     rds_aurora_postgres_username: str | None = None
     rds_aurora_postgres_password: str | None = None
-    rds_aurora_postgres_dbname:   str | None = None
+    rds_aurora_postgres_dbname: str | None = None
     db_schema: str = "public"
 
     # Armazenamento: "local" (mock) ou "aws" (S3)
@@ -111,6 +113,11 @@ class Settings(BaseSettings):
     entra_client_id_purview: str | None = None
     entra_client_secret_purview: str | None = None
 
+    # Postura de falha do Graph/Entra ID:
+    #   False (padrão): Permissivo — login prossegue mesmo sem Graph
+    #   True: Restritivo — login bloqueado se Graph indisponível
+    graph_required: bool = False
+
     @field_validator(
         "cav4_admin_role_names",
         "cav4_supervisor_role_names",
@@ -156,10 +163,10 @@ class Settings(BaseSettings):
             return self
 
         # Casos 2 e 3: determinar host
-        host   = url if url else (self.rds_aurora_postgres_host or "")
-        user   = self.rds_aurora_postgres_username or ""
-        pwd    = self.rds_aurora_postgres_password or ""
-        dbname = self.rds_aurora_postgres_dbname   or ""
+        host = url if url else (self.rds_aurora_postgres_host or "")
+        user = self.rds_aurora_postgres_username or ""
+        pwd = self.rds_aurora_postgres_password or ""
+        dbname = self.rds_aurora_postgres_dbname or ""
 
         if host and user and pwd and dbname:
             assembled = (
@@ -190,7 +197,8 @@ class Settings(BaseSettings):
     frontend_share_details_url: str = "http://localhost:3000/compartilhamentos/{share_id}"
     frontend_supervisor_url: str = "http://localhost:3000/supervisor"
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env",
+                                      extra="allow")
 
 
 settings = Settings()
@@ -199,7 +207,6 @@ settings = Settings()
 # cadeia de credenciais padrão (os.environ tem prioridade sobre ~/.aws).
 # Só aplica quando os valores estão preenchidos (dev local com .env).
 # Em produção (ECS), essas variáveis ficam vazias e a IAM Role é usada.
-import os
 
 if settings.aws_access_key_id:
     os.environ.setdefault("AWS_ACCESS_KEY_ID", settings.aws_access_key_id)

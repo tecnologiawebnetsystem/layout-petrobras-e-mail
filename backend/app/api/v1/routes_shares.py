@@ -29,7 +29,7 @@ from app.services.share_service import (
 )
 from app.services.token_service import issue_token_access, TokenError
 from app.schemas.token_schema import TokenRead
-from app.utils.authz import require_internal, get_current_user
+from app.utils.authz import require_internal, get_current_user, require_permission
 from app.services.audit_service import log_event
 from app.services.s3_service import delete_object, S3ServiceError
 from app.services.email_service import (
@@ -39,6 +39,7 @@ from app.services.email_service import (
 )
 from datetime import timedelta
 from app.core.config import settings
+
 
 router = APIRouter(prefix="/shares", tags=["Shares"])
 
@@ -70,7 +71,7 @@ async def create_share_endpoint(
     payload: ShareCreateRequest,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
-    user: User = Depends(require_internal),
+    user: User = Depends(require_permission("shares:create")),
     request: Request = None,
 ):
     """
@@ -214,11 +215,11 @@ async def create_with_upload(
             area_id=payload_obj.area_id,
             external_email=payload_obj.external_email,
             created_by_id=payload_obj.created_by_id,
-            expiration_hours=payload.obj.expiration_hours,
-            name=payload.obj.name,
-            description=payload.obj.description,
-            consumption_policy=payload.obj.consumption_policy,
-            file_ids=payload.obj.file_ids or [],
+            expiration_hours=payload_obj.expiration_hours,
+            name=payload_obj.name,
+            description=payload_obj.description,
+            consumption_policy=payload_obj.consumption_policy,
+            file_ids=payload_obj.file_ids or [],
             new_uploads=new_uploads,
             request_meta={
                 "ip": request.client.host if request else None,
@@ -240,14 +241,14 @@ async def create_with_upload(
 
             # Reativa o usuário externo se estiver inativo
             ext_user = session.exec(
-                select(User).where(User.email == payload.obj.external_email)
+                select(User).where(User.email == payload_obj.external_email)
             ).first()
             if ext_user and not ext_user.status:
                 ext_user.status = True
                 session.add(ext_user)
                 session.commit()
 
-            files_count = len(new_uploads) if new_uploads else len(payload.obj.file_ids or [])
+            files_count = len(new_uploads) if new_uploads else len(payload_obj.file_ids or [])
             background_tasks.add_task(
                 send_share_approved_external_email,
                 share.external_email,
@@ -278,17 +279,17 @@ async def create_with_upload(
             if creator and creator.manager_id:
                 supervisor = session.get(User, creator.manager_id)
                 if supervisor:
-                    files_count = len(new_uploads) if new_uploads else len(payload.obj.file_ids or [])
+                    files_count = len(new_uploads) if new_uploads else len(payload_obj.file_ids or [])
                     background_tasks.add_task(
                         send_supervisor_approval_request_email,
                         supervisor_email=supervisor.email,
                         supervisor_name=supervisor.name,
                         requester_name=creator.name,
                         requester_email=creator.email,
-                        recipient_email=payload.obj.external_email,
+                        recipient_email=payload_obj.external_email,
                         files_count=files_count,
-                        expiration_hours=payload.obj.expiration_hours,
-                        share_name=payload.obj.name,
+                        expiration_hours=payload_obj.expiration_hours,
+                        share_name=payload_obj.name,
                         share_id=share.id,
                     )
 
@@ -298,8 +299,8 @@ async def create_with_upload(
         logger.error(
             "s3_upload_failed",
             detail=str(e),
-            user_id=payload.obj.created_by_id,
-            external_email=payload.obj.external_email,
+            user_id=payload_obj.created_by_id,
+            external_email=payload_obj.external_email,
         )
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
     except MipProcessingShareError as e:
@@ -307,8 +308,8 @@ async def create_with_upload(
             "mip_processing_failed",
             detail=str(e),
             error_code=getattr(e, "error_code", "MIP_ERROR"),
-            user_id=payload.obj.created_by_id,
-            external_email=payload.obj.external_email,
+            user_id=payload_obj.created_by_id,
+            external_email=payload_obj.external_email,
         )
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -416,7 +417,7 @@ def list_shares(
 def list_my_shares(
     status: ShareStatus | None = Query(None),
     session: Session = Depends(get_session),
-    user: User = Depends(require_internal),
+    user: User = Depends(require_permission("shares:read")),
 ):
     """
     Lista compartilhamentos criados pelo usuario interno autenticado.
@@ -465,7 +466,7 @@ def list_my_shares(
 def get_share_details(
     share_id: int,
     session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission("shares:read")),
 ):
     """
     Retorna detalhes completos do share e seus arquivos.
@@ -535,7 +536,7 @@ def cancel_share(
     share_id: int,
     payload: ShareCancelRequest = None,
     session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission("shares:cancel")),
     request: Request = None,
 ):
     """
@@ -602,7 +603,7 @@ def cancel_share(
 def delete_share(
     share_id: int,
     session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission("shares:delete")),
     request: Request = None,
 ):
     """
@@ -688,7 +689,7 @@ async def resend_share_notification(
     share_id: int,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission("shares:resend")),
     request: Request = None,
 ):
     """
@@ -775,7 +776,7 @@ async def resend_share_notification(
 def resend_share_email(
     share_id: int,
     session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_permission("shares:resend")),
     request: Request = None,
 ):
     """Legado — use /resend-notification."""

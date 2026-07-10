@@ -26,7 +26,11 @@ from app.services.cav4_auth_service import (
     validate_cav4_id_token,
 )
 from app.services.graph_service import enrich_graph_profile_by_upn
+from app.utils.authz import get_current_user
 from app.utils.session_jwt import decode_app_jwt
+
+from app.services.authorization_service import resolve_permissions
+from app.services.cav4_client import cav4_client, Cav4ClientError
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth/cav4", tags=["Auth / CAv4"])
@@ -63,7 +67,17 @@ def _resolve_email(claims: dict, user_login: str) -> str:
     email = (claims.get("email") or claims.get("preferred_username") or "").strip().lower()
     if email:
         return email
-    return f"{user_login}@petrobras.com.br"
+    
+    
+    fallback_email = f"{user_login}@petrobras.com.br"
+
+    logger.warning(
+        "Email não presente no token. Aplicando fallback controlado para login=%s",
+        user_login
+    )
+
+    return fallback_email
+
 
 
 def _build_manager_data(session: Session, user: User) -> dict | None:
@@ -116,6 +130,12 @@ def _complete_cav4_exchange(
 
     claims = validate_cav4_id_token(id_token)
 
+    
+    # ✅ LOG PARA EVIDÊNCIA DO CARD
+    token_roles = claims.get("roles") or claims.get("groups") or []
+    print(f"[DEBUG TOKEN] Roles no token: {bool(token_roles)} | quantidade={len(token_roles)}")
+
+
     nonce = str(claims.get("nonce") or "")
     if expected_nonce and nonce and nonce != expected_nonce:
         raise HTTPException(status_code=401, detail="Nonce invalido no id_token.")
@@ -126,6 +146,45 @@ def _complete_cav4_exchange(
 
     cav4_roles = get_cav4_roles(login=user_login, access_token=access_token)
     access_info = resolve_access_from_cav4_roles(cav4_roles)
+
+    role = access_info["role"]
+    
+    try:
+        permissions = cav4_client.get_user_resources(
+            token=access_token,
+            user_login=user_login
+        )
+        logger.error(
+            "TESTE_CAV4_RESOURCES=%s",
+            permissions
+        )
+        logger.error(
+            "TIPO_RESOURCES=%s",
+            type(permissions)
+        )
+        
+        logger.info(
+            "PERMISSIONS_VINDAS_CAV4 role=%s permissions=%s",
+            role,
+            permissions
+        )
+
+    except Cav4ClientError as e:
+
+        logger.warning(
+            "Falha ao obter resources do CAV4. Aplicando fallback local. erro=%s",
+            str(e)
+        )
+
+        permissions = resolve_permissions([role])
+
+
+    logger.info(
+        "Permissions resolvidas para usuário: role=%s permissions=%s",
+        role,
+        permissions
+    )
+
 
     if not access_info["authorized"]:
         if settings.debug:
@@ -150,7 +209,7 @@ def _complete_cav4_exchange(
     # Busca cargo, departamento, gestor e foto usando a matrícula CAv4 (user_login)
     # como onPremisesSamAccountName — estratégia validada para usuários Petrobras.
     # Retorna dict com Nones se Graph não estiver configurado ou falhar,
-    # sem bloquear o login.
+    # sem bloquear o login (a menos que GRAPH_REQUIRED=true).
     try:
         graph_info = enrich_graph_profile_by_upn(email, employee_id=user_login)
     except Exception as exc:
@@ -165,6 +224,25 @@ def _complete_cav4_exchange(
             "manager_employee_id": None,
             "photo_url": None,
         }
+
+    # ── Verificação de Postura de Falha do Graph ───────────────────────────
+    # Se GRAPH_REQUIRED=true, bloqueia login se Graph falhou ou dados incompletos.
+    # Se GRAPH_REQUIRED=false (padrão), continua mesmo sem dados do Graph.
+    if settings.graph_required:
+        has_enriched_data = any([
+            graph_info.get("job_title"),
+            graph_info.get("department"),
+            graph_info.get("manager_email"),
+        ])
+        if not has_enriched_data:
+            logger.warning(
+                "GRAPH_REQUIRED=true mas enriquecimento falhou para user_login=%s; negando acesso",
+                user_login,
+            )
+            raise HTTPException(
+                status_code=503,
+                detail="Serviço de enriquecimento de perfil indisponível. Tente novamente em instantes.",
+            )
 
     # Garante employee_id mesmo sem Graph
     if not graph_info.get("employee_id"):
@@ -185,7 +263,7 @@ def _complete_cav4_exchange(
     if not user.status:
         raise HTTPException(status_code=403, detail="Usuario desativado.")
 
-    tokens = issue_internal_tokens(session, user, request)
+    tokens = issue_internal_tokens(session, user, request, roles=[role], permissions=permissions)
     manager_data = _build_manager_data(session, user)
 
     role = resolve_primary_role(user)
@@ -266,6 +344,42 @@ def cav4_token_exchange(
     )
 
 
+@router.get("/graph-me")
+def cav4_graph_me(
+    current_user: User = Depends(get_current_user),
+):
+    """Endpoint de diagnostico do enriquecimento via Graph para o usuario autenticado.
+
+    Uso esperado:
+    - suporte operacional e validacao de dados (ex.: cargo da gestora)
+    - comparacao entre dados locais (user) e retorno atual do Graph (graph)
+
+    Observacao:
+    - nao participa do fluxo principal de autenticacao/sessao
+    - nao persiste alteracoes no banco
+    """
+    _assert_cav4_mode()
+
+    user_login = current_user.login_cav4 or current_user.employee_id or extract_user_login({
+        "email": current_user.email,
+        "preferred_username": current_user.email,
+    })
+    graph_info = enrich_graph_profile_by_upn(current_user.email, employee_id=user_login)
+
+    return {
+        "user": {
+            "id": current_user.id,
+            "name": current_user.name,
+            "email": current_user.email,
+            "login_cav4": current_user.login_cav4 or "",
+            "employee_id": current_user.employee_id or "",
+            "job_title": current_user.job_title or "",
+            "department": current_user.department or "",
+        },
+        "graph": graph_info,
+    }
+
+
 @router.post("/refresh")
 def refresh_token(
     request: Request,
@@ -302,7 +416,16 @@ def refresh_token(
     stored.used = True
     session.add(stored)
 
-    tokens = issue_internal_tokens(session, user, request)
+    # ── CORREÇÃO: reemitir com roles e permissions ──────────────────────
+    role = resolve_primary_role(user)
+    roles_list = [role]
+    permissions = resolve_permissions(roles_list)
+    tokens = issue_internal_tokens(
+        session, user, request,
+        roles=roles_list,
+        permissions=permissions,
+    )
+    # ───────────────────────────────────────────────────────────────────
 
     log_event(
         session=session,
@@ -313,7 +436,7 @@ def refresh_token(
         user_agent=request.headers.get("User-Agent") if request else None,
     )
 
-    display_type = resolve_primary_role(user)
+    display_type = role  # já resolvido acima, não precisa recalcular
 
     return {
         **tokens,
@@ -326,6 +449,7 @@ def refresh_token(
             "is_admin": user.is_admin,
         },
     }
+
 
 
 @router.post("/logout")

@@ -24,14 +24,8 @@
 
 export type PublicEnvKey =
   | "NEXT_PUBLIC_AUTH_MODE"
-  | "NEXT_PUBLIC_ENTRA_CLIENT_ID"
-  | "NEXT_PUBLIC_ENTRA_TENANT_ID"
-  | "NEXT_PUBLIC_ENTRA_REDIRECT_URI"
   | "NEXT_PUBLIC_CAV4_DISCOVERY_URL"
   | "NEXT_PUBLIC_APP_URL"
-  | "ENTRA_CLIENT_ID"
-  | "ENTRA_TENANT_ID"
-  | "ENTRA_REDIRECT_URI"
 
 /**
  * Retorna o valor de uma variável pública de ambiente.

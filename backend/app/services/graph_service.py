@@ -155,8 +155,8 @@ def enrich_graph_profile_by_upn(upn: str, employee_id: str | None = None) -> dic
       3. $filter onPremisesSamAccountName eq employee_id  ← estratégia principal Petrobras
       4. $filter startsWith(userPrincipalName, employee_id)  ← fallback
 
-    Retorna dict compatível com sync_user_from_access():
-      {job_title, department, employee_id, manager_email, manager_name, photo_url}
+        Retorna dict compatível com sync_user_from_access():
+            {job_title, department, employee_id, manager_email, manager_name, manager_job_title, photo_url}
 
     Nunca lança exceção — retorna dict com valores None em caso de falha.
     O login CAv4 continua funcionando mesmo sem dados de perfil.
@@ -168,6 +168,7 @@ def enrich_graph_profile_by_upn(upn: str, employee_id: str | None = None) -> dic
         "login_cav4": None,
         "manager_email": None,
         "manager_name": None,
+        "manager_job_title": None,
         "manager_employee_id": None,  # matrícula do gestor (para chamar CAv4)
         "photo_url": None,
     }
@@ -222,11 +223,12 @@ def enrich_graph_profile_by_upn(upn: str, employee_id: str | None = None) -> dic
     result["employee_id"] = login_cav4 or user_obj.get("employeeId") or employee_id
 
     # Gestor
-    manager_path = f"/users/{user_id}/manager?$select=id,displayName,mail,onPremisesSamAccountName,employeeId"
+    manager_path = f"/users/{user_id}/manager?$select=id,displayName,mail,jobTitle,department,onPremisesSamAccountName,employeeId"
     manager = _get_user(token, manager_path)
     if manager:
         result["manager_email"] = manager.get("mail")
         result["manager_name"]  = manager.get("displayName")
+        result["manager_job_title"] = manager.get("jobTitle")
         result["manager_employee_id"] = (
             manager.get("onPremisesSamAccountName") or
             manager.get("onPremicesSamAccountName") or

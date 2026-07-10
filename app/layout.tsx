@@ -117,20 +117,12 @@ export default function RootLayout({
   // runtime — os valores injetados pelo ECS Task Definition.
   //
   // Mapeamento ECS → window.__ENV__:
-  //   NEXT_PUBLIC_APP_URL    (SSM)           → NEXT_PUBLIC_APP_URL
-  //   NEXT_PUBLIC_AUTH_MODE  (SSM)           → NEXT_PUBLIC_AUTH_MODE
-  //   ENTRA_CLIENT_ID        (secret, via valueFrom) → NEXT_PUBLIC_ENTRA_CLIENT_ID
-  //   ENTRA_TENANT_ID        (secret, via valueFrom) → NEXT_PUBLIC_ENTRA_TENANT_ID
-  //   NEXT_PUBLIC_ENTRA_REDIRECT_URI derivado do APP_URL
+  //   NEXT_PUBLIC_APP_URL            (SSM) → NEXT_PUBLIC_APP_URL
+  //   NEXT_PUBLIC_AUTH_MODE          (SSM) → NEXT_PUBLIC_AUTH_MODE
+  //   NEXT_PUBLIC_CAV4_DISCOVERY_URL (SSM) → NEXT_PUBLIC_CAV4_DISCOVERY_URL
   const appUrl = (process.env['NEXT_PUBLIC_APP_URL'] ?? "https://scac-dsv.petrobras.com.br") as string
   const publicEnv = {
-    NEXT_PUBLIC_AUTH_MODE: (process.env['NEXT_PUBLIC_AUTH_MODE'] ?? "entra") as string,
-    // No ECS as chaves da secret chegam sem prefixo (ENTRA_CLIENT_ID).
-    // No .env local chegam com prefixo (NEXT_PUBLIC_ENTRA_CLIENT_ID).
-    NEXT_PUBLIC_ENTRA_CLIENT_ID:
-      ((process.env['NEXT_PUBLIC_ENTRA_CLIENT_ID'] || process.env['ENTRA_CLIENT_ID'] || "") as string),
-    NEXT_PUBLIC_ENTRA_TENANT_ID:
-      ((process.env['NEXT_PUBLIC_ENTRA_TENANT_ID'] || process.env['ENTRA_TENANT_ID'] || "") as string),
+    NEXT_PUBLIC_AUTH_MODE: (process.env['NEXT_PUBLIC_AUTH_MODE'] ?? "cav4") as string,
     NEXT_PUBLIC_CAV4_DISCOVERY_URL:
       ((process.env['NEXT_PUBLIC_CAV4_DISCOVERY_URL'] || process.env['OIDC_DISCOVERY_URL'] || "") as string),
     NEXT_PUBLIC_APP_URL: appUrl,

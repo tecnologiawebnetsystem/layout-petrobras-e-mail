@@ -606,7 +606,7 @@ function VisaoGeralSection() {
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-blue-500" />
-                    Autenticacao via Microsoft Entra ID (SSO)
+                    Autenticacao corporativa via CAv4 (SSO)
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-blue-500" />
@@ -687,7 +687,7 @@ function VisaoGeralSection() {
                 <p className="text-muted-foreground mb-4">
                   Colaborador da Petrobras que faz upload de arquivos e cria
                   compartilhamentos para usuarios externos. Acessa o sistema via
-                  SSO (Microsoft Entra ID) usando suas credenciais corporativas.
+                  SSO corporativo (CAv4) usando suas credenciais Petrobras.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="default">
@@ -962,7 +962,7 @@ function UsuarioInternoSection() {
           <StepCard
             number={2}
             title="Clique em 'Login Corporativo'"
-            description="Voce sera redirecionado para a pagina de login da Microsoft (Entra ID)."
+            description="Voce sera redirecionado para a pagina de autenticacao corporativa (CAv4)."
             icon={<MousePointer className="h-5 w-5" />}
           />
           <StepCard

@@ -49,7 +49,7 @@ def _pick_login_values(
 def _supervisor_role_candidates() -> list[str]:
     """Retorna lista de códigos de papel para supervisor em ordem de tentativa."""
     configured = [str(r).strip() for r in (settings.cav4_supervisor_role_names or []) if str(r).strip()]
-    fallback = "cd_papel_supervisor"
+    fallback = "CD_PAPEL_SUPERVISOR"
     if fallback not in configured:
         configured.append(fallback)
     return configured
@@ -70,7 +70,9 @@ def resolve_primary_role(user: User) -> str:
 def issue_internal_tokens(
         session: Session,
         user: User,
-        request=None,
+        request=None,        
+        roles: list[str] | None = None,
+        permissions: list[str] | None = None,
         expires_minutes: int = 480,
         refresh_days: int = 7,
 ) -> dict:
@@ -85,6 +87,8 @@ def issue_internal_tokens(
         user_type=user.type,
         is_supervisor=user.is_supervisor,
         is_admin=user.is_admin,
+        roles=roles,
+        permissions=permissions,
         expires_minutes=expires_minutes,
     )
 
@@ -128,7 +132,7 @@ def sync_user_from_access(
     - Usuário existente (inclusive inativo): atualiza dados e reativa.
     - Dados do Graph (cargo, departamento, foto) são aplicados quando disponíveis.
     - manager_id é vinculado/removido conforme manager_email do Graph.
-    - Gestor é provisionado no banco E vinculado ao papel cd_papel_supervisor no CAv4.
+    - Gestor é provisionado no banco E vinculado ao papel CD_PAPEL_SUPERVISOR no CAv4.
 
     Esta função NÃO desativa usuários — apenas sincroniza dados locais.
     O enriquecimento via Graph é realizado em graph_service.enrich_graph_profile_by_upn().
@@ -233,7 +237,7 @@ def sync_user_from_access(
     # com os dados disponíveis — garantindo que o vínculo seja estabelecido
     # imediatamente, sem depender de um login futuro do gestor.
     # Isso é necessário para que o fluxo de aprovação de shares funcione.
-    # APÓS criar o gestor no banco, ele é atribuído ao papel cd_papel_supervisor
+    # APÓS criar o gestor no banco, ele é atribuído ao papel CD_PAPEL_SUPERVISOR
     # no CAv4 para que tenha acesso quando fizer seu primeiro login.
     manager_email = graph_info.get("manager_email")
     manager_name  = graph_info.get("manager_name")
@@ -252,8 +256,8 @@ def sync_user_from_access(
     manager_login_cav4 = manager_login or (manager_cav4_info or {}).get("employee_id")
     manager_effective_email = manager_email or (manager_cav4_info or {}).get("email")
     manager_effective_name = manager_name
-    manager_effective_job = (manager_cav4_info or {}).get("job_title")
-    manager_effective_dept = (manager_cav4_info or {}).get("department")
+    manager_effective_job = (manager_cav4_info or {}).get("job_title") or graph_info.get("manager_job_title")
+    manager_effective_dept = (manager_cav4_info or {}).get("department") or graph_info.get("manager_department")
 
     if manager_effective_email:
         resolved_manager = session.exec(
@@ -308,7 +312,7 @@ def sync_user_from_access(
             session.flush()
             logger.info("Manager vinculado ao usuario=%s (manager_id=%s)", user.email, resolved_manager.id)
 
-        # ── Atribuir papel cd_papel_supervisor no CAv4 ────────────────────────
+        # ── Atribuir papel CD_PAPEL_SUPERVISOR no CAv4 ────────────────────────
         # Quando a gestora é provisionada ou já existe no banco, atribuir o papel
         # no CAv4 para que ela tenha acesso quando fizer login.
         # Usa o access_token do usuário atual (que está fazendo login) para chamar
@@ -342,7 +346,7 @@ def sync_user_from_access(
 
     # ── Atribuir papel para supervisores (gestoras) quando fazem login ────────
     # Se o usuário é supervisor e tem employee_id/login_cav4 (matrícula CAv4),
-    # tentar atribuir o papel cd_papel_supervisor no CAv4 (caso não tenha sido
+    # tentar atribuir o papel CD_PAPEL_SUPERVISOR no CAv4 (caso não tenha sido
     # atribuído quando foi provisionado como gestor de outro usuário).
     # Isso garante que gestoras criadas sem matrícula agora recebam o papel
     # assim que fazerem login e tiverem sua identidade CAv4 completa.

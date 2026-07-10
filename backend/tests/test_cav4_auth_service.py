@@ -56,13 +56,13 @@ def test_resolve_access_from_cav4_roles_mapping(monkeypatch) -> None:
 def test_extract_role_names_handles_nested_dict_payload() -> None:
     payload = {
         "value": [
-            {"name": "GN_CLOUD_AWS_SCAC_ADMINS"},
-            {"nome": "GN_CLOUD_AWS_SCAC_USERS"},
+            {"name": "CD_PAPEL_ADMIN"},
+            {"nome": "CD_PAPEL_USUARIO"},
         ]
     }
     roles = svc._extract_role_names(payload)
-    assert "gn_cloud_aws_scac_admins" in roles
-    assert "gn_cloud_aws_scac_users" in roles
+    assert "CD_PAPEL_ADMIN" in roles
+    assert "CD_PAPEL_USUARIO" in roles
 
 
 def test_resolve_access_normalizes_case_and_accent(monkeypatch) -> None:
@@ -88,13 +88,13 @@ def test_extract_role_names_handles_cav4_content_code_payload() -> None:
         "content": [
             {
                 "uid": 1793352,
-                "code": "cd_papel_usuario",
+                "code": "CD_PAPEL_USUARIO",
                 "enabled": True,
                 "type": "common",
             },
             {
                 "uid": 1793354,
-                "code": "cd_papel_supervisor",
+                "code": "CD_PAPEL_SUPERVISOR",
                 "enabled": True,
                 "type": "common",
             },
@@ -104,8 +104,8 @@ def test_extract_role_names_handles_cav4_content_code_payload() -> None:
 
     roles = svc._extract_role_names(payload)
 
-    assert "cd_papel_usuario" in roles
-    assert "cd_papel_supervisor" in roles
+    assert "CD_PAPEL_USUARIO" in roles
+    assert "CD_PAPEL_SUPERVISOR" in roles
 
 
 def test_get_authorization_url_builds_expected_query(monkeypatch) -> None:
@@ -197,7 +197,7 @@ def test_add_role_with_fallback_uses_user_token_first(monkeypatch) -> None:
 
     ok, source = svc.add_role_to_user_with_fallback(
         login="X4RQ",
-        role_code="cd_papel_supervisor",
+        role_code="CD_PAPEL_SUPERVISOR",
         user_access_token="user-token",
     )
 
@@ -220,7 +220,7 @@ def test_add_role_with_fallback_uses_service_token_on_403(monkeypatch) -> None:
 
     ok, source = svc.add_role_to_user_with_fallback(
         login="X4RQ",
-        role_code="cd_papel_supervisor",
+        role_code="CD_PAPEL_SUPERVISOR",
         user_access_token="user-token",
     )
 
@@ -238,7 +238,7 @@ def test_add_role_with_fallback_reports_when_service_token_missing(monkeypatch) 
 
     ok, source = svc.add_role_to_user_with_fallback(
         login="X4RQ",
-        role_code="cd_papel_supervisor",
+        role_code="CD_PAPEL_SUPERVISOR",
         user_access_token="user-token",
     )
 
@@ -260,7 +260,7 @@ def test_add_role_with_fallback_uses_service_token_on_422(monkeypatch) -> None:
 
     ok, source = svc.add_role_to_user_with_fallback(
         login="X4RQ",
-        role_code="cd_papel_supervisor",
+        role_code="CD_PAPEL_SUPERVISOR",
         user_access_token="user-token",
     )
 

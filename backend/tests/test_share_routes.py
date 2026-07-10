@@ -15,26 +15,34 @@ from fastapi.testclient import TestClient
 
 from app.models.share import Share, ShareStatus, TokenConsumption
 from app.models.user import User
+from app.utils import authz
 
 
 # ── Fixture: cliente HTTP com usuario_interno autenticado ────────────────────
 
 @pytest.fixture()
 def authed_client(db_engine, usuario_interno):
-    """TestClient com engine de teste e get_current_user sobrescritos para usuario_interno."""
     import app.db.session as _db_module
     from app.main import app as fastapi_app
     from app.utils.authz import get_current_user
+    from fastapi.testclient import TestClient
 
     original_engine = _db_module.engine
     _db_module.engine = db_engine
 
+    # ✅ usuário autenticado
+    object.__setattr__(usuario_interno, "permissions", ["*"])
+
     fastapi_app.dependency_overrides[get_current_user] = lambda: usuario_interno
+
     with TestClient(fastapi_app, raise_server_exceptions=True) as c:
         yield c
-    fastapi_app.dependency_overrides.pop(get_current_user, None)
+
+    fastapi_app.dependency_overrides.clear()
     _db_module.engine = original_engine
 
+
+    
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Testes de criação de share
