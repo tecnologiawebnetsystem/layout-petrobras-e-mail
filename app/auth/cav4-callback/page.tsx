@@ -5,17 +5,17 @@ import { useRouter, useSearchParams } from "next/navigation"
 
 import { FullPageLoader } from "@/components/ui/full-page-loader"
 import { useAuthStore } from "@/lib/stores/auth-store"
-import { getRedirectMessage, mapRoleToUserType, resolvePostLoginRoute } from "@/lib/auth/cav4-config"
+import { mapRoleToUserType, resolvePostLoginRoute, type FrontendUserType } from "@/lib/auth/cav4-config"
+import { RoleRedirectScreen } from "@/components/auth/role-redirect-screen"
 
 function CAv4CallbackContent() {
   const router = useRouter()
   const params = useSearchParams()
   const { setAuth } = useAuthStore()
   const processed = useRef(false)
-  const [loaderMessage, setLoaderMessage] = useState("Validando seu acesso corporativo")
-  const [loaderSubMessage, setLoaderSubMessage] = useState(
-    "Estamos confirmando suas credenciais com a Petrobras. Isso leva apenas alguns segundos.",
-  )
+  // Perfil de destino: enquanto null, exibimos a validacao; quando definido,
+  // mostramos a tela visual indicando para qual area o usuario esta indo.
+  const [targetType, setTargetType] = useState<FrontendUserType | null>(null)
 
   useEffect(() => {
     if (processed.current) return
@@ -77,8 +77,7 @@ function CAv4CallbackContent() {
           data.refresh_token,
         )
 
-        setLoaderMessage(getRedirectMessage(userType))
-        setLoaderSubMessage("Acesso confirmado. Preparando seu ambiente de trabalho.")
+        setTargetType(userType)
         router.replace(resolvePostLoginRoute(userType))
       } catch {
         router.replace("/?error=auth_failed")
@@ -88,8 +87,17 @@ function CAv4CallbackContent() {
     run()
   }, [params, router, setAuth])
 
+  // Enquanto valida, mostra o loader; ao confirmar o papel, mostra a tela
+  // visual indicando claramente para qual perfil o usuario esta sendo levado.
+  if (targetType) {
+    return <RoleRedirectScreen targetType={targetType} />
+  }
+
   return (
-    <FullPageLoader message={loaderMessage} subMessage={loaderSubMessage} />
+    <FullPageLoader
+      message="Validando seu acesso corporativo"
+      subMessage="Estamos confirmando suas credenciais com a Petrobras. Isso leva apenas alguns segundos."
+    />
   )
 }
 

@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
 import { useAuthStore } from "@/lib/stores/auth-store"
-import { getRedirectMessage, resolvePostLoginRoute, type FrontendUserType } from "@/lib/auth/cav4-config"
+import { resolvePostLoginRoute, type FrontendUserType } from "@/lib/auth/cav4-config"
+import { RoleRedirectScreen } from "@/components/auth/role-redirect-screen"
 
 type GateStatus = "checking" | "redirecting" | "unauthenticated"
 
@@ -72,32 +72,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return <>{children}</>
   }
 
-  // "checking" (validando sessao) ou "redirecting" (indo para a area do papel)
-  return (
-    <div
-      className="min-h-screen flex items-center justify-center bg-background p-6"
-      role="status"
-      aria-live="polite"
-    >
-      <div className="flex flex-col items-center gap-6 text-center">
-        <img
-          src="/images/petrobras-full-logo.png"
-          alt="Petrobras - Logo oficial"
-          className="h-12 w-auto"
-          width={180}
-          height={48}
-        />
-        <div className="flex items-center gap-3 text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden="true" />
-          <span className="text-sm font-medium">
-            {status === "redirecting" && targetType
-              ? getRedirectMessage(targetType)
-              : status === "redirecting"
-                ? "Acesso confirmado. Redirecionando..."
-                : "Verificando sua sessao..."}
-          </span>
-        </div>
-      </div>
-    </div>
-  )
+  // "checking" (validando sessao) ou "redirecting" (indo para a area do papel).
+  // A tela mostra claramente para qual perfil o usuario esta sendo direcionado.
+  return <RoleRedirectScreen targetType={targetType} />
 }
