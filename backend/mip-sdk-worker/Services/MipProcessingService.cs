@@ -63,6 +63,33 @@ public class MipProcessingService : IMipProcessingService
         return processedBytes;
     }
 
+    public async Task<byte[]> RemoveLabelAndProtectionAsUserAsync(
+        string fileName,
+        byte[] fileContent,
+        string userAadrmToken,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("RemoveLabelAndProtectionAsUserAsync: {FileName}", fileName);
+        ValidateSdkConfiguration();
+        return await _mipSdkProvider.RemoveLabelAndProtectionAsUserAsync(
+            fileName, fileContent, userAadrmToken, cancellationToken);
+    }
+
+    public async Task<byte[]> ChangeLabelAsUserAsync(
+        ChangeLabelRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation(
+            "ChangeLabelAsUserAsync: {FileName} → {TargetLabel}",
+            request.FileName, request.TargetLabelImmutableId);
+        ValidateSdkConfiguration();
+        if (string.IsNullOrWhiteSpace(request.TargetLabelImmutableId))
+            throw new InvalidOperationException("TargetLabelImmutableId é obrigatório.");
+        if (string.IsNullOrWhiteSpace(request.UserAadrmToken))
+            throw new InvalidOperationException("UserAadrmToken é obrigatório para chang-label-as-user.");
+        return await _mipSdkProvider.ChangeLabelAsUserAsync(request, cancellationToken);
+    }
+
     private void ValidateSdkConfiguration()
     {
         if (string.IsNullOrWhiteSpace(_entraIdOptions.TenantId) ||

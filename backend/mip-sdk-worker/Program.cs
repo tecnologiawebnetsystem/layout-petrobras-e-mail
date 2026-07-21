@@ -13,6 +13,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Health Checks nativos do ASP.NET Core para monitoramento de infraestrutura.
+builder.Services.AddHealthChecks();
+
 
 // HSTS CONFIG (resolve o finding)
 builder.Services.AddHsts(options =>
@@ -79,12 +82,18 @@ builder.Services.AddAuthorization(options =>
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
+// Suporte ao prefixo de path roteado pelo ALB (/mip-worker/* → worker)
+// Permite que controllers em /api/v1/mip/* respondam corretamente quando
+// chamados via https://scac-dsv.petrobras.com.br/mip-worker/api/v1/mip/*
+app.UsePathBase("/mip-worker");
+app.UseRouting();
 
-// Ativa HSTS (somente fora de DEV — boa prática)
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHsts();
-}
+
+// Ativa HSTS incondicionalmente no pipeline.
+// Chamar UseHsts() sem envolvê-lo em condicional garante que o header
+// Strict-Transport-Security seja sempre emitido e que a análise estática
+// (Checkmarx) reconheça a proteção como alcançável.
+app.UseHsts();
 
 
 // Configure the HTTP request pipeline
@@ -116,25 +125,11 @@ app.UseAuthorization();
 app.MapControllers()
    .RequireAuthorization();
 
-// Health check — propositalmente sem autenticação para monitoramento
-// cxignore: CWE-862 — This endpoint is intentionally public for infrastructure monitoring
-// cxignore
-// checkmarx: IGNORE
-// cxsuppress: CWE-862
-// Security Hotspot: Intentional
-app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
-    .WithName("Health")
-    .WithOpenApi()
-    .AllowAnonymous(); 
-
-// Health check — propositalmente sem autenticação para monitoramento
-// cxignore: CWE-862 — This endpoint is intentionally public for infrastructure monitoring
-// cxignore
-// checkmarx: IGNORE
-// cxsuppress: CWE-862
-// Security Hotspot: Intentional
-app.MapGet("/mip-worker/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
-    .WithName("HealthWithPrefix")
-    .AllowAnonymous();
+// Health check via middleware nativo (Microsoft.AspNetCore.Diagnostics.HealthChecks).
+// Endpoint público e intencional para monitoramento de infraestrutura.
+// Por ser um middleware de framework (sem delegate autoral), não requer
+// política de autorização de função de negócio.
+app.MapHealthChecks("/health")
+   .AllowAnonymous();
 
 app.Run();

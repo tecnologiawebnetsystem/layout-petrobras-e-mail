@@ -9,12 +9,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.SecretsManager" Version="4.0.5.3" />
+    <PackageReference Include="AWSSDK.SecretsManager" Version="4.0.100.4" />
     <PackageReference Include="DotNetEnv" Version="3.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
-    <PackageReference Include="Microsoft.InformationProtection.File" Version="1.17.181" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.82.1" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.29" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
+    <!-- Pacote genérico: fornece as DLLs Windows e a API .NET -->
+    <PackageReference Include="Microsoft.InformationProtection.File" Version="1.18.124" />
+    <!-- Pacote Linux: fornece libmip_dotnet.so e demais .so para Ubuntu 22.04 / Debian 12 -->
+    <PackageReference Include="Microsoft.InformationProtection.File.Ubuntu2204" Version="1.18.124" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.86.0" />
   </ItemGroup>
 
 </Project>
