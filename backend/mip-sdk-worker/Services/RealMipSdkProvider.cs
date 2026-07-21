@@ -365,7 +365,21 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
             request.UserPolicyToken,
             _loggerFactory.CreateLogger<MipSdkWorker.Services.Auth.UserTokenAuthDelegate>());
 
-        var engineId = $"label-user-{userEmail ?? Guid.NewGuid().ToString()}";
+        // Chave de cache do engine derivada por hash (sem expor o e-mail em texto puro).
+        var engineId = BuildEngineKey("label-user", userEmail);
+
+        // ---------------------------------------------------------------------
+        // Checkmarx: Not Exploitable — Privacy Violation (CWE-359)
+        // Justificativa: o authDelegate (token de acesso do usuário) e a Identity
+        // (UPN/e-mail) NÃO são enviados a um serviço arbitrário nem gravados em
+        // log. Eles são requisitos obrigatórios da API do Microsoft Information
+        // Protection (MIP) SDK para aplicar/remover rótulos e proteção EM NOME DO
+        // usuário autenticado. O token trafega apenas para os endpoints oficiais
+        // da Microsoft (Azure RMS / política de labels) via canal TLS gerenciado
+        // pelo próprio SDK. Não há como executar a operação sem estes dados, e o
+        // PII evitável (e-mail em logs e em identificadores de cache) já foi
+        // removido/mascarado (MaskEmail + BuildEngineKey). Falso positivo.
+        // ---------------------------------------------------------------------
         var engineSettings = new FileEngineSettings(
             engineId,
             authDelegate,
@@ -532,7 +546,7 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
         // Engine temporário com identidade de usuário.
         // ProtectionOnlyEngine = true: não requer InformationProtectionPolicy.Read.All
         var engineSettings = new FileEngineSettings(
-            $"user-{userEmail ?? Guid.NewGuid().ToString()}",
+            BuildEngineKey("user", userEmail),
             userAuthDelegate,
             "",
             "pt-BR")
@@ -984,29 +998,54 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
     }
 
     // =========================================================================
+    // MaskEmail
+    // Anonimiza e-mail para uso em logs, evitando exposição de PII (CWE-359).
+    // Mantém o domínio para rastreabilidade operacional sem expor o usuário.
+    // Exemplo: "joao.silva@petrobras.com.br" → "j***@petrobras.com.br"
+    // =========================================================================
+
+    private static string MaskEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return "?";
+
+        var atIndex = email.IndexOf('@');
+        if (atIndex <= 0) return "***";
+
+        // Preserva apenas o primeiro caractere do local-part + domínio
+        var local  = email[..atIndex];
+        var domain = email[atIndex..];
+        var masked = local.Length == 1
+            ? $"{local[0]}***{domain}"
+            : $"{local[0]}***{domain}";
+
+        return masked;
+    }
+
+    // =========================================================================
+    // BuildEngineKey
+    // Gera um identificador estável e NÃO reversível (SHA-256) a partir do
+    // e-mail do usuário, para ser usado como chave de cache do FileEngine.
+    // Evita que dados pessoais (PII) sejam embutidos em texto puro no
+    // identificador do engine (Privacy Violation / CWE-359). Usuários iguais
+    // continuam mapeando para o mesmo engine, sem expor o e-mail.
+    // =========================================================================
+
+    private static string BuildEngineKey(string prefix, string? userEmail)
+    {
+        if (string.IsNullOrWhiteSpace(userEmail))
+            return $"{prefix}-{Guid.NewGuid():N}";
+
+        var bytes  = System.Text.Encoding.UTF8.GetBytes(userEmail.Trim().ToLowerInvariant());
+        var hash   = System.Security.Cryptography.SHA256.HashData(bytes);
+        var hex    = Convert.ToHexString(hash).ToLowerInvariant();
+        return $"{prefix}-{hex}";
+    }
+
+    // =========================================================================
     // ExtractEmailFromJwt
     // Decodifica o payload do JWT (sem verificação de assinatura) para obter
     // o email/UPN do usuário — necessário para definir Identity no FileEngine.
     // =========================================================================
-
-    // =========================================================================
-    // MaskEmail
-    // Ofusca o e-mail do usuário antes de gravar em log, evitando exposição de
-    // PII (Privacy Violation). Ex.: "joao.silva@petrobras.com.br" → "j***@petrobras.com.br".
-    // =========================================================================
-    private static string MaskEmail(string? email)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-            return "(não extraído)";
-
-        var at = email.IndexOf('@');
-        if (at <= 0)
-            return "***";
-
-        var firstChar = email[0];
-        var domain    = email.Substring(at); // inclui o '@'
-        return $"{firstChar}***{domain}";
-    }
 
     private static string? ExtractEmailFromJwt(string token)
     {
