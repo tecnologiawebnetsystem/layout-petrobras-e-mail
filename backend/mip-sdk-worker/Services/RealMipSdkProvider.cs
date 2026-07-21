@@ -355,7 +355,7 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
         var userEmail = ExtractEmailFromJwt(request.UserAadrmToken!);
         _logger.LogInformation(
             "ChangeLabelAsUserAsync: {FileName} → {TargetLabel} | user={UserEmail}",
-            request.FileName, request.TargetLabelImmutableId, userEmail ?? "?");
+            request.FileName, request.TargetLabelImmutableId, MaskEmail(userEmail));
 
         // UserTokenAuthDelegate com AMBOS os tokens:
         // - aadrmToken  : proteção RMS
@@ -527,7 +527,7 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
         var userEmail = ExtractEmailFromJwt(userAadrmToken);
         _logger.LogInformation(
             "RemoveLabelAndProtectionAsUserAsync: userEmail={UserEmail}",
-            userEmail ?? "(não extraído)");
+            MaskEmail(userEmail));
 
         // Engine temporário com identidade de usuário.
         // ProtectionOnlyEngine = true: não requer InformationProtectionPolicy.Read.All
@@ -988,6 +988,25 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
     // Decodifica o payload do JWT (sem verificação de assinatura) para obter
     // o email/UPN do usuário — necessário para definir Identity no FileEngine.
     // =========================================================================
+
+    // =========================================================================
+    // MaskEmail
+    // Ofusca o e-mail do usuário antes de gravar em log, evitando exposição de
+    // PII (Privacy Violation). Ex.: "joao.silva@petrobras.com.br" → "j***@petrobras.com.br".
+    // =========================================================================
+    private static string MaskEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return "(não extraído)";
+
+        var at = email.IndexOf('@');
+        if (at <= 0)
+            return "***";
+
+        var firstChar = email[0];
+        var domain    = email.Substring(at); // inclui o '@'
+        return $"{firstChar}***{domain}";
+    }
 
     private static string? ExtractEmailFromJwt(string token)
     {
