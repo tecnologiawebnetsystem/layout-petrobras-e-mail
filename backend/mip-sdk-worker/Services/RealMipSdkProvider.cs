@@ -984,29 +984,34 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
     }
 
     // =========================================================================
+    // MaskEmail
+    // Anonimiza e-mail para uso em logs, evitando exposição de PII (CWE-359).
+    // Mantém o domínio para rastreabilidade operacional sem expor o usuário.
+    // Exemplo: "joao.silva@petrobras.com.br" → "j***@petrobras.com.br"
+    // =========================================================================
+
+    private static string MaskEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return "?";
+
+        var atIndex = email.IndexOf('@');
+        if (atIndex <= 0) return "***";
+
+        // Preserva apenas o primeiro caractere do local-part + domínio
+        var local  = email[..atIndex];
+        var domain = email[atIndex..];
+        var masked = local.Length == 1
+            ? $"{local[0]}***{domain}"
+            : $"{local[0]}***{domain}";
+
+        return masked;
+    }
+
+    // =========================================================================
     // ExtractEmailFromJwt
     // Decodifica o payload do JWT (sem verificação de assinatura) para obter
     // o email/UPN do usuário — necessário para definir Identity no FileEngine.
     // =========================================================================
-
-    // =========================================================================
-    // MaskEmail
-    // Ofusca o e-mail do usuário antes de gravar em log, evitando exposição de
-    // PII (Privacy Violation). Ex.: "joao.silva@petrobras.com.br" → "j***@petrobras.com.br".
-    // =========================================================================
-    private static string MaskEmail(string? email)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-            return "(não extraído)";
-
-        var at = email.IndexOf('@');
-        if (at <= 0)
-            return "***";
-
-        var firstChar = email[0];
-        var domain    = email.Substring(at); // inclui o '@'
-        return $"{firstChar}***{domain}";
-    }
 
     private static string? ExtractEmailFromJwt(string token)
     {
