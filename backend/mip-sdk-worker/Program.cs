@@ -79,6 +79,12 @@ builder.Services.AddAuthorization(options =>
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
+// Suporte ao prefixo de path roteado pelo ALB (/mip-worker/* → worker)
+// Permite que controllers em /api/v1/mip/* respondam corretamente quando
+// chamados via https://scac-dsv.petrobras.com.br/mip-worker/api/v1/mip/*
+app.UsePathBase("/mip-worker");
+app.UseRouting();
+
 
 // Ativa HSTS (somente fora de DEV — boa prática)
 if (!app.Environment.IsDevelopment())
@@ -126,15 +132,5 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = Dat
     .WithName("Health")
     .WithOpenApi()
     .AllowAnonymous(); 
-
-// Health check — propositalmente sem autenticação para monitoramento
-// cxignore: CWE-862 — This endpoint is intentionally public for infrastructure monitoring
-// cxignore
-// checkmarx: IGNORE
-// cxsuppress: CWE-862
-// Security Hotspot: Intentional
-app.MapGet("/mip-worker/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
-    .WithName("HealthWithPrefix")
-    .AllowAnonymous();
 
 app.Run();
