@@ -365,7 +365,8 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
             request.UserPolicyToken,
             _loggerFactory.CreateLogger<MipSdkWorker.Services.Auth.UserTokenAuthDelegate>());
 
-        var engineId = $"label-user-{userEmail ?? Guid.NewGuid().ToString()}";
+        // Chave de cache do engine derivada por hash (sem expor o e-mail em texto puro).
+        var engineId = BuildEngineKey("label-user", userEmail);
         var engineSettings = new FileEngineSettings(
             engineId,
             authDelegate,
@@ -532,7 +533,7 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
         // Engine temporário com identidade de usuário.
         // ProtectionOnlyEngine = true: não requer InformationProtectionPolicy.Read.All
         var engineSettings = new FileEngineSettings(
-            $"user-{userEmail ?? Guid.NewGuid().ToString()}",
+            BuildEngineKey("user", userEmail),
             userAuthDelegate,
             "",
             "pt-BR")
@@ -1005,6 +1006,26 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
             : $"{local[0]}***{domain}";
 
         return masked;
+    }
+
+    // =========================================================================
+    // BuildEngineKey
+    // Gera um identificador estável e NÃO reversível (SHA-256) a partir do
+    // e-mail do usuário, para ser usado como chave de cache do FileEngine.
+    // Evita que dados pessoais (PII) sejam embutidos em texto puro no
+    // identificador do engine (Privacy Violation / CWE-359). Usuários iguais
+    // continuam mapeando para o mesmo engine, sem expor o e-mail.
+    // =========================================================================
+
+    private static string BuildEngineKey(string prefix, string? userEmail)
+    {
+        if (string.IsNullOrWhiteSpace(userEmail))
+            return $"{prefix}-{Guid.NewGuid():N}";
+
+        var bytes  = System.Text.Encoding.UTF8.GetBytes(userEmail.Trim().ToLowerInvariant());
+        var hash   = System.Security.Cryptography.SHA256.HashData(bytes);
+        var hex    = Convert.ToHexString(hash).ToLowerInvariant();
+        return $"{prefix}-{hex}";
     }
 
     // =========================================================================
