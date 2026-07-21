@@ -3,9 +3,11 @@ seed_dev.py – Popula o banco de desenvolvimento com dados mínimos para testar
 o fluxo completo: INTERNO cria share → SUPERVISOR aprova → EXTERNO recebe OTP → download.
 
 Dados criados:
-  1. Administrador global (admin@petrobras.com.br / admin@123)  [is_admin=True]
-  2. Supervisor           (supervisor@petrobras.com.br / supervisor@123)  [is_supervisor=True]
-  3. Usuários internos    (múltiplos / internal@123) – ver INTERNAL_USERS
+  1. Administrador global (SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD)  [is_admin=True]
+  2. Supervisor           (SEED_SUPERVISOR_EMAIL / SEED_SUPERVISOR_PASSWORD)  [is_supervisor=True]
+  3. Usuários internos    (múltiplos / SEED_INTERNAL_PASSWORD) – ver INTERNAL_USERS
+
+As credenciais são lidas de variáveis de ambiente (.env). Consulte .env.example.
   4. Área + vínculo AreaSupervisor (um por usuário interno)
   5. Share PENDENTE       → 2 arquivos vinculados (carregados no S3 real)
   6. Usuário externo      (destinatario@example.com)
@@ -17,11 +19,13 @@ Uso:
     python -m scripts_data.seed_dev
 """
 
+import os
 import posixpath
 import secrets
 from datetime import datetime, UTC
 
 from botocore.exceptions import ClientError, NoCredentialsError
+from dotenv import load_dotenv
 from sqlmodel import Session, select
 
 from app.db.session import engine
@@ -40,6 +44,30 @@ from app.services.s3_service import (
     head_object_safe,
     sanitize_filename,
 )
+
+# Carrega variáveis definidas no arquivo .env (na raiz do backend), se existir.
+load_dotenv()
+
+
+def _require_env(name: str) -> str:
+    """Lê uma variável de ambiente obrigatória para o seed.
+
+    Levanta erro claro caso não esteja definida — evita credenciais fixas no
+    código-fonte (Checkmarx: Use_Of_Hardcoded_Password / CWE-798).
+    Defina os valores no arquivo .env a partir do modelo em .env.example.
+    """
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(
+            f"Variável de ambiente obrigatória '{name}' não definida. "
+            f"Copie .env.example para .env e preencha as credenciais de seed."
+        )
+    return value
+
+
+# Credenciais dos usuários de teste — lidas do ambiente (.env), nunca fixas no código.
+SEED_ADMIN_EMAIL         = os.getenv("SEED_ADMIN_EMAIL", "admin@petrobras.com.br")
+SEED_SUPERVISOR_EMAIL    = os.getenv("SEED_SUPERVISOR_EMAIL", "supervisor@petrobras.com.br")
 
 EXTERNAL_EMAIL = "destinatario@example.com"
 
@@ -208,7 +236,7 @@ def _seed_internal_user(
     # 1. Upsert usuário interno
     internal, ic = _upsert_user(
         session, email=email, name=name,
-        user_type=TypeUser.INTERNAL, password="internal@123",
+        user_type=TypeUser.INTERNAL, password=_require_env("SEED_INTERNAL_PASSWORD"),
     )
     print(f"[seed] interno     id={internal.id}  email={internal.email}"
           + ("  ← CRIADO" if ic else "  ← já existia"))
@@ -304,10 +332,10 @@ def main() -> None:
         # ── Administrador global ──────────────────────────────────────────────
         admin, adc = _upsert_user(
             session,
-            email="admin@petrobras.com.br",
+            email=SEED_ADMIN_EMAIL,
             name="Admin Dev",
             user_type=TypeUser.INTERNAL,
-            password="admin@123",
+            password=_require_env("SEED_ADMIN_PASSWORD"),
             is_admin=True,
         )
         print(f"[seed] admin       id={admin.id}  email={admin.email}"
@@ -316,10 +344,10 @@ def main() -> None:
         # ── Supervisor (compartilhado por todos os internos) ──────────────────
         supervisor, sc = _upsert_user(
             session,
-            email="supervisor@petrobras.com.br",
+            email=SEED_SUPERVISOR_EMAIL,
             name="Supervisor Dev",
             user_type=TypeUser.INTERNAL,
-            password="supervisor@123",
+            password=_require_env("SEED_SUPERVISOR_PASSWORD"),
             is_supervisor=True,
         )
         print(f"[seed] supervisor  id={supervisor.id}  email={supervisor.email}"
@@ -351,14 +379,14 @@ def main() -> None:
         print(f"[seed] {sep}")
         print(f"[seed]  [ADMIN] Login como administrador global:")
         print(f"[seed]     POST /api/v1/auth/internal/login")
-        print(f'[seed]     {{"email":"admin@petrobras.com.br","password":"admin@123"}}')
+        print(f'[seed]     {{"email":"{SEED_ADMIN_EMAIL}","password":"<SEED_ADMIN_PASSWORD do .env>"}}')
         print(f"[seed]     GET  /api/v1/admin/dashboard    Authorization: Bearer <token_admin>")
         print(f"[seed]     GET  /api/v1/admin/users        Authorization: Bearer <token_admin>")
         print(f"[seed]     GET  /api/v1/admin/logs         Authorization: Bearer <token_admin>")
         print(f"[seed] ")
         print(f"[seed]  [SUPERVISOR] Login como supervisor:")
         print(f"[seed]     POST /api/v1/auth/internal/login")
-        print(f'[seed]     {{"email":"supervisor@petrobras.com.br","password":"supervisor@123"}}')
+        print(f'[seed]     {{"email":"{SEED_SUPERVISOR_EMAIL}","password":"<SEED_SUPERVISOR_PASSWORD do .env>"}}')
         print(f"[seed] ")
         print(f"[seed]  1) Listar pendentes:")
         print(f"[seed]     GET /api/v1/supervisor/pending")
