@@ -86,7 +86,15 @@ public class TokenValidationMiddleware
             return;
         }
 
-        // Token is valid, proceed
+        // Token is valid — define um ClaimsPrincipal autenticado para que o
+        // middleware de autorização do ASP.NET Core (FallbackPolicy) não tente
+        // um ChallengeAsync sem authentication scheme registrado.
+        var identity = new System.Security.Claims.ClaimsIdentity(
+            new[] { new System.Security.Claims.Claim(
+                System.Security.Claims.ClaimTypes.Name, "mip-worker-service-client") },
+            authenticationType: "Bearer");
+        context.User = new System.Security.Claims.ClaimsPrincipal(identity);
+
         await _next(context);
     }
 }
