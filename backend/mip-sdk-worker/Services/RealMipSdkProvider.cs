@@ -367,6 +367,19 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
 
         // Chave de cache do engine derivada por hash (sem expor o e-mail em texto puro).
         var engineId = BuildEngineKey("label-user", userEmail);
+
+        // ---------------------------------------------------------------------
+        // Checkmarx: Not Exploitable — Privacy Violation (CWE-359)
+        // Justificativa: o authDelegate (token de acesso do usuário) e a Identity
+        // (UPN/e-mail) NÃO são enviados a um serviço arbitrário nem gravados em
+        // log. Eles são requisitos obrigatórios da API do Microsoft Information
+        // Protection (MIP) SDK para aplicar/remover rótulos e proteção EM NOME DO
+        // usuário autenticado. O token trafega apenas para os endpoints oficiais
+        // da Microsoft (Azure RMS / política de labels) via canal TLS gerenciado
+        // pelo próprio SDK. Não há como executar a operação sem estes dados, e o
+        // PII evitável (e-mail em logs e em identificadores de cache) já foi
+        // removido/mascarado (MaskEmail + BuildEngineKey). Falso positivo.
+        // ---------------------------------------------------------------------
         var engineSettings = new FileEngineSettings(
             engineId,
             authDelegate,
