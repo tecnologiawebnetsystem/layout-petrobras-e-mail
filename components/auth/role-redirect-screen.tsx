@@ -1,140 +1,276 @@
 "use client"
 
-import { ShieldCheck, ClipboardCheck, Send, Download, type LucideIcon } from "lucide-react"
+import { useEffect, useState } from "react"
+import {
+  ShieldCheck,
+  ClipboardCheck,
+  Send,
+  Download,
+  CheckCircle2,
+  type LucideIcon,
+} from "lucide-react"
 import { getUserTypeLabel, type FrontendUserType } from "@/lib/auth/cav4-config"
+
+// ---------------------------------------------------------------------------
+// Configuracao visual por perfil
+// ---------------------------------------------------------------------------
 
 interface RoleVisual {
   icon: LucideIcon
   description: string
-  /** Classe de gradiente do circulo do icone. */
-  gradient: string
-  /** Cor de destaque (badge do perfil e anel animado). */
-  accent: string
+  /** Cor primaria do perfil (classe Tailwind de bg). */
+  iconBg: string
+  /** Cor primaria do perfil em hex — usada no anel SVG animado. */
+  ringColor: string
+  /** Classe de texto colorido para o badge do perfil. */
+  badgeClass: string
+  /** Itens de progresso especificos do perfil. */
+  steps: string[]
 }
 
 const ROLE_VISUALS: Record<FrontendUserType, RoleVisual> = {
   admin: {
     icon: ShieldCheck,
-    description: "Acesso completo a auditoria, logs, relatorios e gestao do sistema.",
-    gradient: "from-primary to-secondary",
-    accent: "text-primary",
+    description: "Auditoria, logs, relatorios e gestao completa do sistema.",
+    iconBg: "bg-[#003f7f]",
+    ringColor: "#003f7f",
+    badgeClass: "bg-[#003f7f]/10 text-[#003f7f] dark:bg-[#003f7f]/30 dark:text-blue-300",
+    steps: [
+      "Validando credenciais",
+      "Carregando permissoes de auditoria",
+      "Preparando painel do auditor",
+    ],
   },
   supervisor: {
     icon: ClipboardCheck,
-    description: "Aprovacao e gestao de compartilhamentos, upload de arquivos e visualizacao de logs.",
-    gradient: "from-emerald-500 to-teal-600",
-    accent: "text-emerald-600 dark:text-emerald-400",
+    description: "Aprovacao de compartilhamentos, upload e visualizacao de logs.",
+    iconBg: "bg-emerald-600",
+    ringColor: "#059669",
+    badgeClass: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    steps: [
+      "Validando credenciais",
+      "Carregando compartilhamentos pendentes",
+      "Preparando painel do gestor",
+    ],
   },
   internal: {
     icon: Send,
     description: "Envio seguro de arquivos para destinatarios externos.",
-    gradient: "from-blue-500 to-indigo-600",
-    accent: "text-blue-600 dark:text-blue-400",
+    iconBg: "bg-[#00a859]",
+    ringColor: "#00a859",
+    badgeClass: "bg-[#00a859]/10 text-[#00a859] dark:bg-[#00a859]/20 dark:text-green-400",
+    steps: [
+      "Validando credenciais",
+      "Verificando gestor direto",
+      "Preparando area de envio",
+    ],
   },
   external: {
     icon: Download,
     description: "Download seguro dos arquivos compartilhados com voce.",
-    gradient: "from-amber-500 to-orange-600",
-    accent: "text-amber-600 dark:text-amber-400",
+    iconBg: "bg-amber-500",
+    ringColor: "#f59e0b",
+    badgeClass: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    steps: [
+      "Validando credenciais",
+      "Localizando arquivos disponiveis",
+      "Preparando area de download",
+    ],
   },
 }
 
+// ---------------------------------------------------------------------------
+// Subcomponente: anel SVG rotativo
+// ---------------------------------------------------------------------------
+
+function SpinRing({ color, size = 72 }: { color: string; size?: number }) {
+  const r = (size - 6) / 2
+  const circ = 2 * Math.PI * r
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      className="animate-spin"
+      style={{ animationDuration: "2.4s" }}
+      aria-hidden="true"
+    >
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke={color}
+        strokeWidth={3}
+        strokeOpacity={0.15}
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke={color}
+        strokeWidth={3}
+        strokeLinecap="round"
+        strokeDasharray={`${circ * 0.25} ${circ * 0.75}`}
+      />
+    </svg>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Subcomponente: linha de passo com animacao sequencial
+// ---------------------------------------------------------------------------
+
+function StepLine({ label, state }: { label: string; state: "done" | "active" | "idle" }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className="shrink-0 w-4 h-4 flex items-center justify-center">
+        {state === "done" && (
+          <CheckCircle2 className="w-4 h-4 text-[#00a859]" aria-hidden="true" />
+        )}
+        {state === "active" && (
+          <span className="block w-3 h-3 rounded-full border-2 border-current border-t-transparent animate-spin text-muted-foreground" />
+        )}
+        {state === "idle" && (
+          <span className="block w-2 h-2 rounded-full bg-border" />
+        )}
+      </div>
+      <span
+        className={
+          state === "idle"
+            ? "text-xs text-muted-foreground/50"
+            : state === "active"
+              ? "text-xs font-medium text-foreground"
+              : "text-xs text-muted-foreground line-through"
+        }
+      >
+        {label}
+      </span>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Componente principal
+// ---------------------------------------------------------------------------
+
 interface RoleRedirectScreenProps {
   /**
-   * Perfil de destino. Quando null, exibe apenas o estado de verificacao
+   * Perfil de destino. Quando null exibe o estado inicial de verificacao
    * (ainda nao sabemos para qual area o usuario vai).
    */
   targetType: FrontendUserType | null
 }
 
 /**
- * Tela cheia exibida no login/redirecionamento. Mostra de forma elegante e
- * profissional o status ("Autenticando" / "Carregando") e, quando conhecido,
- * o PERFIL de destino do usuario (Auditor, Gestor, Remetente ou
- * Usuario Externo).
- *
- * Usada tanto no AuthGate (retorno com sessao ativa) quanto no callback do
- * CAv4 (login novo), garantindo a mesma experiencia nos dois fluxos.
+ * Tela elegante de carregamento/redirecionamento exibida apos o login.
+ * Diferencia visualmente cada perfil (Remetente, Gestor, Auditor, Externo)
+ * com cor, icone, descricao e passos de progresso proprios.
  */
 export function RoleRedirectScreen({ targetType }: RoleRedirectScreenProps) {
   const visual = targetType ? ROLE_VISUALS[targetType] : null
-  const Icon = visual?.icon
+  const Icon = visual?.icon ?? ShieldCheck
+
+  // Avanca os passos sequencialmente para dar sensacao de progresso real.
+  const [step, setStep] = useState(0)
+  useEffect(() => {
+    if (!visual) return
+    setStep(0)
+    const t1 = setTimeout(() => setStep(1), 900)
+    const t2 = setTimeout(() => setStep(2), 2000)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [targetType]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const ringColor = visual?.ringColor ?? "#00a859"
 
   return (
     <div
-      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted/40 p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-background p-4"
       role="status"
       aria-live="polite"
+      aria-label="Carregando perfil de acesso"
     >
-      {/* Brilho sutil de fundo */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-secondary/10 blur-3xl" />
+      {/* Fundo sutil — dois pontos de luz nas extremidades */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="absolute -top-32 -left-32 h-80 w-80 rounded-full blur-3xl opacity-30"
+          style={{ background: ringColor }}
+        />
+        <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full blur-3xl opacity-20 bg-[#003f7f]" />
       </div>
 
-      <div className="relative z-10 w-full max-w-sm">
-        <div className="rounded-3xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-2xl p-10 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-500">
+      {/* Card central */}
+      <div className="relative z-10 w-full max-w-[340px] rounded-2xl border border-border bg-card shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+
+        {/* Faixa superior colorida (4px) */}
+        <div
+          className="h-1 w-full"
+          style={{ background: `linear-gradient(90deg, ${ringColor} 0%, #fdb913 100%)` }}
+          aria-hidden="true"
+        />
+
+        <div className="flex flex-col items-center gap-6 px-8 py-8">
+
+          {/* Logo */}
           <img
             src="/images/petrobras-full-logo.png"
-            alt="Petrobras - Logo oficial"
-            className="h-9 w-auto mb-8"
-            width={140}
-            height={36}
+            alt="Petrobras"
+            className="h-7 w-auto opacity-90"
+            width={112}
+            height={28}
           />
 
-          {/* Icone com aneis animados */}
-          <div className="relative flex items-center justify-center mb-6">
-            <span
-              className={`absolute inline-flex h-24 w-24 rounded-full ${
-                visual ? "bg-current opacity-10" : "bg-primary opacity-10"
-              } ${visual?.accent ?? ""} animate-ping`}
-              style={{ animationDuration: "2s" }}
-              aria-hidden="true"
-            />
-            <span
-              className={`absolute inline-flex h-24 w-24 rounded-full border-2 border-dashed ${
-                visual?.accent ?? "text-primary"
-              } opacity-30 animate-spin`}
-              style={{ animationDuration: "8s", borderColor: "currentColor" }}
-              aria-hidden="true"
-            />
+          {/* Icone com anel */}
+          <div className="relative flex items-center justify-center" aria-hidden="true">
+            <div className="absolute">
+              <SpinRing color={ringColor} size={80} />
+            </div>
             <div
-              className={`relative h-20 w-20 rounded-2xl bg-gradient-to-br ${
-                visual?.gradient ?? "from-primary to-secondary"
-              } flex items-center justify-center shadow-xl`}
+              className={`h-14 w-14 rounded-xl ${visual?.iconBg ?? "bg-[#00a859]"} flex items-center justify-center shadow-lg`}
             >
-              {Icon ? (
-                <Icon className="h-9 w-9 text-white" aria-hidden="true" />
-              ) : (
-                <ShieldCheck className="h-9 w-9 text-white animate-pulse" aria-hidden="true" />
-              )}
+              <Icon className="h-7 w-7 text-white" />
             </div>
           </div>
 
+          {/* Perfil ou estado inicial */}
           {targetType && visual ? (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <div className="space-y-1">
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Seu perfil</p>
-                <h1 className="text-2xl font-bold text-foreground text-balance">{getUserTypeLabel(targetType)}</h1>
-              </div>
-              <p className="text-sm text-muted-foreground text-pretty leading-relaxed">{visual.description}</p>
+            <div className="text-center space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-400">
+              <span
+                className={`inline-block rounded-full px-3 py-0.5 text-[11px] font-semibold uppercase tracking-widest ${visual.badgeClass}`}
+              >
+                {getUserTypeLabel(targetType)}
+              </span>
+              <p className="text-sm text-muted-foreground text-pretty leading-relaxed">
+                {visual.description}
+              </p>
             </div>
           ) : (
-            <div className="space-y-1">
-              <h1 className="text-xl font-bold text-foreground">Autenticando</h1>
+            <div className="text-center space-y-1">
+              <p className="text-base font-semibold text-foreground">Autenticando</p>
               <p className="text-sm text-muted-foreground">Validando suas credenciais corporativas</p>
             </div>
           )}
 
-          {/* Barra de progresso animada */}
-          <div className="mt-8 w-full space-y-3">
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+          {/* Passos de progresso */}
+          {visual && (
+            <div className="w-full space-y-2.5 border-t border-border pt-5">
+              {visual.steps.map((label, i) => (
+                <StepLine
+                  key={i}
+                  label={label}
+                  state={i < step ? "done" : i === step ? "active" : "idle"}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Barra de progresso inferior */}
+          {!visual && (
+            <div className="w-full h-1 rounded-full overflow-hidden bg-muted">
               <div className="progress-petrobras h-full w-full rounded-full" />
             </div>
-            <p className="text-xs font-medium text-muted-foreground">
-              {targetType ? "Preparando seu ambiente de trabalho..." : "Carregando..."}
-            </p>
-          </div>
+          )}
         </div>
       </div>
     </div>
