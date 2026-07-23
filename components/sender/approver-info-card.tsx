@@ -2,6 +2,7 @@
 
 import { Label } from "@/components/ui/label"
 import { Lock, Sparkles } from "lucide-react"
+import { usePermissions } from "@/lib/auth/permissions"
 
 interface ManagerInfo {
   name: string
@@ -11,21 +12,25 @@ interface ManagerInfo {
 }
 
 interface ApproverInfoCardProps {
-  /** Tipo do usuario logado. Supervisores tem aprovacao automatica. */
+  /** Tipo do usuario logado. Usado como fallback quando permissions nao foram carregadas. */
   userType?: string
-  /** Supervisor direto do remetente, quando identificado no AD. */
+  /** Gestor direto do remetente, quando identificado no AD. */
   manager?: ManagerInfo
 }
 
 /**
  * Bloco informativo sobre quem vai aprovar o compartilhamento.
  * Cobre os tres cenarios que existiam inline na pagina de upload:
- *  - Supervisor: aprovacao automatica
- *  - Remetente com supervisor identificado: card do aprovador
- *  - Remetente sem supervisor: aviso informativo
+ *  - Gestor (shares:approve): aprovacao automatica
+ *  - Remetente com gestor identificado: card do aprovador
+ *  - Remetente sem gestor: aviso informativo
  */
 export function ApproverInfoCard({ userType, manager }: ApproverInfoCardProps) {
-  if (userType === "supervisor") {
+  const { hasPermission } = usePermissions()
+  // Usa permissao granular do CAv4; fallback para userType para sessoes antigas.
+  const isApprover = hasPermission("shares:approve") || userType === "supervisor"
+
+  if (isApprover) {
     return (
       <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-5 space-y-2">
         <div className="flex items-start gap-3">
@@ -35,7 +40,7 @@ export function ApproverInfoCard({ userType, manager }: ApproverInfoCardProps) {
           <div className="space-y-1">
             <p className="font-medium text-green-800 dark:text-green-400">Aprovacao automatica</p>
             <p className="text-sm text-green-700 dark:text-green-500 leading-relaxed">
-              Como supervisor, este compartilhamento sera aprovado imediatamente e o destinatario recebera acesso aos
+              Como gestor, este compartilhamento sera aprovado imediatamente e o destinatario recebera acesso aos
               arquivos assim que o envio for concluido.
             </p>
           </div>
@@ -68,12 +73,12 @@ export function ApproverInfoCard({ userType, manager }: ApproverInfoCardProps) {
               )}
             </div>
             <div className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-medium">
-              Supervisor Direto
+              Gestor Direto
             </div>
           </div>
         </div>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Este compartilhamento sera enviado para aprovacao do seu supervisor direto.
+          Este compartilhamento sera enviado para aprovacao do seu gestor direto.
         </p>
       </div>
     )
@@ -86,9 +91,9 @@ export function ApproverInfoCard({ userType, manager }: ApproverInfoCardProps) {
           <span className="text-blue-600 font-bold text-sm">i</span>
         </div>
         <div className="space-y-1">
-          <p className="font-medium text-blue-800 dark:text-blue-500">Supervisor nao identificado</p>
+          <p className="font-medium text-blue-800 dark:text-blue-500">Gestor nao identificado</p>
           <p className="text-sm text-blue-700 dark:text-blue-600 leading-relaxed">
-            Nao foi possivel identificar seu supervisor no Active Directory. Voce pode continuar com o compartilhamento,
+            Nao foi possivel identificar seu gestor no Active Directory. Voce pode continuar com o compartilhamento,
             mas recomendamos entrar em contato com o RH ou TI para atualizar seu cadastro hierarquico.
           </p>
         </div>

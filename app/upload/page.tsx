@@ -19,6 +19,7 @@ import { ScrollToTop } from "@/components/shared/scroll-to-top";
 import { UploadSuccessModal } from "@/components/upload/upload-success-modal";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { PageHeader } from "@/components/shared/page-header";
+import { checkAnyPermission } from "@/lib/auth/permissions";
 import { ApproverInfoCard } from "@/components/sender/approver-info-card";
 import { RecipientField } from "@/components/upload/recipient-field";
 import { ExpirationSelect } from "@/components/upload/expiration-select";
@@ -58,8 +59,12 @@ export default function UploadPage() {
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   useEffect(() => {
     if (!_hasHydrated) return;
+    if (!isAuthenticated) { router.push("/"); return; }
 
-    if (!isAuthenticated || (user?.userType !== "internal" && user?.userType !== "supervisor")) {
+    // Guard por permissao granular (CAv4). Fallback para userType em sessoes antigas.
+    const hasUploadPermission = checkAnyPermission(user?.permissions, ["file:upload", "shares:create"])
+    const hasUploadByRole = user?.userType === "internal" || user?.userType === "supervisor"
+    if (!hasUploadPermission && !hasUploadByRole) {
       router.push("/");
     }
   }, [_hasHydrated, isAuthenticated, user, router]);

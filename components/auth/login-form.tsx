@@ -267,6 +267,8 @@ export function LoginForm() {
           email: data.email ?? email,
           name: data.name ?? email.split("@")[0],
           userType,
+          permissions: data.permissions ?? [],
+          allowedModules: data.allowed_modules ?? [],
           manager: data.manager
             ? {
                 id: String(data.manager.id),

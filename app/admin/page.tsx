@@ -402,7 +402,7 @@ function AdminContent() {
   };
 
   if (pageLoading) {
-    return <FullPageLoader message="Carregando painel administrativo..." />;
+    return <FullPageLoader message="Carregando painel do auditor..." />;
   }
 
   return (
@@ -411,7 +411,7 @@ function AdminContent() {
       <main className="container mx-auto px-4 py-6 max-w-7xl">
         <BreadcrumbNav
           dashboardLink="/admin"
-          items={[{ label: "Inicio", href: "/" }, { label: "Administracao" }]}
+          items={[{ label: "Inicio", href: "/" }, { label: "Auditoria" }]}
         />
 
         {/* Header com gradiente */}
@@ -422,7 +422,7 @@ function AdminContent() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-foreground">
-                Painel Administrativo
+                Painel do Auditor
               </h1>
               <p className="text-muted-foreground">
                 Visao completa de todos os usuarios, compartilhamentos e logs do
@@ -519,7 +519,7 @@ function AdminContent() {
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm font-medium text-muted-foreground">
-                        Supervisores
+                        Gestores
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -531,7 +531,7 @@ function AdminContent() {
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm font-medium text-muted-foreground">
-                        Admins
+                        Auditores
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -732,8 +732,8 @@ function AdminContent() {
                         <TableHead>Email</TableHead>
                         <TableHead>Tipo</TableHead>
                         <TableHead>Cargo</TableHead>
-                        <TableHead>Supervisor</TableHead>
-                        <TableHead>Admin</TableHead>
+                        <TableHead>Gestor</TableHead>
+                        <TableHead>Auditor</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Ultimo Login</TableHead>
                         <TableHead>Acoes</TableHead>
@@ -1215,14 +1215,14 @@ function AdminContent() {
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">
-                          Supervisor
+                          Gestor
                         </p>
                         <p className="font-medium">
                           {trackingData.user.is_supervisor ? "Sim" : "Nao"}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Admin</p>
+                        <p className="text-sm text-muted-foreground">Auditor</p>
                         <p className="font-medium">
                           {trackingData.user.is_admin ? "Sim" : "Nao"}
                         </p>

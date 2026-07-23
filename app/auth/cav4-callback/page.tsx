@@ -63,6 +63,9 @@ function CAv4CallbackContent() {
             department: user.department || undefined,
             employeeId: user.employee_id || undefined,
             photoUrl: user.photo_url || undefined,
+            // Permissoes granulares e modulos retornados pelo CAv4 via authorization_service
+            permissions: data.permissions ?? [],
+            allowedModules: data.allowed_modules ?? [],
             manager: user.manager
               ? {
                   id: String(user.manager.id),

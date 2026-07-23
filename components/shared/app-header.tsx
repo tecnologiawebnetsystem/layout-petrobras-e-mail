@@ -14,6 +14,7 @@ import {
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useThemeStore } from "@/lib/stores/theme-store"
+import { usePermissions } from "@/lib/auth/permissions"
 import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 // import { GlobalSearch } from "@/components/search/global-search"
@@ -27,10 +28,17 @@ interface AppHeaderProps {
 export function AppHeader({ subtitle }: AppHeaderProps) {
   const { user, logout } = useAuthStore()
   const { isDark, toggleTheme } = useThemeStore()
+  const { hasPermission, hasModule } = usePermissions()
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const isExternalUser = user?.userType === "external"
+  // Visibilidade dos itens de menu baseada em permissoes granulares do CAv4.
+  // Fallback para userType quando permissions ainda nao foram carregadas (sessoes antigas).
+  const canViewCompartilhamentos =
+    !isExternalUser && (hasPermission("shares:read") || user?.userType === "internal" || user?.userType === "supervisor")
+  const canViewLogs =
+    !isExternalUser && (hasPermission("report:read") || user?.userType === "supervisor")
 
   const handleLogout = async () => {
     try {
@@ -83,7 +91,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
 
         <TooltipProvider>
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
-            {!isExternalUser && user?.userType === "supervisor" && (
+            {canViewLogs && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -181,7 +189,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                       <div className="flex items-start gap-2">
                         <User className="h-4 w-4 text-muted-foreground mt-0.5" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-muted-foreground">Supervisor</p>
+                          <p className="text-xs font-medium text-muted-foreground">Gestor</p>
                           <p className="text-sm font-semibold text-foreground">{user.manager.name}</p>
                           <p className="text-xs text-muted-foreground truncate">{user.manager.email}</p>
                           {user.manager.jobTitle && (
@@ -195,7 +203,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
 
                 <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
 
-                {!isExternalUser && (user?.userType === "internal" || user?.userType === "supervisor") && (
+                {canViewCompartilhamentos && (
                   <>
                     <DropdownMenuItem
                       onClick={handleViewCompartilhamentos}
@@ -207,7 +215,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                     <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
                   </>
                 )}
-                {!isExternalUser && user?.userType === "supervisor" && (
+                {canViewLogs && (
                   <>
                     <DropdownMenuItem
                       onClick={handleViewLogs}
@@ -277,7 +285,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                       <div className="flex items-start gap-2">
                         <User className="h-4 w-4 text-muted-foreground mt-0.5" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-muted-foreground">Supervisor</p>
+                          <p className="text-xs font-medium text-muted-foreground">Gestor</p>
                           <p className="text-sm font-semibold text-foreground">{user.manager.name}</p>
                           <p className="text-xs text-muted-foreground truncate">{user.manager.email}</p>
                         </div>
@@ -287,7 +295,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                 </SheetHeader>
 
                 <div className="flex flex-col gap-2 p-4">
-                  {!isExternalUser && (user?.userType === "internal" || user?.userType === "supervisor") && (
+                  {canViewCompartilhamentos && (
                     <Button
                       variant="ghost"
                       className="justify-start h-12 text-base hover:bg-accent transition-colors min-h-[44px]"
@@ -298,7 +306,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                     </Button>
                   )}
 
-                  {!isExternalUser && user?.userType === "supervisor" && (
+                  {canViewLogs && (
                     <Button
                       variant="ghost"
                       className="justify-start h-12 text-base hover:bg-accent transition-colors min-h-[44px]"

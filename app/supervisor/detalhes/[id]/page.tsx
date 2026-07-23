@@ -33,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useWorkflowStore } from "@/lib/stores/workflow-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { usePermissions } from "@/lib/auth/permissions";
 import { useToast } from "@/hooks/use-toast";
 import { AppHeader } from "@/components/shared/app-header";
 import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav";
@@ -54,6 +55,13 @@ export default function SupervisorDetailsPage({
     loadAllSupervisorShares,
   } = useWorkflowStore();
   const { user } = useAuthStore();
+  const { hasPermission } = usePermissions();
+  // Controle de visibilidade das acoes por permissao granular (CAv4).
+  // Fallback para userType para compatibilidade com sessoes pre-RBAC.
+  const canApprove = hasPermission("shares:approve") || user?.userType === "supervisor"
+  const canReject = hasPermission("shares:reject") || user?.userType === "supervisor"
+  const canResend = hasPermission("shares:resend") || user?.userType === "supervisor"
+  const canDownload = hasPermission("file:download") || user?.userType === "supervisor"
 
   const [id, setId] = useState<string>("");
   const [uploadData, setUploadData] = useState<any>(null);
@@ -639,8 +647,8 @@ export default function SupervisorDetailsPage({
                         </div>
                       )}
 
-                      {/* Botão de reenvio — disponível apenas para shares já decididos */}
-                      {uploadData.status !== "pending" && (
+                      {/* Botão de reenvio — disponível apenas para shares já decididos e com permissao */}
+                      {uploadData.status !== "pending" && canResend && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -664,9 +672,9 @@ export default function SupervisorDetailsPage({
                 })()}
 
               <div className="flex gap-3">
-                {/* Botão Download ZIP — apenas enquanto PENDENTE */}
+                {/* Botão Download ZIP — apenas enquanto PENDENTE e com permissao */}
                 {uploadData.status === "pending" &&
-                  !id.startsWith("upload-") && (
+                  !id.startsWith("upload-") && canDownload && (
                     <Button
                             className="flex-1 bg-secondary hover:bg-secondary/90 text-white"
                       disabled={isDownloading}
@@ -683,21 +691,25 @@ export default function SupervisorDetailsPage({
 
                 {uploadData.status === "pending" && (
                   <>
-                    <Button
-                      onClick={handleApprove}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Aprovar
-                    </Button>
-                    <Button
-                      onClick={() => setShowRejectDialog(true)}
-                      variant="destructive"
-                      className="flex-1"
-                    >
-                      <XCircle className="h-4 w-4 mr-2" />
-                      Rejeitar
-                    </Button>
+                    {canApprove && (
+                      <Button
+                        onClick={handleApprove}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Aprovar
+                      </Button>
+                    )}
+                    {canReject && (
+                      <Button
+                        onClick={() => setShowRejectDialog(true)}
+                        variant="destructive"
+                        className="flex-1"
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Rejeitar
+                      </Button>
+                    )}
                   </>
                 )}
               </div>

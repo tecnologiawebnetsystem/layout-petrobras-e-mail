@@ -23,6 +23,17 @@ interface User {
   mobilePhone?: string
   employeeId?: string
   photoUrl?: string
+  /**
+   * Lista de permissoes granulares retornadas pelo CAv4 (ex: "shares:approve", "file:upload").
+   * Populada na autenticacao e usada para renderizacao condicional de telas, menus e acoes.
+   * Se contiver "*", o usuario tem acesso total (admin/auditor).
+   */
+  permissions?: string[]
+  /**
+   * Modulos habilitados calculados pelo backend com base nas permissoes do usuario.
+   * Ex: ["upload", "compartilhamentos", "supervisor", "logs", "admin"]
+   */
+  allowedModules?: string[]
   manager?: {
     id: string
     name: string

@@ -11,6 +11,7 @@ from typing import List, Optional
 
 from app.core.config import settings
 from app.utils.logger import logger
+from app.services.authorization_service import get_allowed_modules
 
 
 class Cav4ClientError(Exception):
@@ -68,10 +69,10 @@ class Cav4Client:
 
                 data = response.json()
                 
-                logger.error(
+                """ logger.debug(
                     "CAV4_RAW_RESPONSE=%s",
                     data
-                )
+                ) """
 
                 # Tratamento FLEXÍVEL (FWCA varia formato)
                 resources = []
@@ -110,20 +111,48 @@ class Cav4Client:
                     for c in codes
                     if isinstance(c, str) and c.strip()
                 ]
+                
+                resource_codes = [
+                    code
+                    for code in normalized_codes
+                    if ":" not in code
+                ]
+                permission_codes = [
+                    code
+                    for code in normalized_codes
+                    if ":" in code
+                ]
 
                 # ✅ Log observável
                 logger.info(
                     "CAV4 resources carregados",
                     user_login=user_login,
+                    resources=len(resource_codes),
+                    permissions=len(permission_codes),
                     total=len(normalized_codes),
-                    sample=normalized_codes[:5],  # evita log gigante
+                    sample=resource_codes[:15],  # evita log gigante
                 )
+                
+                permissions_only = [
+                    code
+                    for code in normalized_codes
+                    if ":" in code
+                ]
+
+                active_modules = get_allowed_modules(permissions_only)
+
                 logger.info(
                     "CAV4_PERMISSIONS=%s",
-                    normalized_codes
+                    permissions_only
                 )
 
-                return normalized_codes
+                logger.info(
+                    "MÓDULOS_ATIVOS=%s",
+                    active_modules,
+                    total=len(active_modules)
+                )
+
+                return permissions_only
 
             except httpx.RequestError as e:
                 raise Cav4ClientError(

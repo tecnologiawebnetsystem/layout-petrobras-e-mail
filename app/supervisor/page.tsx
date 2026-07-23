@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useWorkflowStore } from "@/lib/stores/workflow-store"
+import { usePermissions, checkAnyPermission } from "@/lib/auth/permissions"
 import { AppHeader } from "@/components/shared/app-header"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -22,6 +23,7 @@ export default function SupervisorPage() {
   const searchParams = useSearchParams()
   const { user, isAuthenticated } = useAuthStore()
   const { uploads, loadAllSupervisorShares } = useWorkflowStore()
+  const { hasPermission } = usePermissions()
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [isLoading, setIsLoading] = useState(true)
@@ -37,7 +39,11 @@ export default function SupervisorPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (!isAuthenticated || user?.userType !== "supervisor") {
+      if (!isAuthenticated) { router.push("/"); return }
+      // Guard por permissao granular (CAv4). Fallback para userType em sessoes antigas.
+      const hasGestorPermission = checkAnyPermission(user?.permissions, ["shares:approve", "shares:reject"])
+      const hasGestorByRole = user?.userType === "supervisor"
+      if (!hasGestorPermission && !hasGestorByRole) {
         router.push("/")
       } else {
         loadAllSupervisorShares()
@@ -76,7 +82,7 @@ export default function SupervisorPage() {
   }
 
   if (isLoading) {
-    return <FullPageLoader message="Carregando painel do supervisor..." subMessage="Buscando compartilhamentos e dados" />
+    return <FullPageLoader message="Carregando painel do gestor..." subMessage="Buscando compartilhamentos e dados" />
   }
 
   if (!isAuthenticated || user?.userType !== "supervisor") {
@@ -90,13 +96,13 @@ export default function SupervisorPage() {
 
       <main className="container mx-auto px-4 py-6 max-w-7xl">
         <BreadcrumbNav
-          items={[{ label: "Inicio", href: "/supervisor" }, { label: "Painel do Supervisor" }]}
+          items={[{ label: "Inicio", href: "/supervisor" }, { label: "Painel do Gestor" }]}
           dashboardLink="/supervisor"
         />
 
         <PageHeader
           icon={Shield}
-          title="Painel do Supervisor"
+          title="Painel do Gestor"
           subtitle="Gerencie aprovacoes, compartilhamentos e visualize logs do sistema"
         />
 

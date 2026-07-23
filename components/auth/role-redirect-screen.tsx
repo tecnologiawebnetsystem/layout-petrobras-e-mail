@@ -15,13 +15,13 @@ interface RoleVisual {
 const ROLE_VISUALS: Record<FrontendUserType, RoleVisual> = {
   admin: {
     icon: ShieldCheck,
-    description: "Acesso completo a auditoria, logs e gestao do sistema.",
+    description: "Acesso completo a auditoria, logs, relatorios e gestao do sistema.",
     gradient: "from-primary to-secondary",
     accent: "text-primary",
   },
   supervisor: {
     icon: ClipboardCheck,
-    description: "Aprovacao de compartilhamentos e envio de arquivos.",
+    description: "Aprovacao e gestao de compartilhamentos, upload de arquivos e visualizacao de logs.",
     gradient: "from-emerald-500 to-teal-600",
     accent: "text-emerald-600 dark:text-emerald-400",
   },
@@ -50,7 +50,7 @@ interface RoleRedirectScreenProps {
 /**
  * Tela cheia exibida no login/redirecionamento. Mostra de forma elegante e
  * profissional o status ("Autenticando" / "Carregando") e, quando conhecido,
- * o PERFIL de destino do usuario (Administrador, Supervisor, Remetente ou
+ * o PERFIL de destino do usuario (Auditor, Gestor, Remetente ou
  * Usuario Externo).
  *
  * Usada tanto no AuthGate (retorno com sessao ativa) quanto no callback do

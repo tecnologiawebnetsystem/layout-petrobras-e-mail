@@ -31,8 +31,8 @@ export function resolvePostLoginRoute(userType: FrontendUserType): string {
 
 // Rotulo amigavel do perfil, usado nas mensagens de loading/redirecionamento.
 export function getUserTypeLabel(userType: FrontendUserType): string {
-  if (userType === "admin") return "Administrador"
-  if (userType === "supervisor") return "Supervisor"
+  if (userType === "admin") return "Auditor"
+  if (userType === "supervisor") return "Gestor"
   if (userType === "external") return "Usuario Externo"
   return "Remetente"
 }
