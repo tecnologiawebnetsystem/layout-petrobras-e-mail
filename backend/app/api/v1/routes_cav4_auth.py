@@ -29,7 +29,7 @@ from app.services.graph_service import enrich_graph_profile_by_upn
 from app.utils.authz import get_current_user
 from app.utils.session_jwt import decode_app_jwt
 
-from app.services.authorization_service import resolve_permissions
+from app.services.authorization_service import resolve_permissions, get_allowed_modules
 from app.services.cav4_client import cav4_client, Cav4ClientError
 
 logger = logging.getLogger(__name__)
@@ -131,9 +131,9 @@ def _complete_cav4_exchange(
     claims = validate_cav4_id_token(id_token)
 
     
-    # ✅ LOG PARA EVIDÊNCIA DO CARD
+    """ # ✅ LOG PARA EVIDÊNCIA DO CARD
     token_roles = claims.get("roles") or claims.get("groups") or []
-    print(f"[DEBUG TOKEN] Roles no token: {bool(token_roles)} | quantidade={len(token_roles)}")
+    print(f"[DEBUG TOKEN] Roles no token: {bool(token_roles)} | quantidade={len(token_roles)}") """
 
 
     nonce = str(claims.get("nonce") or "")
@@ -154,14 +154,14 @@ def _complete_cav4_exchange(
             token=access_token,
             user_login=user_login
         )
-        logger.error(
+        """ logger.error(
             "TESTE_CAV4_RESOURCES=%s",
             permissions
         )
         logger.error(
             "TIPO_RESOURCES=%s",
             type(permissions)
-        )
+        ) """
         
         logger.info(
             "PERMISSIONS_VINDAS_CAV4 role=%s permissions=%s",
@@ -263,10 +263,20 @@ def _complete_cav4_exchange(
     if not user.status:
         raise HTTPException(status_code=403, detail="Usuario desativado.")
 
-    tokens = issue_internal_tokens(session, user, request, roles=[role], permissions=permissions)
+    # Resolve a lista completa de roles para embuti-la no JWT.
+    # all_roles preserva todos os papéis do usuário (ex: ["supervisor","internal"]),
+    # enquanto role continua sendo o papel principal para exibição no frontend.
+    all_roles = access_info.get("all_roles") or [role]
+
+    tokens = issue_internal_tokens(session, user, request, roles=all_roles, permissions=permissions)
     manager_data = _build_manager_data(session, user)
 
-    role = resolve_primary_role(user)
+    # role vem de access_info (o que o CAv4 retornou AGORA), não do banco.
+    # resolve_primary_role(user) usaria user.is_admin do banco, que pode estar
+    # desatualizado se o usuário mudou de papel desde o último login.
+    role = access_info["role"]
+
+    allowed_modules = get_allowed_modules(permissions)
 
     log_event(
         session=session,
@@ -292,6 +302,10 @@ def _complete_cav4_exchange(
             "photo_url": user.photo_url or "",
             "manager": manager_data,
         },
+        # roles exposto explicitamente para o frontend montar o auth-store
+        "roles": all_roles,
+        "permissions": permissions,
+        "allowed_modules": allowed_modules,
     }
 
 
