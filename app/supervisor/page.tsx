@@ -76,7 +76,7 @@ export default function SupervisorPage() {
   }
 
   if (isLoading) {
-    return <FullPageLoader message="Carregando painel do supervisor..." subMessage="Buscando compartilhamentos e dados" />
+    return <FullPageLoader message="Carregando painel do gestor..." subMessage="Buscando compartilhamentos e dados" />
   }
 
   if (!isAuthenticated || user?.userType !== "supervisor") {
@@ -90,13 +90,13 @@ export default function SupervisorPage() {
 
       <main className="container mx-auto px-4 py-6 max-w-7xl">
         <BreadcrumbNav
-          items={[{ label: "Inicio", href: "/supervisor" }, { label: "Painel do Supervisor" }]}
+          items={[{ label: "Inicio", href: "/supervisor" }, { label: "Painel do Gestor" }]}
           dashboardLink="/supervisor"
         />
 
         <PageHeader
           icon={Shield}
-          title="Painel do Supervisor"
+          title="Painel do Gestor"
           subtitle="Gerencie aprovacoes, compartilhamentos e visualize logs do sistema"
         />
 

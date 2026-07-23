@@ -181,7 +181,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                       <div className="flex items-start gap-2">
                         <User className="h-4 w-4 text-muted-foreground mt-0.5" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-muted-foreground">Supervisor</p>
+                          <p className="text-xs font-medium text-muted-foreground">Gestor</p>
                           <p className="text-sm font-semibold text-foreground">{user.manager.name}</p>
                           <p className="text-xs text-muted-foreground truncate">{user.manager.email}</p>
                           {user.manager.jobTitle && (
@@ -277,7 +277,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                       <div className="flex items-start gap-2">
                         <User className="h-4 w-4 text-muted-foreground mt-0.5" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-muted-foreground">Supervisor</p>
+                          <p className="text-xs font-medium text-muted-foreground">Gestor</p>
                           <p className="text-sm font-semibold text-foreground">{user.manager.name}</p>
                           <p className="text-xs text-muted-foreground truncate">{user.manager.email}</p>
                         </div>
