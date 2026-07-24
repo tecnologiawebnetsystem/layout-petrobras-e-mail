@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, Moon, Sun, Menu, FolderOpen, Building2, MapPin, User, Activity } from "lucide-react"
+import { LogOut, Moon, Sun, Menu, Building2, MapPin, User } from "lucide-react"
 import { PetrobrasLogo } from "@/components/ui/petrobras-logo"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,12 +14,13 @@ import {
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useThemeStore } from "@/lib/stores/theme-store"
-import { usePermissions } from "@/lib/auth/permissions"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 // import { GlobalSearch } from "@/components/search/global-search"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { useState } from "react"
+import { getNavItems } from "@/lib/auth/nav-items"
+import { cn } from "@/lib/utils"
 
 interface AppHeaderProps {
   subtitle?: string
@@ -28,17 +29,13 @@ interface AppHeaderProps {
 export function AppHeader({ subtitle }: AppHeaderProps) {
   const { user, logout } = useAuthStore()
   const { isDark, toggleTheme } = useThemeStore()
-  const { hasPermission, hasModule } = usePermissions()
   const router = useRouter()
+  const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const isExternalUser = user?.userType === "external"
-  // Visibilidade dos itens de menu baseada em permissoes granulares do CAv4.
-  // Fallback para userType quando permissions ainda nao foram carregadas (sessoes antigas).
-  const canViewCompartilhamentos =
-    !isExternalUser && (hasPermission("shares:read") || user?.userType === "internal" || user?.userType === "supervisor")
-  const canViewLogs =
-    !isExternalUser && (hasPermission("report:read") || user?.userType === "supervisor")
+  // Lista de modulos disponiveis calculada a partir das permissoes do usuario (CAv4).
+  // Atualiza automaticamente quando o store muda (ex: apos alterar permissoes).
+  const navItems = getNavItems(user)
 
   const handleLogout = async () => {
     try {
@@ -51,13 +48,8 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
     }
   }
 
-  const handleViewCompartilhamentos = () => {
-    router.push("/compartilhamentos")
-    setMobileMenuOpen(false)
-  }
-
-  const handleViewLogs = () => {
-    router.push("/logs")
+  const handleNavigate = (route: string) => {
+    router.push(route)
     setMobileMenuOpen(false)
   }
 
@@ -91,25 +83,6 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
 
         <TooltipProvider>
           <div className="hidden md:flex items-center gap-2 flex-shrink-0">
-            {canViewLogs && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleViewLogs}
-                    className="h-10 w-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-all duration-300"
-                    aria-label="Logs e Rastreamento"
-                  >
-                    <Activity className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Logs e Rastreamento</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -203,30 +176,37 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
 
                 <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
 
-                {canViewCompartilhamentos && (
+                {navItems.length > 0 && (
                   <>
-                    <DropdownMenuItem
-                      onClick={handleViewCompartilhamentos}
-                      className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 hover:text-blue-900 dark:hover:text-blue-100 focus:text-blue-900 dark:focus:text-blue-100 min-h-[44px]"
-                    >
-                      <FolderOpen className="h-4 w-4" />
-                      <span>Meus Compartilhamentos</span>
-                    </DropdownMenuItem>
+                    <DropdownMenuLabel className="py-1.5 px-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Navegação
+                    </DropdownMenuLabel>
+                    {navItems.map((item) => {
+                      const Icon = item.icon
+                      const isActive = pathname === item.route
+                      return (
+                        <DropdownMenuItem
+                          key={item.route}
+                          onClick={() => handleNavigate(item.route)}
+                          className={cn(
+                            "flex items-center gap-2 cursor-pointer min-h-[40px]",
+                            isActive
+                              ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-medium"
+                              : "text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 hover:text-blue-900 dark:hover:text-blue-100 focus:text-blue-900 dark:focus:text-blue-100",
+                          )}
+                        >
+                          <Icon className="h-4 w-4 flex-shrink-0" />
+                          <span>{item.label}</span>
+                          {isActive && (
+                            <span className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-500" />
+                          )}
+                        </DropdownMenuItem>
+                      )
+                    })}
                     <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
                   </>
                 )}
-                {canViewLogs && (
-                  <>
-                    <DropdownMenuItem
-                      onClick={handleViewLogs}
-                      className="flex items-center gap-2 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 hover:text-blue-900 dark:hover:text-blue-100 focus:text-blue-900 dark:focus:text-blue-100 min-h-[44px]"
-                    >
-                      <Activity className="h-4 w-4" />
-                      <span>Logs e Rastreamento</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
-                  </>
-                )}
+
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="flex items-center gap-2 cursor-pointer text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/40 focus:bg-red-100 dark:focus:bg-red-900/40 hover:text-red-900 dark:hover:text-red-200 focus:text-red-900 dark:focus:text-red-200 min-h-[44px]"
@@ -294,30 +274,38 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                   )}
                 </SheetHeader>
 
-                <div className="flex flex-col gap-2 p-4">
-                  {canViewCompartilhamentos && (
-                    <Button
-                      variant="ghost"
-                      className="justify-start h-12 text-base hover:bg-accent transition-colors min-h-[44px]"
-                      onClick={handleViewCompartilhamentos}
-                    >
-                      <FolderOpen className="h-5 w-5 mr-3" />
-                      Meus Compartilhamentos
-                    </Button>
+                <div className="flex flex-col p-4">
+                  {navItems.length > 0 && (
+                    <>
+                      <p className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        Navegação
+                      </p>
+                      {navItems.map((item) => {
+                        const Icon = item.icon
+                        const isActive = pathname === item.route
+                        return (
+                          <Button
+                            key={item.route}
+                            variant="ghost"
+                            className={cn(
+                              "justify-start h-12 text-base min-h-[44px] transition-colors",
+                              isActive
+                                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-medium"
+                                : "hover:bg-accent",
+                            )}
+                            onClick={() => handleNavigate(item.route)}
+                          >
+                            <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
+                            {item.label}
+                            {isActive && (
+                              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-500" />
+                            )}
+                          </Button>
+                        )
+                      })}
+                      <div className="h-px bg-border my-2" />
+                    </>
                   )}
-
-                  {canViewLogs && (
-                    <Button
-                      variant="ghost"
-                      className="justify-start h-12 text-base hover:bg-accent transition-colors min-h-[44px]"
-                      onClick={handleViewLogs}
-                    >
-                      <Activity className="h-5 w-5 mr-3" />
-                      Logs e Rastreamento
-                    </Button>
-                  )}
-
-                  <div className="h-px bg-border my-2" />
 
                   <Button
                     variant="ghost"
