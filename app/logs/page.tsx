@@ -16,6 +16,7 @@ import { LogFilters } from "@/components/logs/log-filters"
 import { LogTimeline } from "@/components/logs/log-timeline"
 import { LogPagination } from "@/components/logs/log-pagination"
 import type { AuditLog, AuditPagination, AuditResponse } from "@/components/logs/log-utils"
+import { checkAnyPermission } from "@/lib/auth/permissions"
 
 export default function LogsPage() {
   const router = useRouter()
@@ -95,7 +96,10 @@ export default function LogsPage() {
     if (!_hasHydrated) return
 
     const timer = setTimeout(() => {
-      if (!isAuthenticated || (user?.userType !== "supervisor" && user?.userType !== "admin")) {
+      // Guard por permissao granular (CAv4). Fallback para userType em sessoes antigas.
+      const hasReportPermission = checkAnyPermission(user?.permissions, ["report:read"])
+      const hasReportByRole = user?.userType === "supervisor" || user?.userType === "admin"
+      if (!isAuthenticated || (!hasReportPermission && !hasReportByRole)) {
         router.push("/")
       } else {
         setIsLoading(false)
@@ -140,7 +144,8 @@ export default function LogsPage() {
     return <FullPageLoader message="Carregando logs do sistema..." subMessage="Buscando registros de atividades" />
   }
 
-  if (!_hasHydrated || !isAuthenticated || (user?.userType !== "supervisor" && user?.userType !== "admin")) {
+  const hasReportAccess = checkAnyPermission(user?.permissions, ["report:read"]) || user?.userType === "supervisor" || user?.userType === "admin"
+  if (!_hasHydrated || !isAuthenticated || !hasReportAccess) {
     return null
   }
 

@@ -7,13 +7,21 @@ import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { validateSessionContext, initializeSessionBinding } from "@/lib/auth/session-binding"
 import { showAlert } from "@/lib/stores/alert-store"
+import { checkAnyPermission, type Permission } from "@/lib/auth/permissions"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
   allowedUserTypes: Array<"internal" | "external" | "supervisor" | "admin" | "support">
+  /**
+   * Permissoes granulares exigidas (modelo RBAC CAv4).
+   * Basta UMA das permissoes listadas estar presente para conceder acesso.
+   * Quando fornecido, e usado como criterio primario; `allowedUserTypes`
+   * funciona como fallback para sessoes sem campo `permissions`.
+   */
+  requiredPermissions?: Permission[]
 }
 
-export function ProtectedRoute({ children, allowedUserTypes }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, allowedUserTypes, requiredPermissions }: ProtectedRouteProps) {
   const { user, isAuthenticated, _hasHydrated } = useAuthStore()
   const router = useRouter()
   const [isChecking, setIsChecking] = useState(true)
@@ -38,13 +46,23 @@ export function ProtectedRoute({ children, allowedUserTypes }: ProtectedRoutePro
       return
     }
 
-    if (user && !allowedUserTypes.includes(user.userType)) {
-      router.push("/")
-      return
+    if (user) {
+      const hasRole = allowedUserTypes.includes(user.userType)
+
+      // Se ha permissoes granulares definidas, usa-as como criterio primario.
+      // Fallback para userType quando o campo permissions ainda nao existe na sessao.
+      const hasAccess = requiredPermissions
+        ? checkAnyPermission(user.permissions, requiredPermissions) || hasRole
+        : hasRole
+
+      if (!hasAccess) {
+        router.push("/")
+        return
+      }
     }
 
     setIsChecking(false)
-  }, [_hasHydrated, isAuthenticated, user, allowedUserTypes, router])
+  }, [_hasHydrated, isAuthenticated, user, allowedUserTypes, requiredPermissions, router])
 
   if (isChecking) {
     return (
