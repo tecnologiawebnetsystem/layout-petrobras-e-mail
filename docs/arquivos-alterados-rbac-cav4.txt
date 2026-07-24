@@ -82,6 +82,24 @@ SESSAO 2 — Menu de navegacao dinamico por permissao
       * Separador e botao "Sair" mantidos
 
 
+SESSAO 3 — Correcao: permissions propagada em todos os fluxos de login
+--------------------------------------------------------------------------------
+
+11. app/auth/entra-callback/page.tsx
+    - setAuth agora inclui: permissions: data.permissions ?? []
+    - setAuth agora inclui: allowedModules: data.allowed_modules ?? []
+    - Alinhado ao padrao do cav4-callback (sessao 1 estava incompleta neste arquivo)
+
+12. lib/auth/nav-items.ts  [CORRECAO DE LOGICA]
+    - getNavItems reescrita com logica exclusiva por modo:
+      * Se permissions existe e tem itens (sessao CAv4 atual):
+        usa SOMENTE checkAnyPermission — remover permissao retira item do menu
+      * Se permissions e vazio ou ausente (sessao antiga / dev sem RBAC):
+        usa SOMENTE userType como fallback
+    - Correcao necessaria: o OR anterior (hasPermission || hasRole) impedia que a
+      remocao de permissoes surtisse efeito quando o userType cobria o modulo
+
+
 ================================================================================
 ARQUIVOS NAO ALTERADOS (confirmados intactos)
 ================================================================================
@@ -99,8 +117,9 @@ COMPORTAMENTO ESPERADO POS-ALTERACAO
 ================================================================================
 
 - O menu no dropdown da foto exibe somente os modulos que o usuario tem acesso.
-- Alterar permissions no CAv4 (backend) reflete automaticamente no menu na proxima
-  renderizacao sem necessidade de alteracao de codigo frontend.
-- Sessoes antigas (sem campo permissions) continuam funcionando via fallback userType.
+- Alterar permissions no CAv4 (backend) reflete no menu na proxima renderizacao:
+  * Adicionar permissao  -> item aparece no menu
+  * Remover permissao    -> item some do menu (nao e mais mascarado pelo userType)
+- Usuarios sem campo permissions (sessoes antigas) continuam funcionando via fallback.
 - Nenhuma regra de negocio ou logica de backend foi modificada.
 ================================================================================

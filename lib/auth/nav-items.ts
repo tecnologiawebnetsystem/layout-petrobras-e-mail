@@ -96,15 +96,26 @@ interface UserForNav {
 
 /**
  * Retorna somente os itens de navegacao que o usuario tem acesso.
- * Criterio primario: permissao granular (CAv4).
- * Fallback: userType (compatibilidade com sessoes antigas).
+ *
+ * Logica de decisao:
+ * - Se o campo `permissions` existe e tem ao menos 1 item (sessao CAv4 atual),
+ *   usa EXCLUSIVAMENTE a permissao granular. Isso garante que adicionar ou
+ *   remover permissoes no CAv4 reflita imediatamente no menu, sem interferencia
+ *   do userType.
+ * - Se `permissions` e ausente ou vazio (sessao antiga / modo dev sem RBAC),
+ *   cai no fallback por userType para manter compatibilidade.
  */
 export function getNavItems(user: UserForNav | null | undefined): NavItem[] {
   if (!user) return []
 
+  const hasGranularPermissions = Array.isArray(user.permissions) && user.permissions.length > 0
+
   return ALL_NAV_ITEMS.filter((item) => {
-    const hasPermission = checkAnyPermission(user.permissions, item.requiredPermissions)
-    const hasRole = item.requiredUserTypes.includes(user.userType)
-    return hasPermission || hasRole
+    if (hasGranularPermissions) {
+      // Modo granular: apenas permissao CAv4 decide
+      return checkAnyPermission(user.permissions, item.requiredPermissions)
+    }
+    // Modo fallback: userType decide (sessoes antigas ou dev sem RBAC)
+    return item.requiredUserTypes.includes(user.userType)
   })
 }

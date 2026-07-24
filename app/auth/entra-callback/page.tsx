@@ -107,6 +107,9 @@ function CallbackContent() {
             department: u.department || undefined,
             employeeId: u.employee_id || undefined,
             photoUrl: u.photo_url || undefined,
+            // Permissoes granulares e modulos retornados pelo backend via authorization_service
+            permissions: data.permissions ?? [],
+            allowedModules: data.allowed_modules ?? [],
             manager: u.manager
               ? {
                   id: String(u.manager.id),
