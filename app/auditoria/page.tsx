@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useAuditLogStore, type LogAction, type LogLevel } from "@/lib/stores/audit-log-store"
+import { checkAnyPermission } from "@/lib/auth/permissions"
 import { AppHeader } from "@/components/shared/app-header"
 import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
 import { ScrollToTop } from "@/components/shared/scroll-to-top"
@@ -89,6 +90,15 @@ export default function AuditoriaPage() {
       router.push("/")
       return
     }
+
+    // Guard por permissao granular (CAv4). Fallback para userType em sessoes antigas.
+    const hasAuditPermission = checkAnyPermission(user?.permissions, ["audit:read"])
+    const hasAuditByRole = user?.userType === "admin" || user?.userType === "supervisor"
+    if (!hasAuditPermission && !hasAuditByRole) {
+      router.push("/")
+      return
+    }
+
     loadLogs()
     // Simular carregamento inicial
     const timer = setTimeout(() => {
@@ -139,7 +149,8 @@ export default function AuditoriaPage() {
     }
   }, [logs, getLogsByAction])
 
-  if (!_hasHydrated || !isAuthenticated) {
+  const hasAuditAccess = checkAnyPermission(user?.permissions, ["audit:read"]) || user?.userType === "admin" || user?.userType === "supervisor"
+  if (!_hasHydrated || !isAuthenticated || !hasAuditAccess) {
     return null
   }
 

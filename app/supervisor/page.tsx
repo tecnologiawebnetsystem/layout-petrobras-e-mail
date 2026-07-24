@@ -85,7 +85,9 @@ export default function SupervisorPage() {
     return <FullPageLoader message="Carregando painel do gestor..." subMessage="Buscando compartilhamentos e dados" />
   }
 
-  if (!isAuthenticated || user?.userType !== "supervisor") {
+  // Render guard alinhado ao useEffect: permissao granular + fallback por role
+  const hasGestorAccess = checkAnyPermission(user?.permissions, ["shares:approve", "shares:reject"]) || user?.userType === "supervisor"
+  if (!isAuthenticated || !hasGestorAccess) {
     return null
   }
 

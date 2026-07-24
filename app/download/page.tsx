@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useAuditLogStore } from "@/lib/stores/audit-log-store"
+import { checkAnyPermission } from "@/lib/auth/permissions"
 import { AppHeader } from "@/components/shared/app-header"
 import { DocumentCard } from "@/components/download/document-card"
 import { MetricsDashboard } from "@/components/dashboard/metrics-dashboard"
@@ -84,18 +85,23 @@ export default function DownloadPage() {
   const [securityModal, setSecurityModal] = useState({ show: false, documentId: "", documentName: "" })
   const [isZipping, setIsZipping] = useState(false)
 
-  // Redireciona se não for usuário externo autenticado
+  // Redireciona se nao tiver permissao de download
   useEffect(() => {
     if (!_hasHydrated) return
 
-    if (!isAuthenticated || user?.userType !== "external") {
+    // Guard por permissao granular (CAv4). Fallback para userType em sessoes antigas.
+    const hasDownloadPermission = checkAnyPermission(user?.permissions, ["file:download"])
+    const hasDownloadByRole = user?.userType === "external"
+    if (!isAuthenticated || (!hasDownloadPermission && !hasDownloadByRole)) {
       router.push("/")
     }
   }, [_hasHydrated, isAuthenticated, user, router])
 
   // Carrega os arquivos compartilhados com o usuário via API real
   useEffect(() => {
-    if (!isAuthenticated || user?.userType !== "external" || !accessToken) return
+    const hasDownloadPermission = checkAnyPermission(user?.permissions, ["file:download"])
+    const hasDownloadByRole = user?.userType === "external"
+    if (!isAuthenticated || (!hasDownloadPermission && !hasDownloadByRole) || !accessToken) return
 
     setIsLoadingFiles(true)
     setFilesError(null)

@@ -299,7 +299,7 @@ export default function CompartilhamentosPage() {
   }
 
   return (
-    <ProtectedRoute allowedUserTypes={["internal", "supervisor"]}>
+    <ProtectedRoute allowedUserTypes={["internal", "supervisor"]} requiredPermissions={["shares:read"]}>
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <AppHeader subtitle="Meus Compartilhamentos" />
 
