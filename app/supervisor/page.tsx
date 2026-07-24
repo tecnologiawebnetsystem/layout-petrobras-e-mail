@@ -1,17 +1,16 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useWorkflowStore } from "@/lib/stores/workflow-store"
 import { usePermissions, checkAnyPermission } from "@/lib/auth/permissions"
 import { AppHeader } from "@/components/shared/app-header"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ClipboardCheck, Shield, Upload } from "lucide-react"
+import { ClipboardCheck, Shield } from "lucide-react"
 import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
 import { ScrollToTop } from "@/components/shared/scroll-to-top"
-import { SupervisorUploadForm } from "@/components/supervisor/supervisor-upload-form"
 import { FullPageLoader } from "@/components/ui/full-page-loader"
 import { PageHeader } from "@/components/shared/page-header"
 import { ApprovalMetricsCards } from "@/components/supervisor/approval-metrics-cards"
@@ -20,7 +19,6 @@ import { ApprovalList } from "@/components/supervisor/approval-list"
 
 export default function SupervisorPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { user, isAuthenticated } = useAuthStore()
   const { uploads, loadAllSupervisorShares } = useWorkflowStore()
   const { hasPermission } = usePermissions()
@@ -29,13 +27,6 @@ export default function SupervisorPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("aprovacoes")
 
-  // Verifica parametro tab na URL
-  useEffect(() => {
-    const tabParam = searchParams.get("tab")
-    if (tabParam && ["aprovacoes", "compartilhar"].includes(tabParam)) {
-      setActiveTab(tabParam)
-    }
-  }, [searchParams])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -117,9 +108,9 @@ export default function SupervisorPage() {
           onSelect={handleSelectMetric}
         />
 
-        {/* Tabs */}
+        {/* Aprovacoes */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2 h-14 p-1 bg-muted/50">
+          <TabsList className="h-14 p-1 bg-muted/50">
             <TabsTrigger
               value="aprovacoes"
               className="gap-2 text-base data-[state=active]:bg-background data-[state=active]:shadow-sm"
@@ -128,16 +119,8 @@ export default function SupervisorPage() {
               Aprovacoes
               {pendingCount > 0 && <Badge className="ml-1 bg-amber-500 text-white text-xs px-2">{pendingCount}</Badge>}
             </TabsTrigger>
-            <TabsTrigger
-              value="compartilhar"
-              className="gap-2 text-base data-[state=active]:bg-background data-[state=active]:shadow-sm"
-            >
-              <Upload className="h-5 w-5" />
-              Compartilhar
-            </TabsTrigger>
           </TabsList>
 
-          {/* Tab Aprovacoes */}
           <TabsContent value="aprovacoes" className="space-y-6">
             <ApprovalFilters
               searchQuery={searchQuery}
@@ -152,11 +135,6 @@ export default function SupervisorPage() {
               onViewDetails={(id) => router.push(`/supervisor/detalhes/${id}`)}
               onClearFilters={handleResetFilters}
             />
-          </TabsContent>
-
-          {/* Tab Compartilhar */}
-          <TabsContent value="compartilhar" className="space-y-6">
-            <SupervisorUploadForm />
           </TabsContent>
         </Tabs>
       </main>
