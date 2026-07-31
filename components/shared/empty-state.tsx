@@ -38,7 +38,7 @@ export function EmptyState({ type, onAction, actionLabel }: EmptyStateProps) {
       icon: <Download className="w-24 h-24 text-muted-foreground/40" />,
       title: "Nenhum arquivo para download",
       description:
-        "Você ainda não possui arquivos aprovados. Assim que novos documentos forem compartilhados com você e aprovados pelo supervisor, eles aparecerão aqui para download.",
+        "Você ainda não possui arquivos aprovados. Assim que novos documentos forem compartilhados com você e aprovados pelo gestor, eles aparecerão aqui para download.",
       illustration: (
         <div className="relative w-48 h-48 mx-auto mb-8">
           <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 to-primary/10 rounded-full blur-3xl animate-pulse" />

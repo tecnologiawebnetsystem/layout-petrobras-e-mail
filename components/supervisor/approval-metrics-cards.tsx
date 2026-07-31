@@ -52,7 +52,7 @@ function MetricCard({ title, value, icon, gradient, active, ring, onClick }: Met
 }
 
 /**
- * Grade de 4 cards de metricas do painel do supervisor (Total, Pendentes,
+ * Grade de 4 cards de metricas do painel do gestor (Total, Pendentes,
  * Aprovados, Rejeitados). Cada card e clicavel e aplica o filtro de status.
  * O visual e identico ao dashboard de metricas do remetente.
  */

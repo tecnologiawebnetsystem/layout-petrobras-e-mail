@@ -421,7 +421,6 @@ async def log_external_email(
         "approval_rejected": EmailType.APPROVAL_REJECTED,
         "expiration_warning": EmailType.EXPIRATION_WARNING,
         "download_confirmation": EmailType.DOWNLOAD_CONFIRMATION,
-        "password_reset": EmailType.PASSWORD_RESET,
         "welcome": EmailType.WELCOME,
     }
     

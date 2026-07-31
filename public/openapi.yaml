@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Solução de Compartilhamento de Arquivos Confidenciais - CSAC
   description: |
-    API RESTful para o sistema de transferencia segura de arquivos da Petrobras.
+    API RESTful para o sistema de transferência segura de arquivos da Petrobras.
     
     ## Autenticacao
     

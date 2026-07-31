@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { validateSessionContext, initializeSessionBinding } from "@/lib/auth/session-binding"
@@ -25,9 +25,13 @@ export function ProtectedRoute({ children, allowedUserTypes, requiredPermissions
   const { user, isAuthenticated, _hasHydrated } = useAuthStore()
   const router = useRouter()
   const [isChecking, setIsChecking] = useState(true)
+  // Evita que o useEffect execute mais de uma vez (React StrictMode / re-renders).
+  const checkedRef = useRef(false)
 
   useEffect(() => {
-    if (!_hasHydrated) return
+    // Aguarda a hidratação do store e garante execução única.
+    if (!_hasHydrated || checkedRef.current) return
+    checkedRef.current = true
 
     initializeSessionBinding()
 
@@ -37,26 +41,27 @@ export function ProtectedRoute({ children, allowedUserTypes, requiredPermissions
         "Sessão Invalidada",
         "Sua sessão foi invalidada por motivos de segurança. Por favor, faça login novamente.",
       )
-      router.push("/")
+      // replace evita que o usuário volte para a página protegida com o botão "Voltar"
+      router.replace("/")
       return
     }
 
     if (!isAuthenticated) {
-      router.push("/")
+      router.replace("/")
       return
     }
 
     if (user) {
       const hasRole = allowedUserTypes.includes(user.userType)
 
-      // Se ha permissoes granulares definidas, usa-as como criterio primario.
-      // Fallback para userType quando o campo permissions ainda nao existe na sessao.
+      // Se há permissões granulares definidas, usa-as como critério primário.
+      // Fallback para userType quando o campo permissions ainda não existe na sessão.
       const hasAccess = requiredPermissions
         ? checkAnyPermission(user.permissions, requiredPermissions) || hasRole
         : hasRole
 
       if (!hasAccess) {
-        router.push("/")
+        router.replace("/")
         return
       }
     }

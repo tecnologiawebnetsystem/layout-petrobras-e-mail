@@ -686,7 +686,7 @@ class MicrosoftGraphMailService {
     expirationHours: number
     uploadDate: string
   }): EmailData {
-    const appUrl = <span class="cstat-no" title="statement not covered" >process.env.NEXT_PUBLIC_APP_URL || "https://compartilhamento-petrobras.vercel.app"</span>
+    const appUrl = <span class="cstat-no" title="statement not covered" >process.env.NEXT_PUBLIC_APP_URL || "https://compartilhamento-petrobras.app"</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    return {</span>
       subject: `✅ Confirmação de Compartilhamento - ${data.fileName}`,
@@ -714,7 +714,7 @@ class MicrosoftGraphMailService {
               &lt;/div&gt;
               &lt;div class="content"&gt;
                 &lt;p&gt;Olá &lt;strong&gt;${data.senderName}&lt;/strong&gt;,&lt;/p&gt;
-                &lt;p&gt;Seu compartilhamento foi criado com sucesso e está aguardando aprovação do seu supervisor.&lt;/p&gt;
+                &lt;p&gt;Seu compartilhamento foi criado com sucesso e está aguardando aprovação do seu gestor.&lt;/p&gt;
                 &lt;div class="info-box"&gt;
                   &lt;p&gt;&lt;strong&gt;📄 Arquivo:&lt;/strong&gt; ${data.fileName}&lt;/p&gt;
                   &lt;p&gt;&lt;strong&gt;📧 Destinatário:&lt;/strong&gt; ${data.recipient}&lt;/p&gt;
@@ -722,7 +722,7 @@ class MicrosoftGraphMailService {
                   &lt;p&gt;&lt;strong&gt;⏰ Validade:&lt;/strong&gt; ${data.expirationHours} horas após aprovação&lt;/p&gt;
                   &lt;p&gt;&lt;strong&gt;📅 Data do envio:&lt;/strong&gt; ${data.uploadDate}&lt;/p&gt;
                 &lt;/div&gt;
-                &lt;p&gt;Você receberá uma notificação quando o supervisor aprovar ou rejeitar o compartilhamento.&lt;/p&gt;
+                &lt;p&gt;Você receberá uma notificação quando o gestor aprovar ou rejeitar o compartilhamento.&lt;/p&gt;
                 &lt;a href="${appUrl}/compartilhamentos" class="button"&gt;Acompanhar Status&lt;/a&gt;
               &lt;/div&gt;
               &lt;div class="footer"&gt;
@@ -756,7 +756,7 @@ class MicrosoftGraphMailService {
     uploadDate: string
     uploadId: string
   }): EmailData {
-    const appUrl = <span class="cstat-no" title="statement not covered" >process.env.NEXT_PUBLIC_APP_URL || "https://compartilhamento-petrobras.vercel.app"</span>
+    const appUrl = <span class="cstat-no" title="statement not covered" >process.env.NEXT_PUBLIC_APP_URL || "https://compartilhamento-petrobras.app"</span>
     const approvalLink = <span class="cstat-no" title="statement not covered" >`${appUrl}/supervisor/detalhes/${data.uploadId}`</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    return {</span>
@@ -826,7 +826,7 @@ class MicrosoftGraphMailService {
     fileName: string
     expirationHours: number
   }): EmailData {
-    const appUrl = <span class="cstat-no" title="statement not covered" >process.env.NEXT_PUBLIC_APP_URL || "https://compartilhamento-petrobras.vercel.app"</span>
+    const appUrl = <span class="cstat-no" title="statement not covered" >process.env.NEXT_PUBLIC_APP_URL || "https://compartilhamento-petrobras.app"</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    return {</span>
       subject: `Codigo de Acesso - ${data.fileName}`,
@@ -870,7 +870,7 @@ class MicrosoftGraphMailService {
                 &lt;a href="${appUrl}/download" class="button"&gt;Acessar Documentos&lt;/a&gt;
               &lt;/div&gt;
               &lt;div class="footer"&gt;
-                &lt;p&gt;Sistema de Transferencia Segura de Arquivos - Petrobras&lt;/p&gt;
+                &lt;p&gt;Sistema de Transferência Segura de Arquivos - Petrobras&lt;/p&gt;
                 &lt;p&gt;Este e um email automatico, nao responda.&lt;/p&gt;
               &lt;/div&gt;
             &lt;/div&gt;

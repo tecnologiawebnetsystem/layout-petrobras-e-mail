@@ -1,4 +1,3 @@
-@ -0,0 +1,131 @@
 # RELATÓRIO TÉCNICO DE MAPEAMENTO DE RECURSOS E PERMISSÕES
 ## Solução de Compartilhamento de Arquivos Confidenciais
 

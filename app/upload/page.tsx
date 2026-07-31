@@ -22,6 +22,15 @@ import { PageHeader } from "@/components/shared/page-header";
 import { ApproverInfoCard } from "@/components/sender/approver-info-card";
 import { RecipientField } from "@/components/upload/recipient-field";
 import { ExpirationSelect } from "@/components/upload/expiration-select";
+import { MipAuthModal } from "@/components/upload/mip-auth-modal";
+
+// Tipo compartilhado para o resultado do XHR de upload
+type XhrUploadResult = {
+  success?: boolean;
+  data?: unknown;
+  error?: { code: string; message: string };
+  _status: number;
+};
 
 export default function UploadPage() {
   const { user, isAuthenticated, _hasHydrated, accessToken } = useAuthStore();
@@ -51,8 +60,15 @@ export default function UploadPage() {
     recipient: string;
     files: Array<{ name: string; size: string; type: string }>;
     expirationHours: number;
-    senderEmail: string; // Adicionado campo senderEmail
+    senderEmail: string;
   } | null>(null);
+
+  // ── Estado do modal MIP ─────────────────────────────────────────────────────
+  const [mipAuth, setMipAuth] = useState<{
+    show: boolean;
+    pendingFormData: FormData | null;
+  }>({ show: false, pendingFormData: null });
+
   // Validação de e-mail
   const isValidEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -99,6 +115,140 @@ export default function UploadPage() {
 
   const handleFileRemove = (index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  /**
+   * Executa o XHR de upload e retorna o resultado parseado.
+   * Reutilizável tanto no primeiro envio quanto no reenvio com token MIP.
+   */
+  const submitFormData = (formData: FormData): Promise<XhrUploadResult> =>
+    new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/shares/create");
+      xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          setUploadProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+      xhr.onload = () => {
+        try {
+          const data = JSON.parse(xhr.responseText) as XhrUploadResult;
+          resolve({ ...data, _status: xhr.status });
+        } catch {
+          resolve({ _status: xhr.status });
+        }
+      };
+      xhr.onerror = () =>
+        reject(new Error("Falha de rede ao enviar os arquivos."));
+      xhr.ontimeout = () =>
+        reject(new Error("Tempo de envio esgotado. Tente novamente."));
+      xhr.send(formData);
+    });
+
+  /**
+   * Trata o resultado de um XHR de upload (primeiro envio ou reenvio com token MIP).
+   * Retorna true se houve sucesso, false se um erro notificável foi exibido.
+   */
+  const processResult = async (result: XhrUploadResult): Promise<boolean> => {
+    if (result._status >= 400 || result.success === false) {
+      const isS3Failure = result._status === 502;
+      const isMipFailure = result._status === 422;
+      const errorCode = result.error?.code ?? "";
+
+      let title = "Erro ao enviar arquivos";
+      let message =
+        result.error?.message ?? "Ocorreu um erro inesperado. Tente novamente.";
+
+      if (isS3Failure) {
+        title = "Falha no armazenamento seguro";
+        message =
+          "Os arquivos não foram enviados ao armazenamento seguro (S3). Nenhum registro foi criado. Tente novamente ou contate o suporte.";
+      } else if (isMipFailure) {
+        if (errorCode === "MIP_UNSUPPORTED_EXTENSION") {
+          title = "Formato de arquivo não suportado";
+          // mensagem detalhada vem do backend (ex: "O arquivo 'foo.zip' possui extensão...")
+        } else if (errorCode === "MIP_SDK_ERROR") {
+          title = "Falha no processamento de segurança";
+        } else if (errorCode === "MIP_NOT_CONFIGURED") {
+          title = "Serviço de segurança indisponível";
+        } else {
+          title = "Impedimento no processamento de segurança (MIP)";
+        }
+      }
+
+      setNotification({ show: true, type: "error", title, message });
+      return false;
+    }
+
+    // Sucesso: atualiza store a partir do backend (evita duplicação de share)
+    const filesMeta = files.map((f) => ({
+      name: f.name,
+      size: `${(f.size / (1024 * 1024)).toFixed(2)} MB`,
+      type: f.name.split(".").pop()?.toUpperCase() || "FILE",
+    }));
+
+    // NÃO chamar addUpload() — ele faria um segundo POST ao backend criando share duplicado.
+    // O share já foi criado pelo XHR acima. Apenas recarrega a lista.
+    loadUploads();
+
+    setUploadSuccessData({
+      name: description.substring(0, 50),
+      recipient,
+      files: filesMeta,
+      expirationHours,
+      senderEmail: user!.email,
+    });
+
+    setShowSuccess(true);
+
+    setTimeout(() => {
+      setRecipient("");
+      setDescription("");
+      setFiles([]);
+      setExpirationHours(168);
+      setShowSuccess(false);
+    }, 1000);
+
+    return true;
+  };
+
+  /**
+   * Chamado pelo MipAuthModal após autenticação bem-sucedida.
+   * Re-submete o FormData pendente com o aadrm_token (e policy_token, se popup).
+   */
+  const handleMipAuthSuccess = async (
+    aadrmToken: string,
+    policyToken: string | null,
+  ) => {
+    const pending = mipAuth.pendingFormData;
+    setMipAuth({ show: false, pendingFormData: null });
+
+    if (!pending) return;
+
+    pending.append("aadrm_token", aadrmToken);
+    if (policyToken) pending.append("mip_policy_token", policyToken);
+
+    setIsLoading(true);
+    setUploadProgress(0);
+
+    try {
+      const result = await submitFormData(pending);
+      await processResult(result);
+    } catch (error) {
+      setNotification({
+        show: true,
+        type: "error",
+        title: "Erro ao enviar arquivos",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Não foi possível conectar ao servidor.",
+      });
+    } finally {
+      setIsLoading(false);
+      setUploadProgress(0);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -165,103 +315,22 @@ export default function UploadPage() {
         formData.append("files", file, file.name);
       }
 
-      // XHR para rastrear progresso real de upload
-      const result = await new Promise<{
-        success?: boolean;
-        data?: unknown;
-        error?: { code: string; message: string };
-        _status: number;
-      }>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", "/api/shares/create");
-        xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            setUploadProgress(Math.round((e.loaded / e.total) * 100));
-          }
-        };
-        xhr.onload = () => {
-          try {
-            const data = JSON.parse(xhr.responseText) as {
-              success?: boolean;
-              data?: unknown;
-              error?: { code: string; message: string };
-            };
-            resolve({ ...data, _status: xhr.status });
-          } catch {
-            resolve({ _status: xhr.status });
-          }
-        };
-        xhr.onerror = () =>
-          reject(new Error("Falha de rede ao enviar os arquivos."));
-        xhr.ontimeout = () =>
-          reject(new Error("Tempo de envio esgotado. Tente novamente."));
-        xhr.send(formData);
-      });
+      const result = await submitFormData(formData);
 
-      if (result._status >= 400 || result.success === false) {
-        const isS3Failure = result._status === 502;
-        const isMipFailure = result._status === 422;
-        const errorCode = result.error?.code ?? "";
-
-        let title = "Erro ao enviar arquivos";
-        let message =
-          result.error?.message ?? "Ocorreu um erro inesperado. Tente novamente.";
-
-        if (isS3Failure) {
-          title = "Falha no armazenamento seguro";
-          message =
-            "Os arquivos não foram enviados ao armazenamento seguro (S3). Nenhum registro foi criado. Tente novamente ou contate o suporte.";
-        } else if (isMipFailure) {
-          if (errorCode === "MIP_UNSUPPORTED_EXTENSION") {
-            title = "Formato de arquivo não suportado";
-            // mensagem detalhada vem do backend (ex: "O arquivo 'foo.zip' possui extensão...")
-          } else if (errorCode === "MIP_SDK_ERROR") {
-            title = "Falha no processamento de segurança";
-          } else if (errorCode === "MIP_NOT_CONFIGURED") {
-            title = "Serviço de segurança indisponível";
-          } else {
-            title = "Impedimento no processamento de segurança (MIP)";
-          }
-        }
-
-        setNotification({
-          show: true,
-          type: "error",
-          title,
-          message,
-        });
+      // Arquivo protegido por RMS: abre modal para autenticação delegada.
+      // O backend retorna 422 + MIP_ENCRYPTED_NO_RIGHTS quando o SP não tem direitos
+      // e nenhum aadrm_token foi enviado. O frontend abre o MipAuthModal para que
+      // o usuário autorize o processamento com sua conta Microsoft.
+      if (
+        result._status === 422 &&
+        result.error?.code === "MIP_ENCRYPTED_NO_RIGHTS"
+      ) {
+        setMipAuth({ show: true, pendingFormData: formData });
+        setIsLoading(false);
         return;
       }
 
-      // Sucesso: atualiza store a partir do backend (evita duplicação de share)
-      const filesMeta = files.map((f) => ({
-        name: f.name,
-        size: `${(f.size / (1024 * 1024)).toFixed(2)} MB`,
-        type: f.name.split(".").pop()?.toUpperCase() || "FILE",
-      }));
-
-      // NÃO chamar addUpload() — ele faria um segundo POST ao backend criando share duplicado.
-      // O share já foi criado pelo XHR acima. Apenas recarrega a lista.
-      loadUploads();
-
-      setUploadSuccessData({
-        name: description.substring(0, 50),
-        recipient,
-        files: filesMeta,
-        expirationHours,
-        senderEmail: user!.email,
-      });
-
-      setShowSuccess(true);
-
-      setTimeout(() => {
-        setRecipient("");
-        setDescription("");
-        setFiles([]);
-        setExpirationHours(168);
-        setShowSuccess(false);
-      }, 1000);
+      await processResult(result);
     } catch (error) {
       console.error("[upload] handleSubmit error:", error);
       const msg =
@@ -301,7 +370,7 @@ export default function UploadPage() {
   return (
     <ProtectedRoute allowedUserTypes={["internal", "supervisor"]} requiredPermissions={["file:upload", "shares:create"]}>
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <AppHeader subtitle="Solucao de Compartilhamento de Arquivos Confidenciais" />
+        <AppHeader subtitle="Solução de Compartilhamento de Arquivos Confidenciais" />
 
         <main className="container mx-auto px-4 py-6 max-w-7xl pb-20">
           <BreadcrumbNav
@@ -314,8 +383,8 @@ export default function UploadPage() {
 
           <PageHeader
             icon={Sparkles}
-            title="Transferencia Segura de Arquivos"
-            subtitle="Envie documentos para destinatarios externos com seguranca"
+            title="Remetente"
+            subtitle="Envie documentos para destinatários externos com segurança"
           />
 
           <MetricsDashboard
@@ -418,6 +487,15 @@ export default function UploadPage() {
             uploadData={uploadSuccessData}
           />
         )}
+        {/* Modal de autenticação MIP — exibido quando o backend retorna MIP_ENCRYPTED_NO_RIGHTS */}
+        <MipAuthModal
+          open={mipAuth.show}
+          fileName={files[0]?.name ?? ""}
+          accessToken={accessToken ?? ""}
+          userEmail={user?.email}
+          onSuccess={handleMipAuthSuccess}
+          onCancel={() => setMipAuth({ show: false, pendingFormData: null })}
+        />
       </div>
     </ProtectedRoute>
   );

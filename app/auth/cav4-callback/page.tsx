@@ -44,7 +44,7 @@ function CAv4CallbackContent() {
             data?.detail?.message ||
             data?.detail ||
             data?.error?.message ||
-            "Falha na autenticacao CAv4"
+            "Falha na autenticação CAv4"
           router.replace(`/?error=${encodeURIComponent(message)}`)
           return
         }
@@ -110,7 +110,7 @@ export default function CAv4CallbackPage() {
       fallback={
         <FullPageLoader
           message="Preparando seu acesso"
-          subMessage="Aguarde um instante enquanto iniciamos a autenticacao."
+          subMessage="Aguarde um instante enquanto iniciamos a autenticação."
         />
       }
     >

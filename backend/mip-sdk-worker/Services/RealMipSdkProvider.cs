@@ -24,12 +24,15 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
 
     private MipContext? _mipContext;
     private IFileProfile? _fileProfile;
-    private IFileEngine? _fileEngine;
+    private IFileEngine? _fileEngine;          // ProtectionOnlyEngine = true  (SP, sem UnifiedPolicy)
+    private IFileEngine? _policyEngine;        // ProtectionOnlyEngine = false (SP, requer UnifiedPolicy.Tenant.Read)
     private readonly SemaphoreSlim _initLock = new(1, 1);
+    private readonly SemaphoreSlim _policyInitLock = new(1, 1);
 
     private static bool _mipInitialized;
     private static readonly object _mipInitLock = new();
     private bool _initialized;
+    private bool _policyInitialized;
 
     public RealMipSdkProvider(
         ILogger<RealMipSdkProvider> logger,
@@ -72,10 +75,12 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
     }
 
     // =========================================================================
-    // EnsureInitializedAsync
+    // EnsureFileEngineInitializedAsync
+    // Inicializa MipContext, FileProfile e FileEngine (ProtectionOnlyEngine=true).
+    // NÃO requer UnifiedPolicy.Tenant.Read — funciona para remove-label e user-auth.
     // =========================================================================
 
-    private async Task EnsureInitializedAsync(CancellationToken ct)
+    private async Task EnsureFileEngineInitializedAsync(CancellationToken ct)
     {
         if (_initialized) return;
 
@@ -85,7 +90,7 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
             if (_initialized) return;
 
             _logger.LogInformation(
-                "Inicializando MIP SDK (TenantId={TenantId} ClientId={ClientId})",
+                "Inicializando MIP SDK FileEngine (TenantId={TenantId} ClientId={ClientId})",
                 _entraId.TenantId, _entraId.ClientId);
 
             // ApplicationInfo identifica o aplicativo no Azure AD / Purview
@@ -130,15 +135,15 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
 
             _fileProfile = await MIP.LoadFileProfileAsync(profileSettings);
 
-            // ── FileEngine ─────────────────────────────────────────────────────
-            // - ProtectionOnlyEngine = true → NÃO carrega PolicyProfile
-            //   Não requer UnifiedPolicy.Tenant.Read / Sync Service
-            //   Requer apenas: Content.DelegatedWriter + Content.SuperUser
+            // ── FileEngine (ProtectionOnlyEngine = true) ───────────────────────
+            // Não requer UnifiedPolicy.Tenant.Read.
+            // Usado por: RemoveLabelAndProtectionAsync, RemoveLabelAndProtectionAsUserAsync,
+            //            ChangeLabelAsUserAsync.
             var engineSettings = new FileEngineSettings(
-                _entraId.ClientId,  // engine id
+                _entraId.ClientId,
                 authDelegate,
-                "",                 // client data
-                "pt-BR")            // locale (obrigatório)
+                "",
+                "pt-BR")
             {
                 Identity = new Identity(_entraId.ClientId),
                 ProtectionOnlyEngine = true,
@@ -148,12 +153,12 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
                 _fileProfile.AddEngineAsync(engineSettings));
 
             _initialized = true;
-            _logger.LogInformation("MIP SDK inicializado com sucesso (ProtectionOnly).");
+            _logger.LogInformation("MIP SDK FileEngine inicializado com sucesso.");
         }
         catch (AccessDeniedException ex)
         {
             _logger.LogError(ex,
-                "Acesso negado ao inicializar MIP SDK. Verifique: " +
+                "Acesso negado ao inicializar MIP SDK FileEngine. Verifique: " +
                 "1) Content.SuperUser no App Registration (admin consent) " +
                 "2) Enable-AipServiceSuperUser no tenant " +
                 "3) Add-AipServiceSuperUser -ServicePrincipalId {ClientId}",
@@ -162,12 +167,80 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Falha ao inicializar MIP SDK.");
+            _logger.LogError(ex, "Falha ao inicializar MIP SDK FileEngine.");
             throw;
         }
         finally
         {
             _initLock.Release();
+        }
+    }
+
+    // =========================================================================
+    // EnsurePolicyEngineInitializedAsync
+    // Inicializa PolicyEngine (ProtectionOnlyEngine=false) de forma lazy.
+    // Requer: UnifiedPolicy.Tenant.Read (Microsoft Information Protection Sync Service).
+    // Chamado apenas por ChangeLabelAsync — não bloqueia os outros fluxos.
+    // =========================================================================
+
+    private async Task EnsurePolicyEngineInitializedAsync(CancellationToken ct)
+    {
+        // Garante que o FileEngine base (MipContext, FileProfile) já existe
+        await EnsureFileEngineInitializedAsync(ct);
+
+        if (_policyInitialized) return;
+
+        await _policyInitLock.WaitAsync(ct);
+        try
+        {
+            if (_policyInitialized) return;
+
+            _logger.LogInformation("Inicializando MIP SDK PolicyEngine (requer UnifiedPolicy.Tenant.Read)...");
+
+            var authDelegate = new MipAuthDelegate(
+                _entraId.TenantId,
+                _entraId.ClientId,
+                _entraId.ClientSecret,
+                _loggerFactory.CreateLogger<MipAuthDelegate>());
+
+            // ── PolicyEngine (ProtectionOnlyEngine = false) ────────────────────
+            // Requer: UnifiedPolicy.Tenant.Read (Microsoft Information Protection Sync Service).
+            // Permite: listar labels do tenant e aplicar via AssignmentMethod.Privileged.
+            // Usado apenas por: ChangeLabelAsync (SP auth).
+            var policyEngineSettings = new FileEngineSettings(
+                _entraId.ClientId + "-policy",
+                authDelegate,
+                "",
+                "pt-BR")
+            {
+                Identity = new Identity(_entraId.ClientId),
+                ProtectionOnlyEngine = false,
+            };
+
+            _policyEngine = await RetryAsync(() =>
+                _fileProfile!.AddEngineAsync(policyEngineSettings));
+
+            _policyInitialized = true;
+            _logger.LogInformation("MIP SDK PolicyEngine inicializado com sucesso.");
+        }
+        catch (AccessDeniedException ex)
+        {
+            _logger.LogError(ex,
+                "Acesso negado ao inicializar PolicyEngine. " +
+                "Verifique: UnifiedPolicy.Tenant.Read (Microsoft Information Protection Sync Service) " +
+                "concedido com Admin Consent para ClientId={ClientId}. " +
+                "Também requer Label Policy publicada para a conta de serviço no Purview.",
+                _entraId.ClientId);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falha ao inicializar MIP SDK PolicyEngine.");
+            throw;
+        }
+        finally
+        {
+            _policyInitLock.Release();
         }
     }
 
@@ -180,7 +253,7 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
         byte[] fileContent,
         CancellationToken cancellationToken = default)
     {
-        await EnsureInitializedAsync(cancellationToken);
+        await EnsureFileEngineInitializedAsync(cancellationToken);
 
         _logger.LogInformation("Processando: {FileName} ({Size} bytes)",
             fileName, fileContent.Length);
@@ -223,17 +296,20 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
         {
             // Arquivo tem apenas label de classificação — sem proteção RMS.
             // ProtectionOnlyEngine não consegue inspecionar labels via Policy Handler.
-            // Fallback: strip direto das parts MIP no ZIP OOXML (sem SDK, sem permissões).
+            // Rótulos Interno/Público sem criptografia: devolver o arquivo original intacto.
+            // A mudança de rótulo (ex: para Público Externo) ocorre apenas no fluxo de
+            // compartilhamento aprovado, não no momento do upload.
             try { temProtecao = handler.Protection != null; }
             catch { temProtecao = false; }
 
             if (!temProtecao)
             {
                 _logger.LogInformation(
-                    "{FileName}: label-only sem criptografia RMS. Usando strip OOXML direto.",
+                    "{FileName}: label-only sem criptografia RMS (Interno/Público). " +
+                    "Devolvendo arquivo original intacto — sem alteração de rótulo no upload.",
                     fileName);
                 handler.Dispose();
-                return StripMipLabelsFromOoxml(fileContent, fileName);
+                return fileContent;
             }
 
             // Tem proteção, mas label não é legível — remove só a proteção
@@ -326,15 +402,156 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
 
     // =========================================================================
     // ChangeLabelAsync
+    // Altera rótulo via Service Principal usando PolicyEngine (ProtectionOnlyEngine=false).
+    //
+    // ESCOPO DE APLICAÇÃO:
+    //   Aplica-se APENAS a arquivos com proteção RMS (rótulo Confidencial com criptografia).
+    //   Arquivos sem proteção RMS (rótulos Interno, Público) NÃO são processados —
+    //   são devolvidos sem modificação, pois a mudança de rótulo delegada pelo usuário
+    //   não é necessária nesses casos.
+    //
+    // PRÉ-REQUISITOS NO AZURE AD (app A12022):
+    //   - UnifiedPolicy.Tenant.Read  (Microsoft Information Protection Sync Service) — Application
+    //   - Content.DelegatedWriter    (Azure Rights Management Services) — Application
+    //   - Content.SuperUser          (via Enable-AipServiceSuperUser + Add-AipServiceSuperUser)
+    //   - Label Policy publicada para a conta de serviço no portal Purview
     // =========================================================================
 
-    public Task<byte[]> ChangeLabelAsync(
+    public async Task<byte[]> ChangeLabelAsync(
         ChangeLabelRequest request,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException(
-            "ChangeLabelAsync (SP auth) requer InformationProtectionPolicy.Read.All no App Registration. " +
-            "Use change-label-as-user com tokens do usuário.");
+        await EnsurePolicyEngineInitializedAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "ChangeLabelAsync (SP): {FileName} → {TargetLabel}",
+            request.FileName, request.TargetLabelImmutableId);
+
+        if (string.IsNullOrWhiteSpace(request.TargetLabelImmutableId))
+            throw new InvalidOperationException("TargetLabelImmutableId é obrigatório para ChangeLabelAsync.");
+
+        using var inputStream  = new MemoryStream(request.FileContent);
+        using var outputStream = new MemoryStream();
+
+        // Cria o handler com o PolicyEngine (ProtectionOnlyEngine = false)
+        IFileHandler handler;
+        try
+        {
+            handler = await RetryAsync(() =>
+                _policyEngine!.CreateFileHandlerAsync(
+                    inputStream,
+                    request.FileName,
+                    isAuditDiscoveryEnabled: true));
+        }
+        catch (NoPermissionsException ex)
+        {
+            throw new UnauthorizedAccessException(
+                $"O arquivo '{request.FileName}' está protegido com criptografia RMS e o SP não tem " +
+                $"direitos. Owner={ex.Owner ?? "desconhecido"}. " +
+                "Verifique: Content.SuperUser + Enable-AipServiceSuperUser no tenant.", ex);
+        }
+
+        using var _h = handler;
+
+        // ── Verifica se há proteção RMS ────────────────────────────────────────
+        // Regra de negócio: ChangeLabelAsync (via SP) aplica-se SOMENTE a arquivos
+        // com criptografia RMS (Confidencial). Arquivos sem proteção (Interno, Público)
+        // são devolvidos intactos — não há necessidade de mudança de rótulo via SP nesses casos.
+        bool temProtecao;
+        try { temProtecao = handler.Protection != null; }
+        catch (NotSupportedException) { temProtecao = false; }
+
+        if (!temProtecao)
+        {
+            _logger.LogInformation(
+                "ChangeLabelAsync: {FileName} sem proteção RMS (rótulo Interno/Público). " +
+                "Devolvendo arquivo original sem modificação.",
+                request.FileName);
+            return request.FileContent;
+        }
+
+        // Valida direitos da SP sobre o arquivo protegido
+        var hasExport = handler.Protection!.AccessCheck(Rights.Export);
+        var isOwner   = handler.Protection!.AccessCheck(Rights.Owner);
+        _logger.LogInformation(
+            "{FileName}: proteção RMS detectada — Export={Export} Owner={Owner}",
+            request.FileName, hasExport, isOwner);
+
+        if (!hasExport && !isOwner)
+            throw new UnauthorizedAccessException(
+                $"Service principal não tem direitos EXPORT/OWNER sobre '{request.FileName}'. " +
+                "Verifique: Content.SuperUser + Enable-AipServiceSuperUser no tenant.");
+
+        // ── Localiza o rótulo alvo na política do tenant ───────────────────────
+        var labels      = _policyEngine!.SensitivityLabels;
+        var targetLabel = FindLabelById(labels, request.TargetLabelImmutableId!);
+
+        if (targetLabel == null)
+        {
+            var labelList = string.Join(", ", labels.Select(l => $"{l.Name}({l.Id})"));
+            throw new InvalidOperationException(
+                $"Rótulo '{request.TargetLabelImmutableId}' não encontrado na política do tenant. " +
+                $"Labels disponíveis: {labelList}. " +
+                "Verifique se a Label Policy está publicada para a conta de serviço.");
+        }
+
+        _logger.LogInformation(
+            "ChangeLabelAsync: aplicando rótulo '{LabelName}' em {FileName}",
+            targetLabel.Name, request.FileName);
+
+        // ── Remove proteção RMS existente ──────────────────────────────────────
+        handler.RemoveProtection();
+
+        // ── Aplica novo rótulo via AssignmentMethod.Privileged ─────────────────
+        var labelOptions = new LabelingOptions
+        {
+            AssignmentMethod     = AssignmentMethod.Privileged,
+            IsDowngradeJustified = true,
+            JustificationMessage = "Rótulo alterado automaticamente pelo sistema CSA para compartilhamento externo.",
+        };
+
+        try
+        {
+            handler.SetLabel(targetLabel, labelOptions, new ProtectionSettings());
+        }
+        catch (JustificationRequiredException)
+        {
+            handler.SetLabel(targetLabel, new LabelingOptions
+            {
+                AssignmentMethod     = AssignmentMethod.Privileged,
+                IsDowngradeJustified = true,
+                JustificationMessage = "Rótulo alterado automaticamente pelo sistema CSA.",
+            }, new ProtectionSettings());
+        }
+
+        // ── Commit ────────────────────────────────────────────────────────────
+        var committed = await RetryAsync(() => handler.CommitAsync(outputStream));
+        if (!committed)
+            throw new InvalidOperationException($"CommitAsync retornou false para '{request.FileName}'.");
+
+        var result = outputStream.ToArray();
+        _logger.LogInformation(
+            "ChangeLabelAsync concluído: {FileName} ({Orig}→{Final} bytes)",
+            request.FileName, request.FileContent.Length, result.Length);
+
+        return result;
+    }
+
+    private static Microsoft.InformationProtection.Label? FindLabelById(
+        IEnumerable<Microsoft.InformationProtection.Label> labels, string id)
+    {
+        foreach (var label in labels)
+        {
+            if (label.Id.Equals(id, StringComparison.OrdinalIgnoreCase))
+                return label;
+            // Busca recursiva em sublabels
+            if (label.Children?.Count > 0)
+            {
+                var found = FindLabelById(label.Children, id);
+                if (found != null) return found;
+            }
+        }
+        return null;
     }
 
     // =========================================================================
@@ -350,35 +567,25 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
         ChangeLabelRequest request,
         CancellationToken cancellationToken = default)
     {
-        await EnsureInitializedAsync(cancellationToken);
+        await EnsureFileEngineInitializedAsync(cancellationToken);
 
         var userEmail = ExtractEmailFromJwt(request.UserAadrmToken!);
         _logger.LogInformation(
             "ChangeLabelAsUserAsync: {FileName} → {TargetLabel} | user={UserEmail}",
             request.FileName, request.TargetLabelImmutableId, MaskEmail(userEmail));
 
-        // UserTokenAuthDelegate com AMBOS os tokens:
-        // - aadrmToken  : proteção RMS
-        // - policyToken : sincronização de políticas de labels (necessário para ProtectionOnlyEngine=false)
         var authDelegate = new MipSdkWorker.Services.Auth.UserTokenAuthDelegate(
             request.UserAadrmToken!,
             request.UserPolicyToken,
             _loggerFactory.CreateLogger<MipSdkWorker.Services.Auth.UserTokenAuthDelegate>());
 
-        // Chave de cache do engine derivada por hash (sem expor o e-mail em texto puro).
         var engineId = BuildEngineKey("label-user", userEmail);
 
         // ---------------------------------------------------------------------
         // Checkmarx: Not Exploitable — Privacy Violation (CWE-359)
-        // Justificativa: o authDelegate (token de acesso do usuário) e a Identity
-        // (UPN/e-mail) NÃO são enviados a um serviço arbitrário nem gravados em
-        // log. Eles são requisitos obrigatórios da API do Microsoft Information
-        // Protection (MIP) SDK para aplicar/remover rótulos e proteção EM NOME DO
-        // usuário autenticado. O token trafega apenas para os endpoints oficiais
-        // da Microsoft (Azure RMS / política de labels) via canal TLS gerenciado
-        // pelo próprio SDK. Não há como executar a operação sem estes dados, e o
-        // PII evitável (e-mail em logs e em identificadores de cache) já foi
-        // removido/mascarado (MaskEmail + BuildEngineKey). Falso positivo.
+        // O authDelegate e a Identity são requisitos obrigatórios da API do MIP SDK.
+        // O token trafega apenas para endpoints oficiais da Microsoft via TLS.
+        // PII evitável já foi removido/mascarado (MaskEmail + BuildEngineKey).
         // ---------------------------------------------------------------------
         var engineSettings = new FileEngineSettings(
             engineId,
@@ -387,7 +594,7 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
             "pt-BR")
         {
             Identity             = new Identity(userEmail ?? string.Empty),
-            ProtectionOnlyEngine = false,   // habilita operações de label via SDK
+            ProtectionOnlyEngine = false,
         };
 
         IFileEngine userEngine;
@@ -423,7 +630,6 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
 
             using var _h = handler;
 
-            // Valida direitos se o arquivo está protegido por RMS
             if (handler.Protection != null)
             {
                 var hasExport = handler.Protection!.AccessCheck(Rights.Export);
@@ -437,9 +643,7 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
                         $"Usuário não tem direitos EXPORT/OWNER sobre '{request.FileName}'.");
             }
 
-            // Encontra o label alvo na política do usuário
-            // SensitivityLabels é uma propriedade síncrona que lista os labels disponíveis para o usuário
-            var labels = userEngine.SensitivityLabels;
+            var labels      = userEngine.SensitivityLabels;
             var targetLabel = FindLabelById(labels, request.TargetLabelImmutableId!);
 
             if (targetLabel == null)
@@ -454,11 +658,10 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
                 "ChangeLabelAsUserAsync: aplicando rótulo '{LabelName}' em {FileName}",
                 targetLabel.Name, request.FileName);
 
-            // Aplica o novo label (o SDK remove a proteção antiga se o novo label não tiver proteção)
             var labelOptions = new LabelingOptions
             {
                 AssignmentMethod     = AssignmentMethod.Privileged,
-                IsDowngradeJustified = true,   // permite downgrade de classificação
+                IsDowngradeJustified = true,
                 JustificationMessage = "Rótulo alterado automaticamente pelo sistema CSA para compartilhamento externo.",
             };
 
@@ -468,7 +671,6 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
             }
             catch (JustificationRequiredException)
             {
-                // Já definimos IsDowngradeJustified = true, tenta novamente com force
                 handler.SetLabel(targetLabel, new LabelingOptions
                 {
                     AssignmentMethod     = AssignmentMethod.Privileged,
@@ -494,23 +696,6 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
         }
     }
 
-    private static Microsoft.InformationProtection.Label? FindLabelById(
-        IEnumerable<Microsoft.InformationProtection.Label> labels, string id)
-    {
-        foreach (var label in labels)
-        {
-            if (label.Id.Equals(id, StringComparison.OrdinalIgnoreCase))
-                return label;
-            // Busca recursiva em sublabels
-            if (label.Children?.Count > 0)
-            {
-                var found = FindLabelById(label.Children, id);
-                if (found != null) return found;
-            }
-        }
-        return null;
-    }
-
     // =========================================================================
     // RemoveLabelAndProtectionAsUserAsync
     // Cria um FileEngine temporário com o token do próprio usuário (owner).
@@ -525,7 +710,7 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
     {
         // Garante que o MIP SDK global (MipContext + FileProfile) está inicializado.
         // O _fileProfile do singleton é reutilizável para criar engines adicionais.
-        await EnsureInitializedAsync(cancellationToken);
+        await EnsureFileEngineInitializedAsync(cancellationToken);
 
         _logger.LogInformation(
             "RemoveLabelAndProtectionAsUserAsync: criando engine temporário para {FileName}",
@@ -564,7 +749,8 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
         {
             _logger.LogError(ex, "Falha ao criar engine de usuário para {FileName}", fileName);
             throw new InvalidOperationException(
-                $"Não foi possível criar engine MIP com o token do usuário: {ex.Message}", ex);
+                $"Não foi possível criar engine MIP com o token do usuário: {ex.Message} " +
+                "Verifique se userPolicyToken está presente e válido.", ex);
         }
 
         try
@@ -1091,13 +1277,15 @@ public sealed class RealMipSdkProvider : IMipSdkProvider, IDisposable
 
     public void Dispose()
     {
-        (_fileEngine as IDisposable)?.Dispose();
-        (_fileProfile as IDisposable)?.Dispose();
+        (_fileEngine   as IDisposable)?.Dispose();
+        (_policyEngine as IDisposable)?.Dispose();
+        (_fileProfile  as IDisposable)?.Dispose();
 
         _mipContext?.ShutDown();
         _mipContext = null;
 
         _initLock.Dispose();
+        _policyInitLock.Dispose();
     }
 }
 

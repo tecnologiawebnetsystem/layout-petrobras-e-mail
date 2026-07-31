@@ -1744,7 +1744,7 @@ export const <span class="cstat-no" title="statement not covered" >useWorkflowSt
       },
 &nbsp;
       /**
-       * Carrega uploads pendentes para o supervisor.
+       * Carrega uploads pendentes para o gestor.
        * GET /api/supervisor/pending
        */
       loadPendingUploads: <span class="fstat-no" title="function not covered" >async () =&gt; {</span>
@@ -2097,11 +2097,11 @@ export const <span class="cstat-no" title="statement not covered" >useWorkflowSt
 <span class="cstat-no" title="statement not covered" >        if (!upload) <span class="cstat-no" title="statement not covered" >return</span></span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        if (upload.status === "approved") {</span>
-<span class="cstat-no" title="statement not covered" >          showAlert.warning("Nao e Possivel Cancelar", "Este compartilhamento ja foi aprovado pelo supervisor e nao pode ser cancelado.")</span>
+<span class="cstat-no" title="statement not covered" >          showAlert.warning("Nao e Possivel Cancelar", "Este compartilhamento ja foi aprovado pelo gestor e nao pode ser cancelado.")</span>
 <span class="cstat-no" title="statement not covered" >          return</span>
         }
 <span class="cstat-no" title="statement not covered" >        if (upload.status === "rejected") {</span>
-<span class="cstat-no" title="statement not covered" >          showAlert.warning("Nao e Possivel Cancelar", "Este compartilhamento ja foi rejeitado pelo supervisor e nao pode ser cancelado.")</span>
+<span class="cstat-no" title="statement not covered" >          showAlert.warning("Nao e Possivel Cancelar", "Este compartilhamento ja foi rejeitado pelo gestor e nao pode ser cancelado.")</span>
 <span class="cstat-no" title="statement not covered" >          return</span>
         }
 <span class="cstat-no" title="statement not covered" >        if (upload.status === "cancelled") {</span>
@@ -2172,7 +2172,7 @@ export const <span class="cstat-no" title="statement not covered" >useWorkflowSt
           changedBy,
           previousValue,
           newValue: newHours,
-          reason: reason || "Ajuste pelo supervisor",
+          reason: reason || "Ajuste pelo gestor",
         }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        set(<span class="fstat-no" title="function not covered" >(s</span>tate) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
@@ -2196,7 +2196,7 @@ export const <span class="cstat-no" title="statement not covered" >useWorkflowSt
             method: "PUT",
             body: {
               additional_hours: additionalHours,
-              reason: reason || "Ajuste pelo supervisor",
+              reason: reason || "Ajuste pelo gestor",
             },
           }).catch(<span class="fstat-no" title="function not covered" >(e</span>rr) =&gt; {
 <span class="cstat-no" title="statement not covered" >            console.error(" Erro ao estender no backend:", err)</span>
@@ -2219,7 +2219,7 @@ export const <span class="cstat-no" title="statement not covered" >useWorkflowSt
             metadata: {
               previousValue,
               newValue: newHours,
-              reason: reason || "Ajuste pelo supervisor",
+              reason: reason || "Ajuste pelo gestor",
               sender: upload.sender.name,
             },
           },

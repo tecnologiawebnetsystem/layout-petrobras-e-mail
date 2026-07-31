@@ -1,5 +1,6 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,django,flask,venv,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,django,flask,venv,visualstudiocode
+pipeline.yml
 
 ### Django ###
 *.log
@@ -384,5 +385,8 @@ pip-selfcheck.json
 
 ### diretorio de imagens
 storage/**
+
+# Scripts de diagnostico — uso local apenas, nao fazem parte da aplicacao
+scripts_data/diagnostics/
 
 # End of https://www.toptal.com/developers/gitignore/api/python,django,flask,venv,visualstudiocode

@@ -63,7 +63,7 @@ export function LogTimeline({ logs, isLoading }: LogTimelineProps) {
                     </Badge>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground mb-2">{log.details?.description || "Sem descricao"}</p>
+                <p className="text-sm text-muted-foreground mb-2">{log.details?.description || "Sem descrição"}</p>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                   <span className="flex items-center gap-1">
                     <User className="h-3 w-3" />

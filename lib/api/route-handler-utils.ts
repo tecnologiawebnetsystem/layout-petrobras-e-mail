@@ -75,6 +75,15 @@ export function proxyHeaders(
  */
 export function qs(request: NextRequest): string {
   const s = request.nextUrl.searchParams.toString();
+
+  // Limita tamanho para evitar DoS
+  const MAX_QS_LENGTH = 2048; // 2KB é razoável
+  if (s.length > MAX_QS_LENGTH) {
+    throw new Error(
+      `Query string muito grande: ${s.length} bytes (máx: ${MAX_QS_LENGTH})`,
+    );
+  }
+
   return s ? `?${s}` : "";
 }
 
@@ -177,8 +186,49 @@ export async function handleProxyResponse(
  * }
  * ```
  */
+/**
+ * Detecta se o erro é de conectividade de rede
+ * (VPN desligada, host inacessível, timeout de conexão).
+ */
+function _isNetworkError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const msg = error.message.toLowerCase();
+  return [
+    "econnrefused",
+    "enotfound",
+    "econnreset",
+    "etimedout",
+    "enetunreach",
+    "econnaborted",
+    "fetch failed",
+    "network error",
+    "failed to fetch",
+    "socket hang up",
+  ].some((code) => msg.includes(code));
+}
+
+/**
+ * Retorna erro padronizado e registra no log do servidor.
+ * Detecta erros de rede para orientar o usuário sobre VPN/rede corporativa.
+ */
 export function serverError(tag: string, error: unknown): NextResponse {
   console.error(`[API] ${tag}:`, error);
+
+  if (_isNetworkError(error)) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: "NETWORK_UNAVAILABLE",
+          message:
+            "Não foi possível conectar ao servidor. " +
+            "Verifique se você está conectado à rede corporativa (VPN) e tente novamente.",
+        },
+      },
+      { status: 503 },
+    );
+  }
+
   return NextResponse.json(
     {
       success: false,
@@ -213,13 +263,19 @@ export async function proxyGET(
   backendPath: string,
   opts: ProxyOpts = {},
 ): Promise<NextResponse> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
   try {
     const response = await fetch(`${BACKEND_URL}${backendPath}${qs(request)}`, {
       headers: proxyHeaders(request, { withAuth: opts.withAuth }),
+      signal: controller.signal,
     });
+
     return await handleProxyResponse(response, opts);
   } catch (error) {
     return serverError(`GET ${backendPath}`, error);
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -239,6 +295,8 @@ export async function proxyJSON(
   backendPath: string,
   opts: ProxyOpts = {},
 ): Promise<NextResponse> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
   try {
     let body: unknown = {};
     try {
@@ -254,10 +312,13 @@ export async function proxyJSON(
         withContentType: true,
       }),
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
     return await handleProxyResponse(response, opts);
   } catch (error) {
     return serverError(`${method} ${backendPath}`, error);
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -276,14 +337,19 @@ export async function proxyDELETE(
   backendPath: string,
   opts: ProxyOpts = {},
 ): Promise<NextResponse> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
   try {
     const response = await fetch(`${BACKEND_URL}${backendPath}`, {
       method: "DELETE",
       headers: proxyHeaders(request, { withAuth: opts.withAuth }),
+      signal: controller.signal,
     });
     return await handleProxyResponse(response, opts);
   } catch (error) {
     return serverError(`DELETE ${backendPath}`, error);
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -302,6 +368,8 @@ export async function proxyFormData(
   backendPath: string,
   opts: ProxyOpts = {},
 ): Promise<NextResponse> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
   try {
     const formData = await request.formData();
     const response = await fetch(`${BACKEND_URL}${backendPath}`, {
@@ -309,9 +377,12 @@ export async function proxyFormData(
       // Sem Content-Type → Node/fetch define o boundary do multipart automaticamente
       headers: proxyHeaders(request, { withAuth: opts.withAuth }),
       body: formData,
+      signal: controller.signal,
     });
     return await handleProxyResponse(response, opts);
   } catch (error) {
     return serverError(`FormData POST ${backendPath}`, error);
+  } finally {
+    clearTimeout(timeout);
   }
 }

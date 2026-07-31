@@ -33,7 +33,7 @@ A API suporta dois métodos de autenticação:
 ## Fluxo Principal
 
 \`\`\`
-Usuário Interno → Cria Share → Supervisor Aprova → Usuário Externo Baixa
+Usuário Interno → Cria Share → Gestor Aprova → Usuário Externo Baixa
 \`\`\`
 
 ## Ambientes
@@ -79,7 +79,7 @@ Usuário Interno → Cria Share → Supervisor Aprova → Usuário Externo Baixa
     },
     {
       name: "Supervisor",
-      description: "Operações exclusivas de supervisores"
+      description: "Operações exclusivas de gestores"
     },
     {
       name: "External",
@@ -327,7 +327,7 @@ Cria novo compartilhamento de arquivos.
 **Fluxo:**
 1. Valida dados e arquivos
 2. Cria registro com status 'pending'
-3. Notifica supervisor por email
+3. Notifica gestor por email
 4. Envia confirmação para remetente
 
 **Extensões bloqueadas:** .exe, .dll, .bat, .cmd, .com, .msi, .scr, .vbs, .ps1, .sh
@@ -513,7 +513,7 @@ Cria novo compartilhamento de arquivos.
       get: {
         tags: ["Supervisor"],
         summary: "Listar pendentes para aprovação",
-        description: "Lista compartilhamentos aguardando aprovação do supervisor.",
+        description: "Lista compartilhamentos aguardando aprovação do gestor.",
         operationId: "getSupervisorPending",
         security: [{ bearerAuth: [] }],
         parameters: [
@@ -522,7 +522,7 @@ Cria novo compartilhamento de arquivos.
             in: "query",
             required: true,
             schema: { type: "string", format: "email" },
-            description: "Email do supervisor"
+            description: "Email do gestor"
           }
         ],
         responses: {
@@ -554,7 +554,7 @@ Cria novo compartilhamento de arquivos.
       get: {
         tags: ["Supervisor"],
         summary: "Listar todos os compartilhamentos",
-        description: "Lista todos os compartilhamentos que passaram pelo supervisor com filtros.",
+        description: "Lista todos os compartilhamentos que passaram pelo gestor com filtros.",
         operationId: "getSupervisorAll",
         security: [{ bearerAuth: [] }],
         parameters: [

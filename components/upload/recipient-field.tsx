@@ -19,7 +19,7 @@ export function RecipientField({ value, onChange, disabled }: RecipientFieldProp
     <div className="space-y-3">
       <Label htmlFor="recipient" className="text-base font-medium flex items-center gap-2">
         <Lock className="h-4 w-4 text-primary" />
-        Destinatario Externo
+        Destinatário Externo
       </Label>
       <Input
         id="recipient"
@@ -28,11 +28,11 @@ export function RecipientField({ value, onChange, disabled }: RecipientFieldProp
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required
-        aria-label="E-mail do destinatario"
+        aria-label="E-mail do destinatário"
         disabled={disabled}
       />
       <p className="text-sm text-muted-foreground leading-relaxed">
-        O destinatario recebera um email com link seguro para download
+        O destinatário receberá um email com link seguro para download
       </p>
     </div>
   )

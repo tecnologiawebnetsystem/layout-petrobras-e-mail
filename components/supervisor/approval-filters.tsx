@@ -34,7 +34,7 @@ export function ApprovalFilters({
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nome, remetente, destinatario..."
+              placeholder="Buscar por nome, remetente, destinatário..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               className="pl-11 h-12 text-base"

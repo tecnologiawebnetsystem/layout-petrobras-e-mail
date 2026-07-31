@@ -9,6 +9,7 @@ import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav";
 import { ScrollToTop } from "@/components/shared/scroll-to-top";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { DraggableScroll } from "@/components/ui/draggable-scroll";
+import { PageHeader } from "@/components/shared/page-header"
 import {
   Card,
   CardContent,
@@ -233,7 +234,7 @@ function AdminContent() {
       const data = await apiFetch<DashboardMetrics>("/admin/dashboard");
       setMetrics(data);
     } catch (error) {
-      console.error("[Admin] Erro ao carregar metricas:", error);
+      console.error("[Admin] Erro ao carregar métricas:", error);
     } finally {
       setMetricsLoading(false);
     }
@@ -257,7 +258,7 @@ function AdminContent() {
       setUsers(data.users);
       setUsersPagination(data.pagination);
     } catch (error) {
-      console.error("[Admin] Erro ao carregar usuarios:", error);
+      console.error("[Admin] Erro ao carregar usuários:", error);
     } finally {
       setUsersLoading(false);
     }
@@ -317,14 +318,14 @@ function AdminContent() {
       const data = await apiFetch<{ actions: string[] }>("/admin/actions");
       setAvailableActions(data.actions);
     } catch (error) {
-      console.error("[Admin] Erro ao carregar acoes:", error);
+      console.error("[Admin] Erro ao carregar ações:", error);
     }
   };
 
   // Load tracking data
   const loadTracking = async () => {
     if (!trackingUserEmail || !trackingUserEmail.includes("@")) {
-      setTrackingError("Digite um email valido");
+      setTrackingError("Digite um email válido");
       return;
     }
     setTrackingLoading(true);
@@ -337,7 +338,7 @@ function AdminContent() {
       setTrackingData(data);
     } catch (error: any) {
       setTrackingError(
-        error?.message || "Usuario nao encontrado com este email",
+        error?.message || "Usuário não encontrado com este email",
       );
     } finally {
       setTrackingLoading(false);
@@ -402,36 +403,26 @@ function AdminContent() {
   };
 
   if (pageLoading) {
-    return <FullPageLoader message="Carregando painel do auditor..." />;
+    return <FullPageLoader message="Carregando painel do monitor..." />;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <AppHeader subtitle="Solucao de Compartilhamento de Arquivos Confidenciais" />
+      <AppHeader subtitle="Solução de Compartilhamento de Arquivos Confidenciais" />
       <main className="container mx-auto px-4 py-6 max-w-7xl">
         <BreadcrumbNav
           dashboardLink="/admin"
-          items={[{ label: "Inicio", href: "/" }, { label: "Auditoria" }]}
+          items={[{ label: "Inicio", href: "/" }, { label: "Monitor" }]}
         />
 
         {/* Header com gradiente */}
-        <div className="mb-8 mt-4">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
-              <Shield className="h-7 w-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                Painel do Auditor
-              </h1>
-              <p className="text-muted-foreground">
-                Visao completa de todos os usuarios, compartilhamentos e logs do
-                sistema
-              </p>
-            </div>
-          </div>
-        </div>
-
+        
+        <PageHeader
+          icon={Shield}
+          title="Painel de Atividades Realizadas"
+          subtitle="Visão completa de todos os usuários, compartilhamentos e logs do sistema"
+        />
+          
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
@@ -444,7 +435,7 @@ function AdminContent() {
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              Usuarios
+              Usuários
             </TabsTrigger>
             <TabsTrigger value="shares" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
@@ -483,7 +474,7 @@ function AdminContent() {
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm font-medium text-muted-foreground">
-                        Total Usuarios
+                        Total Usuários
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -531,7 +522,7 @@ function AdminContent() {
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm font-medium text-muted-foreground">
-                        Auditores
+                        Monitor
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -733,10 +724,10 @@ function AdminContent() {
                         <TableHead>Tipo</TableHead>
                         <TableHead>Cargo</TableHead>
                         <TableHead>Gestor</TableHead>
-                        <TableHead>Auditor</TableHead>
+                        <TableHead>Monitor</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Ultimo Login</TableHead>
-                        <TableHead>Acoes</TableHead>
+                        <TableHead>Último Login</TableHead>
+                        <TableHead>Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -752,7 +743,7 @@ function AdminContent() {
                             colSpan={10}
                             className="text-center py-8 text-muted-foreground"
                           >
-                            Nenhum usuario encontrado
+                            Nenhum usuário encontrado
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -856,7 +847,7 @@ function AdminContent() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por nome ou email destinatario..."
+                  placeholder="Buscar por nome ou email destinatário..."
                   value={sharesSearch}
                   onChange={(e) => {
                     setSharesSearch(e.target.value);
@@ -894,7 +885,7 @@ function AdminContent() {
                       <TableRow>
                         <TableHead>ID</TableHead>
                         <TableHead>Nome</TableHead>
-                        <TableHead>Destinatario</TableHead>
+                        <TableHead>Destinatário</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Arquivos</TableHead>
                         <TableHead>Criado por</TableHead>
@@ -990,7 +981,7 @@ function AdminContent() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por acao ou detalhe..."
+                  placeholder="Buscar por ação ou detalhe..."
                   value={logsSearch}
                   onChange={(e) => {
                     setLogsSearch(e.target.value);
@@ -1007,7 +998,7 @@ function AdminContent() {
                 }}
               >
                 <SelectTrigger className="w-[220px]">
-                  <SelectValue placeholder="Acao" />
+                  <SelectValue placeholder="Ação" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas</SelectItem>
@@ -1027,8 +1018,8 @@ function AdminContent() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>ID</TableHead>
-                        <TableHead>Acao</TableHead>
-                        <TableHead>Usuario</TableHead>
+                        <TableHead>Ação</TableHead>
+                        <TableHead>Usuário</TableHead>
                         <TableHead>Detalhe</TableHead>
                         <TableHead>IP</TableHead>
                         <TableHead>Data/Hora</TableHead>
@@ -1123,9 +1114,9 @@ function AdminContent() {
           <TabsContent value="tracking" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Rastreamento de Usuario</CardTitle>
+                <CardTitle>Rastreamento de Usuário</CardTitle>
                 <CardDescription>
-                  Digite o email do usuario para ver todo o historico de
+                  Digite o email do usuário para ver todo o histórico de
                   atividades
                 </CardDescription>
               </CardHeader>
@@ -1162,7 +1153,7 @@ function AdminContent() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <User className="h-5 w-5" />
-                      Dados do Usuario
+                      Dados do Usuário
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -1222,7 +1213,7 @@ function AdminContent() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Auditor</p>
+                        <p className="text-sm text-muted-foreground">Monitor</p>
                         <p className="font-medium">
                           {trackingData.user.is_admin ? "Sim" : "Nao"}
                         </p>
@@ -1237,7 +1228,7 @@ function AdminContent() {
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">
-                          Ultimo Login
+                          Último Login
                         </p>
                         <p className="font-medium">
                           {formatDate(trackingData.user.last_login)}
@@ -1303,7 +1294,7 @@ function AdminContent() {
                           <TableRow>
                             <TableHead>ID</TableHead>
                             <TableHead>Nome</TableHead>
-                            <TableHead>Destinatario</TableHead>
+                            <TableHead>Destinatário</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Criado em</TableHead>
                           </TableRow>
@@ -1336,7 +1327,7 @@ function AdminContent() {
                           <TableHeader>
                             <TableRow>
                               <TableHead>ID</TableHead>
-                              <TableHead>Acao</TableHead>
+                              <TableHead>Ação</TableHead>
                               <TableHead>Detalhe</TableHead>
                               <TableHead>IP</TableHead>
                               <TableHead>Data/Hora</TableHead>

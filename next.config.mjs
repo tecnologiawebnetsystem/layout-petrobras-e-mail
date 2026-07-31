@@ -21,7 +21,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
-              "connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.msauth.net https://*.msauthimages.net https://vercel.live",
+              "connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.msauth.net https://*.msauthimages.net https://*.aadrm.com https://api.aadrm.com https://*.informationprotection.azure.com",
               "frame-src 'self' https://login.microsoftonline.com",
             ].join("; "),
           },

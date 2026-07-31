@@ -421,7 +421,7 @@ const GRAPH_API_ENDPOINT = <span class="cstat-no" title="statement not covered" 
  */
 export async function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >getUserProfile(): Promise&lt;UserProfile | null&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >  try {</span>
-<span class="cstat-no" title="statement not covered" >    console.log("[v0 Graph] Iniciando busca de perfil...")</span>
+<span class="cstat-no" title="statement not covered" >    console.log("[Graph] Iniciando busca de perfil...")</span>
     const account = <span class="cstat-no" title="statement not covered" >msalInstance.getAllAccounts()[0]</span>
 <span class="cstat-no" title="statement not covered" >    if (!account) {</span>
 <span class="cstat-no" title="statement not covered" >      console.error("[Graph API] Nenhuma conta logada")</span>
@@ -432,7 +432,7 @@ export async function <span class="cstat-no" title="statement not covered" ><spa
       scopes: ["User.Read", "User.ReadBasic.All"],
       account,
     })
-<span class="cstat-no" title="statement not covered" >    console.log("[v0 Graph] Token obtido com sucesso")</span>
+<span class="cstat-no" title="statement not covered" >    console.log("[Graph] Token obtido com sucesso")</span>
 &nbsp;
     // Buscar perfil completo
     const profileResponse = <span class="cstat-no" title="statement not covered" >await fetch(`${GRAPH_API_ENDPOINT}/me`, {</span>
@@ -441,7 +441,7 @@ export async function <span class="cstat-no" title="statement not covered" ><spa
       },
     })
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    console.log("[v0 Graph] Status da resposta de perfil:", profileResponse.status)</span>
+<span class="cstat-no" title="statement not covered" >    console.log("[Graph] Status da resposta de perfil:", profileResponse.status)</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (!profileResponse.ok) {</span>
 <span class="cstat-no" title="statement not covered" >      console.error("[Graph API] Erro ao buscar perfil:", profileResponse.statusText)</span>
@@ -451,7 +451,7 @@ export async function <span class="cstat-no" title="statement not covered" ><spa
     }
 &nbsp;
     const profile = <span class="cstat-no" title="statement not covered" >await profileResponse.json()</span>
-<span class="cstat-no" title="statement not covered" >    console.log("[v0 Graph] Perfil recebido:", profile)</span>
+<span class="cstat-no" title="statement not covered" >    console.log("[Graph] Perfil recebido:", profile)</span>
 <span class="cstat-no" title="statement not covered" >    return profile</span>
   } catch (error) {
 <span class="cstat-no" title="statement not covered" >    console.error("[Graph API] Erro ao buscar perfil do usuário:", error)</span>
@@ -464,7 +464,7 @@ export async function <span class="cstat-no" title="statement not covered" ><spa
  */
 export async function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >getUserManager(): Promise&lt;ManagerInfo | null&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >  try {</span>
-<span class="cstat-no" title="statement not covered" >    console.log("[v0 Graph] Iniciando busca de supervisor...")</span>
+<span class="cstat-no" title="statement not covered" >    console.log("Graph] Iniciando busca de supervisor...")</span>
     const account = <span class="cstat-no" title="statement not covered" >msalInstance.getAllAccounts()[0]</span>
 <span class="cstat-no" title="statement not covered" >    if (!account) {</span>
 <span class="cstat-no" title="statement not covered" >      console.error("[Graph API] Nenhuma conta logada")</span>
@@ -483,7 +483,7 @@ export async function <span class="cstat-no" title="statement not covered" ><spa
       },
     })
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    console.log("[v0 Graph] Status da resposta de supervisor:", managerResponse.status)</span>
+<span class="cstat-no" title="statement not covered" >    console.log("[Graph] Status da resposta de supervisor:", managerResponse.status)</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (!managerResponse.ok) {</span>
       // Usuário pode não ter gerente configurado
@@ -498,7 +498,7 @@ export async function <span class="cstat-no" title="statement not covered" ><spa
     }
 &nbsp;
     const manager = <span class="cstat-no" title="statement not covered" >await managerResponse.json()</span>
-<span class="cstat-no" title="statement not covered" >    console.log("[v0 Graph] Supervisor recebido:", manager)</span>
+<span class="cstat-no" title="statement not covered" >    console.log("[Graph] Supervisor recebido:", manager)</span>
 <span class="cstat-no" title="statement not covered" >    return manager</span>
   } catch (error) {
 <span class="cstat-no" title="statement not covered" >    console.error("[Graph API] Erro ao buscar gerente do usuário:", error)</span>
@@ -511,7 +511,7 @@ export async function <span class="cstat-no" title="statement not covered" ><spa
  */
 export async function <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >getUserPhoto(): Promise&lt;string | null&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >  try {</span>
-<span class="cstat-no" title="statement not covered" >    console.log("[v0 Graph] Iniciando busca de foto...")</span>
+<span class="cstat-no" title="statement not covered" >    console.log("[Graph] Iniciando busca de foto...")</span>
     const account = <span class="cstat-no" title="statement not covered" >msalInstance.getAllAccounts()[0]</span>
 <span class="cstat-no" title="statement not covered" >    if (!account) <span class="cstat-no" title="statement not covered" >return null</span></span>
 &nbsp;
@@ -526,17 +526,17 @@ export async function <span class="cstat-no" title="statement not covered" ><spa
       },
     })
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    console.log("[v0 Graph] Status da resposta de foto:", photoResponse.status)</span>
+<span class="cstat-no" title="statement not covered" >    console.log("[Graph] Status da resposta de foto:", photoResponse.status)</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (!photoResponse.ok) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log("[v0 Graph] Foto não disponível (status:", photoResponse.status, ")")</span>
+<span class="cstat-no" title="statement not covered" >      console.log("[Graph] Foto não disponível (status:", photoResponse.status, ")")</span>
       // Usuário pode não ter foto configurada
 <span class="cstat-no" title="statement not covered" >      return null</span>
     }
 &nbsp;
     const photoBlob = <span class="cstat-no" title="statement not covered" >await photoResponse.blob()</span>
     const photoUrl = <span class="cstat-no" title="statement not covered" >URL.createObjectURL(photoBlob)</span>
-<span class="cstat-no" title="statement not covered" >    console.log("[v0 Graph] URL da foto criada:", photoUrl)</span>
+<span class="cstat-no" title="statement not covered" >    console.log("[Graph] URL da foto criada:", photoUrl)</span>
 <span class="cstat-no" title="statement not covered" >    return photoUrl</span>
   } catch (error) {
 <span class="cstat-no" title="statement not covered" >    console.error("[Graph API] Erro ao buscar foto do usuário:", error)</span>

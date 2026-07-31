@@ -24,6 +24,7 @@ from app.api.v1 import (
     routes_auth,
     routes_emails,
     routes_admin,
+    routes_mip_auth,
 )
 
 # ── Documentação OpenAPI ─────────────────────────────────────────────────────
@@ -183,6 +184,9 @@ app.include_router(routes_cav4_auth.router, prefix=prefix_v1, tags=["Auth / CAv4
 
 # Admin — Super Administrador Global
 app.include_router(routes_admin.router, prefix=prefix_v1, tags=["Admin"])
+
+# MIP Auth — Device Code Flow para tokens de usuario (arquivos Confidencial)
+app.include_router(routes_mip_auth.router, prefix=prefix_v1, tags=["MIP Auth"])
 
 # Rotas MOCK (sem AWS): integradas com core/aws_utils.py
 @app.get("/mock/upload/{key}")

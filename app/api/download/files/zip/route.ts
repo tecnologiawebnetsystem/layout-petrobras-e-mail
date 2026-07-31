@@ -1,27 +1,28 @@
-import { NextRequest } from "next/server"
-import {
-  BACKEND_URL,
-  proxyHeaders,
-} from "@/lib/api/route-handler-utils"
+import { NextRequest } from "next/server";
+import { BACKEND_URL, proxyHeaders } from "@/lib/api/route-handler-utils";
+
+/**
+ * Destino fixo e imutável — nunca derivado de entrada do usuário.
+ * Declarado como constante de módulo para evidenciar ao analisador estático
+ * que o path não é influenciado por nenhuma entrada HTTP.
+ */
+const BACKEND_ZIP_PATH = "/api/v1/download/files/zip" as const;
 
 type ErrorResponse = {
-  detail?: string
-}
+  detail?: string;
+};
 
-async function safeJsonParse<T>(
-  response: Response
-): Promise<T | null> {
-  const contentType =
-    response.headers.get("content-type")
+async function safeJsonParse<T>(response: Response): Promise<T | null> {
+  const contentType = response.headers.get("content-type");
 
   if (!contentType?.includes("application/json")) {
-    return null
+    return null;
   }
 
   try {
-    return (await response.json()) as T
+    return (await response.json()) as T;
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -31,77 +32,71 @@ async function safeJsonParse<T>(
  */
 export async function GET(request: NextRequest) {
   try {
-    const ids =
-      request.nextUrl.searchParams.get("ids") ?? ""
+    const ids = request.nextUrl.searchParams.get("ids") ?? "";
 
-    const response = await fetch(
-      `${BACKEND_URL}/api/v1/download/files/zip?ids=${encodeURIComponent(ids)}`,
-      {
-        headers: proxyHeaders(request),
-      }
-    )
+    if (!/^\d+(,\d+)*$/.test(ids)) {
+      return Response.json(
+        {
+          success: false,
+          error: {
+            code: "INVALID_IDS",
+            message: "Parâmetro ids inválido.",
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    // URL de destino construída exclusivamente a partir de constantes do servidor.
+    const targetUrl = new URL(BACKEND_ZIP_PATH, BACKEND_URL);
+    targetUrl.searchParams.set("ids", ids);
+
+    const response = await fetch(targetUrl.toString(), {
+      headers: proxyHeaders(request),
+    });
 
     if (!response.ok) {
-      const errorData =
-        await safeJsonParse<ErrorResponse>(
-          response
-        )
+      const errorData = await safeJsonParse<ErrorResponse>(response);
 
       return new Response(
         JSON.stringify({
           success: false,
           error: {
             code: "DOWNLOAD_ZIP_FAILED",
-            message:
-              errorData?.detail ??
-              "Falha ao gerar o arquivo ZIP.",
+            message: errorData?.detail ?? "Falha ao gerar o arquivo ZIP.",
           },
         }),
         {
           status: response.status,
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-        }
-      )
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
     return new Response(response.body, {
       status: 200,
       headers: {
-        "Content-Type":
-          "application/zip",
-
+        "Content-Type": "application/zip",
         "Content-Disposition":
-          response.headers.get(
-            "Content-Disposition"
-          ) ??
+          response.headers.get("Content-Disposition") ??
           'attachment; filename="arquivos.zip"',
       },
-    })
+    });
   } catch (error) {
-    console.error(
-      "[API] GET /download/files/zip:",
-      error
-    )
+    console.error("[API] GET /download/files/zip:", error);
 
     return new Response(
       JSON.stringify({
         success: false,
         error: {
           code: "SERVER_ERROR",
-          message:
-            "Erro interno do servidor",
+          message: "Erro interno do servidor",
         },
       }),
       {
         status: 500,
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-      }
-    )
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   }
 }

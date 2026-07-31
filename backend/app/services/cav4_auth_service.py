@@ -478,63 +478,59 @@ def resolve_access_from_cav4_roles(roles: list[str]) -> dict[str, Any]:
 
     # ── 1. Mapeamento direto por código CAV4 (prioridade máxima) ─────────────
     priority_order = ["auditor", "supervisor", "internal"]
+    mapped_roles: list[str] = []
+    for normalized in role_set:
+        mapped = _CAV4_CODE_TO_ROLE.get(normalized)
+        if mapped:
+            frontend = "admin" if mapped == "auditor" else mapped
+            if frontend not in mapped_roles:
+                mapped_roles.append(frontend)
+
     for target_role in priority_order:
         for normalized in role_set:
             if _CAV4_CODE_TO_ROLE.get(normalized) == target_role:       
-                is_admin     = target_role in ("auditor", "admin")
+                is_admin      = target_role in ("auditor", "admin")
                 is_supervisor = target_role == "supervisor"
-                # tirar depois
-                logging.getLogger(__name__).info(
-                    "ROLE_RESOLVIDA: %s",
-                    target_role
-                )
-                
-                
-                frontend_role = target_role
-
-                if target_role == "auditor":
-                    frontend_role = "admin"
+                logging.getLogger(__name__).info("ROLE_RESOLVIDA: %s", target_role)
+                frontend_role = "admin" if target_role == "auditor" else target_role
 
                 return {                    
                     "authorized": True,
                     "role": frontend_role,
+                    "all_roles": mapped_roles or [frontend_role],
                     "cav4_role": target_role,
                     "is_admin": is_admin,
                     "is_supervisor": is_supervisor,
                     "source": "cav4_direct_code",
                 }
 
-    # ── 2. Fallback: comparação por settings (comportamento original) ─────────
+    # ── 2. Fallback: comparação por settings ─────────────────────────────────
     admin_names      = set(_normalize_role_name(r) for r in settings.cav4_admin_role_names)
     supervisor_names = set(_normalize_role_name(r) for r in settings.cav4_supervisor_role_names)
     internal_names   = set(_normalize_role_name(r) for r in settings.cav4_internal_role_names)
 
+    fallback_roles: list[str] = []
     if role_set & admin_names:
-        logging.getLogger(__name__).info(
-            "ROLE_RESOLVIDA: %s",
-            target_role
-        )
-        return {"authorized": True, "role": "admin",
+        fallback_roles.append("admin")
+    if role_set & supervisor_names:
+        fallback_roles.append("supervisor")
+    if role_set & internal_names:
+        fallback_roles.append("internal")
+
+    if role_set & admin_names:
+        logging.getLogger(__name__).info("ROLE_RESOLVIDA: admin (settings fallback)")
+        return {"authorized": True, "role": "admin", "all_roles": fallback_roles or ["admin"],
                 "is_admin": True, "is_supervisor": False, "source": "cav4_roles"}
     if role_set & supervisor_names:
-        logging.getLogger(__name__).info(
-            "ROLE_RESOLVIDA: %s",
-            target_role
-        )
-        return {"authorized": True, "role": "supervisor",
+        logging.getLogger(__name__).info("ROLE_RESOLVIDA: supervisor (settings fallback)")
+        return {"authorized": True, "role": "supervisor", "all_roles": fallback_roles or ["supervisor"],
                 "is_admin": False, "is_supervisor": True, "source": "cav4_roles"}
     if role_set & internal_names:
-        logging.getLogger(__name__).info(
-            "ROLE_RESOLVIDA: %s",
-            target_role
-        )
-        return {"authorized": True, "role": "internal",
+        logging.getLogger(__name__).info("ROLE_RESOLVIDA: internal (settings fallback)")
+        return {"authorized": True, "role": "internal", "all_roles": fallback_roles or ["internal"],
                 "is_admin": False, "is_supervisor": False, "source": "cav4_roles"}
-        logging.getLogger(__name__).info(
-            "ROLE_RESOLVIDA: %s",
-            target_role
-        )
-    return {"authorized": False, "role": None,
+
+    return {"authorized": False, "role": None, "all_roles": [],
             "is_admin": False, "is_supervisor": False, "source": "cav4_roles"}
 
 

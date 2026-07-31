@@ -37,28 +37,29 @@ export interface NavItem {
 
 export const ALL_NAV_ITEMS: NavItem[] = [
   {
-    label: "Upload",
+    label: "Compartilhar",
     route: "/upload",
     icon: Upload,
     requiredPermissions: ["file:upload", "shares:create"],
     requiredUserTypes: ["internal", "supervisor"],
   },
   {
-    label: "Compartilhamentos",
+    label: "Meus Compartilhamentos",
     route: "/compartilhamentos",
-    icon: FolderOpen,
+    icon: History,
     requiredPermissions: ["shares:read"],
     requiredUserTypes: ["internal", "supervisor"],
   },
-  {
+ /**  {
     label: "Histórico",
     route: "/historico",
     icon: History,
     requiredPermissions: ["shares:read"],
     requiredUserTypes: ["internal", "supervisor"],
   },
+**/
   {
-    label: "Painel do Gestor",
+    label: "Aprovar (Módulo Gestor)",
     route: "/supervisor",
     icon: ShieldCheck,
     requiredPermissions: ["shares:approve", "shares:reject"],
@@ -72,14 +73,14 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     requiredUserTypes: ["supervisor", "admin"],
   },
   {
-    label: "Auditoria",
-    route: "/auditoria",
-    icon: Search,
+    label: "Atividades Realizadas (Monitor)",
+    route: "/admin",
+    icon: Settings,
     requiredPermissions: ["audit:read"],
     requiredUserTypes: ["admin", "supervisor"],
   },
   {
-    label: "Administração",
+    label: "Atividades Realizadas",
     route: "/admin",
     icon: Settings,
     requiredPermissions: ["*"],

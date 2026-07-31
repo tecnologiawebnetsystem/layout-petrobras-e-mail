@@ -1,18 +1,45 @@
-FROM registry.petrobras.com.br/imagens-devops/base/petro-aspnet-8_0
+# ── Stage 1: Build ──────────────────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
-ARG JENKINS_OUTPUT=.
+WORKDIR /src
+
+COPY . .
+
+RUN dotnet publish mip-sdk-worker.csproj \
+        --configuration Release \
+        --runtime linux-x64 \
+        --no-self-contained \
+        -o /app/publish
+
+# ── Stage 2: Runtime ─────────────────────────────────────────────────────────
+FROM registry.petrobras.com.br/imagens-devops/base/petro-aspnet-8_0
 
 ARG PORT=8081
 
 ENV ASPNETCORE_URLS=http://+:$PORT \
-    TZ=America/Sao_Paulo
+    TZ=America/Sao_Paulo \
+    LD_LIBRARY_PATH=/app:/usr/local/lib:/usr/lib/x86_64-linux-gnu
 
 WORKDIR /app
 
-COPY $JENKINS_OUTPUT /app
+# ── Dependências nativas do MIP SDK (Microsoft.InformationProtection.File) ──
+# Ref: https://learn.microsoft.com/en-us/information-protection/develop/setup-configure-mip
+# A imagem base é Debian 12 (bookworm). O MIP SDK foi compilado contra OpenSSL 1.1.x,
+# portanto criamos symlinks de compatibilidade para as libs OpenSSL 3.x do Debian 12.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libsecret-1-0 \
+        libgmime-3.0-0 \
+        libgsf-1-114 \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/lib/x86_64-linux-gnu/libdl.so.2     /usr/lib/x86_64-linux-gnu/libdl.so \
+    && ln -sf /usr/lib/x86_64-linux-gnu/libssl.so.3    /usr/lib/x86_64-linux-gnu/libssl.so.1.1 \
+    && ln -sf /usr/lib/x86_64-linux-gnu/libcrypto.so.3 /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1
+
+COPY --from=build /app/publish .
 
 EXPOSE $PORT
 
-HEALTHCHECK CMD wget --no-verbose --tries=1 --spider http://localhost:$PORT/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:$PORT/health || exit 1
 
 ENTRYPOINT ["dotnet", "mip-sdk-worker.dll"]

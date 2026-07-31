@@ -46,7 +46,10 @@ class Settings(BaseSettings):
     mip_processing_timeout_seconds: int = 120
     mip_sdk_base_url: str | None = None
     mip_sdk_api_token: str | None = None
-    mip_sdk_verify_tls: bool = True
+    # MIP SDK TLS: False por padrão pois o ALB Petrobras usa CA corporativa
+    # (self-signed chain) não reconhecida pelo httpx/Python.
+    # Definir MIP_SDK_VERIFY_TLS=true apenas em ambientes com CA pública válida.
+    mip_sdk_verify_tls: bool = False
 
     # OTP e cooldown
     otp_max_attempts: int = 5
@@ -84,20 +87,14 @@ class Settings(BaseSettings):
     # Exemplo .env: AUTO_APPROVE_JOB_TITLES=["gerente geral","diretor","presidente"]
     auto_approve_job_titles: List[str] = [
         "gerente geral",
-        "gerente executivo",
-        "gerente executiva",
-        "ouvidor-geral da petrobras",
-        "ouvidora-geral da petrobras",
-        "secretario-geral da petrobras",
-        "secretaria-geral da petrobras",
+        "gerente executivo(a)",
+        "ouvidor(a)-geral da petrobras",
+        "secretario(a)-geral da petrobras",
         "chefe do gabinete da presidencia",
-        "auditor-geral da petrobras",
-        "auditora-geral da petrobras",
-        "diretor",
-        "diretora",
+        "auditor(a)-geral da petrobras",
+        "diretor(a)",
         "presidente",
-        "corregedor-geral da petrobras",
-        "corregedora-geral da petrobras",
+        "corregedor(a)-geral da petrobras",
     ]
 
     # Nota: Entra ID removido em Fase 3. Usar CAv4 como provider principal.
@@ -112,6 +109,11 @@ class Settings(BaseSettings):
     # App Registration separado usado para operacoes Purview (MIP)
     entra_client_id_purview: str | None = None
     entra_client_secret_purview: str | None = None
+
+    # Client ID publico do app Microsoft "Azure Information Protection Viewer".
+    # App de primeira parte, pre-aprovado em tenants AIP/MIP.
+    # Configurar via MIP_AIP_VIEWER_CLIENT_ID no .env para sobrescrever sem alterar codigo.
+    mip_aip_viewer_client_id: str | None = None
 
     # Postura de falha do Graph/Entra ID:
     #   False (padrão): Permissivo — login prossegue mesmo sem Graph

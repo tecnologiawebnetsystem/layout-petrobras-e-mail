@@ -133,7 +133,9 @@ def create_share(
     consumption_policy: TokenConsumption = TokenConsumption.AFTER_ALL,
     file_ids: list[int] | None = None,
     new_uploads: Iterable[tuple[str, bytes, str]] | None = None,
-    request_meta: dict | None = None
+    request_meta: dict | None = None,
+    aadrm_token: str | None = None,
+    mip_policy_token: str | None = None,
 ) -> Share:
     # valida interno
     internal = session.exec(select(User).where(User.id == created_by_id)).first()
@@ -205,7 +207,12 @@ def create_share(
                 safe_name = sanitize_filename(upload_name)
 
                 # ── Processa MIP antes de qualquer gravação ──────────────────
-                mip_result = process_upload_file(filename=safe_name, content_bytes=content_bytes)
+                mip_result = process_upload_file(
+                    filename=safe_name,
+                    content_bytes=content_bytes,
+                    aadrm_token=aadrm_token,
+                    mip_policy_token=mip_policy_token,
+                )
 
                 file_id = str(uuid.uuid4())
                 key_s3 = build_upload_key(area.id, file_id, safe_name)
@@ -293,12 +300,19 @@ def create_share(
         ) from exc
 
     # Auditoria de sucesso
+    # Indica se houve segunda autenticacao MIP no upload (CA03)
+    _mip_auth_used = bool(aadrm_token) and bool(new_uploads)
+    _policy_info = "presente" if mip_policy_token else "ausente"
+    _detail = f"external_email={external_email}"
+    if _mip_auth_used:
+        _detail += f", mip_segunda_auth=true, policy_token={_policy_info}"
+
     log_event(
         session=session,
         action="CRIAR_SHARE",
         user_id=created_by_id,
         share_id=share.id,
-        detail=f"external_email={external_email}",
+        detail=_detail,
         ip=request_meta.get("ip") if request_meta else None,
         user_agent=request_meta.get("ua") if request_meta else None
     )

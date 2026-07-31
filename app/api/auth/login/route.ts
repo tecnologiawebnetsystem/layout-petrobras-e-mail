@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: {
           code: "AUTH_ERROR",
-          message: data?.detail ?? "Falha na autenticacao",
+          message: data?.detail ?? "Falha na autenticação",
         },
       },
       { status: backendResponse.status },
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: {
           code: "BACKEND_UNAVAILABLE",
-          message: "Servico de autenticacao indisponivel",
+          message: "Serviço de autenticação indisponível",
         },
       },
       { status: 503 },

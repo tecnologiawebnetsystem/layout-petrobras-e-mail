@@ -117,12 +117,12 @@ const sections: Section[] = [
   },
   {
     id: "supervisor",
-    title: "Supervisor",
+    title: "Gestor",
     icon: <UserCheck className="h-4 w-4" />,
     description: "Gestor de equipe",
     subsections: [
       { id: "supervisor-acesso", title: "1. Acessando o Painel" },
-      { id: "supervisor-painel", title: "2. Painel do Supervisor" },
+      { id: "supervisor-painel", title: "2. Painel do Gestor" },
       { id: "supervisor-lista-pendentes", title: "3. Lista de Pendentes" },
       { id: "supervisor-detalhes", title: "4. Detalhes do Compartilhamento" },
       { id: "supervisor-aprovar", title: "5. Aprovar" },
@@ -562,7 +562,7 @@ function VisaoGeralSection() {
           <FeatureCard
             icon={<CheckCircle className="h-8 w-8" />}
             title="Aprovado"
-            description="Fluxo de aprovação por supervisor antes do envio"
+            description="Fluxo de aprovação por gestor antes do envio"
             color="purple"
           />
         </div>
@@ -717,16 +717,16 @@ function VisaoGeralSection() {
               </div>
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-3 mb-3">
-                  <h3 className="text-xl font-bold">Supervisor</h3>
+                  <h3 className="text-xl font-bold">Gestor</h3>
                   <Badge variant="warning">Gestor de Equipe</Badge>
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  Usuário interno com flag <code>supervisor</code>. Responsável
+                  Usuário interno com flag <code>gestor</code>. Responsável
                   por aprovar ou rejeitar os compartilhamentos criados pelos
                   membros da sua equipe (via <code>supervisionado</code>). Pode
                   acessar logs de auditoria e criar compartilhamentos com
                   auto-aprovação via aba &quot;Compartilhar&quot; do painel{" "}
-                  <code>/supervisor</code>.
+                  <code>/gestor</code>.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="default">
@@ -852,7 +852,7 @@ function VisaoGeralSection() {
                 icon: <Clock className="h-4 w-4" />,
               },
               {
-                label: "3. Supervisor Aprova",
+                label: "3. Gestor Aprova",
                 icon: <CheckCircle className="h-4 w-4" />,
               },
               {
@@ -876,13 +876,13 @@ function VisaoGeralSection() {
         </ScreenMockup>
 
         <div className="mt-6 grid md:grid-cols-2 gap-4">
-          <InfoBox type="tip" title="Auto-Aprovação para Supervisores">
-            Quando um supervisor cria um compartilhamento pela aba
+          <InfoBox type="tip" title="Auto-Aprovação para Gestores">
+            Quando um gestor cria um compartilhamento pela aba
             &quot;Compartilhar&quot; do painel <code>/supervisor</code>, o mesmo
             é aprovado automaticamente, pulando a etapa de aguardar aprovação.
           </InfoBox>
           <InfoBox type="info" title="Notificações por E-mail">
-            O sistema envia e-mails em cada etapa: ao supervisor quando há
+            O sistema envia e-mails em cada etapa: ao gestor quando há
             pendência, ao remetente com o resultado (aprovado/rejeitado) e ao
             destinatário externo com o link de acesso após aprovação.
           </InfoBox>
@@ -1235,7 +1235,7 @@ function UsuarioInternoSection() {
           <StepCard
             number={5}
             title="Enviar para Aprovação"
-            description="Clique em 'Enviar para Aprovação'. O sistema cria o compartilhamento com status PENDENTE e notifica o supervisor por e-mail."
+            description="Clique em 'Enviar para Aprovação'. O sistema cria o compartilhamento com status PENDENTE e notifica o gestor por e-mail."
             icon={<Send className="h-5 w-5" />}
           />
           <StepCard
@@ -1253,7 +1253,7 @@ function UsuarioInternoSection() {
           </InfoBox>
           <InfoBox type="info" title="Fluxo de Aprovação">
             Após o envio, o compartilhamento fica com status{" "}
-            <strong>Pendente</strong> até que o supervisor aprove ou rejeite.
+            <strong>Pendente</strong> até que o gestor aprove ou rejeite.
             Somente após aprovação o e-mail é enviado ao destinatário externo.
           </InfoBox>
         </div>
@@ -1275,23 +1275,23 @@ function UsuarioInternoSection() {
           <div className="space-y-4">
             {/* Filtros */}
             <div className="flex flex-wrap gap-3 pb-4 border-b">
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-background">
                 <Filter className="h-4 w-4" />
                 <span className="text-sm">Todos</span>
               </div>
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted hover:bg-muted/80 cursor-pointer">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-muted hover:bg-muted/80 cursor-pointer">
                 <Clock className="h-4 w-4 text-amber-500" />
                 <span className="text-sm">Pendentes</span>
               </div>
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted hover:bg-muted/80 cursor-pointer">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-muted hover:bg-muted/80 cursor-pointer">
                 <CheckCircle className="h-4 w-4 text-blue-500" />
                 <span className="text-sm">Aprovados/Ativos</span>
               </div>
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted hover:bg-muted/80 cursor-pointer">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-muted hover:bg-muted/80 cursor-pointer">
                 <XCircle className="h-4 w-4 text-red-500" />
                 <span className="text-sm">Rejeitados</span>
               </div>
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted hover:bg-muted/80 cursor-pointer">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-muted hover:bg-muted/80 cursor-pointer">
                 <Clock className="h-4 w-4 text-gray-400" />
                 <span className="text-sm">Expirados</span>
                 <div className="h-12 w-12 rounded-lg bg-green-500/10 flex items-center justify-center">
@@ -1339,7 +1339,7 @@ function UsuarioInternoSection() {
                     Para: maria@fornecedor.com
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Aguardando aprovação do supervisor
+                    Aguardando aprovação do gestor
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -1391,7 +1391,7 @@ function UsuarioInternoSection() {
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-amber-500" />
                 <span className="text-sm">
-                  <strong>Pendente:</strong> Aguardando aprovação do supervisor
+                  <strong>Pendente:</strong> Aguardando aprovação do gestor
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -1410,7 +1410,7 @@ function UsuarioInternoSection() {
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-red-500" />
                 <span className="text-sm">
-                  <strong>Rejeitado:</strong> Negado pelo supervisor
+                  <strong>Rejeitado:</strong> Negado pelo gestor
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -1447,6 +1447,10 @@ function UsuarioInternoSection() {
     </div>
   );
 }
+
+// ========================================
+// SECAO: USUARIO EXTERNO
+// ========================================
 function UsuarioExternoSection() {
   return (
     <div className="space-y-12">
@@ -1875,9 +1879,9 @@ function SupervisorSection() {
             <UserCheck className="h-7 w-7 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold mb-2">Guia do Supervisor</h2>
+            <h2 className="text-2xl font-bold mb-2">Guia do Gestor</h2>
             <p className="text-muted-foreground">
-              Este guia detalha as funcionalidades exclusivas do supervisor,
+              Este guia detalha as funcionalidades exclusivas do gestor,
               incluindo aprovação de compartilhamentos, gerenciamento de equipe
               e visualização de logs de auditoria.
             </p>
@@ -1895,9 +1899,9 @@ function SupervisorSection() {
         </h2>
 
         <p className="text-muted-foreground mb-6">
-          O acesso ao painel do supervisor e feito da mesma forma que o usuario
+          O acesso ao painel do gestor e feito da mesma forma que o usuario
           interno (via SSO). Após o login, o sistema detecta automaticamente seu
-          perfil de supervisor e exibe as opções adicionais.
+          perfil de gestor e exibe as opções adicionais.
         </p>
       </section>
 
@@ -1907,11 +1911,11 @@ function SupervisorSection() {
           <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
             <LayoutDashboard className="h-5 w-5 text-amber-600" />
           </div>
-          2. Dashboard do Supervisor
+          2. Dashboard do Gestor
         </h2>
 
         <ScreenMockup
-          title="Painel do Supervisor - /supervisor"
+          title="Painel do Gestor - /supervisor"
           description="Visão geral das aprovações e métricas da equipe"
         >
           <div className="space-y-6">
@@ -1921,7 +1925,7 @@ function SupervisorSection() {
                 <Shield className="h-7 w-7 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold">Painel do Supervisor</h3>
+                <h3 className="text-xl font-bold">Painel do Gestor</h3>
                 <p className="text-sm text-muted-foreground">
                   Gerencie aprovações, compartilhamentos e visualize logs
                 </p>
@@ -2157,7 +2161,7 @@ function SupervisorSection() {
             <div className="p-5 rounded-xl border bg-card">
               <h4 className="font-semibold mb-4 flex items-center gap-2">
                 <Globe className="h-5 w-5 text-primary" />
-                Destinatario (Externo)
+                Destinatário (Externo)
               </h4>
               <div className="flex items-center gap-4">
                 <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
@@ -2220,7 +2224,7 @@ function SupervisorSection() {
               <h3 className="text-xl font-bold mb-2">Confirmar Aprovacao</h3>
               <p className="text-muted-foreground mb-6">
                 Ao aprovar, o e-mail sera enviado automaticamente para o
-                destinatario com o link de acesso ao arquivo.
+                destinatário com o link de acesso ao arquivo.
               </p>
 
               <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 text-left mb-6">
@@ -2230,7 +2234,7 @@ function SupervisorSection() {
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-3 w-3 text-green-500" /> E-mail
-                    enviado ao destinatario
+                    enviado ao destinatário
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle className="h-3 w-3 text-green-500" /> Link de
@@ -2340,10 +2344,10 @@ function SupervisorSection() {
         </h2>
 
         <p className="text-muted-foreground mb-6">
-          Como supervisor, seus próprios compartilhamentos criados na{" "}
+          Como gestor, seus próprios compartilhamentos criados na{" "}
           <strong>aba "Compartilhar"</strong> do painel
           <code>/supervisor</code> são aprovados automaticamente, sem
-          necessidade de aprovação de outro supervisor.
+          necessidade de aprovação de outro gestor.
         </p>
 
         <ScreenMockup
@@ -2356,12 +2360,12 @@ function SupervisorSection() {
                 <Zap className="h-6 w-6 text-amber-600 flex-shrink-0" />
                 <div>
                   <p className="font-semibold text-amber-700 dark:text-amber-400">
-                    Auto-Aprovacao Habilitada
+                    Auto-Aprovação Habilitada
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Como voce e supervisor, seu compartilhamento sera{" "}
-                    <strong>aprovado automaticamente</strong> apos a criacao. O
-                    e-mail sera enviado imediatamente ao destinatario.
+                    Como você é gestor, seu compartilhamento será{" "}
+                    <strong>aprovado automaticamente</strong> apos a criação. O
+                    e-mail sera enviado imediatamente ao destinatário.
                   </p>
                 </div>
               </div>
@@ -2394,8 +2398,8 @@ function SupervisorSection() {
         </h2>
 
         <ScreenMockup
-          title="Auditoria - /auditoria"
-          description="Logs de ações da sua equipe (somente visualização)"
+          title="Auditoria - /admin (aba Logs)"
+          description="Logs de ações da sua equipe (acesso via painel de monitoramento)"
         >
           <div className="space-y-4">
             <div className="flex items-center gap-3 pb-4 border-b">
@@ -2483,7 +2487,7 @@ function SupervisorSection() {
 
         <div className="mt-6">
           <InfoBox type="warning" title="Somente Leitura">
-            Como supervisor, voce pode apenas <strong>visualizar</strong> os
+            Como gestor, voce pode apenas <strong>visualizar</strong> os
             logs de auditoria da sua equipe. Somente o Admin Global pode
             exportar dados ou alterar configurações de auditoria.
           </InfoBox>
@@ -2534,7 +2538,7 @@ function AdminGlobalSection() {
         </h2>
 
         <p className="text-muted-foreground mb-6">
-          O acesso ao painel administrativo é feito via SSO. Após o login, o
+          O acesso ao painel de atividades é feito via SSO. Após o login, o
           sistema detecta automaticamente seu perfil de administrador e libera o
           acesso ao menu &quot;Administração&quot;.
         </p>
@@ -2685,7 +2689,7 @@ function AdminGlobalSection() {
                     ana.lima@petrobras.com.br
                   </span>,
                   <Badge key="t2" variant="warning">
-                    Supervisor
+                    Gestor
                   </Badge>,
                   <Badge key="a2" variant="success">
                     Sim

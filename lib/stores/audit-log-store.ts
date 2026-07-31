@@ -31,7 +31,7 @@ export interface AuditLog {
     id: string
     name: string
     email: string
-    type: "internal" | "external" | "supervisor" | "support" | "admin"
+    type: "internal" | "external" | "supervisor" |  "support" |"admin"
     employeeId?: string
   }
   details: {
@@ -75,10 +75,10 @@ function mapLevel(level: string): LogLevel {
   return "info"
 }
 
-function mapUserType(type: string): "internal" | "external" | "supervisor" | "support" {
+function mapUserType(type: string): "internal" | "external" | "supervisor" | "admin" {
   const t = (type || "").toLowerCase()
+  if (t.includes("admin")) return "admin"
   if (t.includes("supervisor")) return "supervisor"
-  if (t.includes("support") || t.includes("suporte")) return "support"
   if (t.includes("internal") || t.includes("interno")) return "internal"
   return "external"
 }

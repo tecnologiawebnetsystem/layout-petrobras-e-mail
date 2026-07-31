@@ -187,6 +187,8 @@ async def create_with_upload(
     background_tasks: BackgroundTasks,
     payload: str = Form(...),
     files: List[UploadFile] = [],
+    aadrm_token: Optional[str] = Form(None),
+    mip_policy_token: Optional[str] = Form(None),
     session: Session = Depends(get_session),
     request: Request = None
 ):
@@ -224,7 +226,9 @@ async def create_with_upload(
             request_meta={
                 "ip": request.client.host if request else None,
                 "ua": request.headers.get("User-Agent") if request else None
-            }
+            },
+            aadrm_token=aadrm_token,
+            mip_policy_token=mip_policy_token,
         )
 
         # Se o criador é supervisor, aprova automaticamente

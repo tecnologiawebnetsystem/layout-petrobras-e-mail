@@ -22,7 +22,7 @@ export default function ConfiguracoesPage() {
     if (!_hasHydrated) return
 
     if (!isAuthenticated) {
-      router.push("/")
+      router.replace("/")
       return
     }
     // Simular carregamento inicial

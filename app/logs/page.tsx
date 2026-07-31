@@ -156,7 +156,7 @@ export default function LogsPage() {
 
       <main className="container mx-auto px-4 py-6 max-w-7xl">
         <BreadcrumbNav
-          items={[{ label: "Supervisor", href: "/supervisor" }, { label: "Logs e Rastreamento" }]}
+          items={[{ label: "Gestor", href: "/supervisor" }, { label: "Logs e Rastreamento" }]}
           dashboardLink="/supervisor"
         />
 

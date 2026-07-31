@@ -93,12 +93,16 @@ export default function DownloadPage() {
     const hasDownloadPermission = checkAnyPermission(user?.permissions, ["file:download"])
     const hasDownloadByRole = user?.userType === "external"
     if (!isAuthenticated || (!hasDownloadPermission && !hasDownloadByRole)) {
-      router.push("/")
+      // replace evita que o usuário volte para a página protegida com o botão "Voltar"
+      router.replace("/")
     }
   }, [_hasHydrated, isAuthenticated, user, router])
 
-  // Carrega os arquivos compartilhados com o usuário via API real
+  // Carrega os arquivos compartilhados com o usuário via API real.
+  // Aguarda _hasHydrated para não executar enquanto user ainda é null (hidratando store).
   useEffect(() => {
+    if (!_hasHydrated) return
+
     const hasDownloadPermission = checkAnyPermission(user?.permissions, ["file:download"])
     const hasDownloadByRole = user?.userType === "external"
     if (!isAuthenticated || (!hasDownloadPermission && !hasDownloadByRole) || !accessToken) return
@@ -137,7 +141,7 @@ export default function DownloadPage() {
         setFilesError("Não foi possível carregar os arquivos. Tente novamente.")
       })
       .finally(() => setIsLoadingFiles(false))
-  }, [isAuthenticated, user?.userType, accessToken])
+  }, [_hasHydrated, isAuthenticated, user?.userType, accessToken])
 
   const availableDocuments = documents.filter((doc) => {
     const isExpired = doc.expiresAt && new Date(doc.expiresAt) < new Date()
@@ -376,7 +380,7 @@ export default function DownloadPage() {
   if (isLoadingFiles) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <AppHeader subtitle="Solucao de Compartilhamento de Arquivos Confidenciais" />
+        <AppHeader subtitle="Solução de Compartilhamento de Arquivos Confidenciais" />
         <main className="container mx-auto px-4 py-6 max-w-7xl flex items-center justify-center">
           <div className="text-center space-y-4">
             <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -390,7 +394,7 @@ export default function DownloadPage() {
   if (filesError) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <AppHeader subtitle="Solucao de Compartilhamento de Arquivos Confidenciais" />
+        <AppHeader subtitle="Solução de Compartilhamento de Arquivos Confidenciais" />
         <main className="container mx-auto px-4 py-6 max-w-7xl flex items-center justify-center">
           <div className="text-center space-y-4">
             <AlertTriangle className="h-12 w-12 text-destructive mx-auto" />
@@ -404,7 +408,7 @@ export default function DownloadPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <AppHeader subtitle="Solucao de Compartilhamento de Arquivos Confidenciais" />
+      <AppHeader subtitle="Solução de Compartilhamento de Arquivos Confidenciais" />
 
       <main className="container mx-auto px-4 py-6 max-w-7xl pb-20 space-y-10">
         {/* Header com gradiente */}
@@ -453,7 +457,7 @@ export default function DownloadPage() {
               <h3 className="text-2xl font-bold text-foreground">Nenhum Arquivo Disponível</h3>
               <p className="text-muted-foreground max-w-md mx-auto">
                 No momento, você não possui arquivos aprovados para download. Quando novos arquivos forem compartilhados
-                com você e aprovados pelo supervisor, eles aparecerão aqui.
+                com você e aprovados pelo gestor, eles aparecerão aqui.
               </p>
             </div>
             <div className="flex justify-center gap-4 pt-4">

@@ -18,8 +18,10 @@ public sealed class MipWorkerOptions
     // ← padrão agora é FALSE — placeholder só ativa explicitamente
     public bool PlaceholderModeEnabled { get; init; } = false;
 
-    [Required(ErrorMessage = "MipWorker:ConfidentialLabelImmutableId é obrigatório")]
-    public string ConfidentialLabelImmutableId { get; init; } = string.Empty;
+    // Opcional — GUID do rótulo Confidencial. Usado como SourceLabelImmutableId
+    // no endpoint change-label/public-external. Pode ser deixado vazio; o GUID
+    // real deve ser obtido via portal Purview → Information Protection → Labels.
+    public string? ConfidentialLabelImmutableId { get; init; }
 
     [Required(ErrorMessage = "MipWorker:PublicExternalLabelImmutableId é obrigatório")]
     public string PublicExternalLabelImmutableId { get; init; } = string.Empty;

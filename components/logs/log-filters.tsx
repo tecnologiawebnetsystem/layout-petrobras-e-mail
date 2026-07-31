@@ -39,7 +39,7 @@ export function LogFilters({
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
-            placeholder="Buscar por descricao, usuario, solicitacao..."
+            placeholder="Buscar por descrição, usuário, solicitação..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-11 h-12"
@@ -48,12 +48,12 @@ export function LogFilters({
         <Select value={actionFilter} onValueChange={onActionFilterChange}>
           <SelectTrigger className="w-full md:w-[180px] h-12">
             <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Acao" />
+            <SelectValue placeholder="Ação" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas as Acoes</SelectItem>
-            <SelectItem value="APROVAR">Aprovacoes</SelectItem>
-            <SelectItem value="REJEITAR">Rejeicoes</SelectItem>
+            <SelectItem value="all">Todas as Ações</SelectItem>
+            <SelectItem value="APROVAR">Aprovações</SelectItem>
+            <SelectItem value="REJEITAR">Rejeições</SelectItem>
             <SelectItem value="UPLOAD">Uploads</SelectItem>
             <SelectItem value="DOWNLOAD">Downloads</SelectItem>
             <SelectItem value="LOGIN">Logins</SelectItem>
@@ -66,7 +66,7 @@ export function LogFilters({
             <SelectValue placeholder="Periodo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todo Periodo</SelectItem>
+            <SelectItem value="all">Todo Período</SelectItem>
             <SelectItem value="today">Hoje</SelectItem>
             <SelectItem value="week">Ultimos 7 dias</SelectItem>
             <SelectItem value="month">Ultimos 30 dias</SelectItem>
@@ -95,7 +95,7 @@ export function LogFilters({
           )}
           {actionFilter !== "all" && (
             <Badge variant="secondary" className="gap-1">
-              Acao: {actionFilter}
+              Ação: {actionFilter}
               <button onClick={() => onActionFilterChange("all")} className="ml-1 hover:text-destructive">
                 x
               </button>

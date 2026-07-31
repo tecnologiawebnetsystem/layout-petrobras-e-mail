@@ -300,7 +300,7 @@ export function SupervisorUploadForm() {
               </div>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Como você é um supervisor, este compartilhamento será enviado para
+              Como você é um gestor, este compartilhamento será enviado para
               aprovação do seu superior hierárquico.
             </p>
           </div>

@@ -85,6 +85,7 @@ INTERNAL_USERS: list[tuple[str, str]] = [
     ("isaachenriques@petrobras.com.br",             "Isaac Henriques"),
     ("wagner.brazil@petrobras.com.br",              "Wagner Brazil"),
     ("kleber.goncalves.prestserv@petrobras.com.br", "Kleber Goncalves"),
+    ("fabio.j.lima.prestserv@petrobras.com.br", "Fabio Junio"),
 ]
 
 

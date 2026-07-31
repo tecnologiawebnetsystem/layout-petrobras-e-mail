@@ -37,13 +37,13 @@ const ROLE_VISUALS: Record<FrontendUserType, RoleVisual> = {
     badgeClass: "bg-[#003f7f]/10 text-[#003f7f] dark:bg-[#003f7f]/30 dark:text-blue-300",
     steps: [
       "Validando credenciais",
-      "Carregando permissoes de auditoria",
-      "Preparando painel do auditor",
+      "Carregando permissões de auditoria",
+      "Preparando painel do monitor",
     ],
   },
   supervisor: {
     icon: ClipboardCheck,
-    description: "Aprovacao de compartilhamentos, upload e visualizacao de logs.",
+    description: "Aprovação de compartilhamentos, upload e visualização de logs.",
     iconBg: "bg-emerald-600",
     ringColor: "#059669",
     badgeClass: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
@@ -62,12 +62,12 @@ const ROLE_VISUALS: Record<FrontendUserType, RoleVisual> = {
     steps: [
       "Validando credenciais",
       "Verificando gestor direto",
-      "Preparando area de envio",
+      "Preparando área de envio",
     ],
   },
   external: {
     icon: Download,
-    description: "Download seguro dos arquivos compartilhados com voce.",
+    description: "Download seguro dos arquivos compartilhados com você.",
     iconBg: "bg-amber-500",
     ringColor: "#f59e0b",
     badgeClass: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",

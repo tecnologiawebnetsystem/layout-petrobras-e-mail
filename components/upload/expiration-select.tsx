@@ -51,7 +51,7 @@ export function ExpirationSelect({ value, onChange, disabled }: ExpirationSelect
         </SelectContent>
       </Select>
       <p className="text-sm text-muted-foreground leading-relaxed">
-        Os arquivos ficarao disponiveis para download por {value} horas apos a aprovacao. Maximo: 168 horas (7 dias).
+        Os arquivos ficarão disponiveis para download por {value} horas após a aprovação. Máximo: 168 horas (7 dias).
       </p>
     </div>
   )

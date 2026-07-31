@@ -55,6 +55,10 @@ def client(_test_engine):
         type=TypeUser.INTERNAL,
         status=True,
     )
+    
+    object.__setattr__(_fake_user, "permissions", ["*"])
+    object.__setattr__(_fake_user, "roles", ["ADMIN"])
+
 
     def override_get_current_user() -> User:
         return _fake_user

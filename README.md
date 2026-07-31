@@ -231,12 +231,12 @@ cd csa-frontend
 npm install
 
 # 3. Configure variáveis de ambiente
-cp .env.example .env.local
-# Edite .env.local:
+cp .env.example .env
+# Edite .env:
 ```
 
 ```env
-# .env.local
+# .env
 BACKEND_URL=http://127.0.0.1:8080
 NEXT_PUBLIC_AUTH_MODE=dev
 NEXT_PUBLIC_ENTRA_CLIENT_ID=seu-client-id
@@ -255,7 +255,7 @@ npm run dev
 
 ```bash
 docker build -t csa-frontend .
-docker run -p 3000:3000 --env-file .env.local csa-frontend
+docker run -p 3000:3000 --env-file .env csa-frontend
 ```
 
 ---
@@ -278,7 +278,7 @@ npm run test:cov   # Jest com cobertura
 | Problema | Causa Provável | Solução |
 |----------|----------------|---------|
 | Erro 401 em todas as rotas | Token expirado ou `auth-store` desatualizado | Limpar localStorage e fazer login novamente |
-| `BACKEND_URL` undefined | Variável não definida no `.env.local` | Adicionar `BACKEND_URL=http://127.0.0.1:8080` |
+| `BACKEND_URL` undefined | Variável não definida no `.env` | Adicionar `BACKEND_URL=http://127.0.0.1:8080` |
 | Callback Entra ID não funciona | `ENTRA_REDIRECT_URI` diverge do registro no portal | Confirmar URI exata no Azure App Registration |
 | Modo dev não aparece o formulário | `NEXT_PUBLIC_AUTH_MODE` não é `dev` | Definir `NEXT_PUBLIC_AUTH_MODE=dev` |
 | Erro `window is not defined` | Código cliente executando no servidor | Usar `"use client"` ou verificar `typeof window` |

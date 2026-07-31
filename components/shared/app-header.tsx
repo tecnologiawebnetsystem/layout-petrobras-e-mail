@@ -179,7 +179,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                 {navItems.length > 0 && (
                   <>
                     <DropdownMenuLabel className="py-1.5 px-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Navegação
+                      Menu
                     </DropdownMenuLabel>
                     {navItems.map((item) => {
                       const Icon = item.icon

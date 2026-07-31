@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     template: "%s | CSAC",
   },
   description:
-    "Sistema corporativo de transferencia segura de arquivos para destinatarios externos. Compartilhe documentos de forma controlada, auditavel e em conformidade com as politicas de seguranca da Petrobras.",
+    "Sistema corporativo de transferencia segura de arquivos para destinatários externos. Compartilhe documentos de forma controlada, auditavel e em conformidade com as politicas de seguranca da Petrobras.",
   keywords: [
     "Petrobras",
     "transferencia de arquivos",
@@ -73,12 +73,12 @@ export const metadata: Metadata = {
     siteName: "CSAC",
     title: "Solução de Compartilhamento de Arquivos Confidenciais",
     description:
-      "Sistema corporativo de transferencia segura de arquivos para destinatarios externos com aprovacao supervisionada e auditoria completa.",
+      "Sistema corporativo de transferência segura de arquivos para destinatários externos com aprovação supervisionada e auditoria completa.",
   },
   twitter: {
     card: "summary_large_image",
     title: "CSAC",
-    description: "Transferencia segura de arquivos para destinatarios externos",
+    description: "Transferência segura de arquivos para destinatários externos",
   },
   icons: {
     icon: [
@@ -120,12 +120,22 @@ export default function RootLayout({
   //   NEXT_PUBLIC_APP_URL            (SSM) → NEXT_PUBLIC_APP_URL
   //   NEXT_PUBLIC_AUTH_MODE          (SSM) → NEXT_PUBLIC_AUTH_MODE
   //   NEXT_PUBLIC_CAV4_DISCOVERY_URL (SSM) → NEXT_PUBLIC_CAV4_DISCOVERY_URL
+  //   NEXT_PUBLIC_MIP_CLIENT_ID      (SSM) → NEXT_PUBLIC_MIP_CLIENT_ID
+  //   NEXT_PUBLIC_MIP_TENANT_ID      (SSM) → NEXT_PUBLIC_MIP_TENANT_ID
   const appUrl = (process.env['NEXT_PUBLIC_APP_URL'] ?? "https://scac-dsv.petrobras.com.br") as string
   const publicEnv = {
     NEXT_PUBLIC_AUTH_MODE: (process.env['NEXT_PUBLIC_AUTH_MODE'] ?? "cav4") as string,
     NEXT_PUBLIC_CAV4_DISCOVERY_URL:
       ((process.env['NEXT_PUBLIC_CAV4_DISCOVERY_URL'] || process.env['OIDC_DISCOVERY_URL'] || "") as string),
     NEXT_PUBLIC_APP_URL: appUrl,
+    NEXT_PUBLIC_MIP_CLIENT_ID:
+      (process.env['NEXT_PUBLIC_MIP_CLIENT_ID'] ?? "") as string,
+    NEXT_PUBLIC_MIP_TENANT_ID:
+      (process.env['NEXT_PUBLIC_MIP_TENANT_ID'] ?? "") as string,
+    // "popup" → usa MSAL popup (requer Opção B: permissão delegada AADRM no portal)
+    // "device_code" → usa device code via backend (sem permissão extra, padrão atual)
+    NEXT_PUBLIC_MIP_AUTH_MODE:
+      (process.env['NEXT_PUBLIC_MIP_AUTH_MODE'] ?? "device_code") as string,
   }
 
   return (

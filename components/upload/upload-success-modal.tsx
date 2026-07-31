@@ -127,10 +127,10 @@ export function UploadSuccessModal({
                 </div>
                 <div className="flex-1">
                   <p className="text-xs font-medium text-amber-900 dark:text-amber-100">
-                    Notificação para supervisor:
+                    Notificação para gestor:
                   </p>
                   <p className="font-semibold text-amber-800 dark:text-amber-200">
-                    {uploadData.supervisorName || "Supervisor"}
+                    {uploadData.supervisorName || "Gestor"}
                   </p>
                   <p className="text-xs text-amber-700 dark:text-amber-300">
                     {uploadData.supervisorEmail ||
@@ -153,7 +153,7 @@ export function UploadSuccessModal({
                   </p>
                   <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
                     ⚠️ O link para download será enviado somente após aprovação
-                    do supervisor
+                    do gestor
                   </p>
                 </div>
               </div>

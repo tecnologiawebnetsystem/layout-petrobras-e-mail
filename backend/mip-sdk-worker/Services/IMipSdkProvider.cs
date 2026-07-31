@@ -20,6 +20,12 @@ public interface IMipSdkProvider
     /// </summary>
     Task<byte[]> ChangeLabelAsUserAsync(ChangeLabelRequest request, CancellationToken cancellationToken = default);
 
-    /// <summary>Altera rótulo via SP auth. NotImplemented sem InformationProtectionPolicy.Read.All.</summary>
+    /// <summary>
+    /// Altera rótulo via SP auth usando PolicyEngine (ProtectionOnlyEngine = false).
+    /// Aplica-se SOMENTE a arquivos com proteção RMS (Confidencial com criptografia).
+    /// Arquivos sem proteção RMS (Interno, Público) são devolvidos sem modificação.
+    /// Requer: UnifiedPolicy.Tenant.Read + Content.DelegatedWriter + Content.SuperUser.
+    /// Label Policy deve estar publicada para a conta de serviço no portal Purview.
+    /// </summary>
     Task<byte[]> ChangeLabelAsync(ChangeLabelRequest request, CancellationToken cancellationToken = default);
 }

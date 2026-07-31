@@ -69,7 +69,7 @@ class MicrosoftGraphMailService {
     expirationHours: number
     uploadDate: string
   }): EmailData {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://compartilhamento-petrobras.vercel.app"
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://compartilhamento-petrobras.app"
 
     return {
       subject: `✅ Confirmação de Compartilhamento - ${data.fileName}`,
@@ -97,7 +97,7 @@ class MicrosoftGraphMailService {
               </div>
               <div class="content">
                 <p>Olá <strong>${data.senderName}</strong>,</p>
-                <p>Seu compartilhamento foi criado com sucesso e está aguardando aprovação do seu supervisor.</p>
+                <p>Seu compartilhamento foi criado com sucesso e está aguardando aprovação do seu gestor.</p>
                 <div class="info-box">
                   <p><strong>📄 Arquivo:</strong> ${data.fileName}</p>
                   <p><strong>📧 Destinatário:</strong> ${data.recipient}</p>
@@ -105,7 +105,7 @@ class MicrosoftGraphMailService {
                   <p><strong>⏰ Validade:</strong> ${data.expirationHours} horas após aprovação</p>
                   <p><strong>📅 Data do envio:</strong> ${data.uploadDate}</p>
                 </div>
-                <p>Você receberá uma notificação quando o supervisor aprovar ou rejeitar o compartilhamento.</p>
+                <p>Você receberá uma notificação quando o gestor aprovar ou rejeitar o compartilhamento.</p>
                 <a href="${appUrl}/compartilhamentos" class="button">Acompanhar Status</a>
               </div>
               <div class="footer">
@@ -139,7 +139,7 @@ class MicrosoftGraphMailService {
     uploadDate: string
     uploadId: string
   }): EmailData {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://compartilhamento-petrobras.vercel.app"
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://compartilhamento-petrobras.app"
     const approvalLink = `${appUrl}/supervisor/detalhes/${data.uploadId}`
 
     return {
@@ -209,7 +209,7 @@ class MicrosoftGraphMailService {
     fileName: string
     expirationHours: number
   }): EmailData {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://compartilhamento-petrobras.vercel.app"
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://compartilhamento-petrobras.app"
 
     return {
       subject: `Codigo de Acesso - ${data.fileName}`,

@@ -43,27 +43,27 @@ export function LoginBackground() {
 
         {/* Title */}
         <h2 className="text-3xl lg:text-4xl font-bold text-white leading-tight mb-4 text-balance">
-          Transferencia Segura de Arquivos
+          Transferência Segura de Arquivos
         </h2>
         
         {/* Description */}
         <p className="text-lg text-white/80 leading-relaxed mb-10 text-pretty">
-          Compartilhe documentos com destinatarios externos de forma controlada e auditavel.
+          Compartilhe documentos com destinatários externos de forma controlada e auditável.
         </p>
 
         {/* Features */}
         <div className="space-y-4">
           <FeatureItem 
-            title="Aprovacao Supervisionada"
-            description="Todos os envios passam por validacao antes da liberacao"
+            title="Aprovação Supervisionada"
+            description="Todos os envios passam por validação antes da liberação"
           />
           <FeatureItem 
             title="Acesso Controlado"
-            description="Codigo unico de verificacao para cada destinatario"
+            description="Código único de verificação para cada destinatário"
           />
           <FeatureItem 
             title="Auditoria Completa"
-            description="Rastreabilidade total de uploads, aprovacoes e downloads"
+            description="Rastreabilidade total de uploads, aprovações e downloads"
           />
         </div>
       </div>

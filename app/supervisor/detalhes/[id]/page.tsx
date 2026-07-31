@@ -419,7 +419,7 @@ export default function SupervisorDetailsPage({
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <AppHeader subtitle="Módulo Supervisor" />
+        <AppHeader subtitle="Módulo Gestor" />
         <div className="container mx-auto p-6">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
@@ -447,7 +447,7 @@ export default function SupervisorDetailsPage({
                 onClick={() => router.push("/supervisor")}
                 className="mt-4"
               >
-                Voltar para Supervisor
+                Voltar para Gestor
               </Button>
             </div>
           </div>
@@ -466,7 +466,7 @@ export default function SupervisorDetailsPage({
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader subtitle="Módulo Supervisor" />
+      <AppHeader subtitle="Módulo Gestor" />
 
       <div className="container max-w-7xl mx-auto px-6 py-8">
         <BreadcrumbNav
@@ -600,7 +600,7 @@ export default function SupervisorDetailsPage({
                           {emailLogs.map((log) => {
                             const isOk = log.status === "sent";
                             const label: Record<string, string> = {
-                              approval_request: "Notificação ao supervisor",
+                              approval_request: "Notificação ao gestor",
                               approval_granted: "Aprovação ao solicitante",
                               file_share: "Disponibilização ao destinatário",
                               approval_rejected: "Rejeição ao solicitante",

@@ -357,7 +357,7 @@ export function LoginForm() {
               Acesse sua conta
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base leading-relaxed text-pretty">
-              Sistema de transferencia segura de arquivos para destinatarios
+              Sistema de transferência segura de arquivos para destinatários
               externos.
             </p>
           </header>

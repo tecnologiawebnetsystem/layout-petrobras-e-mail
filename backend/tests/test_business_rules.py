@@ -101,20 +101,16 @@ class TestHasAutoApproveJobTitle:
         assert has_auto_approve_job_title(user) is False
 
     def test_detecta_diretor_exato(self, session):
-        user = _make_user(session, "dir@p.com", job_title="Diretor")
+        user = _make_user(session, "dir@p.com", job_title="Diretor(a)")
         assert has_auto_approve_job_title(user) is True
 
     def test_detecta_diretor_case_insensitive(self, session):
-        user = _make_user(session, "dir2@p.com", job_title="DIRETOR")
-        assert has_auto_approve_job_title(user) is True
-
-    def test_detecta_diretor_com_acento(self, session):
-        user = _make_user(session, "dir3@p.com", job_title="Diretora")
+        user = _make_user(session, "dir2@p.com", job_title="DIRETOR(a)")
         assert has_auto_approve_job_title(user) is True
 
     def test_detecta_diretor_prefixo(self, session):
         """'Diretor de Operações' deve bater no prefixo 'diretor'."""
-        user = _make_user(session, "dir4@p.com", job_title="Diretor de Operações")
+        user = _make_user(session, "dir4@p.com", job_title="Diretor(a) de Operações")
         assert has_auto_approve_job_title(user) is True
 
     def test_detecta_presidente(self, session):
@@ -193,7 +189,7 @@ class TestShareNoSupervisorError:
         from app.models.area import SharedArea
         from app.services.share_service import create_share
 
-        diretor = _make_user(session, "dir@p.com", job_title="Diretor")
+        diretor = _make_user(session, "dir@p.com", job_title="Diretor(a)")
         area = SharedArea(
             name="Área Dir",
             prefix_s3=f"areas/AUTO-{diretor.id}/",

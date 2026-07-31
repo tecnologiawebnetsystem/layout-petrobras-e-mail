@@ -129,7 +129,7 @@ export default function CompartilhamentosPage() {
           show: true,
           type: "success",
           title: "E-mail reenviado",
-          message: "Notificação reenviada ao supervisor.",
+          message: "Notificação reenviada ao gestor.",
         });
         setTimeout(() => fetchEmailLog(shareId), 2000);
       } else {
@@ -446,7 +446,7 @@ export default function CompartilhamentosPage() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
                     type="text"
-                    placeholder="Buscar por nome, destinatario ou descricao..."
+                    placeholder="Buscar por nome, destinatário ou descrição..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 h-12 text-base"
@@ -619,7 +619,7 @@ export default function CompartilhamentosPage() {
                             <div className="flex items-center gap-2 p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg">
                               <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
                               <p className="text-sm text-amber-700">
-                                Aguardando aprovacao do supervisor
+                                Aguardando aprovação do gestor
                               </p>
                             </div>
                           )}
@@ -636,7 +636,7 @@ export default function CompartilhamentosPage() {
                                     <div className="flex items-center gap-2">
                                       <Mail className="h-4 w-4 text-muted-foreground" />
                                       <span className="text-xs text-muted-foreground">
-                                        Notificação ao supervisor ainda não
+                                        Notificação ao gestor ainda não
                                         enviada
                                       </span>
                                     </div>
@@ -664,7 +664,7 @@ export default function CompartilhamentosPage() {
                                     <div className="flex items-center gap-2">
                                       <MailCheck className="h-4 w-4 text-emerald-600" />
                                       <span className="text-xs text-emerald-700">
-                                        Supervisor notificado
+                                        Gestor notificado
                                         {log.sent_at
                                           ? ` · ${new Date(log.sent_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`
                                           : ""}
@@ -695,7 +695,7 @@ export default function CompartilhamentosPage() {
                                     <MailX className="h-4 w-4 text-red-600" />
                                     <div>
                                       <span className="text-xs text-red-700 font-medium">
-                                        Falha no envio ao supervisor
+                                        Falha no envio ao gestor
                                       </span>
                                       {log.error_message && (
                                         <p className="text-xs text-red-600 mt-0.5 truncate max-w-xs">
@@ -817,26 +817,26 @@ export default function CompartilhamentosPage() {
                 Cancelar Compartilhamento
               </DialogTitle>
               <DialogDescription>
-                Tem certeza que deseja cancelar este compartilhamento? Esta acao
-                nao pode ser desfeita.
+                Tem certeza que deseja cancelar este compartilhamento? Esta ação
+                não pode ser desfeita.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="reason">
-                  Motivo do cancelamento (opcional)
+                  Motivo do cancelamento (obrigatório)
                 </Label>
                 <Textarea
                   id="reason"
-                  placeholder="Ex: Arquivo errado, preciso enviar uma versao atualizada..."
+                  placeholder="Ex: Arquivo errado, preciso enviar uma versão atualizada..."
                   value={cancellationReason}
                   onChange={(e) => setCancellationReason(e.target.value)}
                   rows={4}
                   className="resize-none"
                 />
                 <p className="text-sm text-muted-foreground">
-                  Informar o motivo ajuda o supervisor a entender melhor sua
+                  Informar o motivo ajuda o gestor a entender melhor sua
                   decisao.
                 </p>
               </div>

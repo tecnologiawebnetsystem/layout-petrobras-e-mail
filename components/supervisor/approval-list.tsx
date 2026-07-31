@@ -85,7 +85,7 @@ export function ApprovalList({ uploads, onViewDetails, onClearFilters }: Approva
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Mail className="h-4 w-4 flex-shrink-0" />
                       <span className="truncate">
-                        <span className="font-medium">Destinatario:</span> {upload.recipient || "N/A"}
+                        <span className="font-medium">Destinatário:</span> {upload.recipient || "N/A"}
                       </span>
                     </div>
                   </div>
