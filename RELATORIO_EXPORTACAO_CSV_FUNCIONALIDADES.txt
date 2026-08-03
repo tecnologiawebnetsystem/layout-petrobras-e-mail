@@ -1,0 +1,95 @@
+========================================================================
+O QUE FOI CRIADO E QUAIS SÃO AS NOVAS POSSIBILIDADES
+Exportação de Relatórios em CSV — Perfis MONITOR e GESTOR
+========================================================================
+
+1. VISÃO GERAL
+------------------------------------------------------------------------
+Foi criada uma funcionalidade completa de EXPORTAÇÃO DE RELATÓRIOS EM CSV
+para dois perfis do sistema:
+
+  - MONITOR (Admin): exporta Usuários, Compartilhamentos e Logs de
+    auditoria de TODO o sistema.
+  - GESTOR (Supervisor): exporta os Compartilhamentos dos seus
+    usuários supervisionados.
+
+A exportação é feita através de um diálogo (janela) padronizado que
+permite ESCOLHER QUAIS COLUNAS exportar e APLICAR FILTROS antes de gerar
+o arquivo. O download é autenticado e o arquivo já abre corretamente no
+Excel em português (acentuação e separador de colunas).
+
+
+2. CARACTERÍSTICAS DO ARQUIVO CSV GERADO
+------------------------------------------------------------------------
+  - Codificação UTF-8 com BOM  -> acentuação correta no Excel.
+  - Delimitador ";" (padrão pt-BR) -> colunas separadas corretamente.
+  - Datas formatadas como dd/mm/aaaa HH:MM:SS.
+  - Booleanos exibidos como "Sim" / "Nao".
+  - Nome do arquivo com data automática, ex.: usuarios-2026-08-02.csv.
+  - Limite de segurança de 10.000 linhas por exportação (evita abuso).
+  - Proteção contra injeção de fórmula (segurança ao abrir no Excel).
+  - Registro em auditoria de toda exportação realizada (quem/quando/qtd).
+
+
+3. NOVAS POSSIBILIDADES — PERFIL MONITOR (ADMIN)
+------------------------------------------------------------------------
+3.1) Exportar USUÁRIOS
+     Colunas disponíveis: ID, Nome, Email, Tipo (Interno/Externo),
+     Departamento, Cargo, Gestor (Sim/Nao), Monitor (Sim/Nao),
+     Ativo (Sim/Nao), Criado em, Último login.
+     Filtros: busca (nome/email), tipo (internos/externos),
+              situação (ativos/inativos).
+
+3.2) Exportar COMPARTILHAMENTOS
+     Colunas disponíveis: ID, Nome, Descrição, Destinatário, Status,
+     Qtd. Arquivos, Criado por, Email do criador, Aprovado por,
+     Email do aprovador, Criado em, Aprovado em, Expira em.
+     Filtros: busca (nome/destinatário), status
+              (pendente/aprovado/ativo/rejeitado/expirado),
+              data inicial e data final.
+
+3.3) Exportar LOGS DE AUDITORIA
+     Colunas disponíveis: ID, Ação, Detalhe, Usuário, Email, IP,
+     User-Agent, Share ID, Data/Hora.
+     Filtros: busca (ação/detalhe), ação específica,
+              data inicial e data final.
+
+
+4. NOVAS POSSIBILIDADES — PERFIL GESTOR (SUPERVISOR)
+------------------------------------------------------------------------
+4.1) Exportar COMPARTILHAMENTOS DA EQUIPE (supervisionados)
+     Colunas disponíveis: ID, Nome, Status, Destinatário, Descrição,
+     Solicitante, Email do solicitante, Departamento, Qtd. Arquivos,
+     Horas de expiração, Criado em, Aprovado em, Rejeitado em,
+     Motivo da rejeição, Expira em.
+     Filtros: busca (nome/destinatário), status
+              (pendente/aprovado/rejeitado),
+              data inicial e data final.
+
+     IMPORTANTE: o Gestor só exporta os compartilhamentos dos usuários
+     que ele supervisiona (escopo restrito por hierarquia), garantindo
+     que ele não acesse dados de outras equipes.
+
+
+5. COMO USAR (FLUXO DO USUÁRIO)
+------------------------------------------------------------------------
+  1. Acessar o painel (Monitor ou Gestor).
+  2. Clicar no botão "Exportar CSV".
+  3. Ajustar os filtros desejados (opcional).
+  4. Marcar/desmarcar as colunas desejadas (todas vêm marcadas).
+  5. Clicar em "Exportar" — o arquivo é baixado automaticamente.
+  6. Abrir no Excel/Google Sheets — pronto para análise.
+
+
+6. GANHOS PARA O NEGÓCIO
+------------------------------------------------------------------------
+  - Geração de relatórios sob demanda, sem depender da equipe técnica.
+  - Personalização (escolha de colunas e filtros) por exportação.
+  - Rastreabilidade: cada exportação fica registrada na auditoria.
+  - Segurança: escopo por perfil, limite de linhas, download autenticado
+    e proteção contra injeção de fórmula.
+  - Compatibilidade imediata com Excel em português (acentos e colunas).
+
+========================================================================
+FIM DO RELATÓRIO DE FUNCIONALIDADES
+========================================================================

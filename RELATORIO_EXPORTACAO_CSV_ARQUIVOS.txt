@@ -1,0 +1,108 @@
+========================================================================
+RELATÓRIO DE VERIFICAÇÃO — EXPORTAÇÃO DE RELATÓRIOS EM CSV
+Perfis: MONITOR (Admin) e GESTOR (Supervisor)
+Data da análise: 02/08/2026
+========================================================================
+
+1. RESULTADO DA VERIFICAÇÃO
+------------------------------------------------------------------------
+Status geral: APROVADO (implementação correta e consistente entre
+front-end e back-end).
+
+Foram validados:
+  - Componente de UI reutilizável (seleção de colunas + filtros).
+  - Serviço de download autenticado (envio do Bearer token).
+  - Rotas proxy Next.js (BFF) para cada exportação.
+  - Rotas FastAPI no back-end (Monitor e Gestor).
+  - Utilitário central de geração de CSV.
+  - Dependências de autorização (require_admin / require_permission).
+  - Campos dos modelos (Share, Audit, User) usados nas exportações.
+  - Registro dos routers no main.py.
+
+As chaves de coluna do front-end casam 1:1 com as chaves montadas no
+back-end (users, shares e logs para o Monitor; shares para o Gestor).
+Os filtros (busca, status, tipo, datas) são repassados corretamente e
+respeitados nas queries. A permissão da rota do Gestor
+(require_permission("shares:read")) é a MESMA já usada na listagem de
+compartilhamentos do Gestor (/supervisor/shares e /supervisor/pending),
+portanto é consistente — quem lista, exporta.
+
+
+2. CORREÇÃO APLICADA
+------------------------------------------------------------------------
+[SEGURANÇA] CSV / Formula Injection
+  Arquivo: backend/app/utils/csv_export.py
+  Problema: valores de texto vindos do usuário (nome, descrição, e-mail,
+            user-agent, etc.) começando com "=", "+", "-", "@", TAB ou
+            CR podiam ser interpretados como FÓRMULA ao abrir o CSV no
+            Excel / Google Sheets / LibreOffice, permitindo execução de
+            conteúdo malicioso na máquina de quem abre o relatório.
+  Correção: adicionada a função _sanitize_formula(), que prefixa esses
+            valores com uma aspa simples ('), neutralizando a fórmula
+            sem alterar o dado exibido. Aplicada em _format_value().
+
+Nenhum outro erro funcional foi encontrado.
+
+
+3. ARQUIVOS CRIADOS (nova funcionalidade de exportação CSV)
+------------------------------------------------------------------------
+FRONT-END (Next.js)
+  - components/shared/export-csv-dialog.tsx
+        Componente de diálogo reutilizável: seleção de colunas,
+        filtros dinâmicos (texto/data/select) e disparo do download.
+  - lib/services/download-csv.ts
+        Serviço que baixa o arquivo binário do proxy autenticado
+        (inclui Authorization: Bearer <token>) e dispara o download.
+  - app/api/admin/export/users/route.ts
+        Proxy BFF -> /api/v1/admin/export/users.csv   (Monitor)
+  - app/api/admin/export/shares/route.ts
+        Proxy BFF -> /api/v1/admin/export/shares.csv  (Monitor)
+  - app/api/admin/export/logs/route.ts
+        Proxy BFF -> /api/v1/admin/export/logs.csv    (Monitor)
+  - app/api/supervisor/export/shares/route.ts
+        Proxy BFF -> /api/v1/supervisor/export/shares.csv (Gestor)
+
+BACK-END (FastAPI)
+  - backend/app/utils/csv_export.py
+        Utilitário central de geração de CSV (BOM UTF-8, delimitador ";",
+        seleção de colunas, formatação de datas/booleanos, limite de
+        segurança de 10.000 linhas, sanitização de fórmula).
+
+
+4. ARQUIVOS ALTERADOS
+------------------------------------------------------------------------
+FRONT-END
+  - app/admin/page.tsx
+        Import do ExportCsvDialog e inclusão de 3 botões de exportação
+        (Usuários, Compartilhamentos e Logs) com suas colunas/filtros.
+  - app/supervisor/page.tsx
+        Import do ExportCsvDialog e inclusão do botão de exportação de
+        Compartilhamentos do Gestor com colunas/filtros.
+
+BACK-END
+  - backend/app/api/v1/routes_admin.py
+        Novos endpoints:
+          GET /admin/export/users.csv
+          GET /admin/export/shares.csv
+          GET /admin/export/logs.csv
+        (com filtros, auditoria via log_event e proteção require_admin)
+  - backend/app/api/v1/routes_supervisor.py
+        Novo endpoint:
+          GET /supervisor/export/shares.csv
+        (escopo restrito aos supervisionados do gestor, auditoria e
+         proteção require_permission("shares:read"))
+  - backend/app/utils/csv_export.py  (correção de segurança — item 2)
+
+
+5. ARQUIVOS ANALISADOS (sem necessidade de alteração)
+------------------------------------------------------------------------
+  - lib/api/route-handler-utils.ts   (proxyDownload — streaming binário OK)
+  - backend/app/utils/authz.py        (require_admin / require_permission OK)
+  - backend/app/models/share.py       (campos usados existem)
+  - backend/app/models/audit.py       (campos usados existem)
+  - backend/app/models/user.py        (campos usados existem)
+  - backend/app/main.py               (routers registrados)
+
+========================================================================
+FIM DO RELATÓRIO DE ARQUIVOS
+========================================================================

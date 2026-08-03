@@ -22,6 +22,18 @@ from fastapi.responses import StreamingResponse
 EXPORT_MAX_ROWS = 10000
 
 
+# Caracteres que iniciam fórmulas em Excel/Sheets/LibreOffice.
+# Prefixar com aspa simples neutraliza a execução (CSV/Formula Injection).
+_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _sanitize_formula(text: str) -> str:
+    """Neutraliza injeção de fórmula em planilhas prefixando com aspa simples."""
+    if text and text[0] in _FORMULA_PREFIXES:
+        return "'" + text
+    return text
+
+
 def _format_value(value: Any) -> str:
     """Converte um valor Python em texto amigável para a célula do CSV."""
     if value is None:
@@ -30,7 +42,7 @@ def _format_value(value: Any) -> str:
         return "Sim" if value else "Nao"
     if isinstance(value, datetime):
         return value.strftime("%d/%m/%Y %H:%M:%S")
-    return str(value)
+    return _sanitize_formula(str(value))
 
 
 def parse_columns(columns: Optional[str]) -> Optional[list[str]]:
