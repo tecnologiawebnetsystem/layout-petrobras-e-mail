@@ -354,6 +354,75 @@ export async function proxyDELETE(
 }
 
 /**
+ * Proxy de **download** (streaming) – repassa o corpo binário/texto do backend
+ * preservando Content-Type e Content-Disposition. Ideal para CSV, ZIP, PDF.
+ *
+ * Em caso de erro do backend, tenta extrair `detail` e retorna JSON padronizado.
+ *
+ * ```ts
+ * export async function GET(request: NextRequest) {
+ *   return proxyDownload(request, "/api/v1/admin/export/users.csv", {
+ *     fallbackContentType: "text/csv; charset=utf-8",
+ *     fallbackFilename: "usuarios.csv",
+ *   })
+ * }
+ * ```
+ */
+export async function proxyDownload(
+  request: NextRequest,
+  backendPath: string,
+  opts: {
+    fallbackContentType?: string;
+    fallbackFilename?: string;
+    errorCode?: string;
+  } = {},
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
+  try {
+    const response = await fetch(`${BACKEND_URL}${backendPath}${qs(request)}`, {
+      headers: proxyHeaders(request),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      let message = "Erro ao gerar arquivo";
+      try {
+        const data = (await response.json()) as Record<string, unknown>;
+        const detail = data["detail"];
+        if (typeof detail === "string" && detail.trim()) message = detail;
+      } catch {
+        // resposta sem JSON
+      }
+      return NextResponse.json(
+        {
+          success: false,
+          error: { code: opts.errorCode ?? "EXPORT_FAILED", message },
+        },
+        { status: response.status },
+      );
+    }
+
+    return new Response(response.body, {
+      status: 200,
+      headers: {
+        "Content-Type":
+          response.headers.get("Content-Type") ??
+          opts.fallbackContentType ??
+          "application/octet-stream",
+        "Content-Disposition":
+          response.headers.get("Content-Disposition") ??
+          `attachment; filename="${opts.fallbackFilename ?? "download"}"`,
+      },
+    });
+  } catch (error) {
+    return serverError(`DOWNLOAD ${backendPath}`, error);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
  * Proxy **POST** com FormData (multipart).
  * Não define Content-Type – o browser/runtime inclui o boundary automaticamente.
  *

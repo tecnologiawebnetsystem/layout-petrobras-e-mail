@@ -10,6 +10,7 @@ import { ScrollToTop } from "@/components/shared/scroll-to-top";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { DraggableScroll } from "@/components/ui/draggable-scroll";
 import { PageHeader } from "@/components/shared/page-header"
+import { ExportCsvDialog } from "@/components/shared/export-csv-dialog"
 import {
   Card,
   CardContent,
@@ -174,6 +175,49 @@ interface Pagination {
   total_items: number;
   limit: number;
 }
+
+// Colunas exportáveis (chaves devem casar com o backend)
+const USERS_EXPORT_COLUMNS = [
+  { key: "id", label: "ID" },
+  { key: "name", label: "Nome" },
+  { key: "email", label: "Email" },
+  { key: "type", label: "Tipo" },
+  { key: "department", label: "Departamento" },
+  { key: "job_title", label: "Cargo" },
+  { key: "is_supervisor", label: "Gestor" },
+  { key: "is_admin", label: "Monitor" },
+  { key: "status", label: "Ativo" },
+  { key: "created_at", label: "Criado em" },
+  { key: "last_login", label: "Último login" },
+];
+
+const SHARES_EXPORT_COLUMNS = [
+  { key: "id", label: "ID" },
+  { key: "name", label: "Nome" },
+  { key: "description", label: "Descrição" },
+  { key: "external_email", label: "Destinatário" },
+  { key: "status", label: "Status" },
+  { key: "files_count", label: "Qtd. Arquivos" },
+  { key: "creator_name", label: "Criado por" },
+  { key: "creator_email", label: "Email do criador" },
+  { key: "approver_name", label: "Aprovado por" },
+  { key: "approver_email", label: "Email do aprovador" },
+  { key: "created_at", label: "Criado em" },
+  { key: "approved_at", label: "Aprovado em" },
+  { key: "expires_at", label: "Expira em" },
+];
+
+const LOGS_EXPORT_COLUMNS = [
+  { key: "id", label: "ID" },
+  { key: "action", label: "Ação" },
+  { key: "detail", label: "Detalhe" },
+  { key: "user_name", label: "Usuário" },
+  { key: "user_email", label: "Email" },
+  { key: "ip", label: "IP" },
+  { key: "user_agent", label: "User-Agent" },
+  { key: "share_id", label: "Share ID" },
+  { key: "created_at", label: "Data/Hora" },
+];
 
 function AdminContent() {
   const router = useRouter();
@@ -710,6 +754,36 @@ function AdminContent() {
                   <SelectItem value="external">Externos</SelectItem>
                 </SelectContent>
               </Select>
+              <ExportCsvDialog
+                endpoint="/admin/export/users"
+                filenamePrefix="usuarios"
+                title="Exportar usuários em CSV"
+                columns={USERS_EXPORT_COLUMNS}
+                initialFilters={{ search: usersSearch, user_type: usersTypeFilter }}
+                filters={[
+                  { type: "text", key: "search", label: "Busca (nome/email)", placeholder: "Filtrar..." },
+                  {
+                    type: "select",
+                    key: "user_type",
+                    label: "Tipo",
+                    options: [
+                      { value: "all", label: "Todos" },
+                      { value: "internal", label: "Internos" },
+                      { value: "external", label: "Externos" },
+                    ],
+                  },
+                  {
+                    type: "select",
+                    key: "status",
+                    label: "Situação",
+                    options: [
+                      { value: "all", label: "Todas" },
+                      { value: "true", label: "Ativos" },
+                      { value: "false", label: "Inativos" },
+                    ],
+                  },
+                ]}
+              />
             </div>
 
             <Card>
@@ -875,6 +949,31 @@ function AdminContent() {
                   <SelectItem value="expired">Expirado</SelectItem>
                 </SelectContent>
               </Select>
+              <ExportCsvDialog
+                endpoint="/admin/export/shares"
+                filenamePrefix="compartilhamentos"
+                title="Exportar compartilhamentos em CSV"
+                columns={SHARES_EXPORT_COLUMNS}
+                initialFilters={{ search: sharesSearch, status: sharesStatusFilter }}
+                filters={[
+                  { type: "text", key: "search", label: "Busca (nome/destinatário)", placeholder: "Filtrar..." },
+                  {
+                    type: "select",
+                    key: "status",
+                    label: "Status",
+                    options: [
+                      { value: "all", label: "Todos" },
+                      { value: "pending", label: "Pendente" },
+                      { value: "approved", label: "Aprovado" },
+                      { value: "active", label: "Ativo" },
+                      { value: "rejected", label: "Rejeitado" },
+                      { value: "expired", label: "Expirado" },
+                    ],
+                  },
+                  { type: "date", key: "start_date", label: "Data inicial" },
+                  { type: "date", key: "end_date", label: "Data final" },
+                ]}
+              />
             </div>
 
             <Card>
@@ -1009,6 +1108,27 @@ function AdminContent() {
                   ))}
                 </SelectContent>
               </Select>
+              <ExportCsvDialog
+                endpoint="/admin/export/logs"
+                filenamePrefix="logs_auditoria"
+                title="Exportar logs em CSV"
+                columns={LOGS_EXPORT_COLUMNS}
+                initialFilters={{ search: logsSearch, action: logsActionFilter }}
+                filters={[
+                  { type: "text", key: "search", label: "Busca (ação/detalhe)", placeholder: "Filtrar..." },
+                  {
+                    type: "select",
+                    key: "action",
+                    label: "Ação",
+                    options: [
+                      { value: "all", label: "Todas" },
+                      ...availableActions.map((a) => ({ value: a, label: a })),
+                    ],
+                  },
+                  { type: "date", key: "start_date", label: "Data inicial" },
+                  { type: "date", key: "end_date", label: "Data final" },
+                ]}
+              />
             </div>
 
             <Card>

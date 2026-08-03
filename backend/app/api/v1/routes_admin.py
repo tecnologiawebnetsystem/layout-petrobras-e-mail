@@ -31,6 +31,7 @@ from app.models.restricted_file import RestrictedFile
 from app.models.audit import Audit as AuditLog
 from app.models.email_log import EmailLog
 from app.utils.authz import require_admin
+from app.utils.csv_export import build_csv_response, parse_columns, EXPORT_MAX_ROWS
 from app.services.audit_service import log_event
 from app.services.task_service import run_cleanup_job
 
@@ -419,6 +420,290 @@ def admin_list_logs(
             "limit": limit,
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# GET /admin/export/users.csv — Exporta usuarios em CSV
+# ---------------------------------------------------------------------------
+
+# Colunas disponiveis para exportacao de usuarios (chave, rotulo)
+USERS_EXPORT_COLUMNS = [
+    ("id", "ID"),
+    ("name", "Nome"),
+    ("email", "Email"),
+    ("type", "Tipo"),
+    ("department", "Departamento"),
+    ("job_title", "Cargo"),
+    ("is_supervisor", "Gestor"),
+    ("is_admin", "Monitor"),
+    ("status", "Ativo"),
+    ("created_at", "Criado em"),
+    ("last_login", "Ultimo login"),
+]
+
+
+@router.get("/export/users.csv")
+def admin_export_users_csv(
+    search: Optional[str] = Query(None),
+    user_type: Optional[str] = Query(None),
+    status: Optional[bool] = Query(None),
+    is_supervisor: Optional[bool] = Query(None),
+    is_admin: Optional[bool] = Query(None),
+    columns: Optional[str] = Query(None, description="Colunas separadas por virgula"),
+    session: Session = Depends(get_session),
+    user: User = Depends(require_admin),
+    request: Request = None,
+):
+    """Exporta TODOS os usuarios (respeitando filtros) como CSV."""
+    query = select(User)
+
+    if search:
+        query = query.where(
+            or_(
+                User.name.ilike(f"%{search}%"),
+                User.email.ilike(f"%{search}%"),
+            )
+        )
+    if user_type:
+        if user_type.lower() == "internal":
+            query = query.where(User.type == TypeUser.INTERNAL)
+        elif user_type.lower() == "external":
+            query = query.where(User.type == TypeUser.EXTERNAL)
+    if status is not None:
+        query = query.where(User.status == status)
+    if is_supervisor is not None:
+        query = query.where(User.is_supervisor == is_supervisor)
+    if is_admin is not None:
+        query = query.where(User.is_admin == is_admin)
+
+    query = query.order_by(User.created_at.desc()).limit(EXPORT_MAX_ROWS)
+    users = session.exec(query).all()
+
+    rows = [
+        {
+            "id": u.id,
+            "name": u.name,
+            "email": u.email,
+            "type": "Interno" if (u.type == TypeUser.INTERNAL) else "Externo",
+            "department": u.department,
+            "job_title": u.job_title,
+            "is_supervisor": u.is_supervisor,
+            "is_admin": u.is_admin,
+            "status": u.status,
+            "created_at": u.created_at,
+            "last_login": u.last_login,
+        }
+        for u in users
+    ]
+
+    log_event(
+        session=session,
+        action="ADMIN_EXPORT_USERS_CSV",
+        user_id=user.id,
+        detail=f"total={len(rows)}",
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None,
+    )
+
+    return build_csv_response(
+        rows, USERS_EXPORT_COLUMNS, "usuarios.csv", parse_columns(columns)
+    )
+
+
+# ---------------------------------------------------------------------------
+# GET /admin/export/shares.csv — Exporta compartilhamentos em CSV
+# ---------------------------------------------------------------------------
+
+SHARES_EXPORT_COLUMNS = [
+    ("id", "ID"),
+    ("name", "Nome"),
+    ("description", "Descricao"),
+    ("external_email", "Destinatario"),
+    ("status", "Status"),
+    ("files_count", "Qtd. Arquivos"),
+    ("creator_name", "Criado por"),
+    ("creator_email", "Email do criador"),
+    ("approver_name", "Aprovado por"),
+    ("approver_email", "Email do aprovador"),
+    ("created_at", "Criado em"),
+    ("approved_at", "Aprovado em"),
+    ("expires_at", "Expira em"),
+]
+
+
+@router.get("/export/shares.csv")
+def admin_export_shares_csv(
+    search: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    columns: Optional[str] = Query(None, description="Colunas separadas por virgula"),
+    session: Session = Depends(get_session),
+    user: User = Depends(require_admin),
+    request: Request = None,
+):
+    """Exporta TODOS os compartilhamentos (respeitando filtros) como CSV."""
+    query = select(Share)
+
+    if search:
+        query = query.where(
+            or_(
+                Share.name.ilike(f"%{search}%"),
+                Share.external_email.ilike(f"%{search}%"),
+            )
+        )
+
+    status_map = {
+        "pending": ShareStatus.PENDING,
+        "approved": ShareStatus.APPROVED,
+        "active": ShareStatus.ACTIVE,
+        "rejected": ShareStatus.REJECTED,
+        "expired": ShareStatus.EXPIRED,
+        "canceled": ShareStatus.CANCELED,
+        "completed": ShareStatus.COMPLETED,
+    }
+    if status and status.lower() in status_map:
+        query = query.where(Share.status == status_map[status.lower()])
+
+    if start_date:
+        try:
+            sd = datetime.fromisoformat(start_date)
+            query = query.where(Share.created_at >= sd)
+        except ValueError:
+            pass
+    if end_date:
+        try:
+            ed = datetime.fromisoformat(end_date).replace(hour=23, minute=59, second=59)
+            query = query.where(Share.created_at <= ed)
+        except ValueError:
+            pass
+
+    query = query.order_by(Share.created_at.desc()).limit(EXPORT_MAX_ROWS)
+    shares = session.exec(query).all()
+
+    rows = []
+    for s in shares:
+        creator = session.get(User, s.created_by_id) if s.created_by_id else None
+        approver = session.get(User, s.approver_id) if s.approver_id else None
+        files_count = session.exec(
+            select(func.count()).select_from(ShareFile).where(ShareFile.share_id == s.id)
+        ).one()
+        rows.append({
+            "id": s.id,
+            "name": s.name,
+            "description": s.description,
+            "external_email": s.external_email,
+            "status": s.status.value if hasattr(s.status, "value") else str(s.status),
+            "files_count": files_count,
+            "creator_name": creator.name if creator else None,
+            "creator_email": creator.email if creator else None,
+            "approver_name": approver.name if approver else None,
+            "approver_email": approver.email if approver else None,
+            "created_at": s.created_at,
+            "approved_at": s.approved_at,
+            "expires_at": s.expires_at,
+        })
+
+    log_event(
+        session=session,
+        action="ADMIN_EXPORT_SHARES_CSV",
+        user_id=user.id,
+        detail=f"total={len(rows)}",
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None,
+    )
+
+    return build_csv_response(
+        rows, SHARES_EXPORT_COLUMNS, "compartilhamentos.csv", parse_columns(columns)
+    )
+
+
+# ---------------------------------------------------------------------------
+# GET /admin/export/logs.csv — Exporta logs de auditoria em CSV
+# ---------------------------------------------------------------------------
+
+LOGS_EXPORT_COLUMNS = [
+    ("id", "ID"),
+    ("action", "Acao"),
+    ("detail", "Detalhe"),
+    ("user_name", "Usuario"),
+    ("user_email", "Email"),
+    ("ip", "IP"),
+    ("user_agent", "User-Agent"),
+    ("share_id", "Share ID"),
+    ("created_at", "Data/Hora"),
+]
+
+
+@router.get("/export/logs.csv")
+def admin_export_logs_csv(
+    search: Optional[str] = Query(None),
+    action: Optional[str] = Query(None),
+    user_id: Optional[int] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    columns: Optional[str] = Query(None, description="Colunas separadas por virgula"),
+    session: Session = Depends(get_session),
+    user: User = Depends(require_admin),
+    request: Request = None,
+):
+    """Exporta TODOS os logs de auditoria (respeitando filtros) como CSV."""
+    query = select(AuditLog)
+
+    if search:
+        query = query.where(
+            or_(
+                AuditLog.action.ilike(f"%{search}%"),
+                AuditLog.detail.ilike(f"%{search}%"),
+            )
+        )
+    if action:
+        query = query.where(AuditLog.action == action.upper())
+    if user_id:
+        query = query.where(AuditLog.user_id == user_id)
+    if start_date:
+        try:
+            sd = datetime.fromisoformat(start_date)
+            query = query.where(AuditLog.created_at >= sd)
+        except ValueError:
+            pass
+    if end_date:
+        try:
+            ed = datetime.fromisoformat(end_date).replace(hour=23, minute=59, second=59)
+            query = query.where(AuditLog.created_at <= ed)
+        except ValueError:
+            pass
+
+    query = query.order_by(AuditLog.created_at.desc()).limit(EXPORT_MAX_ROWS)
+    logs = session.exec(query).all()
+
+    rows = []
+    for log in logs:
+        log_user = session.get(User, log.user_id) if log.user_id else None
+        rows.append({
+            "id": log.id,
+            "action": log.action,
+            "detail": log.detail,
+            "user_name": log_user.name if log_user else None,
+            "user_email": log_user.email if log_user else None,
+            "ip": log.ip_address,
+            "user_agent": log.user_agent,
+            "share_id": log.share_id,
+            "created_at": log.created_at,
+        })
+
+    log_event(
+        session=session,
+        action="ADMIN_EXPORT_LOGS_CSV",
+        user_id=user.id,
+        detail=f"total={len(rows)}",
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None,
+    )
+
+    return build_csv_response(
+        rows, LOGS_EXPORT_COLUMNS, "logs_auditoria.csv", parse_columns(columns)
+    )
 
 
 # ---------------------------------------------------------------------------
