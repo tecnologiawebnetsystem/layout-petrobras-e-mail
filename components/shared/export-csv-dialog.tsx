@@ -1,11 +1,23 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Download, Loader2 } from "lucide-react"
+import {
+  Check,
+  Columns3,
+  Download,
+  FileSpreadsheet,
+  Filter,
+  Loader2,
+  Search,
+  X,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Dialog,
   DialogContent,
@@ -60,6 +72,11 @@ interface ExportCsvDialogProps {
 /** Valor "todos"/vazio que não deve ser enviado como filtro. */
 const EMPTY_FILTER_VALUES = new Set(["", "all"])
 
+/** Retorna true quando o valor do filtro é considerado "ativo" (será enviado). */
+function isActiveFilterValue(value: string | undefined): boolean {
+  return !EMPTY_FILTER_VALUES.has((value ?? "").trim())
+}
+
 export function ExportCsvDialog({
   endpoint,
   filenamePrefix,
@@ -72,6 +89,7 @@ export function ExportCsvDialog({
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [columnQuery, setColumnQuery] = useState("")
 
   const [selectedColumns, setSelectedColumns] = useState<Set<string>>(
     () => new Set(columns.map((c) => c.key)),
@@ -87,6 +105,20 @@ export function ExportCsvDialog({
     () => columns.filter((c) => selectedColumns.has(c.key)).map((c) => c.key),
     [columns, selectedColumns],
   )
+
+  const visibleColumns = useMemo(() => {
+    const query = columnQuery.trim().toLowerCase()
+    if (!query) return columns
+    return columns.filter((c) => c.label.toLowerCase().includes(query))
+  }, [columns, columnQuery])
+
+  const activeFilterCount = useMemo(
+    () => filters.filter((f) => isActiveFilterValue(filterValues[f.key])).length,
+    [filters, filterValues],
+  )
+
+  const date = new Date().toISOString().slice(0, 10)
+  const filename = `${filenamePrefix}-${date}.csv`
 
   const toggleColumn = (key: string) => {
     setSelectedColumns((prev) => {
@@ -105,6 +137,15 @@ export function ExportCsvDialog({
 
   const setFilter = (key: string, value: string) => {
     setFilterValues((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const clearFilters = () => {
+    setFilterValues(
+      filters.reduce<Record<string, string>>((acc, f) => {
+        acc[f.key] = f.type === "select" ? "all" : ""
+        return acc
+      }, {}),
+    )
   }
 
   const handleExport = async () => {
@@ -129,8 +170,6 @@ export function ExportCsvDialog({
       }
 
       const query = params.toString()
-      const date = new Date().toISOString().slice(0, 10)
-      const filename = `${filenamePrefix}-${date}.csv`
 
       await downloadFile(`${endpoint}${query ? `?${query}` : ""}`, filename)
 
@@ -159,19 +198,48 @@ export function ExportCsvDialog({
           {triggerLabel}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
-            Escolha as informações e os filtros e clique em exportar.
-          </DialogDescription>
+      <DialogContent className="max-w-lg p-0 overflow-hidden gap-0">
+        <DialogHeader className="space-y-3 border-b border-border p-6 pb-4">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <FileSpreadsheet className="h-5 w-5" />
+            </span>
+            <div className="space-y-0.5">
+              <DialogTitle className="text-lg">{title}</DialogTitle>
+              <DialogDescription className="text-sm">
+                Escolha as informações e os filtros e clique em exportar.
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-6 py-2">
+        <div className="max-h-[60vh] space-y-6 overflow-y-auto p-6">
           {filters.length > 0 && (
-            <div className="space-y-3">
-              <h4 className="text-sm font-medium text-foreground">Filtros</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  Filtros
+                  {activeFilterCount > 0 && (
+                    <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+                      {activeFilterCount} ativo{activeFilterCount > 1 ? "s" : ""}
+                    </Badge>
+                  )}
+                </h4>
+                {activeFilterCount > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 text-xs"
+                    onClick={clearFilters}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Limpar filtros
+                  </Button>
+                )}
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {filters.map((filter) => (
                   <div key={filter.key} className="space-y-1.5">
                     <Label htmlFor={`filter-${filter.key}`} className="text-xs">
@@ -207,55 +275,112 @@ export function ExportCsvDialog({
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium text-foreground">
-                Colunas ({selectedColumns.size}/{columns.length})
+          {filters.length > 0 && <Separator />}
+
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h4 className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Columns3 className="h-4 w-4 text-muted-foreground" />
+                Colunas
+                <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+                  {selectedColumns.size}/{columns.length}
+                </Badge>
               </h4>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={toggleAll}
+              <label
+                htmlFor="col-select-all"
+                className="flex cursor-pointer select-none items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground"
               >
+                <Checkbox
+                  id="col-select-all"
+                  checked={allSelected ? true : noneSelected ? false : "indeterminate"}
+                  onCheckedChange={toggleAll}
+                />
                 {allSelected ? "Limpar seleção" : "Selecionar todas"}
-              </Button>
+              </label>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
-              {columns.map((column) => (
-                <label
-                  key={column.key}
-                  htmlFor={`col-${column.key}`}
-                  className="flex items-center gap-2 rounded-md border border-border p-2 text-sm cursor-pointer hover:bg-muted/50"
-                >
-                  <Checkbox
-                    id={`col-${column.key}`}
-                    checked={selectedColumns.has(column.key)}
-                    onCheckedChange={() => toggleColumn(column.key)}
-                  />
-                  <span className="truncate">{column.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+
+            {columns.length > 6 && (
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={columnQuery}
+                  onChange={(e) => setColumnQuery(e.target.value)}
+                  placeholder="Buscar coluna..."
+                  className="h-9 pl-8"
+                  aria-label="Buscar coluna"
+                />
+              </div>
+            )}
+
+            <ScrollArea className="max-h-56 rounded-md">
+              <div className="grid grid-cols-1 gap-2 pr-3 sm:grid-cols-2">
+                {visibleColumns.length === 0 ? (
+                  <p className="col-span-full py-6 text-center text-sm text-muted-foreground">
+                    Nenhuma coluna encontrada para “{columnQuery}”.
+                  </p>
+                ) : (
+                  visibleColumns.map((column) => {
+                    const checked = selectedColumns.has(column.key)
+                    return (
+                      <label
+                        key={column.key}
+                        htmlFor={`col-${column.key}`}
+                        className={`flex items-center gap-2 rounded-md border p-2.5 text-sm transition-colors cursor-pointer ${
+                          checked
+                            ? "border-primary/40 bg-primary/5"
+                            : "border-border hover:bg-muted/50"
+                        }`}
+                      >
+                        <Checkbox
+                          id={`col-${column.key}`}
+                          checked={checked}
+                          onCheckedChange={() => toggleColumn(column.key)}
+                        />
+                        <span className="truncate">{column.label}</span>
+                      </label>
+                    )
+                  })
+                )}
+              </div>
+            </ScrollArea>
+          </section>
         </div>
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)} disabled={exporting}>
-            Cancelar
-          </Button>
-          <Button onClick={handleExport} disabled={exporting} className="gap-2">
-            {exporting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-            {exporting ? "Exportando..." : "Exportar"}
-          </Button>
+        <DialogFooter className="flex-col gap-3 border-t border-border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+            <FileSpreadsheet className="h-4 w-4 shrink-0" />
+            <span className="truncate">
+              {noneSelected ? (
+                "Selecione ao menos uma coluna"
+              ) : (
+                <>
+                  <span className="font-medium text-foreground">{filename}</span>
+                  {" · "}
+                  {selectedColumns.size} coluna{selectedColumns.size > 1 ? "s" : ""}
+                </>
+              )}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={() => setOpen(false)} disabled={exporting}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleExport}
+              disabled={exporting || noneSelected}
+              className="gap-2"
+            >
+              {exporting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
+              {exporting ? "Exportando..." : "Exportar"}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
