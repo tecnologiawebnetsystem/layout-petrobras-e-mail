@@ -1,0 +1,81 @@
+========================================================================
+TAREFA: EXPORTACAO DE RELATORIOS EM CSV - FRONTEND
+Criterios de Aceite (Negocio + Tecnico)
+========================================================================
+
+------------------------------------------------------------------------
+1. CONTEXTO / OBJETIVO
+------------------------------------------------------------------------
+Permitir que os perfis MONITOR e GESTOR exportem relatorios em formato
+CSV diretamente pela interface do sistema, escolhendo colunas e aplicando
+os filtros ja disponiveis nas telas (usuarios, compartilhamentos e logs).
+
+Componente central: components/shared/export-csv-dialog.tsx
+Usos atuais:
+  - Admin/Monitor: exportacao de Usuarios
+  - Admin/Monitor: exportacao de Compartilhamentos
+  - Admin/Monitor: exportacao de Logs de auditoria
+  - Gestor: exportacao de Compartilhamentos dos supervisionados
+
+
+------------------------------------------------------------------------
+2. CRITERIOS DE ACEITE - VISAO DE NEGOCIO
+------------------------------------------------------------------------
+[ ] O usuario consegue abrir a janela de exportacao a partir de um botao
+    claro ("Exportar CSV") na tela correspondente ao seu perfil.
+[ ] O usuario escolhe QUAIS colunas deseja no arquivo antes de exportar.
+[ ] Os filtros que o usuario ja aplicou na tela (busca, status, periodo,
+    etc.) sao respeitados na exportacao.
+[ ] O usuario ve claramente quantos filtros estao ativos e consegue
+    limpa-los sem sair da janela.
+[ ] O usuario nao consegue exportar um arquivo sem nenhuma coluna
+    selecionada (o botao de exportar fica desabilitado).
+[ ] O usuario ve uma previa do nome do arquivo que sera baixado.
+[ ] Quando ha muitas colunas, o usuario consegue localizar rapidamente
+    uma coluna por busca.
+[ ] O usuario recebe feedback visual durante a geracao do arquivo
+    (estado de carregamento) e mensagem de sucesso ou erro ao final.
+[ ] A identidade visual segue o padrao do sistema (cores institucionais,
+    tipografia e componentes ja usados no restante do produto).
+
+
+------------------------------------------------------------------------
+3. CRITERIOS DE ACEITE - VISAO TECNICA
+------------------------------------------------------------------------
+[ ] O componente ExportCsvDialog mantem a MESMA interface de props ja
+    consumida pelas telas (nao quebrar chamadas existentes).
+[ ] O botao "Exportar" fica desabilitado quando selectedColumns.length === 0.
+[ ] Checkbox "selecionar todas" com estado indeterminado quando ha
+    selecao parcial.
+[ ] Campo de busca de colunas aparece somente quando a quantidade de
+    colunas ultrapassa o limite definido (ex.: > 6 colunas).
+[ ] Contador de filtros ativos e acao de "Limpar filtros" no cabecalho.
+[ ] Previa do nome do arquivo exibida no rodape antes do download.
+[ ] Uso de componentes ja existentes (Dialog, Button, Checkbox, Input,
+    Badge, Separator, ScrollArea) - sem introduzir novas dependencias.
+[ ] Estilizacao via tokens de tema (bg-*, text-*, border-*), sem cores
+    diretas hardcoded.
+[ ] Acessibilidade: labels associados aos checkboxes, foco visivel,
+    textos para leitor de tela onde aplicavel.
+[ ] Estado de loading trava o botao para evitar duplo clique / duplo
+    download.
+[ ] A logica de exportacao continua usando o servico downloadFile
+    (lib/services/download-csv.ts) com os mesmos parametros.
+
+
+------------------------------------------------------------------------
+4. FORA DE ESCOPO (NESTA TAREFA)
+------------------------------------------------------------------------
+- Alteracao de regras de negocio ou permissoes.
+- Alteracao das APIs/back-end.
+- Novas colunas nao suportadas pelo back-end.
+
+
+------------------------------------------------------------------------
+5. DEFINICAO DE PRONTO (DoD)
+------------------------------------------------------------------------
+[ ] Codigo revisado e sem erros de compilacao/lint.
+[ ] Testado nos perfis Monitor e Gestor.
+[ ] Verificado em tema claro e escuro.
+[ ] Verificado em desktop e mobile (responsivo).
+========================================================================

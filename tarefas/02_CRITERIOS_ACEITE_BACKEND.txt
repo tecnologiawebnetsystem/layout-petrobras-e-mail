@@ -1,0 +1,80 @@
+========================================================================
+TAREFA: EXPORTACAO DE RELATORIOS EM CSV - BACKEND
+Criterios de Aceite (Negocio + Tecnico)
+========================================================================
+
+------------------------------------------------------------------------
+1. CONTEXTO / OBJETIVO
+------------------------------------------------------------------------
+Disponibilizar endpoints que geram arquivos CSV para os perfis MONITOR
+(admin) e GESTOR (supervisor), respeitando permissoes, filtros e o
+escopo de dados de cada perfil.
+
+Arquivos principais:
+  - backend/app/utils/csv_export.py            (geracao do CSV)
+  - backend/app/api/v1/routes_admin.py         (users / shares / logs)
+  - backend/app/api/v1/routes_supervisor.py    (shares dos supervisionados)
+
+Camada de proxy no Next.js (repassa a chamada ao back-end):
+  - app/api/admin/export/users/route.ts
+  - app/api/admin/export/shares/route.ts
+  - app/api/admin/export/logs/route.ts
+  - app/api/supervisor/export/shares/route.ts
+
+
+------------------------------------------------------------------------
+2. CRITERIOS DE ACEITE - VISAO DE NEGOCIO
+------------------------------------------------------------------------
+[ ] O MONITOR consegue exportar Usuarios, Compartilhamentos e Logs.
+[ ] O GESTOR consegue exportar apenas os Compartilhamentos dos seus
+    supervisionados (nunca dados de fora do seu escopo).
+[ ] Os filtros enviados pela tela sao aplicados na consulta antes de
+    gerar o arquivo (o CSV reflete exatamente o que o usuario ve).
+[ ] Apenas perfis autorizados acessam cada exportacao; usuario sem
+    permissao recebe erro de autorizacao.
+[ ] O arquivo gerado abre corretamente no Excel / LibreOffice / Google
+    Sheets, com acentuacao correta (portugues).
+[ ] Datas e valores booleanos aparecem em formato legivel para o usuario
+    de negocio (ex.: dd/mm/aaaa hh:mm:ss, "Sim"/"Nao").
+
+
+------------------------------------------------------------------------
+3. CRITERIOS DE ACEITE - VISAO TECNICA
+------------------------------------------------------------------------
+[ ] Endpoints protegidos por dependencia de autorizacao:
+      - Admin: require_admin
+      - Supervisor/Gestor: require_permission("shares:read")
+[ ] O GESTOR so recebe registros vinculados aos seus supervisionados
+    (filtro por escopo aplicado na query, sem vazamento de dados).
+[ ] Parametros de coluna e filtro recebidos via query string sao
+    validados; colunas invalidas sao ignoradas com seguranca.
+[ ] Geracao do CSV centralizada em csv_export.py (build_csv_response),
+    reutilizada por todas as rotas.
+[ ] Encoding UTF-8 com BOM para compatibilidade com Excel.
+[ ] Header Content-Disposition com nome de arquivo apropriado e
+    Content-Type text/csv.
+[ ] Protecao contra CSV/Formula Injection: valores iniciando com
+    = + - @ (e TAB/CR) sao neutralizados com prefixo de aspa simples.
+[ ] Formatacao consistente de datas (datetime) e booleanos.
+[ ] Rotas registradas corretamente em main.py (include_router).
+[ ] Respostas de erro padronizadas (401/403 para autorizacao,
+    422 para parametros invalidos).
+
+
+------------------------------------------------------------------------
+4. FORA DE ESCOPO (NESTA TAREFA)
+------------------------------------------------------------------------
+- Mudancas de modelo de dados / migracoes.
+- Novos perfis de acesso.
+- Exportacao em outros formatos (XLSX, PDF).
+
+
+------------------------------------------------------------------------
+5. DEFINICAO DE PRONTO (DoD)
+------------------------------------------------------------------------
+[ ] Endpoints testados com e sem permissao.
+[ ] Escopo do Gestor validado (nao retorna dados de terceiros).
+[ ] Arquivo gerado validado em Excel e LibreOffice.
+[ ] Protecao de injecao de formula verificada.
+[ ] Sem regressao nas rotas de listagem existentes.
+========================================================================
