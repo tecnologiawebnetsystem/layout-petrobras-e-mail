@@ -1,0 +1,72 @@
+========================================================================
+TAREFA: EXPORTACAO CSV - INTEGRACAO FRONT <-> BACK (uniao no Front)
+Criterios de Aceite (Negocio + Tecnico)
+========================================================================
+
+------------------------------------------------------------------------
+1. CONTEXTO / OBJETIVO
+------------------------------------------------------------------------
+Garantir que a interface (ExportCsvDialog) esteja corretamente conectada
+aos endpoints de exportacao atraves da camada de proxy do Next.js,
+enviando colunas e filtros e recebendo o arquivo CSV para download.
+
+Fluxo:
+  Tela (Monitor/Gestor)
+    -> ExportCsvDialog (monta colunas + filtros)
+      -> downloadFile (lib/services/download-csv.ts)
+        -> Proxy Next.js (app/api/.../export/*)
+          -> Endpoint FastAPI (routes_admin.py / routes_supervisor.py)
+            -> Arquivo CSV retornado e baixado no navegador
+
+
+------------------------------------------------------------------------
+2. CRITERIOS DE ACEITE - VISAO DE NEGOCIO
+------------------------------------------------------------------------
+[ ] Ao confirmar a exportacao, o download do arquivo inicia sem que o
+    usuario precise sair da tela.
+[ ] As colunas escolhidas na janela sao exatamente as que aparecem no
+    arquivo baixado.
+[ ] Os filtros ativos na tela chegam corretamente ao arquivo final.
+[ ] Se ocorrer erro (sessao expirada, sem permissao, falha de rede), o
+    usuario ve uma mensagem clara e o download nao acontece silenciosamente.
+[ ] O nome do arquivo baixado corresponde a previa mostrada na janela.
+
+
+------------------------------------------------------------------------
+3. CRITERIOS DE ACEITE - VISAO TECNICA
+------------------------------------------------------------------------
+[ ] As chaves de coluna enviadas pelo front batem 1:1 com as esperadas
+    pelo back-end (mesmos identificadores).
+[ ] Os filtros sao serializados na query string no formato esperado pelo
+    endpoint.
+[ ] O proxy do Next.js repassa metodo, query e cabecalhos de autenticacao
+    corretamente ao back-end.
+[ ] O servico downloadFile trata a resposta como blob e dispara o
+    download com o nome de arquivo vindo do Content-Disposition (ou
+    fallback local).
+[ ] Estados de loading e erro sao propagados de volta ao ExportCsvDialog.
+[ ] Requisicao nao autorizada (401/403) resulta em mensagem de erro no
+    front, sem baixar arquivo vazio ou corrompido.
+[ ] Sem hardcode de URL absoluta do back-end no componente (uso das rotas
+    de proxy).
+
+
+------------------------------------------------------------------------
+4. MATRIZ DE INTEGRACAO (checar cada combinacao)
+------------------------------------------------------------------------
+Perfil    | Recurso           | Proxy                                | Endpoint
+----------|-------------------|--------------------------------------|-----------------------------
+Monitor   | Usuarios          | /api/admin/export/users              | routes_admin (users)
+Monitor   | Compartilhamentos | /api/admin/export/shares             | routes_admin (shares)
+Monitor   | Logs              | /api/admin/export/logs               | routes_admin (logs)
+Gestor    | Compartilhamentos | /api/supervisor/export/shares        | routes_supervisor (shares)
+
+
+------------------------------------------------------------------------
+5. DEFINICAO DE PRONTO (DoD)
+------------------------------------------------------------------------
+[ ] Cada linha da matriz de integracao testada de ponta a ponta.
+[ ] Colunas e filtros conferidos no arquivo final.
+[ ] Cenarios de erro (401/403/rede) validados no front.
+[ ] Nome do arquivo consistente entre previa e download.
+========================================================================

@@ -1,0 +1,133 @@
+========================================================================
+TAREFA: EXPORTACAO CSV - TESTES INTEGRADOS
+Roteiro de Testes (Negocio + Tecnico)
+========================================================================
+
+------------------------------------------------------------------------
+1. OBJETIVO
+------------------------------------------------------------------------
+Validar de ponta a ponta as melhorias aplicadas na exportacao de
+relatorios em CSV para os perfis MONITOR e GESTOR, cobrindo interface,
+integracao e regras do back-end.
+
+
+------------------------------------------------------------------------
+2. PRE-CONDICOES
+------------------------------------------------------------------------
+[ ] Ambiente com back-end (FastAPI) e front (Next.js) rodando.
+[ ] Usuario MONITOR valido disponivel.
+[ ] Usuario GESTOR valido com supervisionados cadastrados.
+[ ] Massa de dados suficiente (usuarios, compartilhamentos, logs).
+
+
+------------------------------------------------------------------------
+3. CASOS DE TESTE - PERFIL MONITOR
+------------------------------------------------------------------------
+CT01 - Exportar Usuarios com todas as colunas
+  Passos: abrir janela > selecionar todas > exportar
+  Esperado: arquivo baixado com todas as colunas e todos os registros
+            do filtro atual.
+
+CT02 - Exportar Usuarios com selecao parcial de colunas
+  Esperado: arquivo contem apenas as colunas marcadas.
+
+CT03 - Exportar com filtro aplicado na tela (ex.: busca/status)
+  Esperado: arquivo reflete somente os registros filtrados.
+
+CT04 - Tentar exportar sem nenhuma coluna
+  Esperado: botao "Exportar" desabilitado; nao gera arquivo.
+
+CT05 - Buscar coluna pelo campo de busca (quando > 6 colunas)
+  Esperado: lista filtra as colunas conforme o texto digitado.
+
+CT06 - Limpar filtros pela janela
+  Esperado: contador de filtros zera; exportacao passa a trazer tudo.
+
+CT07 - Exportar Compartilhamentos
+  Esperado: arquivo correto conforme colunas e filtros.
+
+CT08 - Exportar Logs de auditoria
+  Esperado: arquivo correto; datas em formato legivel.
+
+
+------------------------------------------------------------------------
+4. CASOS DE TESTE - PERFIL GESTOR
+------------------------------------------------------------------------
+CT09 - Exportar Compartilhamentos dos supervisionados
+  Esperado: arquivo contem SOMENTE registros dos supervisionados do gestor.
+
+CT10 - Gestor sem supervisionados
+  Esperado: exportacao retorna arquivo apenas com cabecalho (sem dados),
+            sem erro.
+
+CT11 - Gestor tentando acessar exportacao de admin (users/logs)
+  Esperado: acesso negado (401/403); nenhum arquivo baixado.
+
+
+------------------------------------------------------------------------
+5. CASOS DE TESTE - SEGURANCA E ROBUSTEZ
+------------------------------------------------------------------------
+CT12 - CSV/Formula Injection
+  Dado: registro com valor iniciando por "=", "+", "-", "@"
+  Esperado: no arquivo, o valor vem neutralizado (prefixo de aspa simples),
+            nao executa como formula ao abrir no Excel.
+
+CT13 - Sessao expirada durante exportacao
+  Esperado: mensagem de erro clara no front; nenhum arquivo corrompido.
+
+CT14 - Falha de rede / back-end indisponivel
+  Esperado: mensagem de erro; estado de loading encerrado corretamente.
+
+CT15 - Duplo clique no botao exportar
+  Esperado: apenas um download; botao travado durante o loading.
+
+CT16 - Acentuacao (portugues) no arquivo
+  Esperado: acentos corretos ao abrir em Excel/LibreOffice/Sheets (UTF-8 BOM).
+
+
+------------------------------------------------------------------------
+6. CASOS DE TESTE - UI / RESPONSIVIDADE
+------------------------------------------------------------------------
+CT17 - Tema claro e escuro
+  Esperado: contraste e legibilidade adequados nos dois temas.
+
+CT18 - Desktop e mobile
+  Esperado: janela utilizavel, lista com rolagem, botoes acessiveis.
+
+CT19 - Previa do nome do arquivo
+  Esperado: nome mostrado na janela == nome do arquivo baixado.
+
+
+------------------------------------------------------------------------
+7. REGISTRO DE RESULTADO
+------------------------------------------------------------------------
+ID    | Resultado (OK/NOK) | Evidencia / Observacao
+------|--------------------|-------------------------------------------
+CT01  |                    |
+CT02  |                    |
+CT03  |                    |
+CT04  |                    |
+CT05  |                    |
+CT06  |                    |
+CT07  |                    |
+CT08  |                    |
+CT09  |                    |
+CT10  |                    |
+CT11  |                    |
+CT12  |                    |
+CT13  |                    |
+CT14  |                    |
+CT15  |                    |
+CT16  |                    |
+CT17  |                    |
+CT18  |                    |
+CT19  |                    |
+
+
+------------------------------------------------------------------------
+8. CRITERIO DE APROVACAO
+------------------------------------------------------------------------
+[ ] 100% dos casos de seguranca (CT12 a CT16) OK.
+[ ] Nenhum vazamento de dados fora do escopo do Gestor (CT09/CT11) OK.
+[ ] Demais casos OK ou com desvios documentados e aceitos.
+========================================================================
