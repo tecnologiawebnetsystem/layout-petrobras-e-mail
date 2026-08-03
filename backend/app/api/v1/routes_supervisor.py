@@ -26,6 +26,7 @@ from app.models.share_file import ShareFile
 from app.models.restricted_file import RestrictedFile
 from app.models.email_log import EmailLog
 from app.services.audit_service import log_event
+from app.utils.csv_export import build_csv_response, parse_columns, EXPORT_MAX_ROWS
 from app.services.s3_service import delete_object, S3ServiceError, get_s3_object_stream, generate_presigned_get, S3ObjectNotFound
 from app.core.config import settings
 from app.services.email_service import (
@@ -747,6 +748,123 @@ def get_supervisor_shares(
             "total_items": total_items,
         },
     }
+
+
+# =====================================================
+# GET /supervisor/export/shares.csv - Exporta compartilhamentos em CSV
+# =====================================================
+
+SUPERVISOR_SHARES_EXPORT_COLUMNS = [
+    ("id", "ID"),
+    ("name", "Nome"),
+    ("status", "Status"),
+    ("recipient_email", "Destinatario"),
+    ("description", "Descricao"),
+    ("sender_name", "Solicitante"),
+    ("sender_email", "Email do solicitante"),
+    ("sender_department", "Departamento"),
+    ("files_count", "Qtd. Arquivos"),
+    ("expiration_hours", "Horas de expiracao"),
+    ("created_at", "Criado em"),
+    ("approved_at", "Aprovado em"),
+    ("rejected_at", "Rejeitado em"),
+    ("rejection_reason", "Motivo da rejeicao"),
+    ("expires_at", "Expira em"),
+]
+
+
+@router.get("/export/shares.csv")
+def export_supervisor_shares_csv(
+    status: Optional[str] = Query(None, description="Filtro: pending | active | rejected"),
+    search: Optional[str] = Query(None, description="Busca por nome/solicitante/destinatario"),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    columns: Optional[str] = Query(None, description="Colunas separadas por virgula"),
+    session: Session = Depends(get_session),
+    user: User = Depends(require_permission("shares:read")),
+    request: Request = None,
+):
+    """
+    Exporta os compartilhamentos dos supervisionados deste gestor como CSV.
+    Respeita os mesmos filtros da listagem, sem paginacao (ate o limite de seguranca).
+    """
+    supervised_users = session.exec(
+        select(User.id).where(User.manager_id == user.id)
+    ).all()
+
+    if not supervised_users:
+        return build_csv_response(
+            [], SUPERVISOR_SHARES_EXPORT_COLUMNS,
+            "compartilhamentos_gestor.csv", parse_columns(columns),
+        )
+
+    status_map = {
+        "pending": ShareStatus.PENDING,
+        "active": ShareStatus.ACTIVE,
+        "approved": ShareStatus.ACTIVE,
+        "rejected": ShareStatus.REJECTED,
+    }
+
+    query = select(Share).where(Share.created_by_id.in_(supervised_users))
+    if status and status.lower() in status_map:
+        query = query.where(Share.status == status_map[status.lower()])
+    if search:
+        query = query.where(
+            (Share.name.ilike(f"%{search}%")) | (Share.external_email.ilike(f"%{search}%"))
+        )
+    if start_date:
+        try:
+            sd = datetime.fromisoformat(start_date)
+            query = query.where(Share.created_at >= sd)
+        except ValueError:
+            pass
+    if end_date:
+        try:
+            ed = datetime.fromisoformat(end_date).replace(hour=23, minute=59, second=59)
+            query = query.where(Share.created_at <= ed)
+        except ValueError:
+            pass
+
+    query = query.order_by(Share.created_at.desc()).limit(EXPORT_MAX_ROWS)
+    shares = session.exec(query).all()
+
+    rows = []
+    for share in shares:
+        sender = session.get(User, share.created_by_id)
+        files_count = session.exec(
+            select(func.count()).select_from(ShareFile).where(ShareFile.share_id == share.id)
+        ).one()
+        rows.append({
+            "id": share.id,
+            "name": share.name or f"Compartilhamento #{share.id}",
+            "status": share.status.value if hasattr(share.status, "value") else str(share.status),
+            "recipient_email": share.external_email,
+            "description": share.description,
+            "sender_name": sender.name if sender else None,
+            "sender_email": sender.email if sender else None,
+            "sender_department": sender.department if sender else None,
+            "files_count": files_count,
+            "expiration_hours": share.expiration_hours,
+            "created_at": share.created_at,
+            "approved_at": share.approved_at,
+            "rejected_at": getattr(share, "rejected_at", None),
+            "rejection_reason": getattr(share, "rejection_reason", None),
+            "expires_at": share.expires_at,
+        })
+
+    log_event(
+        session=session,
+        action="EXPORTAR_SHARES_CSV",
+        user_id=user.id,
+        detail=f"total={len(rows)}",
+        ip=request.client.host if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None,
+    )
+
+    return build_csv_response(
+        rows, SUPERVISOR_SHARES_EXPORT_COLUMNS,
+        "compartilhamentos_gestor.csv", parse_columns(columns),
+    )
 
 
 # =====================================================

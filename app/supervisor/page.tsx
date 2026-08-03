@@ -16,6 +16,25 @@ import { PageHeader } from "@/components/shared/page-header"
 import { ApprovalMetricsCards } from "@/components/supervisor/approval-metrics-cards"
 import { ApprovalFilters } from "@/components/supervisor/approval-filters"
 import { ApprovalList } from "@/components/supervisor/approval-list"
+import { ExportCsvDialog } from "@/components/shared/export-csv-dialog"
+
+const SUPERVISOR_SHARES_EXPORT_COLUMNS = [
+  { key: "id", label: "ID" },
+  { key: "name", label: "Nome" },
+  { key: "status", label: "Status" },
+  { key: "recipient_email", label: "Destinatário" },
+  { key: "description", label: "Descrição" },
+  { key: "sender_name", label: "Solicitante" },
+  { key: "sender_email", label: "Email do solicitante" },
+  { key: "sender_department", label: "Departamento" },
+  { key: "files_count", label: "Qtd. Arquivos" },
+  { key: "expiration_hours", label: "Horas de expiração" },
+  { key: "created_at", label: "Criado em" },
+  { key: "approved_at", label: "Aprovado em" },
+  { key: "rejected_at", label: "Rejeitado em" },
+  { key: "rejection_reason", label: "Motivo da rejeição" },
+  { key: "expires_at", label: "Expira em" },
+]
 
 export default function SupervisorPage() {
   const router = useRouter()
@@ -122,6 +141,32 @@ export default function SupervisorPage() {
           </TabsList>
 
           <TabsContent value="aprovacoes" className="space-y-6">
+            <div className="flex justify-end">
+              <ExportCsvDialog
+                endpoint="/supervisor/export/shares"
+                filenamePrefix="compartilhamentos_gestor"
+                title="Exportar compartilhamentos em CSV"
+                columns={SUPERVISOR_SHARES_EXPORT_COLUMNS}
+                initialFilters={{ search: searchQuery, status: statusFilter }}
+                filters={[
+                  { type: "text", key: "search", label: "Busca (nome/destinatário)", placeholder: "Filtrar..." },
+                  {
+                    type: "select",
+                    key: "status",
+                    label: "Status",
+                    options: [
+                      { value: "all", label: "Todos" },
+                      { value: "pending", label: "Pendente" },
+                      { value: "approved", label: "Aprovado" },
+                      { value: "rejected", label: "Rejeitado" },
+                    ],
+                  },
+                  { type: "date", key: "start_date", label: "Data inicial" },
+                  { type: "date", key: "end_date", label: "Data final" },
+                ]}
+              />
+            </div>
+
             <ApprovalFilters
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
