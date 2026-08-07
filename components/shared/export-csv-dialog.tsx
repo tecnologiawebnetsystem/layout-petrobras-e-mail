@@ -124,6 +124,14 @@ export function ExportCsvDialog({
     () => ({ ...initialFilters }),
   )
 
+  // Sincroniza os filtros da tela quando o modal é aberto, para que o usuário
+  // não precise filtrar novamente dentro do diálogo.
+  useEffect(() => {
+    if (open) {
+      setFilterValues({ ...initialFilters })
+    }
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const allSelected = selectedColumns.size === columns.length
   const noneSelected = selectedColumns.size === 0
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, Moon, Sun, Menu, Building2, MapPin, User } from "lucide-react"
+import { LogOut, Moon, Sun, Menu, Building2, MapPin, User, Briefcase, ShieldAlert, Eye } from "lucide-react"
 import { PetrobrasLogo } from "@/components/ui/petrobras-logo"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,6 +21,84 @@ import { useState } from "react"
 import { getNavItems } from "@/lib/auth/nav-items"
 import { cn } from "@/lib/utils"
 
+// ─── Tema por perfil ──────────────────────────────────────────────────────────
+
+type ProfileTheme = {
+  /** Label exibido no badge de perfil */
+  label: string
+  /** Ícone do perfil */
+  Icon: React.ElementType
+  /** Gradiente do cabeçalho do dropdown/sheet */
+  headerGradient: string
+  /** Cor do badge de perfil */
+  badgeBg: string
+  badgeText: string
+  /** Cor do avatar ring */
+  avatarRing: string
+  /** Fundo do item ativo */
+  activeBg: string
+  /** Texto do item ativo */
+  activeText: string
+  /** Hover dos itens */
+  hoverBg: string
+  hoverText: string
+  /** Cor do ponto indicador de ativo */
+  dotColor: string
+  /** Cor do separador decorativo */
+  dividerColor: string
+}
+
+function getProfileTheme(userType: string | undefined): ProfileTheme {
+  switch (userType) {
+    case "supervisor":
+      return {
+        label: "Gestor",
+        Icon: ShieldAlert,
+        headerGradient: "from-amber-600 via-amber-500 to-yellow-400",
+        badgeBg: "bg-amber-100 dark:bg-amber-900/40",
+        badgeText: "text-amber-800 dark:text-amber-300",
+        avatarRing: "ring-amber-400/60",
+        activeBg: "bg-amber-50 dark:bg-amber-900/25",
+        activeText: "text-amber-800 dark:text-amber-300",
+        hoverBg: "hover:bg-amber-50 dark:hover:bg-amber-900/20 focus:bg-amber-50 dark:focus:bg-amber-900/20",
+        hoverText: "hover:text-amber-900 dark:hover:text-amber-200 focus:text-amber-900 dark:focus:text-amber-200",
+        dotColor: "bg-amber-500",
+        dividerColor: "border-amber-200/60 dark:border-amber-800/40",
+      }
+    case "admin":
+      return {
+        label: "Monitor",
+        Icon: Eye,
+        headerGradient: "from-violet-700 via-violet-500 to-indigo-400",
+        badgeBg: "bg-violet-100 dark:bg-violet-900/40",
+        badgeText: "text-violet-800 dark:text-violet-300",
+        avatarRing: "ring-violet-400/60",
+        activeBg: "bg-violet-50 dark:bg-violet-900/25",
+        activeText: "text-violet-800 dark:text-violet-300",
+        hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-900/20 focus:bg-violet-50 dark:focus:bg-violet-900/20",
+        hoverText: "hover:text-violet-900 dark:hover:text-violet-200 focus:text-violet-900 dark:focus:text-violet-200",
+        dotColor: "bg-violet-500",
+        dividerColor: "border-violet-200/60 dark:border-violet-800/40",
+      }
+    default:
+      // internal / Remetente
+      return {
+        label: "Remetente",
+        Icon: Briefcase,
+        headerGradient: "from-sky-700 via-sky-500 to-cyan-400",
+        badgeBg: "bg-sky-100 dark:bg-sky-900/40",
+        badgeText: "text-sky-800 dark:text-sky-300",
+        avatarRing: "ring-sky-400/60",
+        activeBg: "bg-sky-50 dark:bg-sky-900/25",
+        activeText: "text-sky-800 dark:text-sky-300",
+        hoverBg: "hover:bg-sky-50 dark:hover:bg-sky-900/20 focus:bg-sky-50 dark:focus:bg-sky-900/20",
+        hoverText: "hover:text-sky-900 dark:hover:text-sky-200 focus:text-sky-900 dark:focus:text-sky-200",
+        dotColor: "bg-sky-500",
+        dividerColor: "border-sky-200/60 dark:border-sky-800/40",
+      }
+  }
+}
+
 interface AppHeaderProps {
   subtitle?: string
 }
@@ -35,6 +113,10 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
   // Lista de modulos disponiveis calculada a partir das permissoes do usuario (CAv4).
   // Atualiza automaticamente quando o store muda (ex: apos alterar permissoes).
   const navItems = getNavItems(user)
+
+  // Tema visual baseado no perfil do usuário autenticado.
+  const theme = getProfileTheme(user?.userType)
+  const ProfileIcon = theme.Icon
 
   const handleLogout = async () => {
     try {
@@ -107,9 +189,9 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                   variant="ghost"
                   className="gap-3 px-3 h-12 text-foreground hover:bg-accent/10 transition-all duration-300 rounded-full"
                 >
-                  <Avatar className="h-9 w-9 ring-2 ring-primary/20">
+                  <Avatar className={cn("h-9 w-9 ring-2", theme.avatarRing)}>
                     {user?.photoUrl && <AvatarImage src={user.photoUrl || "/placeholder.svg"} alt={user.name} />}
-                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                    <AvatarFallback className={cn("text-xs font-bold", theme.badgeBg, theme.badgeText)}>
                       {user?.name ? getInitials(user.name) : "U"}
                     </AvatarFallback>
                   </Avatar>
@@ -117,69 +199,79 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                     <span className="text-sm font-semibold text-foreground truncate max-w-[160px]">
                       {user?.name || "Usuário"}
                     </span>
-                    <span className="text-xs text-muted-foreground truncate max-w-[160px]">
-                      {user?.jobTitle || user?.email || ""}
+                    <span className={cn("text-xs font-medium truncate max-w-[160px]", theme.badgeText)}>
+                      {theme.label}
                     </span>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
+
               <DropdownMenuContent
                 align="end"
-                className="w-72 bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 shadow-xl"
+                className="w-72 overflow-hidden bg-white dark:bg-slate-900 border-0 shadow-2xl rounded-xl p-0"
               >
-                <DropdownMenuLabel className="pb-3">
+                {/* Cabeçalho com gradiente de perfil */}
+                <div className={cn("bg-gradient-to-br p-4", theme.headerGradient)}>
                   <div className="flex items-start gap-3">
-                    <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+                    <Avatar className="h-12 w-12 ring-2 ring-white/40 shadow-md">
                       {user?.photoUrl && <AvatarImage src={user.photoUrl || "/placeholder.svg"} alt={user.name} />}
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
+                      <AvatarFallback className="bg-white/20 text-white text-sm font-bold">
                         {user?.name ? getInitials(user.name) : "U"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground">{user?.name || "Usuário"}</p>
-                      <p className="text-xs text-muted-foreground truncate mt-0.5">{user?.email || ""}</p>
+                      <p className="text-sm font-bold text-white leading-tight">{user?.name || "Usuário"}</p>
+                      <p className="text-xs text-white/75 truncate mt-0.5">{user?.email || ""}</p>
+                      {/* Badge de perfil */}
+                      <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full bg-white/20 text-white text-xs font-semibold">
+                        <ProfileIcon className="h-3 w-3" />
+                        {theme.label}
+                      </span>
+                    </div>
+                  </div>
+                  {(user?.jobTitle || user?.department) && (
+                    <div className="mt-3 pt-3 border-t border-white/20 space-y-1">
                       {user?.jobTitle && (
-                        <div className="flex items-center gap-1 mt-1">
-                          <Building2 className="h-3 w-3 text-muted-foreground" />
-                          <p className="text-xs text-muted-foreground">{user.jobTitle}</p>
+                        <div className="flex items-center gap-1.5">
+                          <Building2 className="h-3 w-3 text-white/70 flex-shrink-0" />
+                          <p className="text-xs text-white/80 truncate">{user.jobTitle}</p>
                         </div>
                       )}
                       {user?.department && (
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <MapPin className="h-3 w-3 text-muted-foreground" />
-                          <p className="text-xs text-muted-foreground">{user.department}</p>
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="h-3 w-3 text-white/70 flex-shrink-0" />
+                          <p className="text-xs text-white/80 truncate">{user.department}</p>
                         </div>
                       )}
                     </div>
-                  </div>
-                </DropdownMenuLabel>
+                  )}
+                </div>
 
+                {/* Seção do Gestor (se houver) */}
                 {user?.manager && (
-                  <>
-                    <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
-                    <DropdownMenuLabel className="py-2">
-                      <div className="flex items-start gap-2">
-                        <User className="h-4 w-4 text-muted-foreground mt-0.5" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-muted-foreground">Gestor</p>
-                          <p className="text-sm font-semibold text-foreground">{user.manager.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{user.manager.email}</p>
-                          {user.manager.jobTitle && (
-                            <p className="text-xs text-muted-foreground mt-0.5">{user.manager.jobTitle}</p>
-                          )}
-                        </div>
+                  <div className="px-3 py-2.5 border-b border-border/50">
+                    <div className="flex items-start gap-2">
+                      <div className="flex-shrink-0 mt-0.5 h-6 w-6 rounded-full bg-muted flex items-center justify-center">
+                        <User className="h-3.5 w-3.5 text-muted-foreground" />
                       </div>
-                    </DropdownMenuLabel>
-                  </>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-muted-foreground">Gestor direto</p>
+                        <p className="text-sm font-semibold text-foreground leading-tight">{user.manager.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{user.manager.email}</p>
+                        {user.manager.jobTitle && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{user.manager.jobTitle}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 )}
 
-                <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
-
+                {/* Itens de navegação */}
                 {navItems.length > 0 && (
-                  <>
-                    <DropdownMenuLabel className="py-1.5 px-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Menu
-                    </DropdownMenuLabel>
+                  <div className="py-1.5 px-1">
+                    <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                      Navegação
+                    </p>
                     {navItems.map((item) => {
                       const Icon = item.icon
                       const isActive = pathname === item.route
@@ -188,31 +280,35 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                           key={item.route}
                           onClick={() => handleNavigate(item.route)}
                           className={cn(
-                            "flex items-center gap-2 cursor-pointer min-h-[40px]",
+                            "flex items-center gap-2.5 cursor-pointer min-h-[40px] rounded-lg mx-1 px-3 transition-all duration-150",
                             isActive
-                              ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-medium"
-                              : "text-gray-800 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:bg-blue-50 dark:focus:bg-blue-900/20 hover:text-blue-900 dark:hover:text-blue-100 focus:text-blue-900 dark:focus:text-blue-100",
+                              ? cn(theme.activeBg, theme.activeText, "font-semibold")
+                              : cn("text-foreground", theme.hoverBg, theme.hoverText),
                           )}
                         >
                           <Icon className="h-4 w-4 flex-shrink-0" />
-                          <span>{item.label}</span>
+                          <span className="text-sm">{item.label}</span>
                           {isActive && (
-                            <span className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-500" />
+                            <span className={cn("ml-auto h-2 w-2 rounded-full", theme.dotColor)} />
                           )}
                         </DropdownMenuItem>
                       )
                     })}
-                    <DropdownMenuSeparator className="bg-gray-300 dark:bg-slate-600" />
-                  </>
+                  </div>
                 )}
 
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 cursor-pointer text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/40 focus:bg-red-100 dark:focus:bg-red-900/40 hover:text-red-900 dark:hover:text-red-200 focus:text-red-900 dark:focus:text-red-200 min-h-[44px]"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Sair</span>
-                </DropdownMenuItem>
+                <div className="h-px bg-border mx-3 my-0.5" />
+
+                {/* Botão de sair */}
+                <div className="py-1.5 px-1">
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="flex items-center gap-2.5 cursor-pointer text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 focus:bg-red-50 dark:focus:bg-red-900/30 hover:text-red-700 dark:hover:text-red-300 focus:text-red-700 dark:focus:text-red-300 min-h-[44px] rounded-lg mx-1 px-3 transition-all duration-150"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span className="text-sm font-medium">Sair</span>
+                  </DropdownMenuItem>
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -241,42 +337,48 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-80 p-0">
-                <SheetHeader className="p-6 bg-muted border-b">
+              <SheetContent side="right" className="w-80 p-0 overflow-hidden">
+                {/* Cabeçalho com gradiente de perfil (mobile) */}
+                <SheetHeader className={cn("p-5 bg-gradient-to-br border-b-0", theme.headerGradient)}>
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+                    <Avatar className="h-12 w-12 ring-2 ring-white/40 shadow-md">
                       {user?.photoUrl && <AvatarImage src={user.photoUrl || "/placeholder.svg"} alt={user.name} />}
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
+                      <AvatarFallback className="bg-white/20 text-white text-sm font-bold">
                         {user?.name ? getInitials(user.name) : "U"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="text-left flex-1 min-w-0">
-                      <SheetTitle className="text-foreground text-base">{user?.name || "Usuário"}</SheetTitle>
-                      <SheetDescription className="text-muted-foreground text-sm truncate">
+                      <SheetTitle className="text-white text-base font-bold leading-tight">
+                        {user?.name || "Usuário"}
+                      </SheetTitle>
+                      <SheetDescription className="text-white/70 text-xs truncate mt-0.5">
                         {user?.email || ""}
                       </SheetDescription>
-                      {user?.jobTitle && <p className="text-xs text-muted-foreground mt-1">{user.jobTitle}</p>}
+                      <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full bg-white/20 text-white text-xs font-semibold">
+                        <ProfileIcon className="h-3 w-3" />
+                        {theme.label}
+                      </span>
                     </div>
                   </div>
 
                   {user?.manager && (
-                    <div className="mt-4 pt-4 border-t border-border">
+                    <div className="mt-4 pt-4 border-t border-white/20">
                       <div className="flex items-start gap-2">
-                        <User className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <User className="h-4 w-4 text-white/70 mt-0.5" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-muted-foreground">Gestor</p>
-                          <p className="text-sm font-semibold text-foreground">{user.manager.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{user.manager.email}</p>
+                          <p className="text-xs font-medium text-white/70">Gestor direto</p>
+                          <p className="text-sm font-semibold text-white leading-tight">{user.manager.name}</p>
+                          <p className="text-xs text-white/70 truncate">{user.manager.email}</p>
                         </div>
                       </div>
                     </div>
                   )}
                 </SheetHeader>
 
-                <div className="flex flex-col p-4">
+                <div className="flex flex-col p-3">
                   {navItems.length > 0 && (
                     <>
-                      <p className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      <p className="px-3 py-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                         Navegação
                       </p>
                       {navItems.map((item) => {
@@ -287,28 +389,28 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                             key={item.route}
                             variant="ghost"
                             className={cn(
-                              "justify-start h-12 text-base min-h-[44px] transition-colors",
+                              "justify-start h-12 text-sm min-h-[44px] transition-all duration-150 rounded-lg",
                               isActive
-                                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-medium"
-                                : "hover:bg-accent",
+                                ? cn(theme.activeBg, theme.activeText, "font-semibold")
+                                : cn("text-foreground", theme.hoverBg, theme.hoverText),
                             )}
                             onClick={() => handleNavigate(item.route)}
                           >
                             <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
                             {item.label}
                             {isActive && (
-                              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-500" />
+                              <span className={cn("ml-auto h-2 w-2 rounded-full", theme.dotColor)} />
                             )}
                           </Button>
                         )
                       })}
-                      <div className="h-px bg-border my-2" />
+                      <div className="h-px bg-border my-2 mx-2" />
                     </>
                   )}
 
                   <Button
                     variant="ghost"
-                    className="justify-start h-12 text-base text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors min-h-[44px]"
+                    className="justify-start h-12 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-all duration-150 min-h-[44px] rounded-lg"
                     onClick={handleLogout}
                   >
                     <LogOut className="h-5 w-5 mr-3" />
