@@ -22,79 +22,75 @@ import { getNavItems } from "@/lib/auth/nav-items"
 import { cn } from "@/lib/utils"
 
 // ─── Tema por perfil ──────────────────────────────────────────────────────────
+// Cores institucionais Petrobras:
+//   Verde   #00A859 / dark #008A48
+//   Amarelo #FDB913 / dark #E5A510
+//   Azul    #003F7F / dark #0055AA
 
 type ProfileTheme = {
-  /** Label exibido no badge de perfil */
   label: string
-  /** Ícone do perfil */
   Icon: React.ElementType
-  /** Gradiente do cabeçalho do dropdown/sheet */
-  headerGradient: string
-  /** Cor do badge de perfil */
-  badgeBg: string
-  badgeText: string
-  /** Cor do avatar ring */
-  avatarRing: string
-  /** Fundo do item ativo */
-  activeBg: string
-  /** Texto do item ativo */
-  activeText: string
-  /** Hover dos itens */
-  hoverBg: string
-  hoverText: string
-  /** Cor do ponto indicador de ativo */
-  dotColor: string
-  /** Cor do separador decorativo */
-  dividerColor: string
+  /** Estilo inline do cabeçalho gradiente */
+  headerStyle: React.CSSProperties
+  /** Classes Tailwind para anel do avatar */
+  avatarRingClass: string
+  /** Estilo inline do anel do avatar (cor) */
+  avatarRingStyle: React.CSSProperties
+  /** Classes Tailwind para item ativo */
+  activeClass: string
+  /** Estilo inline para texto/bg ativo */
+  activeStyle: React.CSSProperties
+  /** Classes Tailwind para hover dos itens */
+  hoverClass: string
+  /** Cor inline do ponto indicador */
+  dotStyle: React.CSSProperties
+  /** Texto da badge de label (cor inline) */
+  badgeStyle: React.CSSProperties
 }
 
 function getProfileTheme(userType: string | undefined): ProfileTheme {
   switch (userType) {
     case "supervisor":
+      // Gestor → Amarelo Petrobras
       return {
         label: "Gestor",
         Icon: ShieldAlert,
-        headerGradient: "from-amber-600 via-amber-500 to-yellow-400",
-        badgeBg: "bg-amber-100 dark:bg-amber-900/40",
-        badgeText: "text-amber-800 dark:text-amber-300",
-        avatarRing: "ring-amber-400/60",
-        activeBg: "bg-amber-50 dark:bg-amber-900/25",
-        activeText: "text-amber-800 dark:text-amber-300",
-        hoverBg: "hover:bg-amber-50 dark:hover:bg-amber-900/20 focus:bg-amber-50 dark:focus:bg-amber-900/20",
-        hoverText: "hover:text-amber-900 dark:hover:text-amber-200 focus:text-amber-900 dark:focus:text-amber-200",
-        dotColor: "bg-amber-500",
-        dividerColor: "border-amber-200/60 dark:border-amber-800/40",
+        headerStyle: { background: "linear-gradient(135deg, #e5a510 0%, #fdb913 55%, #f5c842 100%)" },
+        avatarRingClass: "ring-2 ring-offset-1",
+        avatarRingStyle: { "--tw-ring-color": "#fdb913" } as React.CSSProperties,
+        activeClass: "font-semibold",
+        activeStyle: { backgroundColor: "rgba(253,185,19,0.12)", color: "#7a5300" },
+        hoverClass: "transition-all duration-150",
+        dotStyle: { backgroundColor: "#fdb913" },
+        badgeStyle: { color: "#7a5300" },
       }
     case "admin":
+      // Monitor → Azul Petrobras
       return {
         label: "Monitor",
         Icon: Eye,
-        headerGradient: "from-violet-700 via-violet-500 to-indigo-400",
-        badgeBg: "bg-violet-100 dark:bg-violet-900/40",
-        badgeText: "text-violet-800 dark:text-violet-300",
-        avatarRing: "ring-violet-400/60",
-        activeBg: "bg-violet-50 dark:bg-violet-900/25",
-        activeText: "text-violet-800 dark:text-violet-300",
-        hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-900/20 focus:bg-violet-50 dark:focus:bg-violet-900/20",
-        hoverText: "hover:text-violet-900 dark:hover:text-violet-200 focus:text-violet-900 dark:focus:text-violet-200",
-        dotColor: "bg-violet-500",
-        dividerColor: "border-violet-200/60 dark:border-violet-800/40",
+        headerStyle: { background: "linear-gradient(135deg, #003f7f 0%, #0055aa 55%, #1a6fbb 100%)" },
+        avatarRingClass: "ring-2 ring-offset-1",
+        avatarRingStyle: { "--tw-ring-color": "#0055aa" } as React.CSSProperties,
+        activeClass: "font-semibold",
+        activeStyle: { backgroundColor: "rgba(0,63,127,0.10)", color: "#003f7f" },
+        hoverClass: "transition-all duration-150",
+        dotStyle: { backgroundColor: "#0055aa" },
+        badgeStyle: { color: "#003f7f" },
       }
     default:
-      // internal / Remetente
+      // Remetente / internal → Verde Petrobras
       return {
         label: "Remetente",
         Icon: Briefcase,
-        headerGradient: "from-sky-700 via-sky-500 to-cyan-400",
-        badgeBg: "bg-sky-100 dark:bg-sky-900/40",
-        badgeText: "text-sky-800 dark:text-sky-300",
-        avatarRing: "ring-sky-400/60",
-        activeBg: "bg-sky-50 dark:bg-sky-900/25",
-        activeText: "text-sky-800 dark:text-sky-300",
-        hoverBg: "hover:bg-sky-50 dark:hover:bg-sky-900/20 focus:bg-sky-50 dark:focus:bg-sky-900/20",
-        hoverText: "hover:text-sky-900 dark:hover:text-sky-200 focus:text-sky-900 dark:focus:text-sky-200",
-        dotColor: "bg-sky-500",
-        dividerColor: "border-sky-200/60 dark:border-sky-800/40",
+        headerStyle: { background: "linear-gradient(135deg, #008a48 0%, #00a859 55%, #00c46a 100%)" },
+        avatarRingClass: "ring-2 ring-offset-1",
+        avatarRingStyle: { "--tw-ring-color": "#00a859" } as React.CSSProperties,
+        activeClass: "font-semibold",
+        activeStyle: { backgroundColor: "rgba(0,168,89,0.10)", color: "#006636" },
+        hoverClass: "transition-all duration-150",
+        dotStyle: { backgroundColor: "#00a859" },
+        badgeStyle: { color: "#006636" },
       }
   }
 }
@@ -189,9 +185,9 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                   variant="ghost"
                   className="gap-3 px-3 h-12 text-foreground hover:bg-accent/10 transition-all duration-300 rounded-full"
                 >
-                  <Avatar className={cn("h-9 w-9 ring-2", theme.avatarRing)}>
+                  <Avatar className={cn("h-9 w-9", theme.avatarRingClass)} style={theme.avatarRingStyle}>
                     {user?.photoUrl && <AvatarImage src={user.photoUrl || "/placeholder.svg"} alt={user.name} />}
-                    <AvatarFallback className={cn("text-xs font-bold", theme.badgeBg, theme.badgeText)}>
+                    <AvatarFallback className="text-xs font-bold bg-muted" style={theme.badgeStyle}>
                       {user?.name ? getInitials(user.name) : "U"}
                     </AvatarFallback>
                   </Avatar>
@@ -199,7 +195,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                     <span className="text-sm font-semibold text-foreground truncate max-w-[160px]">
                       {user?.name || "Usuário"}
                     </span>
-                    <span className={cn("text-xs font-medium truncate max-w-[160px]", theme.badgeText)}>
+                    <span className="text-xs font-medium truncate max-w-[160px]" style={theme.badgeStyle}>
                       {theme.label}
                     </span>
                   </div>
@@ -211,7 +207,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                 className="w-72 overflow-hidden bg-white dark:bg-slate-900 border-0 shadow-2xl rounded-xl p-0"
               >
                 {/* Cabeçalho com gradiente de perfil */}
-                <div className={cn("bg-gradient-to-br p-4", theme.headerGradient)}>
+                <div className="p-4" style={theme.headerStyle}>
                   <div className="flex items-start gap-3">
                     <Avatar className="h-12 w-12 ring-2 ring-white/40 shadow-md">
                       {user?.photoUrl && <AvatarImage src={user.photoUrl || "/placeholder.svg"} alt={user.name} />}
@@ -280,16 +276,16 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                           key={item.route}
                           onClick={() => handleNavigate(item.route)}
                           className={cn(
-                            "flex items-center gap-2.5 cursor-pointer min-h-[40px] rounded-lg mx-1 px-3 transition-all duration-150",
-                            isActive
-                              ? cn(theme.activeBg, theme.activeText, "font-semibold")
-                              : cn("text-foreground", theme.hoverBg, theme.hoverText),
+                            "flex items-center gap-2.5 cursor-pointer min-h-[40px] rounded-lg mx-1 px-3",
+                            theme.hoverClass,
+                            isActive ? theme.activeClass : "text-foreground",
                           )}
+                          style={isActive ? theme.activeStyle : undefined}
                         >
                           <Icon className="h-4 w-4 flex-shrink-0" />
                           <span className="text-sm">{item.label}</span>
                           {isActive && (
-                            <span className={cn("ml-auto h-2 w-2 rounded-full", theme.dotColor)} />
+                            <span className="ml-auto h-2 w-2 rounded-full" style={theme.dotStyle} />
                           )}
                         </DropdownMenuItem>
                       )
@@ -339,7 +335,7 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
               </SheetTrigger>
               <SheetContent side="right" className="w-80 p-0 overflow-hidden">
                 {/* Cabeçalho com gradiente de perfil (mobile) */}
-                <SheetHeader className={cn("p-5 bg-gradient-to-br border-b-0", theme.headerGradient)}>
+                <SheetHeader className="p-5 border-b-0" style={theme.headerStyle}>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12 ring-2 ring-white/40 shadow-md">
                       {user?.photoUrl && <AvatarImage src={user.photoUrl || "/placeholder.svg"} alt={user.name} />}
@@ -389,17 +385,17 @@ export function AppHeader({ subtitle }: AppHeaderProps) {
                             key={item.route}
                             variant="ghost"
                             className={cn(
-                              "justify-start h-12 text-sm min-h-[44px] transition-all duration-150 rounded-lg",
-                              isActive
-                                ? cn(theme.activeBg, theme.activeText, "font-semibold")
-                                : cn("text-foreground", theme.hoverBg, theme.hoverText),
+                              "justify-start h-12 text-sm min-h-[44px] rounded-lg",
+                              theme.hoverClass,
+                              isActive ? theme.activeClass : "text-foreground",
                             )}
+                            style={isActive ? theme.activeStyle : undefined}
                             onClick={() => handleNavigate(item.route)}
                           >
                             <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
                             {item.label}
                             {isActive && (
-                              <span className={cn("ml-auto h-2 w-2 rounded-full", theme.dotColor)} />
+                              <span className="ml-auto h-2 w-2 rounded-full" style={theme.dotStyle} />
                             )}
                           </Button>
                         )
