@@ -757,7 +757,7 @@ function AdminContent() {
               <ExportCsvDialog
                 endpoint="/admin/export/users"
                 filenamePrefix="usuarios"
-                title="Exportar usuários em CSV"
+                title="Exportar usuários em Relatórios"
                 columns={USERS_EXPORT_COLUMNS}
                 initialFilters={{ search: usersSearch, user_type: usersTypeFilter }}
                 filters={[
@@ -952,7 +952,7 @@ function AdminContent() {
               <ExportCsvDialog
                 endpoint="/admin/export/shares"
                 filenamePrefix="compartilhamentos"
-                title="Exportar compartilhamentos em CSV"
+                title="Exportar compartilhamentos em Relatórios"
                 columns={SHARES_EXPORT_COLUMNS}
                 initialFilters={{ search: sharesSearch, status: sharesStatusFilter }}
                 filters={[
@@ -1111,7 +1111,7 @@ function AdminContent() {
               <ExportCsvDialog
                 endpoint="/admin/export/logs"
                 filenamePrefix="logs_auditoria"
-                title="Exportar logs em CSV"
+                title="Exportar logs em Relatórios"
                 columns={LOGS_EXPORT_COLUMNS}
                 initialFilters={{ search: logsSearch, action: logsActionFilter }}
                 filters={[

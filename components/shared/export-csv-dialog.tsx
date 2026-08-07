@@ -100,8 +100,8 @@ export function ExportCsvDialog({
   columns,
   filters = [],
   initialFilters = {},
-  triggerLabel = "Exportar CSV",
-  title = "Exportar relatório em CSV",
+  triggerLabel = "Exportar Relatórios",
+  title = "Exportar relatório",
 }: ExportCsvDialogProps) {
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
@@ -226,7 +226,7 @@ export function ExportCsvDialog({
         variant: "destructive",
         title: "Falha ao exportar",
         description:
-          error instanceof Error ? error.message : "Não foi possível gerar o CSV.",
+          error instanceof Error ? error.message : "Não foi possível gerar o arquivo.",
       })
     } finally {
       phaseTimers.current.forEach(clearTimeout)
@@ -261,7 +261,7 @@ export function ExportCsvDialog({
         {exporting ? (
           <div className="flex flex-col items-center px-6 py-10 text-center">
             <DialogHeader className="sr-only">
-              <DialogTitle>Gerando arquivo CSV</DialogTitle>
+              <DialogTitle>Gerando arquivo</DialogTitle>
               <DialogDescription>
                 Aguarde enquanto o relatório é gerado.
               </DialogDescription>

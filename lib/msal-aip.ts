@@ -9,7 +9,17 @@
  *
  * Tokens adquiridos:
  *   aadrmToken  → https://aadrm.com/user_impersonation
- *   policyToken → https://syncservice.o365syncservice.com/user_impersonation
+ *   policyToken → https://syncservice.o365syncservice.com/UnifiedPolicy.User.Read
+ *
+ * REGRA FUNDAMENTAL — OAuth2 / Entra ID v2.0:
+ *   Cada access token pertence a UM único recurso (campo "aud" no JWT).
+ *   Solicitar escopos de recursos distintos no mesmo acquireTokenPopup() é
+ *   inválido e causa invalid_resource ou redirecionamento para /reprocess.
+ *
+ *   Fluxo correto:
+ *     1. acquireTokenPopup([AADRM_SCOPE])      → popup único para o usuário
+ *     2. acquireTokenSilent([POLICY_SCOPE])    → silent usa o refresh token do cache
+ *     3. Se silent falhar → acquireTokenPopup([POLICY_SCOPE])  (raro, só 1ª vez)
  */
 
 import {
@@ -41,7 +51,7 @@ function getMipTenantId(): string {
 }
 
 const AADRM_SCOPE  = "https://aadrm.com/user_impersonation";
-const POLICY_SCOPE = "https://syncservice.o365syncservice.com/user_impersonation";
+const POLICY_SCOPE = "https://syncservice.o365syncservice.com/.default";
 
 // ---------------------------------------------------------------------------
 // Instância MSAL — lazy init (evita problemas de SSR no Next.js)
@@ -50,6 +60,37 @@ const POLICY_SCOPE = "https://syncservice.o365syncservice.com/user_impersonation
 let _msalInstance: PublicClientApplication | null = null;
 let _initialized = false;
 let _configuredClientId = "";
+
+/**
+ * Remove chaves do sessionStorage que causam interaction_in_progress.
+ *
+ * O MSAL grava uma flag enquanto um popup está em andamento. Se o popup
+ * fechar sem completar o handshake (ex: React StrictMode re-montando o
+ * componente, timeout, erro de rede), a flag fica travada e qualquer
+ * chamada subsequente a acquireTokenPopup falha imediatamente com
+ * interaction_in_progress sem sequer abrir o popup.
+ *
+ * Esta função limpa essas chaves antes de cada popup, garantindo
+ * recuperação automática sem precisar dar F5 na página.
+ */
+function clearMsalInteractionState(): void {
+  if (typeof sessionStorage === "undefined") return;
+  const toRemove: string[] = [];
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    if (key && (
+      key.includes("interaction.status") ||
+      key.includes("request.params")     ||
+      key.includes("nonce.idtoken")      ||
+      key.includes("login.request")      ||
+      key.includes("token.request")      ||
+      key.includes("logout.request")
+    )) {
+      toRemove.push(key);
+    }
+  }
+  toRemove.forEach((k) => sessionStorage.removeItem(k));
+}
 
 async function getMsalInstance(): Promise<PublicClientApplication> {
   const clientId = getMipClientId();
@@ -124,16 +165,21 @@ export interface MipTokens {
 }
 
 /**
- * Adquire os dois tokens MIP num único popup MSAL.
+ * Adquire os dois tokens MIP.
  *
- * Estratégia: solicita AADRM + Policy Sync juntos no mesmo popup.
- * O Azure AD emite um refresh token com acesso a ambos os recursos,
- * permitindo que o token do segundo recurso seja obtido silenciosamente.
+ * Passo 1 — popup apenas para AADRM:
+ *   Um popup = um recurso. Solicitar dois recursos distintos no mesmo popup
+ *   viola o protocolo OAuth2 e causa invalid_resource / reprocess no Entra ID.
  *
- * Resultado:
- *   - aadrmToken  : sempre presente (obrigatório para descriptografar RMS)
- *   - policyToken : presente quando o tenant permite Policy Sync
- *                   (necessário para change-label via SDK — aplica "Público Externo" corretamente)
+ * Passo 2 — silent para Policy Sync:
+ *   Após o popup o MSAL armazena um refresh token no cache. O silent usa esse
+ *   refresh token para emitir o token do segundo recurso sem interação.
+ *
+ * Passo 3 — fallback (raro):
+ *   Se o silent lançar InteractionRequiredAuthError (ex: recurso nunca
+ *   consentido antes), abre um segundo popup apenas para POLICY_SCOPE.
+ *   Se esse também falhar, policyToken = null e o sistema usa o fallback
+ *   OOXML injection (remove-label-as-user) que não precisa desse token.
  */
 export async function acquireMipTokens(): Promise<MipTokens> {
   const msal = await getMsalInstance();
@@ -156,29 +202,18 @@ export async function acquireMipTokens(): Promise<MipTokens> {
     }
   }
 
-  // Popup solicitando os dois escopos
+  // Limpa estado travado de tentativas anteriores antes de abrir o popup.
+  // Sem isso, um popup que fechou sem completar o handshake deixa a flag
+  // interaction_in_progress no sessionStorage e a próxima tentativa falha
+  // imediatamente sem abrir nenhuma janela.
+  clearMsalInteractionState();
+
+  // ── Passo 1: popup APENAS para AADRM ──────────────────────────────────────
+  let aadrmToken: string;
   try {
-    const result = await msal.acquireTokenPopup({
-      scopes: [AADRM_SCOPE, POLICY_SCOPE],
-    });
-
-    const updatedAccounts = msal.getAllAccounts();
-    let policyToken: string | null = null;
-    if (updatedAccounts.length > 0) {
-      try {
-        const pr = await msal.acquireTokenSilent({
-          scopes: [POLICY_SCOPE],
-          account: updatedAccounts[0],
-        });
-        policyToken = pr.accessToken;
-      } catch { /* fallback: remove-label-as-user ainda funciona */ }
-    }
-
-    return { aadrmToken: result.accessToken, policyToken };
-
+    const aadrm = await msal.acquireTokenPopup({ scopes: [AADRM_SCOPE] });
+    aadrmToken = aadrm.accessToken;
   } catch (err) {
-    // AADSTS650053 = recurso AADRM não está nas permissões delegadas do app.
-    // Orienta com mensagem clara para o admin adicionar a permissão.
     const msg = err instanceof Error ? err.message : String(err);
     if (msg.includes("650053") || msg.includes("invalid_client")) {
       throw new Error(
@@ -192,6 +227,36 @@ export async function acquireMipTokens(): Promise<MipTokens> {
       throw new Error("Autenticação cancelada pelo usuário.");
     throw err;
   }
+
+  // ── Passo 2: silent para Policy Sync (usa refresh token gravado pelo popup) ─
+  let policyToken: string | null = null;
+  const updatedAccounts = msal.getAllAccounts();
+  if (updatedAccounts.length > 0) {
+    try {
+      const pr = await msal.acquireTokenSilent({
+        scopes: [POLICY_SCOPE],
+        account: updatedAccounts[0],
+      });
+      policyToken = pr.accessToken;
+    } catch (err) {
+      // ── Passo 3: fallback — segundo popup apenas para Policy Sync ───────────
+      if (err instanceof InteractionRequiredAuthError) {
+        try {
+          const pr = await msal.acquireTokenPopup({
+            scopes:  [POLICY_SCOPE],
+            account: updatedAccounts[0],
+          });
+          policyToken = pr.accessToken;
+        } catch {
+          // Falhou: segue sem policyToken — remove-label-as-user (OOXML) funciona
+          policyToken = null;
+        }
+      }
+      // Qualquer outro erro: segue com policyToken = null (fallback automático)
+    }
+  }
+
+  return { aadrmToken, policyToken };
 }
 
 /** Atalho: adquire apenas o token AADRM. */

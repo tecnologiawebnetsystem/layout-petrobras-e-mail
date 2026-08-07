@@ -1,152 +1,182 @@
-"use client"
+"use client";
 
-import { useEffect, useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
-import { useAuthStore } from "@/lib/stores/auth-store"
-import { AppHeader } from "@/components/shared/app-header"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Activity, ArrowLeft, RefreshCcw } from "lucide-react"
-import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav"
-import { ScrollToTop } from "@/components/shared/scroll-to-top"
-import { FullPageLoader } from "@/components/ui/full-page-loader"
-import { PageHeader } from "@/components/shared/page-header"
-import { LogStatsCards } from "@/components/logs/log-stats-cards"
-import { LogFilters } from "@/components/logs/log-filters"
-import { LogTimeline } from "@/components/logs/log-timeline"
-import { LogPagination } from "@/components/logs/log-pagination"
-import type { AuditLog, AuditPagination, AuditResponse } from "@/components/logs/log-utils"
-import { checkAnyPermission } from "@/lib/auth/permissions"
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { AppHeader } from "@/components/shared/app-header";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Activity, ArrowLeft, RefreshCcw } from "lucide-react";
+import { BreadcrumbNav } from "@/components/shared/breadcrumb-nav";
+import { ScrollToTop } from "@/components/shared/scroll-to-top";
+import { FullPageLoader } from "@/components/ui/full-page-loader";
+import { PageHeader } from "@/components/shared/page-header";
+import { LogStatsCards } from "@/components/logs/log-stats-cards";
+import { LogFilters } from "@/components/logs/log-filters";
+import { LogTimeline } from "@/components/logs/log-timeline";
+import { LogPagination } from "@/components/logs/log-pagination";
+import type {
+  AuditLog,
+  AuditPagination,
+  AuditResponse,
+} from "@/components/logs/log-utils";
+import { checkAnyPermission } from "@/lib/auth/permissions";
 
 export default function LogsPage() {
-  const router = useRouter()
-  const { user, isAuthenticated, _hasHydrated, accessToken } = useAuthStore()
-  const [isLoading, setIsLoading] = useState(true)
-  const [isLoadingLogs, setIsLoadingLogs] = useState(false)
-  const [logs, setLogs] = useState<AuditLog[]>([])
+  const router = useRouter();
+  const { user, isAuthenticated, _hasHydrated, accessToken } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
   const [pagination, setPagination] = useState<AuditPagination>({
     current_page: 1,
     total_pages: 1,
     total_items: 0,
     items_per_page: 50,
-  })
-  const [logFilter, setLogFilter] = useState("all")
-  const [logSearch, setLogSearch] = useState("")
-  const [dateFilter, setDateFilter] = useState("all")
-  const [actionFilter, setActionFilter] = useState("all")
+  });
+  const [logFilter, setLogFilter] = useState("all");
+  const [logSearch, setLogSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [actionFilter, setActionFilter] = useState("all");
 
   // Carregar logs da API
   const fetchLogs = useCallback(
     async (page: number = 1) => {
-      if (!accessToken) return
+      if (!accessToken) return;
 
-      setIsLoadingLogs(true)
+      setIsLoadingLogs(true);
       try {
-        const params = new URLSearchParams()
-        params.set("page", String(page))
-        params.set("limit", "50")
+        const params = new URLSearchParams();
+        params.set("page", String(page));
+        params.set("limit", "50");
 
         if (logFilter !== "all") {
-          params.set("level", logFilter)
+          params.set("level", logFilter);
         }
 
         if (actionFilter !== "all") {
-          params.set("action", actionFilter)
+          params.set("action", actionFilter);
         }
 
         // Filtro de data
         if (dateFilter !== "all") {
-          const now = new Date()
-          let startDate: Date
+          const now = new Date();
+          let startDate: Date;
 
           if (dateFilter === "today") {
-            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+            startDate = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate(),
+            );
           } else if (dateFilter === "week") {
-            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
           } else if (dateFilter === "month") {
-            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
           } else {
-            startDate = new Date(0)
+            startDate = new Date(0);
           }
 
-          params.set("start_date", startDate.toISOString())
+          params.set("start_date", startDate.toISOString());
         }
 
         const res = await fetch(`/api/audit/logs?${params.toString()}`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
-        })
+        });
 
         if (res.ok) {
-          const data: AuditResponse = await res.json()
-          setLogs(data.logs)
-          setPagination(data.pagination)
+          const data: AuditResponse = await res.json();
+          setLogs(data.logs);
+          setPagination(data.pagination);
         }
       } catch (error) {
-        console.error("[v0] Erro ao carregar logs:", error)
+        console.error("[v0] Erro ao carregar logs:", error);
       } finally {
-        setIsLoadingLogs(false)
+        setIsLoadingLogs(false);
       }
     },
     [accessToken, logFilter, actionFilter, dateFilter],
-  )
+  );
 
   useEffect(() => {
-    if (!_hasHydrated) return
+    if (!_hasHydrated) return;
 
     const timer = setTimeout(() => {
       // Guard por permissao granular (CAv4). Fallback para userType em sessoes antigas.
-      const hasReportPermission = checkAnyPermission(user?.permissions, ["report:read"])
-      const hasReportByRole = user?.userType === "supervisor" || user?.userType === "admin"
+      const hasReportPermission = checkAnyPermission(user?.permissions, [
+        "report:read",
+      ]);
+      const hasReportByRole =
+        user?.userType === "supervisor" || user?.userType === "admin";
       if (!isAuthenticated || (!hasReportPermission && !hasReportByRole)) {
-        router.push("/")
+        router.push("/");
       } else {
-        setIsLoading(false)
-        fetchLogs(1)
+        setIsLoading(false);
+        fetchLogs(1);
       }
-    }, 500)
+    }, 500);
 
-    return () => clearTimeout(timer)
-  }, [_hasHydrated, isAuthenticated, user, router, fetchLogs])
+    return () => clearTimeout(timer);
+  }, [_hasHydrated, isAuthenticated, user, router, fetchLogs]);
 
   // Recarregar quando filtros mudarem
   useEffect(() => {
     if (!isLoading && accessToken) {
-      fetchLogs(1)
+      fetchLogs(1);
     }
-  }, [logFilter, actionFilter, dateFilter])
+  }, [logFilter, actionFilter, dateFilter]);
 
   // Filtrar logs localmente pela busca
   const filteredLogs = logs.filter((log) => {
-    if (!logSearch) return true
+    if (!logSearch) return true;
 
-    const searchLower = logSearch.toLowerCase()
+    const searchLower = logSearch.toLowerCase();
     return (
       log.action.toLowerCase().includes(searchLower) ||
       log.details?.description?.toLowerCase().includes(searchLower) ||
       log.user?.name?.toLowerCase().includes(searchLower) ||
       log.user?.email?.toLowerCase().includes(searchLower) ||
       String(log.details?.target_id || "").includes(searchLower)
-    )
-  })
+    );
+  });
 
   // Estatisticas (baseadas nos logs carregados)
   const stats = {
     total: pagination.total_items,
-    success: logs.filter((l) => l.level === "success" || l.level === "INFO").length,
-    error: logs.filter((l) => l.level === "error" || l.level === "ERROR").length,
-    warning: logs.filter((l) => l.level === "warning" || l.level === "WARNING").length,
-    info: logs.filter((l) => l.level === "info" || l.level === "INFO" || !l.level).length,
-  }
+    success: logs.filter((l) => l.level === "success" || l.level === "INFO")
+      .length,
+    error: logs.filter((l) => l.level === "error" || l.level === "ERROR")
+      .length,
+    warning: logs.filter((l) => l.level === "warning" || l.level === "WARNING")
+      .length,
+    info: logs.filter(
+      (l) => l.level === "info" || l.level === "INFO" || !l.level,
+    ).length,
+  };
 
   if (isLoading) {
-    return <FullPageLoader message="Carregando logs do sistema..." subMessage="Buscando registros de atividades" />
+    return (
+      <FullPageLoader
+        message="Carregando logs do sistema..."
+        subMessage="Buscando registros de atividades"
+      />
+    );
   }
 
-  const hasReportAccess = checkAnyPermission(user?.permissions, ["report:read"]) || user?.userType === "supervisor" || user?.userType === "admin"
+  const hasReportAccess =
+    checkAnyPermission(user?.permissions, ["report:read"]) ||
+    user?.userType === "supervisor" ||
+    user?.userType === "admin";
   if (!_hasHydrated || !isAuthenticated || !hasReportAccess) {
-    return null
+    return null;
   }
 
   return (
@@ -156,7 +186,10 @@ export default function LogsPage() {
 
       <main className="container mx-auto px-4 py-6 max-w-7xl">
         <BreadcrumbNav
-          items={[{ label: "Gestor", href: "/supervisor" }, { label: "Logs e Rastreamento" }]}
+          items={[
+            { label: "Inicio", href: "/supervisor" },
+            { label: "Logs e Rastreamento" },
+          ]}
           dashboardLink="/supervisor"
         />
 
@@ -174,10 +207,16 @@ export default function LogsPage() {
                 disabled={isLoadingLogs}
                 className="gap-2"
               >
-                <RefreshCcw className={`h-4 w-4 ${isLoadingLogs ? "animate-spin" : ""}`} />
+                <RefreshCcw
+                  className={`h-4 w-4 ${isLoadingLogs ? "animate-spin" : ""}`}
+                />
                 Atualizar
               </Button>
-              <Button variant="outline" onClick={() => router.push("/supervisor")} className="gap-2">
+              <Button
+                variant="outline"
+                onClick={() => router.push("/supervisor")}
+                className="gap-2"
+              >
                 <ArrowLeft className="h-4 w-4" />
                 Voltar ao Painel
               </Button>
@@ -200,9 +239,12 @@ export default function LogsPage() {
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <CardTitle className="text-xl">Registros de Atividade</CardTitle>
+                <CardTitle className="text-xl">
+                  Registros de Atividade
+                </CardTitle>
                 <CardDescription>
-                  Exibindo {filteredLogs.length} de {pagination.total_items} registros
+                  Exibindo {filteredLogs.length} de {pagination.total_items}{" "}
+                  registros
                 </CardDescription>
               </div>
               <Button
@@ -210,10 +252,10 @@ export default function LogsPage() {
                 size="sm"
                 className="gap-2"
                 onClick={() => {
-                  setLogFilter("all")
-                  setLogSearch("")
-                  setDateFilter("all")
-                  setActionFilter("all")
+                  setLogFilter("all");
+                  setLogSearch("");
+                  setDateFilter("all");
+                  setActionFilter("all");
                 }}
               >
                 <RefreshCcw className="h-4 w-4" />
@@ -246,5 +288,5 @@ export default function LogsPage() {
         </Card>
       </main>
     </div>
-  )
+  );
 }
