@@ -1,0 +1,135 @@
+====================================================================
+  ANÁLISE DE ARQUIVOS BACKEND SEM USO DETECTADO
+  Data: 07/08/2026
+====================================================================
+
+METODOLOGIA
+-----------
+Foram verificados todos os arquivos em app/api/ e lib/.
+Para cada rota (route.ts) foi checado se o seu path é chamado
+em qualquer arquivo .ts/.tsx do projeto (app/, components/, hooks/, lib/).
+Para cada lib foi checado se o seu módulo é importado em algum outro arquivo.
+
+====================================================================
+1. ROTAS API — Não chamadas pelo frontend nem por outros arquivos
+====================================================================
+
+ATENÇÃO: Rotas de API podem ser chamadas por sistemas externos (backend,
+integrações, CRON jobs, serviços externos). Confirme antes de remover.
+
+--- Rotas SEM qualquer referência no código frontend ---
+
+app/api/auth/cav4/login/route.ts
+  Motivo: nenhum arquivo do frontend chama "/api/auth/cav4/login".
+  Obs.: Faz proxy para /api/v1/auth/cav4/login. Pode ser legado.
+
+app/api/auth/cav4/refresh/route.ts
+  Motivo: nenhum arquivo do frontend chama "/api/auth/cav4/refresh".
+  Obs.: Faz proxy para /api/v1/auth/cav4/refresh. Pode ser legado.
+
+app/api/auth/login/route.ts
+  Motivo: o frontend usa "/api/v1/auth/login" (via proxy.ts), não "/api/auth/login".
+  Obs.: Arquivo tem route.test.ts associado. Possível rota legada em processo
+        de migração para o padrão /api/v1/*.
+
+app/api/auth/logout/route.ts
+  Motivo: o frontend usa "/api/v1/auth/logout", não "/api/auth/logout".
+  Obs.: Mesma situação de migração que auth/login.
+
+app/api/auth/refresh/route.ts
+  Motivo: o frontend usa "/api/v1/auth/refresh", não "/api/auth/refresh".
+  Obs.: Mesma situação de migração.
+
+app/api/send-email/route.ts
+  Motivo: nenhum arquivo do projeto chama "/api/send-email".
+  Obs.: Verificar se é chamado por trigger externo (ex.: webhook, serviço backend).
+
+app/api/send-otp-email/route.ts
+  Motivo: nenhum arquivo do projeto chama "/api/send-otp-email".
+  Obs.: Verificar se é chamado por trigger externo.
+
+====================================================================
+2. ARQUIVOS DE TESTE (route.test.ts) — Rotas possivelmente legadas
+====================================================================
+
+Os arquivos abaixo são testes das rotas sem prefixo /v1 listadas acima.
+Se as rotas forem removidas, estes testes também devem ser removidos.
+
+app/api/auth/external/request-code/route.test.ts
+app/api/auth/external/verify-code/route.test.ts
+app/api/auth/internal/login/route.test.ts
+app/api/auth/internal/logout/route.test.ts
+app/api/auth/internal/signup/route.test.ts
+app/api/auth/login/route.test.ts
+app/api/auth/logout/route.test.ts
+app/api/auth/refresh/route.test.ts
+
+  Obs.: Os testes de auth/external/* e auth/internal/* podem ser válidos,
+        pois essas rotas ainda são chamadas pelo frontend. Avalie caso a caso.
+
+====================================================================
+3. LIB — Arquivos com uso restrito ou suspeito
+====================================================================
+
+lib/utils/create-mock-zip.ts
+  Refs: 1 (apenas lib/stores/workflow-store.ts via import dinâmico)
+  Status: SUSPEITO — importado somente no workflow-store, que simula
+          dados mock. Verifique se esse código de mock ainda é necessário
+          em produção ou se pode ser removido junto com o workflow-store.
+
+lib/hooks/use-permission.ts
+  Refs: 1 (apenas components/auth/permission-gate.tsx)
+  Status: SUSPEITO — o componente permission-gate.tsx já consta como
+          não utilizado no frontend (ver analise-arquivos-nao-utilizados.txt).
+          Se o permission-gate for removido, este hook fica órfão.
+
+lib/msal-aip.ts
+  Refs: 2 (app/auth/mip-redirect/page.tsx e components/upload/mip-auth-modal.tsx)
+  Status: EM USO — mantido como referência para o fluxo MIP. Não remover.
+
+====================================================================
+4. DUPLICIDADE DE ROTAS — Padrão antigo vs. /v1
+====================================================================
+
+O projeto está em processo de migração para o padrão /api/v1/*.
+As rotas abaixo existem em DOIS locais: sem prefixo (legado) e com /v1 (atual).
+O frontend já usa exclusivamente as rotas com /v1. As sem prefixo são candidatas
+a remoção após confirmação de que nenhum sistema externo as utiliza.
+
+  LEGADO (sem /v1)                         ATUAL (com /v1, via proxy.ts)
+  -----------------------------------      ------------------------------------
+  app/api/auth/login/route.ts          ->  app/api/auth/login/*  (proxy fwd)
+  app/api/auth/logout/route.ts         ->  proxy.ts -> /api/v1/auth/logout
+  app/api/auth/refresh/route.ts        ->  proxy.ts -> /api/v1/auth/refresh
+  app/api/auth/cav4/login/route.ts     ->  proxy.ts -> /api/v1/auth/cav4/login
+  app/api/auth/cav4/refresh/route.ts   ->  proxy.ts -> /api/v1/auth/cav4/refresh
+
+====================================================================
+5. CONCLUSÃO — AÇÃO RECOMENDADA
+====================================================================
+
+CANDIDATOS À REMOÇÃO (confirmar antes):
+  - app/api/auth/cav4/login/route.ts
+  - app/api/auth/cav4/refresh/route.ts
+  - app/api/auth/login/route.ts  + route.test.ts
+  - app/api/auth/logout/route.ts + route.test.ts
+  - app/api/auth/refresh/route.ts + route.test.ts
+  - app/api/send-email/route.ts
+  - app/api/send-otp-email/route.ts
+
+CANDIDATOS À REMOÇÃO (dependentes do frontend, ver outro relatório):
+  - lib/utils/create-mock-zip.ts   (se workflow-store mock for removido)
+  - lib/hooks/use-permission.ts    (se permission-gate.tsx for removido)
+
+EM USO — NÃO REMOVER:
+  - lib/msal-aip.ts
+  - lib/api/route-handler-utils.ts (68 referências)
+  - lib/env.ts                     (35 referências)
+  - proxy.ts                       (69 referências — roteador central)
+  - lib/auth/cav4-config.ts        (4 referências)
+  - lib/auth/permissions.ts        (em uso no supervisor e sender)
+  - lib/services/microsoft-graph-mail.tsx (em uso no send-email flow)
+
+====================================================================
+FIM DO RELATÓRIO
+====================================================================
