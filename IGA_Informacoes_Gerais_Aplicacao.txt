@@ -1,0 +1,414 @@
+==============================================================================
+IGA — INFORMAÇÕES GERAIS DA APLICAÇÃO
+SCAC (A12022) — Solução de Compartilhamento de Arquivos Confidenciais
+==============================================================================
+
+Classificação: Interno
+Versão do documento: 1.0
+Data de elaboração: 11/08/2026
+Base: Código-fonte dos repositórios A12022_FrontEnd (Next.js) e A12022_BackEnd
+(FastAPI), conforme documentação técnica interna (SCAC_Arquitetura.md v3.0)
+
+------------------------------------------------------------------------------
+1. OBJETIVO
+------------------------------------------------------------------------------
+
+Disponibilizar um canal corporativo seguro, controlado e auditável para que
+colaboradores da Petrobras compartilhem arquivos confidenciais (inclusive
+documentos protegidos por Microsoft Purview / MIP) com destinatários externos
+— parceiros, fornecedores e órgãos reguladores —, eliminando o uso de e-mail
+convencional para esse fim e garantindo:
+
+  - Rastreabilidade completa de todo o ciclo de vida do arquivo;
+  - Aprovação hierárquica obrigatória para envios sensíveis;
+  - Controle de prazo de acesso (expiração e revogação);
+  - Trilha de auditoria imutável de todas as ações realizadas no sistema.
+
+------------------------------------------------------------------------------
+2. NECESSIDADE DO NEGÓCIO
+------------------------------------------------------------------------------
+
+O compartilhamento de arquivos confidenciais por e-mail convencional expõe a
+Petrobras a riscos de:
+
+  a) Falta de rastreabilidade — não há registro estruturado de quem enviou,
+     para quem, quando e o que foi acessado;
+  b) Ausência de governança — arquivos sensíveis podem ser enviados sem
+     validação de um gestor;
+  c) Acesso irrestrito a conteúdo rotulado (MIP) — sem controle sobre
+     re-rotulagem ou remoção indevida de classificação de confidencialidade;
+  d) Ausência de expiração — links e anexos permanecem acessíveis
+     indefinidamente, mesmo após o encerramento da necessidade de negócio;
+  e) Falta de trilha de auditoria para fins de compliance e investigação.
+
+O SCAC resolve esses problemas por meio de:
+
+  Problema                                    | Solução SCAC
+  ---------------------------------------------|--------------------------------
+  Envio não rastreável via e-mail convencional | Compartilhamento com
+                                                | rastreamento completo em banco
+  Ausência de aprovação hierárquica            | Workflow de aprovação pelo
+                                                | gestor imediato (supervisor)
+  Acesso irrestrito a arquivos MIP-rotulados   | Integração com Microsoft
+                                                | Purview para re-rotulagem
+                                                | controlada
+  Falta de expiração/revogação de acesso       | Links com TTL configurável e
+                                                | revogação automática
+  Ausência de trilha de auditoria              | Tabela "audit" com todos os
+                                                | eventos do sistema
+
+------------------------------------------------------------------------------
+3. DADOS GERAIS DA APLICAÇÃO
+------------------------------------------------------------------------------
+
+  Nome da aplicação ..........: SCAC — Solução de Compartilhamento de
+                                 Arquivos Confidenciais
+  Código do sistema ..........: A12022
+  Repositórios ................: A12022_FrontEnd / A12022_BackEnd
+                                 (arquitetura de microserviços em dois
+                                 repositórios independentes)
+  Natureza .....................: Sistema corporativo interno Petrobras
+  Ambiente de execução .........: Amazon ECS (Fargate), Multi-AZ
+  Registry de imagens ..........: registry.petrobras.com.br
+  Banco de dados ................: Amazon Aurora PostgreSQL (Multi-AZ)
+  Armazenamento de arquivos ....: Amazon S3
+  Comunicação Front/Back .......: API REST versionada (/api/v1/), autenticação
+                                 via JWT interno
+  Ambientes disponíveis .........: DSV (desenvolvimento), TST (testes),
+                                 HMG (homologação), PRD (produção)
+  Documentação de referência ...: SCAC_Arquitetura.md (documento técnico
+                                 detalhado de arquitetura)
+
+------------------------------------------------------------------------------
+4. PERFIS E PERMISSÕES
+------------------------------------------------------------------------------
+
+4.1. Perfis de Usuário
+
+  Perfil            | Descrição
+  ------------------|---------------------------------------------------------
+  Usuário Interno   | Colaborador Petrobras autenticado via CAv4 (padrão) ou
+                     | Entra ID. Pode fazer upload e solicitar
+                     | compartilhamentos.
+  Supervisor        | Colaborador interno com permissão de aprovação sobre
+                     | os compartilhamentos de seus subordinados (vínculo
+                     | via manager_id).
+  Administrador     | Super administrador global. Visibilidade total do
+                     | sistema, sem restrições hierárquicas. Pode promover
+                     | outros usuários.
+  Usuário Externo   | Destinatário de fora da Petrobras. Acessa via portal
+                     | público com autenticação OTP (código de 6 dígitos
+                     | enviado por e-mail). Não possui credenciais do Active
+                     | Directory.
+
+4.2. Matriz de Permissões (RBAC)
+
+  Permissão        | Admin | Supervisor | Interno | Externo
+  ------------------|-------|------------|---------|---------
+  shares:create     |   X   |     X      |    X    |    —
+  shares:read       |   X   |     X      |    X    |    —
+  shares:approve    |   X   |     X      |    —    |    —
+  shares:reject     |   X   |     X      |    —    |    —
+  shares:cancel     |   X   |     X      |    X    |    —
+  shares:extend     |   X   |     X      |    —    |    —
+  file:upload       |   X   |     X      |    X    |    —
+  report:read       |   X   |     X      |    —    |    —
+  admin:*           |   X   |     —      |    —    |    —
+
+4.3. Páginas Acessíveis por Perfil
+
+  Perfil       | Páginas
+  -------------|---------------------------------------------------------------
+  Externo      | /download, /external-verify
+  Interno      | /upload, /compartilhamentos, /historico, /configuracoes
+  Supervisor   | (perfil Interno) + /supervisor,
+               |   /supervisor/detalhes/[id]
+  Admin        | (perfil Interno) + /admin, /auditoria, /logs, /docs
+
+4.4. Regras Especiais de Perfil
+
+  - Aprovação automática por cargo: colaboradores com cargos elevados
+    (Gerente Geral/Executivo, Diretor, Presidente, Auditor-Geral,
+    Ouvidor-Geral, Secretário-Geral, Chefe de Gabinete da Presidência,
+    Corregedor-Geral) e administradores têm compartilhamentos
+    auto-aprovados, sem intervenção do supervisor. Lista configurável via
+    parâmetro AUTO_APPROVE_JOB_TITLES.
+  - Supervisor sem subordinados vinculados (manager_id) não recebe acesso
+    ao módulo de aprovação.
+  - Mapeamento de roles CAv4 para perfis SCAC é configurável via parâmetros
+    (CAV4_ADMIN_ROLE_NAMES, CAV4_SUPERVISOR_ROLE_NAMES,
+    CAV4_INTERNAL_ROLE_NAMES).
+
+------------------------------------------------------------------------------
+5. FLUXO OPERACIONAL
+------------------------------------------------------------------------------
+
+5.1. Compartilhamento com Aprovação do Supervisor
+
+  1. Usuário interno faz upload de arquivo(s) e solicita compartilhamento
+     (POST /shares/create), informando destinatário externo e política de
+     expiração.
+  2. Backend cria o registro de compartilhamento com status PENDENTE e
+     armazena o(s) arquivo(s) no S3.
+  3. Sistema verifica o cargo do solicitante:
+       - Se elegível para auto-aprovação: status muda diretamente para
+         ATIVO e o destinatário externo é notificado por e-mail.
+       - Caso contrário: e-mail é enviado ao supervisor imediato solicitando
+         aprovação.
+  4. Supervisor aprova (POST /supervisor/approve/{file_id}) ou rejeita
+     (POST /supervisor/reject/{file_id}):
+       - Na aprovação: valida vínculo hierárquico, muda status para ATIVO,
+         define data de expiração e notifica o destinatário externo por
+         e-mail.
+       - Na rejeição: status muda para REJEITADO, motivo é registrado e
+         solicitante é notificado.
+
+5.2. Download por Usuário Externo (Autenticação OTP)
+
+  1. Destinatário externo acessa o portal público e informa o e-mail
+     (POST /download/verify).
+  2. Sistema verifica existência de compartilhamento ATIVO para aquele
+     e-mail e envia código OTP de 6 dígitos por e-mail (validade de 5
+     minutos, máximo de 5 tentativas, cooldown de 15 minutos após bloqueio).
+  3. Externo informa o código recebido (POST /download/authenticate);
+     sistema valida e emite um token de acesso temporário.
+  4. Externo lista os arquivos disponíveis e realiza o download individual
+     (URL presignada do S3) ou em lote (ZIP).
+  5. Ciclo de vida do compartilhamento é atualizado conforme a política de
+     consumo configurada (expira após todos os downloads ou após o
+     primeiro download).
+
+5.3. Ciclo de Vida do Compartilhamento (estados)
+
+  Status      | Descrição
+  ------------|------------------------------------------------------------
+  pendente    | Aguardando aprovação do supervisor
+  aprovado    | Aprovado, aguardando notificação ao externo
+  ativo       | Disponível para download
+  rejeitado   | Rejeitado pelo supervisor
+  concluido   | Todos os arquivos baixados
+  expirado    | Prazo de validade (TTL) expirado
+  cancelado   | Cancelado pelo próprio solicitante
+
+------------------------------------------------------------------------------
+6. ARQUITETURA TECNOLÓGICA
+------------------------------------------------------------------------------
+
+A solução adota arquitetura de microserviços em dois repositórios
+independentes, cada um conteinerizado e executado em Amazon ECS (Fargate),
+com suporte a multi-AZ. A comunicação entre Front End e Back End ocorre
+exclusivamente via API REST versionada (/api/v1/), com autenticação por JWT
+interno emitido pelo Back End após validação das credenciais corporativas.
+
+  Camada de apresentação (Front End)
+    - Next.js App Router, com padrão BFF (Backend-For-Frontend) via Route
+      Handlers: nenhuma chamada HTTP é feita diretamente do navegador para
+      o backend real; tudo passa pelos Route Handlers do Next.js, que
+      injetam autenticação e repassam ao serviço Python.
+
+  Camada de lógica de negócio (Back End)
+    - FastAPI (Python), responsável por regras de negócio, autenticação e
+      autorização, orquestração de operações de arquivos, integrações
+      externas e exposição das APIs REST versionadas.
+
+  Camada de persistência
+    - Amazon Aurora PostgreSQL (Multi-AZ), com migrações gerenciadas via
+      Alembic, executadas automaticamente no boot do contêiner.
+
+  Camada de armazenamento de arquivos
+    - Amazon S3: todo arquivo é enviado com chave estruturada
+      {area_prefix}/{share_id}_{uuid}_{nome_sanitizado}. Downloads via
+      streaming pelo Back End ou URL presignada. Objetos são removidos
+      automaticamente na rejeição ou cancelamento do compartilhamento.
+
+  Diagrama simplificado:
+
+    Usuário Interno / Usuário Externo
+              |
+              v
+    Front End (Next.js — App Router / Route Handlers / BFF)
+              |  REST + JWT
+              v
+    Back End (FastAPI / Python)
+              |                     \
+              v                      v
+    Amazon Aurora PostgreSQL     Amazon S3 (arquivos)
+              |
+    Integrações: CAv4 (IdP Petrobras), Microsoft Graph,
+                 Microsoft Purview/MIP, SMTP Petrobras
+
+------------------------------------------------------------------------------
+7. TECNOLOGIAS UTILIZADAS
+------------------------------------------------------------------------------
+
+7.1. Front End
+
+  Camada          | Tecnologia                 | Observação
+  -----------------|-----------------------------|---------------------------
+  Framework        | Next.js (App Router)        | force-dynamic no layout
+                    |                             | raiz para leitura de env
+                    |                             | em runtime
+  Linguagem        | TypeScript                  | Tipagem estrita
+  UI Components    | shadcn/ui + Radix UI         | Componentes acessíveis
+  Estilização      | Tailwind CSS                 | Tokens via @theme
+  Formulários      | react-hook-form + zod        | Validação client-side
+  Estado global    | Zustand + Immer              | Auth store, UI state
+  Data fetching    | SWR                          | Cache/revalidação
+  Autenticação     | @azure/msal-browser           | MSAL SPA (Entra ID)
+  PDF / evidências | jsPDF                        | Comprovantes
+  ZIP              | JSZip                        | Download em lote
+  Gráficos         | Recharts                     | Dashboard administrativo
+  Testes           | Jest                         | Unitários/integração
+  Container        | Node.js 20 (Alpine)          | Dockerfile multi-stage
+
+7.2. Back End
+
+  Camada           | Tecnologia            | Observação
+  ------------------|-----------------------|---------------------------------
+  Framework         | FastAPI               | Assíncrono, OpenAPI automático
+  Linguagem         | Python 3.12           | Container slim da registry
+                     |                       | Petrobras
+  ORM / Query       | SQLModel + psycopg3    | Tipo-safe sobre SQLAlchemy 2.x
+  Migrations        | Alembic               | Versionamento de esquema
+  Auth JWT          | PyJWT                 | HS256 (interno) / RS256 (JWKS)
+  Hashing           | bcrypt                | Senhas de usuários externos
+  Cliente HTTP      | httpx                 | Graph API, CAv4, MIP SDK
+  AWS SDK           | boto3 / botocore      | S3, Parameter Store, Secrets
+                     |                       | Manager
+  Logging           | structlog             | JSON estruturado em produção
+  Validação/Config  | pydantic-settings     | Lê env, Parameter Store,
+                     |                       | Secrets Manager
+  Testes            | pytest                | Unitários e de integração
+  Servidor ASGI     | Uvicorn               | Multi-worker em produção
+
+7.3. Infraestrutura
+
+  - Contêineres (Dockerfile multi-stage) publicados no registry interno
+    Petrobras.
+  - Execução em Amazon ECS (Fargate), Multi-AZ.
+  - Pipeline CI/CD via GitHub Actions (snapshot, start-release,
+    finish-release, redeploy).
+  - Configuração hierárquica: variável de ambiente da Task Definition >
+    Secrets Manager > Parameter Store > defaults da aplicação.
+
+------------------------------------------------------------------------------
+8. SEGURANÇA E CONTROLE DE ACESSO
+------------------------------------------------------------------------------
+
+8.1. Autenticação e Sessão
+
+  - JWT HS256 para sessões internas (issuer "secure-share"), validado em
+    todos os endpoints protegidos.
+  - Duração do access token: 60 minutos (CAv4) / 480 minutos (Entra ID).
+  - Refresh token com duração de 7 dias e rotação obrigatória: cada uso
+    invalida o token anterior e emite um novo.
+  - Tokens nunca armazenados em texto plano — apenas hash SHA-256.
+  - Código OTP também armazenado apenas como hash SHA-256.
+  - Fluxos OAuth 2.0 utilizam obrigatoriamente PKCE (RFC 7636), eliminando
+    a necessidade de client_secret no frontend.
+
+8.2. Controle de Acesso (RBAC)
+
+  - Autorização por permissão: middleware require_permission() aplicado em
+    cada endpoint.
+  - Scoping hierárquico: supervisores só visualizam compartilhamentos de
+    seus subordinados diretos (manager_id).
+  - Administradores possuem visibilidade total, sem restrição hierárquica.
+
+8.3. Proteção contra Ataques
+
+  - Bloqueio de contas locais (usuários externos) após 5 tentativas de
+    login falhas consecutivas.
+  - OTP: validade de 5 minutos, máximo de 5 tentativas, cooldown de 15
+    minutos após bloqueio.
+  - Extensões de arquivo bloqueadas no upload: .exe .dll .bat .cmd .com
+    .msi .scr .vbs .ps1 .sh
+  - Sanitização de nomes de arquivo antes do upload.
+
+8.4. Governança de Segredos
+
+  - Segredos sensíveis (client secrets, JWT secret, senhas SMTP)
+    armazenados no AWS Secrets Manager.
+  - Parâmetros não sensíveis armazenados no AWS Parameter Store, seguindo
+    convenção de nomenclatura por ambiente
+    (/APP/{serviço}-{ambiente}/{variável}).
+  - Credenciais AWS não constam nos secrets quando a Task ECS utiliza IAM
+    Role — cadeia de credenciais padrão do boto3.
+
+------------------------------------------------------------------------------
+9. INTEGRAÇÕES EXTERNAS
+------------------------------------------------------------------------------
+
+9.1. CAv4 — Identity Provider Corporativo Petrobras (Autenticação Padrão)
+
+  - Protocolo OIDC Authorization Code + PKCE (RFC 7636).
+  - Descoberta de endpoints via OIDC_DISCOVERY_URL.
+  - Validação de token via JWKS (RS256), com verificação de exp, iss, aud
+    e nonce.
+  - Consulta de roles e permissões do usuário via API do CAv4
+    (CA_API_BASE_URL).
+  - Uso de truststore corporativo Petrobras para TLS.
+  - Fluxo: login → geração de state/nonce/PKCE → redirecionamento ao CAv4
+    → autenticação SSO corporativa → callback com código → troca por
+    tokens → validação do id_token → extração da matrícula → consulta de
+    roles → enriquecimento via Microsoft Graph → sincronização do usuário
+    → emissão de JWT interno + refresh token.
+  - Mapeamento de roles CAv4 para perfis SCAC (admin, supervisor, interno)
+    configurável via parâmetros.
+
+9.2. Microsoft Entra ID (Azure Active Directory)
+
+  Utilizado para dois fins:
+
+  a) Autenticação (modo legado, quando AUTH_MODE=entra): fluxo MSAL SPA
+     (Authorization Code + PKCE), com verificação de pertencimento ao
+     grupo GN_CLOUD_AWS_SCAC_USERS e validação de id_token via JWKS da
+     Microsoft.
+
+  b) Enriquecimento de perfil (Microsoft Graph API — usado em ambos os
+     modos de autenticação):
+
+     Dado             | Endpoint Graph          | Uso no SCAC
+     ------------------|--------------------------|---------------------------
+     Cargo (jobTitle)  | GET /v1.0/me             | Aprovação automática;
+                         |                          | exibição no perfil
+     Departamento      | GET /v1.0/me             | Exibição e filtros
+     Matrícula          | GET /v1.0/me             | Correlação com
+                         |                          | employee_id
+     Nome do gestor     | GET /v1.0/me/manager     | Vínculo hierárquico
+                         |                          | (manager_id)
+     E-mail do gestor   | GET /v1.0/me/manager     | Notificações ao
+                         |                          | supervisor
+     Foto               | GET /v1.0/me/photo/$value| Avatar do perfil
+
+     - Postura de falha configurável: por padrão, login não é bloqueado
+       caso o Graph falhe (GRAPH_REQUIRED=false).
+
+9.3. Microsoft Purview / MIP (Microsoft Information Protection)
+
+  - Integração com SDK MIP dedicado para consulta e alteração de rótulos
+    de confidencialidade em arquivos antes do compartilhamento.
+  - Autenticação via device code flow (padrão) ou popup MSAL.
+  - Modo "falha fechada" configurável: se habilitado, falha do SDK bloqueia
+    a operação de compartilhamento.
+
+9.4. Amazon S3
+
+  - Armazenamento de todos os arquivos binários (metadados no
+    PostgreSQL). Upload via API do backend ou URL presignada; download via
+    streaming ou URL presignada (TTL padrão 300s). Limpeza automática de
+    objetos em cancelamento/rejeição.
+
+9.5. SMTP Petrobras (E-mail Corporativo)
+
+  - Envio de e-mails via servidor SMTP corporativo (smtp.petrobras.com.br),
+    com suporte a headers de roteamento (desvio em ambientes não
+    produtivos) e proteção MIP automática via Exchange.
+  - Alternativa configurável: Amazon SES.
+  - Tipos de e-mail: verificação OTP, notificação de compartilhamento
+    pendente, aprovação, rejeição, confirmação de download, aviso de
+    expiração, reset de senha e boas-vindas.
+
+==============================================================================
+FIM DO DOCUMENTO
+==============================================================================
