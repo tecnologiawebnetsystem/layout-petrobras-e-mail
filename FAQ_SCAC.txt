@@ -1,0 +1,313 @@
+==============================================================================
+FAQ — PERGUNTAS FREQUENTES
+SCAC (A12022) — Solução de Compartilhamento de Arquivos Confidenciais
+==============================================================================
+
+Classificação: Interno
+Versão do documento: 1.0
+Data de elaboração: 12/08/2026
+Base: Código-fonte dos repositórios A12022_FrontEnd (Next.js) e A12022_BackEnd
+(FastAPI), conforme IGA_Informacoes_Gerais_Aplicacao.txt e SCAC_Arquitetura.md
+
+------------------------------------------------------------------------------
+1. SOBRE O SISTEMA
+------------------------------------------------------------------------------
+
+P: O que é o SCAC?
+R: SCAC (Solução de Compartilhamento de Arquivos Confidenciais, código de
+   sistema A12022) é um canal corporativo seguro para que colaboradores da
+   Petrobras compartilhem arquivos confidenciais — inclusive documentos
+   protegidos por Microsoft Purview/MIP — com destinatários externos
+   (parceiros, fornecedores, órgãos reguladores), com aprovação, expiração
+   e auditoria completa.
+
+P: Por que não posso simplesmente enviar o arquivo por e-mail?
+R: O e-mail convencional não oferece rastreabilidade, aprovação hierárquica,
+   controle de expiração de acesso nem trilha de auditoria. O SCAC resolve
+   esses riscos registrando todo o ciclo de vida do compartilhamento em
+   banco de dados e aplicando regras de governança automatizadas.
+
+P: Quem pode usar o SCAC?
+R: Colaboradores internos da Petrobras (autenticados via CAv4 ou Entra ID)
+   para enviar arquivos, e destinatários externos (sem credenciais de AD)
+   para acessar/baixar os arquivos compartilhados, via portal público com
+   autenticação por código OTP enviado por e-mail.
+
+P: O SCAC substitui o e-mail corporativo?
+R: Não. O SCAC é um canal complementar específico para o compartilhamento
+   de arquivos confidenciais com terceiros externos. O e-mail continua
+   sendo usado para comunicação geral; o SCAC apenas notifica as partes
+   (solicitante, supervisor, externo) sobre eventos do compartilhamento.
+
+------------------------------------------------------------------------------
+2. ACESSO E AUTENTICAÇÃO
+------------------------------------------------------------------------------
+
+P: Como um usuário interno acessa o sistema?
+R: Via login corporativo. O modo padrão de autenticação é o CAv4 (Identity
+   Provider da Petrobras), com fluxo OIDC Authorization Code + PKCE. Há
+   também suporte a Microsoft Entra ID como modo alternativo/legado
+   (MSAL SPA), configurável pela variável AUTH_MODE.
+
+P: Como um destinatário externo acessa os arquivos, já que não tem login
+   corporativo?
+R: O externo acessa o portal público (/download), informa o e-mail para o
+   qual o compartilhamento foi endereçado e recebe um código OTP de 6
+   dígitos por e-mail. Ao informar o código corretamente, um token de
+   acesso temporário é emitido para listar e baixar os arquivos.
+
+P: Qual a validade do código OTP e quantas tentativas eu tenho?
+R: O código OTP tem validade de 5 minutos, com máximo de 5 tentativas de
+   digitação. Após esgotar as tentativas, há um cooldown (bloqueio
+   temporário) de 15 minutos antes de permitir nova solicitação.
+
+P: Esqueci/não recebi o código OTP, o que faço?
+R: Verifique a caixa de spam/lixo eletrônico e confirme que o e-mail
+   informado é exatamente o mesmo para o qual o compartilhamento foi
+   endereçado. Após o período de validade (5 minutos) é possível solicitar
+   um novo código. Se o problema persistir, entre em contato com o
+   solicitante interno ou com o suporte.
+
+P: Por quanto tempo minha sessão fica ativa?
+R: O token de acesso (access token) dura 60 minutos para login via CAv4 e
+   480 minutos para login via Entra ID. Há um refresh token válido por 7
+   dias, com rotação obrigatória — cada uso gera um novo refresh token e
+   invalida o anterior.
+
+P: Minha conta pode ser bloqueada?
+R: Sim, contas de usuários externos são bloqueadas após 5 tentativas de
+   login/OTP falhas consecutivas, como proteção contra ataques de força
+   bruta.
+
+------------------------------------------------------------------------------
+3. PERFIS DE USUÁRIO
+------------------------------------------------------------------------------
+
+P: Quais perfis existem no sistema?
+R: Quatro perfis: Usuário Interno (colaborador Petrobras, cria
+   compartilhamentos), Supervisor (aprova/rejeita compartilhamentos de seus
+   subordinados diretos), Administrador (visibilidade total do sistema,
+   sem restrição hierárquica) e Usuário Externo (destinatário, apenas
+   acessa/baixa arquivos via OTP).
+
+P: Como o sistema sabe quem é meu supervisor?
+R: O vínculo hierárquico é obtido via Microsoft Graph API
+   (GET /v1.0/me/manager) e armazenado como manager_id no cadastro do
+   usuário. Esse vínculo é o que determina qual supervisor recebe a
+   solicitação de aprovação.
+
+P: Sou supervisor mas não vejo nenhum compartilhamento para aprovar. Por
+   quê?
+R: O módulo de aprovação só aparece para supervisores que possuam
+   subordinados vinculados (via manager_id). Se você não tem subordinados
+   cadastrados com esse vínculo, não há o que aprovar.
+
+P: Todo compartilhamento passa por aprovação do supervisor?
+R: Não necessariamente. Colaboradores com cargos elevados (ex.: Gerente
+   Geral/Executivo, Diretor, Presidente, Auditor-Geral, Ouvidor-Geral,
+   Secretário-Geral, Chefe de Gabinete da Presidência, Corregedor-Geral) e
+   administradores têm seus compartilhamentos auto-aprovados, sem
+   intervenção do supervisor. Essa lista de cargos é configurável pelo
+   parâmetro AUTO_APPROVE_JOB_TITLES.
+
+P: Como um usuário se torna Administrador?
+R: A promoção de usuários a Administrador é feita por outro administrador
+   já existente no sistema, através do painel administrativo (/admin).
+
+------------------------------------------------------------------------------
+4. UPLOAD E COMPARTILHAMENTO DE ARQUIVOS
+------------------------------------------------------------------------------
+
+P: Como eu envio um arquivo para um destinatário externo?
+R: Acesse a página /upload, envie o(s) arquivo(s), informe o(s)
+   destinatário(s) externo(s) e defina a política de expiração. Ao
+   confirmar, o sistema cria o compartilhamento e segue o fluxo de
+   aprovação (se aplicável).
+
+P: O que acontece depois que eu solicito um compartilhamento?
+R: O compartilhamento é criado com status "pendente" e o arquivo é
+   armazenado no Amazon S3. Se o solicitante for elegível para
+   auto-aprovação, o status muda direto para "ativo" e o externo é
+   notificado. Caso contrário, um e-mail é enviado ao supervisor imediato
+   solicitando aprovação.
+
+P: Quais são os status possíveis de um compartilhamento?
+R:
+   - pendente  → aguardando aprovação do supervisor
+   - aprovado  → aprovado, aguardando notificação ao externo
+   - ativo     → disponível para download
+   - rejeitado → rejeitado pelo supervisor
+   - concluído → todos os arquivos já foram baixados
+   - expirado  → prazo de validade (TTL) esgotado
+   - cancelado → cancelado pelo próprio solicitante
+
+P: Posso cancelar um compartilhamento depois de criado?
+R: Sim, o usuário interno (solicitante) pode cancelar o próprio
+   compartilhamento. Administradores e supervisores também têm essa
+   permissão (shares:cancel).
+
+P: É possível estender o prazo de expiração de um compartilhamento?
+R: Sim, mas essa ação (shares:extend) é restrita a Administradores e
+   Supervisores.
+
+P: Existe algum tipo de arquivo proibido de ser enviado?
+R: Sim. Por segurança, extensões potencialmente executáveis são bloqueadas
+   no upload: .exe, .dll, .bat, .cmd, .com, .msi, .scr, .vbs, .ps1, .sh.
+   Além disso, os nomes de arquivo são sanitizados automaticamente antes do
+   armazenamento.
+
+P: O que acontece com o arquivo quando o compartilhamento é rejeitado ou
+   cancelado?
+R: O objeto correspondente é removido automaticamente do Amazon S3,
+   evitando acúmulo de arquivos órfãos e reduzindo a exposição de dados
+   sensíveis.
+
+P: Como funciona a expiração de acesso do destinatário externo?
+R: Cada compartilhamento tem uma política de expiração configurável no
+   momento da criação. O acesso pode expirar após todos os arquivos serem
+   baixados, após o primeiro download, ou ao atingir o prazo (TTL)
+   definido — o que ocorrer primeiro, conforme a política escolhida.
+
+------------------------------------------------------------------------------
+5. APROVAÇÃO PELO SUPERVISOR
+------------------------------------------------------------------------------
+
+P: Como o supervisor é notificado de uma solicitação pendente?
+R: Por e-mail corporativo (SMTP Petrobras), assim que o compartilhamento é
+   criado e identificado como não elegível para auto-aprovação.
+
+P: Onde o supervisor aprova ou rejeita uma solicitação?
+R: Na página /supervisor (lista de pendências) e em
+   /supervisor/detalhes/[id] (detalhamento de cada solicitação), disponível
+   apenas para o perfil Supervisor (e Administrador).
+
+P: O que acontece quando o supervisor aprova?
+R: O sistema valida o vínculo hierárquico entre solicitante e supervisor, o
+   status muda para "ativo", a data de expiração é definida e o
+   destinatário externo recebe o e-mail de acesso.
+
+P: O que acontece quando o supervisor rejeita?
+R: O status muda para "rejeitado", o motivo informado é registrado no
+   sistema e o solicitante interno é notificado por e-mail sobre a
+   rejeição e o motivo.
+
+P: Um supervisor pode aprovar compartilhamentos de qualquer colaborador?
+R: Não. Cada supervisor só visualiza e aprova compartilhamentos de seus
+   subordinados diretos (vínculo via manager_id) — não há visibilidade
+   sobre colaboradores de outras equipes. Apenas o Administrador tem
+   visibilidade total, sem essa restrição hierárquica.
+
+------------------------------------------------------------------------------
+6. DOWNLOAD PELO DESTINATÁRIO EXTERNO
+------------------------------------------------------------------------------
+
+P: Como o destinatário externo sabe que recebeu um arquivo?
+R: Ele recebe um e-mail informando que há um compartilhamento disponível,
+   com instruções para acessar o portal público (/download) e realizar a
+   autenticação por OTP.
+
+P: O destinatário externo baixa os arquivos individualmente ou em lote?
+R: Ambos são suportados: download individual via URL presignada do Amazon
+   S3, ou download em lote (todos os arquivos do compartilhamento) em um
+   único arquivo ZIP.
+
+P: O externo precisa criar uma conta ou senha?
+R: Não. O externo não possui (nem precisa criar) credenciais de Active
+   Directory ou qualquer senha. O acesso é feito exclusivamente por
+   verificação de e-mail + código OTP, válido apenas para aquele
+   compartilhamento.
+
+P: Por quanto tempo a URL de download fica válida?
+R: As URLs presignadas do S3 têm TTL padrão de 300 segundos (5 minutos)
+   por motivos de segurança; após esse período, uma nova URL é gerada ao
+   solicitar o download novamente, desde que o compartilhamento ainda
+   esteja ativo.
+
+------------------------------------------------------------------------------
+7. RÓTULOS DE CONFIDENCIALIDADE (MICROSOFT PURVIEW / MIP)
+------------------------------------------------------------------------------
+
+P: O SCAC lida com arquivos protegidos por rótulo de confidencialidade
+   (MIP)?
+R: Sim. O sistema se integra ao SDK do Microsoft Purview/MIP para consultar
+   e, quando necessário, re-rotular arquivos antes do compartilhamento,
+   evitando que a classificação de confidencialidade seja perdida ou
+   burlada.
+
+P: O que acontece se a verificação do rótulo MIP falhar?
+R: Depende da configuração do ambiente: no modo "falha fechada"
+   (fail-closed), uma falha do SDK MIP bloqueia a operação de
+   compartilhamento por segurança. Em outra configuração, a falha pode não
+   bloquear o fluxo — isso é definido por parâmetro de ambiente.
+
+------------------------------------------------------------------------------
+8. NOTIFICAÇÕES E HISTÓRICO
+------------------------------------------------------------------------------
+
+P: Quais eventos geram notificação por e-mail?
+R: Criação de solicitação pendente (ao supervisor), aprovação/rejeição (ao
+   solicitante), liberação de acesso (ao externo), entre outros eventos do
+   ciclo de vida do compartilhamento. Os e-mails são enviados pelo servidor
+   SMTP corporativo da Petrobras.
+
+P: Onde posso ver o histórico dos meus compartilhamentos?
+R: Na página /historico (para usuários internos) e em /compartilhamentos,
+   onde é possível consultar status, destinatários e datas de cada
+   compartilhamento criado.
+
+P: Existe um log de auditoria de tudo que acontece no sistema?
+R: Sim. Todas as ações relevantes (criação, aprovação, rejeição,
+   cancelamento, download, login, etc.) são gravadas na tabela "audit" do
+   banco de dados, garantindo trilha de auditoria imutável. Administradores
+   podem consultar essa trilha na página /auditoria.
+
+------------------------------------------------------------------------------
+9. SEGURANÇA
+------------------------------------------------------------------------------
+
+P: Meus dados de login/senha ficam armazenados em texto puro?
+R: Não. Tokens de sessão e códigos OTP são armazenados apenas como hash
+   SHA-256 — nunca em texto plano. Senhas de usuários externos (quando
+   aplicável) usam bcrypt.
+
+P: O sistema usa autenticação de dois fatores?
+R: Para o usuário interno, a autenticação é feita via SSO corporativo
+   (CAv4/Entra ID), já com os controles de segurança da Petrobras. Para o
+   usuário externo, o próprio fluxo de OTP por e-mail funciona como fator
+   adicional de verificação de identidade, já que ele não possui
+   credenciais corporativas.
+
+P: Onde ficam armazenados os arquivos enviados?
+R: No Amazon S3, com estrutura de chave organizada por área e
+   compartilhamento. Os metadados (nome, tamanho, status, datas) ficam no
+   banco de dados Amazon Aurora PostgreSQL — nunca o conteúdo binário.
+
+P: Quem pode ver quais arquivos foram compartilhados?
+R: Apenas o solicitante (dono do compartilhamento), o supervisor
+   responsável (enquanto pendente/aprovado), o destinatário externo
+   autenticado e Administradores. O controle é feito por regras de RBAC
+   aplicadas em cada endpoint da API.
+
+------------------------------------------------------------------------------
+10. DÚVIDAS TÉCNICAS E SUPORTE
+------------------------------------------------------------------------------
+
+P: Recebo erro 401 ao navegar no sistema. O que fazer?
+R: Geralmente indica token de sessão expirado ou desatualizado. Tente
+   sair e entrar novamente. Se persistir, limpe os dados locais do
+   navegador para o domínio do SCAC e faça login novamente.
+
+P: O callback de login do Entra ID não funciona. Por quê?
+R: Normalmente ocorre quando a URI de redirecionamento configurada no
+   registro do aplicativo (Azure App Registration) não corresponde
+   exatamente à URI usada pelo ambiente (ex.: produção vs. homologação).
+   Esse ajuste deve ser feito pela equipe técnica responsável.
+
+P: Onde posso tirar outras dúvidas ou reportar um problema?
+R: Utilize a área de suporte disponível no sistema (/suporte) ou contate a
+   equipe responsável pelo SCAC (A12022) pelos canais internos de suporte
+   de TI da Petrobras.
+
+==============================================================================
+FIM DO DOCUMENTO
+==============================================================================
